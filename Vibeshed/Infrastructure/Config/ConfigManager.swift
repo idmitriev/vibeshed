@@ -1,4 +1,5 @@
 import Foundation
+import Yams
 
 @MainActor
 @Observable
@@ -15,7 +16,7 @@ final class ConfigManager {
         self.eventBus = eventBus
         let home = FileManager.default.homeDirectoryForCurrentUser
         self.configDirectoryURL = home.appendingPathComponent(".config/vibeshed")
-        self.configFileURL = configDirectoryURL.appendingPathComponent("config.json")
+        self.configFileURL = configDirectoryURL.appendingPathComponent("config.yaml")
     }
 
     func start() {
@@ -42,8 +43,8 @@ final class ConfigManager {
             return
         }
         do {
-            let data = try Data(contentsOf: configFileURL)
-            let decoded = try JSONDecoder().decode(AppConfig.self, from: data)
+            let yamlString = try String(contentsOf: configFileURL, encoding: .utf8)
+            let decoded = try Self.parseYAML(yamlString)
             guard decoded != config else {
                 Log.config.debug("Config unchanged, skipping reload")
                 return
@@ -56,13 +57,53 @@ final class ConfigManager {
         }
     }
 
+    static func parseYAML(_ yamlString: String) throws -> AppConfig {
+        guard let rootNode = try Yams.compose(yaml: yamlString),
+              let rootMapping = rootNode.mapping
+        else {
+            return AppConfig()
+        }
+
+        var config = AppConfig()
+        let decoder = YAMLDecoder()
+
+        if let hotkeyNode = rootMapping[Node("hotkey")] {
+            let hotkeyYAML = try Yams.serialize(node: hotkeyNode)
+            config.hotkey = try decoder.decode(
+                AppConfig.HotkeyConfig.self,
+                from: hotkeyYAML
+            )
+        }
+
+        if let appearanceNode = rootMapping[Node("appearance")] {
+            let appearanceYAML = try Yams.serialize(node: appearanceNode)
+            config.appearance = try decoder.decode(
+                AppConfig.AppearanceConfig.self,
+                from: appearanceYAML
+            )
+        }
+
+        if let modulesNode = rootMapping[Node("modules")],
+           let modulesMapping = modulesNode.mapping
+        {
+            for (keyNode, valueNode) in modulesMapping {
+                if let key = keyNode.string {
+                    let moduleYAML = try Yams.serialize(node: valueNode)
+                    config.moduleConfigs[key] = Data(moduleYAML.utf8)
+                }
+            }
+        }
+
+        return config
+    }
+
     private func startMonitoring() {
         let fd = open(configFileURL.path, O_EVTONLY)
         guard fd >= 0 else {
             Log.config.warning("Cannot monitor config file (open failed)")
             return
         }
-        self.fileDescriptor = fd
+        fileDescriptor = fd
 
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fd,
@@ -82,6 +123,6 @@ final class ConfigManager {
         }
 
         source.resume()
-        self.fileMonitor = source
+        fileMonitor = source
     }
 }

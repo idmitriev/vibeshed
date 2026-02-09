@@ -1,6 +1,6 @@
 import AppKit
-import SwiftUI
 import KeyboardShortcuts
+import SwiftUI
 
 extension KeyboardShortcuts.Name {
     static let togglePicker = Self("togglePicker", default: .init(.space, modifiers: [.option]))
@@ -8,35 +8,52 @@ extension KeyboardShortcuts.Name {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private(set) var panelController: PanelController!
-    private(set) var pickerState: PickerState!
-    private(set) var eventBus: EventBus!
-    private(set) var configManager: ConfigManager!
-    private(set) var permissionsManager: PermissionsManager!
-    private(set) var moduleRegistry: ModuleRegistry!
+    let eventBus: EventBus
+    let configManager: ConfigManager
+    let permissionsManager: PermissionsManager
+    let pickerState: PickerState
+    let panelController: PanelController
+    let moduleRegistry: ModuleRegistry
 
     private var querySubscription: Any?
 
+    override init() {
+        self.eventBus = EventBus()
+        self.configManager = ConfigManager(eventBus: eventBus)
+        self.permissionsManager = PermissionsManager()
+        self.pickerState = PickerState()
+        self.panelController = PanelController(pickerState: pickerState)
+        self.moduleRegistry = ModuleRegistry(eventBus: eventBus, configManager: configManager)
+        super.init()
+    }
+
+    var isUITesting: Bool {
+        CommandLine.arguments.contains("--ui-testing")
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
-        eventBus = EventBus()
-        configManager = ConfigManager(eventBus: eventBus)
         configManager.start()
-
-        permissionsManager = PermissionsManager()
+        moduleRegistry.startListeningForConfigChanges()
         permissionsManager.checkPermissions()
-
-        pickerState = PickerState()
-        panelController = PanelController(pickerState: pickerState)
-
-        moduleRegistry = ModuleRegistry(eventBus: eventBus)
-
         wireQueryToModules()
 
         KeyboardShortcuts.onKeyUp(for: .togglePicker) { [weak self] in
             self?.panelController.toggle()
         }
 
+        if isUITesting {
+            setupUITesting()
+        }
+
         Log.app.info("Vibeshed launched")
+    }
+
+    private func setupUITesting() {
+        Task { @MainActor in
+            let mockModule = MockModule()
+            try await moduleRegistry.register(mockModule)
+            panelController.show()
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -48,7 +65,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         querySubscription = pickerState.debouncedQuery
             .sink { [weak self] query in
                 guard let self else { return }
-                self.pickerState.isLoading = true
+                pickerState.isLoading = true
                 Task { @MainActor [weak self] in
                     guard let self else { return }
                     let scoring = ScoringContext(
@@ -56,11 +73,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         lastUsedDates: [:],
                         query: query
                     )
-                    let results = await self.moduleRegistry.queryAll(
+                    let results = await moduleRegistry.queryAll(
                         query: query,
                         scoring: scoring
                     )
-                    self.pickerState.actions = results.map { action in
+                    pickerState.actions = results.map { action in
                         ActionItem(
                             id: action.id,
                             title: action.title,
@@ -70,10 +87,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             moduleID: String(action.id.rawValue.prefix(while: { $0 != "." }))
                         )
                     }
-                    if !self.pickerState.actions.isEmpty {
-                        self.pickerState.selectedActionID = self.pickerState.actions.first?.id
+                    if !pickerState.actions.isEmpty {
+                        pickerState.selectedActionID = pickerState.actions.first?.id
                     }
-                    self.pickerState.isLoading = false
+                    pickerState.isLoading = false
                 }
             }
     }

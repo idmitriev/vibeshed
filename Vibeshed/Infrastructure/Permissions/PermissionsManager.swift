@@ -21,7 +21,7 @@ final class PermissionsManager {
 
     private func checkAccessibility(prompt: Bool) -> Bool {
         let options = [
-            kAXTrustedCheckOptionPrompt.takeUnretainedValue(): prompt
+            kAXTrustedCheckOptionPrompt.takeUnretainedValue(): prompt,
         ] as CFDictionary
         return AXIsProcessTrustedWithOptions(options)
     }
@@ -37,7 +37,8 @@ final class PermissionsManager {
         return windowList.contains { info in
             guard let pid = info[kCGWindowOwnerPID as String] as? Int32,
                   pid != currentPID,
-                  let name = info[kCGWindowName as String] as? String else {
+                  let name = info[kCGWindowName as String] as? String
+            else {
                 return false
             }
             return !name.isEmpty

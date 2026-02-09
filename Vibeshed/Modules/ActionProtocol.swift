@@ -13,7 +13,9 @@ struct ActionID: Hashable, Sendable, Codable, CustomStringConvertible {
         self.rawValue = "\(module).\(name)"
     }
 
-    var description: String { rawValue }
+    var description: String {
+        rawValue
+    }
 }
 
 // MARK: - Action Protocol
@@ -29,15 +31,32 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
 
     func run(with values: [String: Any]) async throws -> ActionResult
 
-    @MainActor func makeListItemView() -> AnyView?
-    @MainActor func makePreviewView() -> AnyView?
+    @MainActor
+    func makeListItemView() -> AnyView?
+    @MainActor
+    func makePreviewView() -> AnyView?
 }
 
 extension Action {
-    var iconName: String? { nil }
-    var keywords: [String] { [] }
-    var parameters: [ActionParameter] { [] }
+    var iconName: String? {
+        nil
+    }
 
-    @MainActor func makeListItemView() -> AnyView? { nil }
-    @MainActor func makePreviewView() -> AnyView? { nil }
+    var keywords: [String] {
+        []
+    }
+
+    var parameters: [ActionParameter] {
+        []
+    }
+
+    @MainActor
+    func makeListItemView() -> AnyView? {
+        nil
+    }
+
+    @MainActor
+    func makePreviewView() -> AnyView? {
+        nil
+    }
 }

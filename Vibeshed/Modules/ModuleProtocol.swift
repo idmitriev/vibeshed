@@ -15,8 +15,6 @@ protocol Module: Actor {
         in actionID: ActionID,
         query: String
     ) async -> [ParameterOption]
-
-    func configDidChange(_ config: AppConfig.ModuleConfig) async
 }
 
 extension Module {
@@ -29,6 +27,4 @@ extension Module {
     ) async -> [ParameterOption] {
         []
     }
-
-    func configDidChange(_ config: AppConfig.ModuleConfig) async {}
 }

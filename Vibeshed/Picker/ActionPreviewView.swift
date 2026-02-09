@@ -34,5 +34,6 @@ struct ActionPreviewView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityIdentifier("actionPreview")
     }
 }

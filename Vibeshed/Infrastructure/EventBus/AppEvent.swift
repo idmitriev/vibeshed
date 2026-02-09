@@ -9,5 +9,6 @@ enum AppEvent: Sendable {
     case moduleRegistered(String)
     case moduleUnregistered(String)
     case configReloaded
+    case moduleConfigError(moduleID: String, message: String)
     case custom(name: String, payload: [String: String])
 }

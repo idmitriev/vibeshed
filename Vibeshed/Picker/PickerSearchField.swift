@@ -14,6 +14,7 @@ struct PickerSearchField: View {
                 .textFieldStyle(.plain)
                 .font(.title2)
                 .focused($isFocused)
+                .accessibilityIdentifier("pickerSearchField")
                 .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                         isFocused = true

@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 @Observable
@@ -31,7 +31,8 @@ final class PickerState {
     func selectNext() {
         guard !actions.isEmpty else { return }
         guard let currentID = selectedActionID,
-              let idx = actions.firstIndex(where: { $0.id == currentID }) else {
+              let idx = actions.firstIndex(where: { $0.id == currentID })
+        else {
             selectedActionID = actions.first?.id
             return
         }
@@ -42,7 +43,8 @@ final class PickerState {
     func selectPrevious() {
         guard !actions.isEmpty else { return }
         guard let currentID = selectedActionID,
-              let idx = actions.firstIndex(where: { $0.id == currentID }) else {
+              let idx = actions.firstIndex(where: { $0.id == currentID })
+        else {
             selectedActionID = actions.last?.id
             return
         }

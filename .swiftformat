@@ -1,0 +1,13 @@
+--swiftversion 5.9
+--indent 4
+--allman false
+--disable redundantSelf
+--stripunusedargs closure-only
+--maxwidth 120
+--wrapcollections before-first
+--wraparguments before-first
+--wrapparameters before-first
+--funcattributes prev-line
+--typeattributes prev-line
+--varattributes prev-line
+--exclude .build,.swiftpm,VibeshedUITests

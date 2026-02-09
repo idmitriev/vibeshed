@@ -11,5 +11,6 @@ struct ActionListView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .accessibilityIdentifier("actionList")
     }
 }

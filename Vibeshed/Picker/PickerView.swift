@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 struct PickerView: View {
     @Bindable var state: PickerState
@@ -13,12 +13,14 @@ struct PickerView: View {
 
             Divider()
 
-            if state.isLoading && state.actions.isEmpty {
+            if state.isLoading, state.actions.isEmpty {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if state.actions.isEmpty && !state.query.isEmpty {
+                    .accessibilityIdentifier("pickerLoading")
+            } else if state.actions.isEmpty, !state.query.isEmpty {
                 ContentUnavailableView.search(text: state.query)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityIdentifier("pickerNoResults")
             } else {
                 HSplitView {
                     ActionListView(
@@ -38,10 +40,11 @@ struct PickerView: View {
         .frame(width: 680, height: 460)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityIdentifier("pickerView")
         .onKeyPress(.downArrow) { state.selectNext(); return .handled }
         .onKeyPress(.upArrow) { state.selectPrevious(); return .handled }
         .onKeyPress(.return) {
-            return .handled
+            .handled
         }
     }
 }

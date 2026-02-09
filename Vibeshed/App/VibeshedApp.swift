@@ -8,10 +8,5 @@ struct VibeshedApp: App {
         MenuBarExtra("Vibeshed", systemImage: "sparkle") {
             StatusBarView(panelController: appDelegate.panelController)
         }
-
-        Settings {
-            Text("Settings placeholder")
-                .frame(width: 400, height: 300)
-        }
     }
 }

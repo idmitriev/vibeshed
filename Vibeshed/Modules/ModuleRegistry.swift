@@ -4,25 +4,63 @@ import Foundation
 @Observable
 final class ModuleRegistry {
     private(set) var moduleIDs: [String] = []
+    private(set) var configErrors: [String: String] = [:]
     private var modules: [String: any Module] = [:]
+    private var configDecoders: [String: ModuleConfigDecoder] = [:]
     private let eventBus: EventBus
+    private let configManager: ConfigManager
 
-    init(eventBus: EventBus) {
+    init(eventBus: EventBus, configManager: ConfigManager) {
         self.eventBus = eventBus
+        self.configManager = configManager
+    }
+
+    func startListeningForConfigChanges() {
+        Task { [weak self] in
+            guard let self else { return }
+            let (_, stream) = await eventBus.subscribe()
+            for await event in stream {
+                if case .configReloaded = event {
+                    await self.propagateConfigChanges()
+                }
+            }
+        }
     }
 
     func register(_ module: any Module) async throws {
         let id = await module.id
-        let config = AppConfig.ModuleConfig(name: id)
+
+        let decoder = buildConfigDecoder(for: module, id: id)
+
+        if let decoder {
+            let rawYAML = configManager.config.moduleConfigs[id]
+            do {
+                try decoder.validate(rawYAML)
+            } catch {
+                let message = (error as? ModuleConfigError)?.errorDescription
+                    ?? error.localizedDescription
+                configErrors[id] = message
+                Log.modules.error("Module '\(id)' not loaded: \(message)")
+                await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
+                return
+            }
+        }
+
         let context = ModuleContext(
             eventBus: eventBus,
-            config: config,
             loggerFactory: { subcategory in
                 Log.module("\(id).\(subcategory)")
             }
         )
         try await module.initialize(context: context)
+
+        if let decoder {
+            let rawYAML = configManager.config.moduleConfigs[id]
+            try await decoder.apply(rawYAML)
+        }
+
         modules[id] = module
+        if let decoder { configDecoders[id] = decoder }
         moduleIDs.append(id)
         Log.modules.info("Registered module: \(id)")
         await eventBus.publish(.moduleRegistered(id))
@@ -31,6 +69,8 @@ final class ModuleRegistry {
     func unregister(id: String) async {
         guard let module = modules.removeValue(forKey: id) else { return }
         moduleIDs.removeAll { $0 == id }
+        configDecoders.removeValue(forKey: id)
+        configErrors.removeValue(forKey: id)
         await module.teardown()
         Log.modules.info("Unregistered module: \(id)")
         await eventBus.publish(.moduleUnregistered(id))
@@ -75,5 +115,36 @@ final class ModuleRegistry {
             scoring: ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "")
         )
         return actions.first { $0.id == id }
+    }
+
+    // MARK: - Private
+
+    private func buildConfigDecoder(
+        for module: any Module,
+        id: String
+    ) -> ModuleConfigDecoder? {
+        func open<M: ModuleConfigurable>(_ m: M, id: String) -> ModuleConfigDecoder {
+            ModuleConfigDecoder.make(for: m, moduleID: id)
+        }
+        guard let configurable = module as? any ModuleConfigurable else {
+            return nil
+        }
+        return open(configurable, id: id)
+    }
+
+    private func propagateConfigChanges() async {
+        for (id, decoder) in configDecoders {
+            let rawYAML = configManager.config.moduleConfigs[id]
+            do {
+                try await decoder.apply(rawYAML)
+                configErrors.removeValue(forKey: id)
+            } catch {
+                let message = (error as? ModuleConfigError)?.errorDescription
+                    ?? error.localizedDescription
+                configErrors[id] = message
+                Log.modules.error("Config change rejected for module '\(id)': \(message)")
+                await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
+            }
+        }
     }
 }

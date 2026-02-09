@@ -11,6 +11,15 @@ packages:
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: "2.0.0"
+  Yams:
+    url: https://github.com/jpsim/Yams
+    from: "6.0.0"
+  SwiftLintPlugins:
+    url: https://github.com/SimplyDanny/SwiftLintPlugins
+    from: "0.58.0"
+  SwiftFormat:
+    url: https://github.com/nicklockwood/SwiftFormat
+    from: "0.55.0"
 
 targets:
   Vibeshed:
@@ -22,6 +31,7 @@ targets:
           - Info.plist
     dependencies:
       - package: KeyboardShortcuts
+      - package: Yams
     info:
       path: Vibeshed/Info.plist
       properties:
@@ -39,3 +49,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.vibeshed.app
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_APP_SANDBOX: NO
+
+  VibeshedUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: VibeshedUITests
+    dependencies:
+      - target: Vibeshed
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        TEST_TARGET_NAME: Vibeshed

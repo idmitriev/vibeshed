@@ -14,33 +14,50 @@
 		3CF947AC4BCCC4CF4A29E87D /* ConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C121B86E848FDC88BD5B68E /* ConfigManager.swift */; };
 		59036360B596B4EE5F67B5B1 /* PanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20AE5A9B5F9C29692AF3F7E9 /* PanelController.swift */; };
 		5E49C36BB50BF04370251400 /* ModuleProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9F91D6438A281396DDB289 /* ModuleProtocol.swift */; };
+		66FCCAC15C49EABAC2232FE7 /* ModuleConfigurable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1513BE419E01E789723255D9 /* ModuleConfigurable.swift */; };
 		6871F27BAFF1427FDB1453D1 /* PickerSearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7327E3749066AA84C5E85773 /* PickerSearchField.swift */; };
 		6C3C30FFC99B8AA7DC2E8440 /* VibeshedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54281B09B50928C70FF2D7 /* VibeshedApp.swift */; };
 		79640CDB97016A2A7AEDE542 /* ActionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DF8B4E3AFE960C7097A99CD /* ActionListView.swift */; };
 		7EC3C324CFD4983DA603EC70 /* ActionPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2D569D8FF4C4E43B611C2C /* ActionPreviewView.swift */; };
 		8067EBE14A4A6CC56B5838B5 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F96BD0F02421A8BE5B321BB /* PermissionsManager.swift */; };
+		8C11BFBAED563CBCCD082962 /* PickerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C5FBF0D0478B3732EABBAAB /* PickerUITests.swift */; };
 		8D4A6AF37A22F230F3CF8791 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8CD4D9B93D1B87153D0DED1 /* AppConfig.swift */; };
 		8FE26D4891A32E08CA7E8E78 /* ActionResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2FE607D1BDC2A89FEB29F5 /* ActionResult.swift */; };
 		913C9E017379125796B16D05 /* ActionListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54A380827CE63DE4341D875A /* ActionListItemView.swift */; };
+		93E065D34421DD7D859DD22B /* MockModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B78758915F1F1E6946D55646 /* MockModule.swift */; };
 		95D0E5C4A985DE6CE6742564 /* ActionParameter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746AF9FACF266F596E371361 /* ActionParameter.swift */; };
 		A0CEC1A7E201671142F6B2FB /* ScoringContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F6A1AC73A792839AFF18D5 /* ScoringContext.swift */; };
 		A80AA70E393B1EE7F1EFC5C7 /* EventBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5802724DA06AD2006D0EBBF /* EventBus.swift */; };
 		BB56F7160EFCDE4997100091 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8806170C30191A13DF0A8EB /* StatusBarView.swift */; };
 		BFD0CB0176B127700DD66C0F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A98A537C97C7284F255A5E /* AppDelegate.swift */; };
+		C949016BA990443413FE19E4 /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = 20C3059357BAE74908B7FD8E /* Yams */; };
 		CFD458CE359FC6A096F0D12B /* ActionProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB49F846148B963183589DE2 /* ActionProtocol.swift */; };
 		DDB4D5AB23A5645D335B5BE7 /* PickerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 208003692F680ED31E2FCFD0 /* PickerState.swift */; };
 		DF5A1B0761CE3F187D620737 /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECE2580BD0DA77333DE6105 /* FloatingPanel.swift */; };
+		E67785AB9BF9FA0C919C6E3F /* ModuleConfigDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F41797635891B1CDE1F5A17 /* ModuleConfigDecoder.swift */; };
 		F712C8197F9E6898619DEE7F /* AppEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF39B723395CDBBA2D59861E /* AppEvent.swift */; };
 		FF8A2959BA96EDB8ECCE5349 /* ModuleContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804FC8C70D8A56D626C60F1B /* ModuleContext.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		748AA067970BCA343B58CF8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5E6B7CF84E09EF9890C2AC71 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4A67709EC858665E0BBE2E0F;
+			remoteInfo = Vibeshed;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		1513BE419E01E789723255D9 /* ModuleConfigurable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleConfigurable.swift; sourceTree = "<group>"; };
 		15A98A537C97C7284F255A5E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		208003692F680ED31E2FCFD0 /* PickerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerState.swift; sourceTree = "<group>"; };
 		20AE5A9B5F9C29692AF3F7E9 /* PanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelController.swift; sourceTree = "<group>"; };
 		4F9F91D6438A281396DDB289 /* ModuleProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleProtocol.swift; sourceTree = "<group>"; };
 		54A380827CE63DE4341D875A /* ActionListItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionListItemView.swift; sourceTree = "<group>"; };
 		5DF8B4E3AFE960C7097A99CD /* ActionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionListView.swift; sourceTree = "<group>"; };
+		6F41797635891B1CDE1F5A17 /* ModuleConfigDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleConfigDecoder.swift; sourceTree = "<group>"; };
 		6F96BD0F02421A8BE5B321BB /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		7327E3749066AA84C5E85773 /* PickerSearchField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerSearchField.swift; sourceTree = "<group>"; };
 		746AF9FACF266F596E371361 /* ActionParameter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionParameter.swift; sourceTree = "<group>"; };
@@ -48,12 +65,15 @@
 		804FC8C70D8A56D626C60F1B /* ModuleContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleContext.swift; sourceTree = "<group>"; };
 		8E54281B09B50928C70FF2D7 /* VibeshedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VibeshedApp.swift; sourceTree = "<group>"; };
 		9C121B86E848FDC88BD5B68E /* ConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigManager.swift; sourceTree = "<group>"; };
+		9C5FBF0D0478B3732EABBAAB /* PickerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerUITests.swift; sourceTree = "<group>"; };
 		9FC745B543940A91AB7B27ED /* Vibeshed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vibeshed.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8806170C30191A13DF0A8EB /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
 		B35AA78CEFBB80E80B23AED9 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		B78758915F1F1E6946D55646 /* MockModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockModule.swift; sourceTree = "<group>"; };
 		C0A8442C19B4735C5DDEA699 /* PickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerView.swift; sourceTree = "<group>"; };
 		C5802724DA06AD2006D0EBBF /* EventBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBus.swift; sourceTree = "<group>"; };
 		CECE2580BD0DA77333DE6105 /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
+		D6B2F82F7FC0A0B76A0460E8 /* VibeshedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VibeshedUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB49F846148B963183589DE2 /* ActionProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionProtocol.swift; sourceTree = "<group>"; };
 		DF39B723395CDBBA2D59861E /* AppEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEvent.swift; sourceTree = "<group>"; };
 		E4747E26E55BE497F4DE49CD /* ModuleRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleRegistry.swift; sourceTree = "<group>"; };
@@ -68,6 +88,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				14E9B0E6E9AFE5D7B1988E78 /* KeyboardShortcuts in Frameworks */,
+				C949016BA990443413FE19E4 /* Yams in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +134,14 @@
 			path = Picker;
 			sourceTree = "<group>";
 		};
+		5DFA9F92CA430AB0AD86971A /* Testing */ = {
+			isa = PBXGroup;
+			children = (
+				B78758915F1F1E6946D55646 /* MockModule.swift */,
+			);
+			path = Testing;
+			sourceTree = "<group>";
+		};
 		5FF7CF94385E9421EF239B58 /* Infrastructure */ = {
 			isa = PBXGroup;
 			children = (
@@ -133,6 +162,7 @@
 				A80DE735D8F001FB5F83652F /* Panel */,
 				5B5348C76F8FBCCB52E0E6AA /* Picker */,
 				95D98F51D32873CD6015D14E /* StatusBar */,
+				5DFA9F92CA430AB0AD86971A /* Testing */,
 			);
 			path = Vibeshed;
 			sourceTree = "<group>";
@@ -149,6 +179,7 @@
 			isa = PBXGroup;
 			children = (
 				73A1C211D688F50947991671 /* Vibeshed */,
+				EB778998935EDC0CB5E7149F /* VibeshedUITests */,
 				C445A4F6C841E231F3CC8E90 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -166,6 +197,7 @@
 			isa = PBXGroup;
 			children = (
 				9FC745B543940A91AB7B27ED /* Vibeshed.app */,
+				D6B2F82F7FC0A0B76A0460E8 /* VibeshedUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -176,6 +208,8 @@
 				746AF9FACF266F596E371361 /* ActionParameter.swift */,
 				DB49F846148B963183589DE2 /* ActionProtocol.swift */,
 				7C2FE607D1BDC2A89FEB29F5 /* ActionResult.swift */,
+				6F41797635891B1CDE1F5A17 /* ModuleConfigDecoder.swift */,
+				1513BE419E01E789723255D9 /* ModuleConfigurable.swift */,
 				804FC8C70D8A56D626C60F1B /* ModuleContext.swift */,
 				4F9F91D6438A281396DDB289 /* ModuleProtocol.swift */,
 				E4747E26E55BE497F4DE49CD /* ModuleRegistry.swift */,
@@ -201,9 +235,35 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		EB778998935EDC0CB5E7149F /* VibeshedUITests */ = {
+			isa = PBXGroup;
+			children = (
+				9C5FBF0D0478B3732EABBAAB /* PickerUITests.swift */,
+			);
+			path = VibeshedUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		326FD7A114B92DA2A4DAABBC /* VibeshedUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0CAE40358B04B480B57BF761 /* Build configuration list for PBXNativeTarget "VibeshedUITests" */;
+			buildPhases = (
+				B6B3F944961752FC60260BC1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4A186ED84E39B85DC81B2278 /* PBXTargetDependency */,
+			);
+			name = VibeshedUITests;
+			packageProductDependencies = (
+			);
+			productName = VibeshedUITests;
+			productReference = D6B2F82F7FC0A0B76A0460E8 /* VibeshedUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		4A67709EC858665E0BBE2E0F /* Vibeshed */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FC9BE57795DD42015794ADCA /* Build configuration list for PBXNativeTarget "Vibeshed" */;
@@ -218,6 +278,7 @@
 			name = Vibeshed;
 			packageProductDependencies = (
 				5A6BC3101CE0E9C87F20C141 /* KeyboardShortcuts */,
+				20C3059357BAE74908B7FD8E /* Yams */,
 			);
 			productName = Vibeshed;
 			productReference = 9FC745B543940A91AB7B27ED /* Vibeshed.app */;
@@ -231,6 +292,11 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					326FD7A114B92DA2A4DAABBC = {
+						TestTargetID = 4A67709EC858665E0BBE2E0F;
+					};
+				};
 			};
 			buildConfigurationList = E01B6EA541225C9C27AFB8BC /* Build configuration list for PBXProject "Vibeshed" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -244,12 +310,16 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				07AD761BFFFEE365E904AEA5 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				9B7CFD75670DD1DB3DFE8095 /* XCRemoteSwiftPackageReference "SwiftFormat" */,
+				02770868DD0B43DE82B9EBBA /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
+				E8F92D1DD3B0A98E4075AD23 /* XCRemoteSwiftPackageReference "Yams" */,
 			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				4A67709EC858665E0BBE2E0F /* Vibeshed */,
+				326FD7A114B92DA2A4DAABBC /* VibeshedUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -272,6 +342,9 @@
 				A80AA70E393B1EE7F1EFC5C7 /* EventBus.swift in Sources */,
 				DF5A1B0761CE3F187D620737 /* FloatingPanel.swift in Sources */,
 				334F8E5B2F7C6A14E3E5B35B /* Log.swift in Sources */,
+				93E065D34421DD7D859DD22B /* MockModule.swift in Sources */,
+				E67785AB9BF9FA0C919C6E3F /* ModuleConfigDecoder.swift in Sources */,
+				66FCCAC15C49EABAC2232FE7 /* ModuleConfigurable.swift in Sources */,
 				FF8A2959BA96EDB8ECCE5349 /* ModuleContext.swift in Sources */,
 				5E49C36BB50BF04370251400 /* ModuleProtocol.swift in Sources */,
 				07F5E533479F8B22C3E9BC2A /* ModuleRegistry.swift in Sources */,
@@ -286,7 +359,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B6B3F944961752FC60260BC1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8C11BFBAED563CBCCD082962 /* PickerUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4A186ED84E39B85DC81B2278 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4A67709EC858665E0BBE2E0F /* Vibeshed */;
+			targetProxy = 748AA067970BCA343B58CF8D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		044302E089ED502443C53BD2 /* Debug */ = {
@@ -428,6 +517,24 @@
 			};
 			name = Debug;
 		};
+		32FB0CE590FA042F8EC2996F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vibeshed.VibeshedUITests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_TARGET_NAME = Vibeshed;
+			};
+			name = Release;
+		};
 		6BB64E662AB99C8873A9944B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -448,9 +555,36 @@
 			};
 			name = Release;
 		};
+		B99F64C5FD83A59F4789645A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vibeshed.VibeshedUITests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_TARGET_NAME = Vibeshed;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0CAE40358B04B480B57BF761 /* Build configuration list for PBXNativeTarget "VibeshedUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B99F64C5FD83A59F4789645A /* Debug */,
+				32FB0CE590FA042F8EC2996F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		E01B6EA541225C9C27AFB8BC /* Build configuration list for PBXProject "Vibeshed" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -472,6 +606,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		02770868DD0B43DE82B9EBBA /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SimplyDanny/SwiftLintPlugins";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.58.0;
+			};
+		};
 		07AD761BFFFEE365E904AEA5 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
@@ -480,9 +622,30 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		9B7CFD75670DD1DB3DFE8095 /* XCRemoteSwiftPackageReference "SwiftFormat" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nicklockwood/SwiftFormat";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.55.0;
+			};
+		};
+		E8F92D1DD3B0A98E4075AD23 /* XCRemoteSwiftPackageReference "Yams" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jpsim/Yams";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		20C3059357BAE74908B7FD8E /* Yams */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E8F92D1DD3B0A98E4075AD23 /* XCRemoteSwiftPackageReference "Yams" */;
+			productName = Yams;
+		};
 		5A6BC3101CE0E9C87F20C141 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 07AD761BFFFEE365E904AEA5 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;

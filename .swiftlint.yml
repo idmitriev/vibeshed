@@ -1,0 +1,50 @@
+excluded:
+  - .build
+  - .swiftpm
+  - VibeshedUITests
+
+line_length:
+  warning: 120
+  error: 150
+  ignores_comments: true
+
+type_body_length:
+  warning: 300
+  error: 500
+
+file_length:
+  warning: 500
+  error: 1000
+
+function_body_length:
+  warning: 60
+  error: 100
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  excluded:
+    - id
+    - x
+    - y
+
+disabled_rules:
+  - trailing_comma
+  - large_tuple
+  - todo
+  - void_function_in_ternary
+
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - contains_over_first_not_nil
+  - discouraged_optional_boolean
+  - empty_string
+  - first_where
+  - modifier_order
+  - overridden_super_call
+  - private_action
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - unneeded_parentheses_in_closure_argument

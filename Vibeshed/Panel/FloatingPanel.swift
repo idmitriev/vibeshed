@@ -2,7 +2,6 @@ import AppKit
 import SwiftUI
 
 final class FloatingPanel: NSPanel {
-
     init(contentRect: NSRect) {
         super.init(
             contentRect: contentRect,
@@ -35,8 +34,13 @@ final class FloatingPanel: NSPanel {
         hidesOnDeactivate = false
     }
 
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeKey: Bool {
+        true
+    }
+
+    override var canBecomeMain: Bool {
+        false
+    }
 
     override func resignKey() {
         super.resignKey()
@@ -47,7 +51,7 @@ final class FloatingPanel: NSPanel {
         close()
     }
 
-    func setSwiftUIContent<V: View>(_ view: V) {
+    func setSwiftUIContent(_ view: some View) {
         contentView = NSHostingView(rootView: view.ignoresSafeArea())
     }
 }

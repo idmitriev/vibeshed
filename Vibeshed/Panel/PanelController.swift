@@ -58,7 +58,7 @@ final class PanelController {
             }
         }
 
-        self.panel = newPanel
+        panel = newPanel
         return newPanel
     }
 }

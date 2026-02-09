@@ -17,12 +17,6 @@ struct StatusBarView: View {
 
         Divider()
 
-        SettingsLink {
-            Text("Preferences...")
-        }
-
-        Divider()
-
         Button("Quit Vibeshed") {
             NSApplication.shared.terminate(nil)
         }

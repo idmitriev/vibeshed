@@ -1,5 +1,5 @@
 {
-  "originHash" : "69c39523ac0471922b625cc56b8722155cfd2afd660bdd4f5ff67335b5b87714",
+  "originHash" : "9e8844e4270a04b796dbbd83fa9840427e31f1e8fd1c77923a4a94da97c898b0",
   "pins" : [
     {
       "identity" : "keyboardshortcuts",
@@ -8,6 +8,33 @@
       "state" : {
         "revision" : "1aef85578fdd4f9eaeeb8d53b7b4fc31bf08fe27",
         "version" : "2.4.0"
+      }
+    },
+    {
+      "identity" : "swiftformat",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nicklockwood/SwiftFormat",
+      "state" : {
+        "revision" : "22a472ced4c621a0e41b982a6f32dec868d09392",
+        "version" : "0.59.1"
+      }
+    },
+    {
+      "identity" : "swiftlintplugins",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SimplyDanny/SwiftLintPlugins",
+      "state" : {
+        "revision" : "8a4640d14777685ba8f14e832373160498fbab92",
+        "version" : "0.63.2"
+      }
+    },
+    {
+      "identity" : "yams",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jpsim/Yams",
+      "state" : {
+        "revision" : "deaf82e867fa2cbd3cd865978b079bfcf384ac28",
+        "version" : "6.2.1"
       }
     }
   ],
