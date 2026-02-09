@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:vibeshed}",
+      "name": "Debug Vibeshed",
+      "target": "Vibeshed",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug Vibeshed"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:vibeshed}",
+      "name": "Release Vibeshed",
+      "target": "Vibeshed",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release Vibeshed"
+    }
+  ]
+}

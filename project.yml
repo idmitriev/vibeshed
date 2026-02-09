@@ -1,0 +1,41 @@
+name: Vibeshed
+options:
+  bundleIdPrefix: com.vibeshed
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+  groupSortPosition: top
+
+packages:
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: "2.0.0"
+
+targets:
+  Vibeshed:
+    type: application
+    platform: macOS
+    sources:
+      - path: Vibeshed
+        excludes:
+          - Info.plist
+    dependencies:
+      - package: KeyboardShortcuts
+    info:
+      path: Vibeshed/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - vibeshed
+            CFBundleURLName: com.vibeshed.url
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_IDENTITY: "-"
+        PRODUCT_BUNDLE_IDENTIFIER: com.vibeshed.app
+        COMBINE_HIDPI_IMAGES: YES
+        ENABLE_APP_SANDBOX: NO
