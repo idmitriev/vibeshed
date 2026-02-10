@@ -10,5 +10,8 @@ enum AppEvent: Sendable {
     case moduleUnregistered(String)
     case configReloaded
     case moduleConfigError(moduleID: String, message: String)
+    case permissionChanged(Permission, granted: Bool)
+    case modulePermissionError(moduleID: String, missing: Set<Permission>)
+    case keybindingError(combo: String, message: String)
     case custom(name: String, payload: [String: String])
 }

@@ -1,14 +1,9 @@
 import Foundation
 
 struct AppConfig: Sendable, Equatable {
-    var hotkey: HotkeyConfig = .init()
     var appearance: AppearanceConfig = .init()
+    var keybindings: [KeyBindingEntry] = []
     var moduleConfigs: [String: Data] = [:]
-
-    struct HotkeyConfig: Codable, Sendable, Equatable {
-        var key: String = "space"
-        var modifiers: [String] = ["option"]
-    }
 
     struct AppearanceConfig: Codable, Sendable, Equatable {
         var panelWidth: Double = 680

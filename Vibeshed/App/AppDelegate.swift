@@ -1,10 +1,5 @@
 import AppKit
-import KeyboardShortcuts
 import SwiftUI
-
-extension KeyboardShortcuts.Name {
-    static let togglePicker = Self("togglePicker", default: .init(.space, modifiers: [.option]))
-}
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -14,16 +9,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let pickerState: PickerState
     let panelController: PanelController
     let moduleRegistry: ModuleRegistry
+    let keyComboManager: KeyComboManager
 
     private var querySubscription: Any?
 
     override init() {
         self.eventBus = EventBus()
         self.configManager = ConfigManager(eventBus: eventBus)
-        self.permissionsManager = PermissionsManager()
+        self.permissionsManager = PermissionsManager(eventBus: eventBus)
         self.pickerState = PickerState()
         self.panelController = PanelController(pickerState: pickerState)
-        self.moduleRegistry = ModuleRegistry(eventBus: eventBus, configManager: configManager)
+        self.moduleRegistry = ModuleRegistry(
+            eventBus: eventBus,
+            configManager: configManager,
+            permissionsManager: permissionsManager
+        )
+        // keyComboManager needs panelController, so we init it after
+        let panel = panelController
+        self.keyComboManager = KeyComboManager(
+            eventBus: eventBus,
+            configManager: configManager,
+            moduleRegistry: moduleRegistry,
+            permissionsManager: permissionsManager,
+            togglePicker: { panel.toggle() }
+        )
         super.init()
     }
 
@@ -34,12 +43,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         configManager.start()
         moduleRegistry.startListeningForConfigChanges()
-        permissionsManager.checkPermissions()
+        permissionsManager.checkAll()
+        permissionsManager.startPeriodicRecheck()
         wireQueryToModules()
-
-        KeyboardShortcuts.onKeyUp(for: .togglePicker) { [weak self] in
-            self?.panelController.toggle()
-        }
+        keyComboManager.startListening()
+        keyComboManager.applyBindings(configManager.config.keybindings)
 
         if isUITesting {
             setupUITesting()

@@ -8,15 +8,19 @@
 
 /* Begin PBXBuildFile section */
 		02548D99A1CD6A65D7CDC693 /* PickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A8442C19B4735C5DDEA699 /* PickerView.swift */; };
+		041F01AC30ED0DD4089D733F /* KeyComboParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F343598BBFBA1E675E67E8FA /* KeyComboParser.swift */; };
 		07F5E533479F8B22C3E9BC2A /* ModuleRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4747E26E55BE497F4DE49CD /* ModuleRegistry.swift */; };
 		14E9B0E6E9AFE5D7B1988E78 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 5A6BC3101CE0E9C87F20C141 /* KeyboardShortcuts */; };
 		334F8E5B2F7C6A14E3E5B35B /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35AA78CEFBB80E80B23AED9 /* Log.swift */; };
+		3962B7B13CF519C1D0BD5EAE /* KeyComboError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8A56B0D9DDF840F687CFC1 /* KeyComboError.swift */; };
+		396830DA9740FDA937CD8599 /* KeyComboConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C73328491BF69E906AE66D82 /* KeyComboConfig.swift */; };
 		3CF947AC4BCCC4CF4A29E87D /* ConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C121B86E848FDC88BD5B68E /* ConfigManager.swift */; };
 		59036360B596B4EE5F67B5B1 /* PanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20AE5A9B5F9C29692AF3F7E9 /* PanelController.swift */; };
 		5E49C36BB50BF04370251400 /* ModuleProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9F91D6438A281396DDB289 /* ModuleProtocol.swift */; };
 		66FCCAC15C49EABAC2232FE7 /* ModuleConfigurable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1513BE419E01E789723255D9 /* ModuleConfigurable.swift */; };
 		6871F27BAFF1427FDB1453D1 /* PickerSearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7327E3749066AA84C5E85773 /* PickerSearchField.swift */; };
 		6C3C30FFC99B8AA7DC2E8440 /* VibeshedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54281B09B50928C70FF2D7 /* VibeshedApp.swift */; };
+		6C4F796A9B7F3E2729373BF6 /* EventTapHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97DC18026FF987749FD0A76 /* EventTapHandler.swift */; };
 		79640CDB97016A2A7AEDE542 /* ActionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DF8B4E3AFE960C7097A99CD /* ActionListView.swift */; };
 		7EC3C324CFD4983DA603EC70 /* ActionPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2D569D8FF4C4E43B611C2C /* ActionPreviewView.swift */; };
 		8067EBE14A4A6CC56B5838B5 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F96BD0F02421A8BE5B321BB /* PermissionsManager.swift */; };
@@ -26,15 +30,18 @@
 		913C9E017379125796B16D05 /* ActionListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54A380827CE63DE4341D875A /* ActionListItemView.swift */; };
 		93E065D34421DD7D859DD22B /* MockModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B78758915F1F1E6946D55646 /* MockModule.swift */; };
 		95D0E5C4A985DE6CE6742564 /* ActionParameter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746AF9FACF266F596E371361 /* ActionParameter.swift */; };
+		97222BF01431BBCE9C523AC8 /* PermissionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDBF7BDA779DC1A420CB667D /* PermissionError.swift */; };
 		A0CEC1A7E201671142F6B2FB /* ScoringContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F6A1AC73A792839AFF18D5 /* ScoringContext.swift */; };
 		A80AA70E393B1EE7F1EFC5C7 /* EventBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5802724DA06AD2006D0EBBF /* EventBus.swift */; };
 		BB56F7160EFCDE4997100091 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8806170C30191A13DF0A8EB /* StatusBarView.swift */; };
 		BFD0CB0176B127700DD66C0F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A98A537C97C7284F255A5E /* AppDelegate.swift */; };
 		C949016BA990443413FE19E4 /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = 20C3059357BAE74908B7FD8E /* Yams */; };
 		CFD458CE359FC6A096F0D12B /* ActionProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB49F846148B963183589DE2 /* ActionProtocol.swift */; };
+		DB807B093A5CFC3210B7DC4B /* Permission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 535838F2C4C0C703409BB16B /* Permission.swift */; };
 		DDB4D5AB23A5645D335B5BE7 /* PickerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 208003692F680ED31E2FCFD0 /* PickerState.swift */; };
 		DF5A1B0761CE3F187D620737 /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECE2580BD0DA77333DE6105 /* FloatingPanel.swift */; };
 		E67785AB9BF9FA0C919C6E3F /* ModuleConfigDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F41797635891B1CDE1F5A17 /* ModuleConfigDecoder.swift */; };
+		F1CCA6E4B6A52E8FCB6E1DC0 /* KeyComboManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C674BF539374751E2D2D0EC6 /* KeyComboManager.swift */; };
 		F712C8197F9E6898619DEE7F /* AppEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF39B723395CDBBA2D59861E /* AppEvent.swift */; };
 		FF8A2959BA96EDB8ECCE5349 /* ModuleContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804FC8C70D8A56D626C60F1B /* ModuleContext.swift */; };
 /* End PBXBuildFile section */
@@ -55,6 +62,7 @@
 		208003692F680ED31E2FCFD0 /* PickerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerState.swift; sourceTree = "<group>"; };
 		20AE5A9B5F9C29692AF3F7E9 /* PanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelController.swift; sourceTree = "<group>"; };
 		4F9F91D6438A281396DDB289 /* ModuleProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleProtocol.swift; sourceTree = "<group>"; };
+		535838F2C4C0C703409BB16B /* Permission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permission.swift; sourceTree = "<group>"; };
 		54A380827CE63DE4341D875A /* ActionListItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionListItemView.swift; sourceTree = "<group>"; };
 		5DF8B4E3AFE960C7097A99CD /* ActionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionListView.swift; sourceTree = "<group>"; };
 		6F41797635891B1CDE1F5A17 /* ModuleConfigDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleConfigDecoder.swift; sourceTree = "<group>"; };
@@ -67,11 +75,17 @@
 		9C121B86E848FDC88BD5B68E /* ConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigManager.swift; sourceTree = "<group>"; };
 		9C5FBF0D0478B3732EABBAAB /* PickerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerUITests.swift; sourceTree = "<group>"; };
 		9FC745B543940A91AB7B27ED /* Vibeshed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vibeshed.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FE0948F9E4C7CF35543D5EA /* Vibeshed.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Vibeshed.entitlements; sourceTree = "<group>"; };
 		A8806170C30191A13DF0A8EB /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
+		A97DC18026FF987749FD0A76 /* EventTapHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTapHandler.swift; sourceTree = "<group>"; };
 		B35AA78CEFBB80E80B23AED9 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		B78758915F1F1E6946D55646 /* MockModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockModule.swift; sourceTree = "<group>"; };
+		BDBF7BDA779DC1A420CB667D /* PermissionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionError.swift; sourceTree = "<group>"; };
 		C0A8442C19B4735C5DDEA699 /* PickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerView.swift; sourceTree = "<group>"; };
 		C5802724DA06AD2006D0EBBF /* EventBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBus.swift; sourceTree = "<group>"; };
+		C674BF539374751E2D2D0EC6 /* KeyComboManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyComboManager.swift; sourceTree = "<group>"; };
+		C73328491BF69E906AE66D82 /* KeyComboConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyComboConfig.swift; sourceTree = "<group>"; };
+		CC8A56B0D9DDF840F687CFC1 /* KeyComboError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyComboError.swift; sourceTree = "<group>"; };
 		CECE2580BD0DA77333DE6105 /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
 		D6B2F82F7FC0A0B76A0460E8 /* VibeshedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VibeshedUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB49F846148B963183589DE2 /* ActionProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionProtocol.swift; sourceTree = "<group>"; };
@@ -79,6 +93,7 @@
 		E4747E26E55BE497F4DE49CD /* ModuleRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleRegistry.swift; sourceTree = "<group>"; };
 		E7F6A1AC73A792839AFF18D5 /* ScoringContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringContext.swift; sourceTree = "<group>"; };
 		EC2D569D8FF4C4E43B611C2C /* ActionPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionPreviewView.swift; sourceTree = "<group>"; };
+		F343598BBFBA1E675E67E8FA /* KeyComboParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyComboParser.swift; sourceTree = "<group>"; };
 		F8CD4D9B93D1B87153D0DED1 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -147,6 +162,7 @@
 			children = (
 				3D94F271D5718440A589DEB5 /* Config */,
 				147EBADD4A08F86218920A23 /* EventBus */,
+				EA31E4E1E1129E37285178D2 /* KeyCombo */,
 				165D1B23B4BF59AD7FBCAA17 /* Logging */,
 				D7D4780C004F485DC17FF4F1 /* Permissions */,
 			);
@@ -163,6 +179,7 @@
 				5B5348C76F8FBCCB52E0E6AA /* Picker */,
 				95D98F51D32873CD6015D14E /* StatusBar */,
 				5DFA9F92CA430AB0AD86971A /* Testing */,
+				9FE0948F9E4C7CF35543D5EA /* Vibeshed.entitlements */,
 			);
 			path = Vibeshed;
 			sourceTree = "<group>";
@@ -221,6 +238,8 @@
 		D7D4780C004F485DC17FF4F1 /* Permissions */ = {
 			isa = PBXGroup;
 			children = (
+				535838F2C4C0C703409BB16B /* Permission.swift */,
+				BDBF7BDA779DC1A420CB667D /* PermissionError.swift */,
 				6F96BD0F02421A8BE5B321BB /* PermissionsManager.swift */,
 			);
 			path = Permissions;
@@ -233,6 +252,18 @@
 				8E54281B09B50928C70FF2D7 /* VibeshedApp.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		EA31E4E1E1129E37285178D2 /* KeyCombo */ = {
+			isa = PBXGroup;
+			children = (
+				A97DC18026FF987749FD0A76 /* EventTapHandler.swift */,
+				C73328491BF69E906AE66D82 /* KeyComboConfig.swift */,
+				CC8A56B0D9DDF840F687CFC1 /* KeyComboError.swift */,
+				C674BF539374751E2D2D0EC6 /* KeyComboManager.swift */,
+				F343598BBFBA1E675E67E8FA /* KeyComboParser.swift */,
+			);
+			path = KeyCombo;
 			sourceTree = "<group>";
 		};
 		EB778998935EDC0CB5E7149F /* VibeshedUITests */ = {
@@ -340,7 +371,12 @@
 				F712C8197F9E6898619DEE7F /* AppEvent.swift in Sources */,
 				3CF947AC4BCCC4CF4A29E87D /* ConfigManager.swift in Sources */,
 				A80AA70E393B1EE7F1EFC5C7 /* EventBus.swift in Sources */,
+				6C4F796A9B7F3E2729373BF6 /* EventTapHandler.swift in Sources */,
 				DF5A1B0761CE3F187D620737 /* FloatingPanel.swift in Sources */,
+				396830DA9740FDA937CD8599 /* KeyComboConfig.swift in Sources */,
+				3962B7B13CF519C1D0BD5EAE /* KeyComboError.swift in Sources */,
+				F1CCA6E4B6A52E8FCB6E1DC0 /* KeyComboManager.swift in Sources */,
+				041F01AC30ED0DD4089D733F /* KeyComboParser.swift in Sources */,
 				334F8E5B2F7C6A14E3E5B35B /* Log.swift in Sources */,
 				93E065D34421DD7D859DD22B /* MockModule.swift in Sources */,
 				E67785AB9BF9FA0C919C6E3F /* ModuleConfigDecoder.swift in Sources */,
@@ -349,6 +385,8 @@
 				5E49C36BB50BF04370251400 /* ModuleProtocol.swift in Sources */,
 				07F5E533479F8B22C3E9BC2A /* ModuleRegistry.swift in Sources */,
 				59036360B596B4EE5F67B5B1 /* PanelController.swift in Sources */,
+				DB807B093A5CFC3210B7DC4B /* Permission.swift in Sources */,
+				97222BF01431BBCE9C523AC8 /* PermissionError.swift in Sources */,
 				8067EBE14A4A6CC56B5838B5 /* PermissionsManager.swift in Sources */,
 				6871F27BAFF1427FDB1453D1 /* PickerSearchField.swift in Sources */,
 				DDB4D5AB23A5645D335B5BE7 /* PickerState.swift in Sources */,

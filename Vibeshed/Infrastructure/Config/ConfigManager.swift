@@ -67,11 +67,11 @@ final class ConfigManager {
         var config = AppConfig()
         let decoder = YAMLDecoder()
 
-        if let hotkeyNode = rootMapping[Node("hotkey")] {
-            let hotkeyYAML = try Yams.serialize(node: hotkeyNode)
-            config.hotkey = try decoder.decode(
-                AppConfig.HotkeyConfig.self,
-                from: hotkeyYAML
+        if let keybindingsNode = rootMapping[Node("keybindings")] {
+            let keybindingsYAML = try Yams.serialize(node: keybindingsNode)
+            config.keybindings = try decoder.decode(
+                [KeyBindingEntry].self,
+                from: keybindingsYAML
             )
         }
 

@@ -49,19 +49,20 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Log config validation errors and provide feedback to the user about what needs to be fixed in the config file. Do not load module if config is invalid.
 - [x] Valid config file changes should be propagated to modules and they should be able to react to them, for example by reloading data or updating actions
 
-### Phase 5: Permissions handling
+### Phase 5: Permissions handling (DONE)
 
-- [ ] Implement a permissions manager that can request and manage permissions needed by modules: accessability, screen recording, automation, input monitoring, file system access, etc
-- [ ] Modules should be able to declare the permissions they need, and the main app should handle requesting those permissions from the user and notifying modules of the permission status
-- [ ] Prevent modules from loading if they require permissions that have not been granted, and provide feedback to the user about which permissions are needed and how to grant them
-- [ ] Add an entitlements file to the project with the necessary permissions for the app to function properly
+- [x] Implement a permissions manager that can request and manage permissions needed by modules: accessability, screen recording, automation, input monitoring, file system access, etc
+- [x] Modules should be able to declare the permissions they need, and the main app should handle requesting those permissions from the user and notifying modules of the permission status
+- [x] Prevent modules from loading if they require permissions that have not been granted, and provide feedback to the user about which permissions are needed and how to grant them
+- [x] Add an entitlements file to the project with the necessary permissions for the app to function properly
 
 ### Phase 6: Key-combos
 
 - [ ] Implement key-combo binding system in the main app that can trigger actions based on user-defined key-combos
-- [ ] Read key-combo configurations from the config file and set up the bindings accordingly
+- [ ] Read key-combo (modifier+key or modifier1+modifier2+key) configurations from the config file and set up the bindings accordingly
 - [ ] Validate actions configured for key-combos to ensure they exist and can be executed
-- [ ] Implement a caps-lock modifier mode that can be used to trigger actions when caps-lock is held down, and revert to normal behavior when released
+- [ ] Implement a caps-lock and space as modifiers mode that can be used to trigger actions when key is held down
+- [ ] Implement mouse button bindings, specifically for back and forward buttons on mx master mice
 
 ### Phase 7: URI handling
 

@@ -9,6 +9,7 @@ enum Log {
     static let config = Logger(subsystem: subsystem, category: "config")
     static let events = Logger(subsystem: subsystem, category: "events")
     static let permissions = Logger(subsystem: subsystem, category: "permissions")
+    static let keybindings = Logger(subsystem: subsystem, category: "keybindings")
 
     static func module(_ name: String) -> Logger {
         Logger(subsystem: subsystem, category: "module.\(name)")

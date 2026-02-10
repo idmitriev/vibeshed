@@ -5,14 +5,18 @@ import Foundation
 final class ModuleRegistry {
     private(set) var moduleIDs: [String] = []
     private(set) var configErrors: [String: String] = [:]
+    private(set) var permissionErrors: [String: PermissionError] = [:]
     private var modules: [String: any Module] = [:]
     private var configDecoders: [String: ModuleConfigDecoder] = [:]
+    private var pendingModules: [String: any Module] = [:]
     private let eventBus: EventBus
     private let configManager: ConfigManager
+    private let permissionsManager: PermissionsManager
 
-    init(eventBus: EventBus, configManager: ConfigManager) {
+    init(eventBus: EventBus, configManager: ConfigManager, permissionsManager: PermissionsManager) {
         self.eventBus = eventBus
         self.configManager = configManager
+        self.permissionsManager = permissionsManager
     }
 
     func startListeningForConfigChanges() {
@@ -20,8 +24,13 @@ final class ModuleRegistry {
             guard let self else { return }
             let (_, stream) = await eventBus.subscribe()
             for await event in stream {
-                if case .configReloaded = event {
+                switch event {
+                case .configReloaded:
                     await self.propagateConfigChanges()
+                case .permissionChanged:
+                    await self.retryPendingModules()
+                default:
+                    break
                 }
             }
         }
@@ -30,6 +39,21 @@ final class ModuleRegistry {
     func register(_ module: any Module) async throws {
         let id = await module.id
 
+        // 1. Check permissions before config and init
+        let required = type(of: module).requiredPermissions
+        if !required.isEmpty {
+            let missing = permissionsManager.missingPermissions(from: required)
+            if !missing.isEmpty {
+                let error = PermissionError.denied(moduleID: id, permissions: missing)
+                permissionErrors[id] = error
+                pendingModules[id] = module
+                Log.modules.error("Module '\(id)' not loaded: \(error.localizedDescription)")
+                await eventBus.publish(.modulePermissionError(moduleID: id, missing: missing))
+                return
+            }
+        }
+
+        // 2. Validate config
         let decoder = buildConfigDecoder(for: module, id: id)
 
         if let decoder {
@@ -46,6 +70,7 @@ final class ModuleRegistry {
             }
         }
 
+        // 3. Initialize
         let context = ModuleContext(
             eventBus: eventBus,
             loggerFactory: { subcategory in
@@ -54,6 +79,7 @@ final class ModuleRegistry {
         )
         try await module.initialize(context: context)
 
+        // 4. Apply config
         if let decoder {
             let rawYAML = configManager.config.moduleConfigs[id]
             try await decoder.apply(rawYAML)
@@ -62,6 +88,8 @@ final class ModuleRegistry {
         modules[id] = module
         if let decoder { configDecoders[id] = decoder }
         moduleIDs.append(id)
+        permissionErrors.removeValue(forKey: id)
+        pendingModules.removeValue(forKey: id)
         Log.modules.info("Registered module: \(id)")
         await eventBus.publish(.moduleRegistered(id))
     }
@@ -71,6 +99,8 @@ final class ModuleRegistry {
         moduleIDs.removeAll { $0 == id }
         configDecoders.removeValue(forKey: id)
         configErrors.removeValue(forKey: id)
+        permissionErrors.removeValue(forKey: id)
+        pendingModules.removeValue(forKey: id)
         await module.teardown()
         Log.modules.info("Unregistered module: \(id)")
         await eventBus.publish(.moduleUnregistered(id))
@@ -144,6 +174,22 @@ final class ModuleRegistry {
                 configErrors[id] = message
                 Log.modules.error("Config change rejected for module '\(id)': \(message)")
                 await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
+            }
+        }
+    }
+
+    private func retryPendingModules() async {
+        let pending = pendingModules
+        for (id, module) in pending {
+            let required = type(of: module).requiredPermissions
+            let missing = permissionsManager.missingPermissions(from: required)
+            if missing.isEmpty {
+                Log.modules.info("Retrying module '\(id)' after permission grant")
+                do {
+                    try await register(module)
+                } catch {
+                    Log.modules.error("Retry failed for module '\(id)': \(error.localizedDescription)")
+                }
             }
         }
     }

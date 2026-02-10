@@ -6,7 +6,6 @@ let package = Package(
     name: "Vibeshed",
     platforms: [.macOS(.v14)],
     dependencies: [
-        .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.0.0"),
         .package(url: "https://github.com/jpsim/Yams.git", from: "6.0.0"),
         .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.58.0"),
         .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.55.0"),
@@ -14,9 +13,9 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Vibeshed",
-            dependencies: ["KeyboardShortcuts", "Yams"],
+            dependencies: ["Yams"],
             path: "Vibeshed",
-            exclude: ["Info.plist"],
+            exclude: ["Info.plist", "Vibeshed.entitlements"],
             plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
     ]
