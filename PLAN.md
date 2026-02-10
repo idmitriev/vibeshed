@@ -70,19 +70,19 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] On start set application as default browser on start to handle URL to chose what browser/profile to open links with
 - [x] Allow configuring what URLs to open immediately in browser/profile and what to send to the picker as actions based on the config file
 
-### Phase 8: First module - window management
+### Phase 8: First module - window management (DONE)
 
-- [ ] Create a window management module that can list windows and perform actions like focus, move, resize
-- [ ] Implement actions for cycling between size stops in vertical and horizontal directions anchored to different edges of the screen. Steps should be configurable and support different screen sizes and units - pixels or percentage of the screen.
-- [ ] Implement actions for maximizing, centering and minimizing windows
-- [ ] Implement actions for tiling 2 windows in vertical and horizontal halves of the screen
-- [ ] Actions have window as a parameter, provide focussed actions with focused window prefilled and actions that can be used from the picker with window selection.
-- [ ] Implement actions for focusing windows based on their title, application name, and other metadata
-- [ ] Provide SwiftUI views for window actions in the picker
+- [x] Create a window management module that can list windows and perform actions like focus, move, resize
+- [x] Implement actions for cycling between size stops in vertical and horizontal directions anchored to different edges of the screen. Steps should be configurable and support different screen sizes and units - pixels or percentage of the screen.
+- [x] Implement actions for maximizing, centering and minimizing windows
+- [x] Implement actions for tiling 2 windows in vertical and horizontal halves of the screen
+- [x] Actions have window as a parameter, provide focussed actions with focused window prefilled and actions that can be used from the picker with window selection.
+- [x] Implement actions for focusing windows based on their title, application name, and other metadata
+- [x] Provide SwiftUI views for window actions in the picker
 
-### Phase 9: Single instace lock
+### Phase 9: Single instance lock (DONE)
 
-- [ ] Implement a single instance lock to prevent multiple instances of the app from running at the same time
+- [x] Implement a single instance lock to prevent multiple instances of the app from running at the same time
 
 ### Phase 10: Proper picker UI
 
@@ -90,7 +90,7 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] Implement action parameter binding in the picker, so that when an action is selected, its parameters can be filled in using the query or other input methods. For example, if an action requires a window parameter, the picker can show a list of windows to choose from when the action is selected. Change action protocol if required to support this. This is a crucial part a superb solution is required here. For some actions parameter options can be provided upfront, but some will require dynamic fetching based on the query or other parameters.
 - [ ] Implement a useful preview pane in the picker that can show additional information about the selected action
 - [ ] Implement fuzzy searching and sorting of actions based on the query, usage frequency, and recency. Sorting should be done in a way that feels intuitive and surfaces the most relevant actions to the top.
-- [ ] Implement a system for modules to provide dynamic action lists that can change even when the query is stable, for example based on external data or timers. The picker should update the displayed actions accordingly without disrupting the user's current selection or query.
+- [ ] Implement a system for modules to provide dynamic action lists that can change even when the query is stable, for example based on external data or timers. The picker should update the displayed actions accordingly without disrupting the user's current selection or query
 
 ### Phase 11: Application module
 

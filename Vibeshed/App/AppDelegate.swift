@@ -55,6 +55,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        guard ensureSingleInstance() else { return }
+
         configManager.start()
         moduleRegistry.startListeningForConfigChanges()
         permissionsManager.checkAll()
@@ -66,9 +68,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if isUITesting {
             setupUITesting()
+        } else {
+            registerModules()
         }
 
         Log.app.info("Vibeshed launched")
+    }
+
+    /// Returns `true` if this is the only running instance, `false` if another instance was found and activated.
+    private func ensureSingleInstance() -> Bool {
+        let currentPID = ProcessInfo.processInfo.processIdentifier
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.vibeshed"
+        let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .filter { $0.processIdentifier != currentPID }
+
+        guard let existing = others.first else { return true }
+
+        Log.app.warning(
+            "Another Vibeshed instance already running (PID \(existing.processIdentifier)). Terminating."
+        )
+        existing.activate()
+        DispatchQueue.main.async {
+            NSApp.terminate(nil)
+        }
+        return false
+    }
+
+    private func registerModules() {
+        Task { @MainActor in
+            let windowModule = WindowModule()
+            do {
+                try await moduleRegistry.register(windowModule)
+            } catch {
+                Log.app.error("Failed to register window module: \(error.localizedDescription)")
+            }
+        }
     }
 
     private func setupUITesting() {
