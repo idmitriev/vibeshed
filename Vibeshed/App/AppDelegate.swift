@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let panelController: PanelController
     let moduleRegistry: ModuleRegistry
     let keyComboManager: KeyComboManager
+    let uriManager: URIManager
 
     private var querySubscription: Any?
 
@@ -24,13 +25,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             configManager: configManager,
             permissionsManager: permissionsManager
         )
-        // keyComboManager needs panelController, so we init it after
+        // keyComboManager and uriManager need panelController, so we init them after
         let panel = panelController
+        let picker = pickerState
         self.keyComboManager = KeyComboManager(
             eventBus: eventBus,
             configManager: configManager,
             moduleRegistry: moduleRegistry,
             permissionsManager: permissionsManager,
+            togglePicker: { panel.toggle() }
+        )
+        self.uriManager = URIManager(
+            eventBus: eventBus,
+            configManager: configManager,
+            moduleRegistry: moduleRegistry,
+            showPicker: { query in
+                panel.show()
+                if let query {
+                    picker.query = query
+                }
+            },
             togglePicker: { panel.toggle() }
         )
         super.init()
@@ -48,6 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         wireQueryToModules()
         keyComboManager.startListening()
         keyComboManager.applyBindings(configManager.config.keybindings)
+        uriManager.start()
 
         if isUITesting {
             setupUITesting()
@@ -62,6 +77,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try await moduleRegistry.register(mockModule)
             panelController.show()
         }
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        uriManager.handleURLs(urls)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

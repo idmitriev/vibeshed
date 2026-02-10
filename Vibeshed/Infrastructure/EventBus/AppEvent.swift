@@ -13,5 +13,7 @@ enum AppEvent: Sendable {
     case permissionChanged(Permission, granted: Bool)
     case modulePermissionError(moduleID: String, missing: Set<Permission>)
     case keybindingError(combo: String, message: String)
+    case uriRouted(url: String, destination: String)
+    case uriError(url: String, message: String)
     case custom(name: String, payload: [String: String])
 }

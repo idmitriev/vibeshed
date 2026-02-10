@@ -94,6 +94,14 @@ final class ConfigManager {
             }
         }
 
+        if let urlRoutingNode = rootMapping[Node("urlRouting")] {
+            let urlRoutingYAML = try Yams.serialize(node: urlRoutingNode)
+            config.urlRouting = try decoder.decode(
+                URLRoutingConfig.self,
+                from: urlRoutingYAML
+            )
+        }
+
         return config
     }
 

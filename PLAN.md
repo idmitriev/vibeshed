@@ -56,32 +56,90 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Prevent modules from loading if they require permissions that have not been granted, and provide feedback to the user about which permissions are needed and how to grant them
 - [x] Add an entitlements file to the project with the necessary permissions for the app to function properly
 
-### Phase 6: Key-combos
+### Phase 6: Key-combos (DONE)
 
-- [ ] Implement key-combo binding system in the main app that can trigger actions based on user-defined key-combos
-- [ ] Read key-combo (modifier+key or modifier1+modifier2+key) configurations from the config file and set up the bindings accordingly
-- [ ] Validate actions configured for key-combos to ensure they exist and can be executed
-- [ ] Implement a caps-lock and space as modifiers mode that can be used to trigger actions when key is held down
-- [ ] Implement mouse button bindings, specifically for back and forward buttons on mx master mice
+- [x] Implement key-combo binding system in the main app that can trigger actions based on user-defined key-combos
+- [x] Read key-combo (modifier+key or modifier1+modifier2+key) configurations from the config file and set up the bindings accordingly
+- [x] Validate actions configured for key-combos to ensure they exist and can be executed
+- [x] Implement a caps-lock and space as modifiers mode that can be used to trigger actions when key is held down
+- [x] Implement mouse button bindings, specifically for back and forward buttons on mx master mice
 
-### Phase 7: URI handling
+### Phase 7: URI handling (DONE)
 
-- [ ] Implement a URI scheme for the app that can trigger actions based on URIs
-- [ ] Set up the app to handle incoming URIs and dispatch them to the appropriate modules
-- [ ] Set application as default browser on start to handle URL to chose what browser/profile to open links with
-- [ ] Configure what URLs to open immediately in some browser and what to send to the picker as actions based on the config file
+- [x] Implement a URI scheme (vibeshed://) for the app that can trigger actions
+- [x] On start set application as default browser on start to handle URL to chose what browser/profile to open links with
+- [x] Allow configuring what URLs to open immediately in browser/profile and what to send to the picker as actions based on the config file
 
 ### Phase 8: First module - window management
 
 - [ ] Create a window management module that can list windows and perform actions like focus, move, resize
-- [ ] Implement actions for cyclint between size stops in vertical and horizontal directions anchored to different edges of the screen. Steps should be configurable and support different screen sizes and units - pixels or percentage of the screen.
-- [ ] Implement actions for maximizing, centering and minimizing windows. These actions have window as a parameter, provide focussed actions with focused window prefilled and actions that can be used from the picker with window selection.
+- [ ] Implement actions for cycling between size stops in vertical and horizontal directions anchored to different edges of the screen. Steps should be configurable and support different screen sizes and units - pixels or percentage of the screen.
+- [ ] Implement actions for maximizing, centering and minimizing windows
+- [ ] Implement actions for tiling 2 windows in vertical and horizontal halves of the screen
+- [ ] Actions have window as a parameter, provide focussed actions with focused window prefilled and actions that can be used from the picker with window selection.
 - [ ] Implement actions for focusing windows based on their title, application name, and other metadata
 - [ ] Provide SwiftUI views for window actions in the picker
 
-### Phase 9: Proper picker UI
+### Phase 9: Single instace lock
+
+- [ ] Implement a single instance lock to prevent multiple instances of the app from running at the same time
+
+### Phase 10: Proper picker UI
 
 - [ ] Implement a beautiful animated searchable picker UI that can show actions provided by modules based on the current query - text, module and previously selected action that requires parameters. Picker should support keyboard navigation and selection.
+- [ ] Implement action parameter binding in the picker, so that when an action is selected, its parameters can be filled in using the query or other input methods. For example, if an action requires a window parameter, the picker can show a list of windows to choose from when the action is selected. Change action protocol if required to support this. This is a crucial part a superb solution is required here. For some actions parameter options can be provided upfront, but some will require dynamic fetching based on the query or other parameters.
 - [ ] Implement a useful preview pane in the picker that can show additional information about the selected action
 - [ ] Implement fuzzy searching and sorting of actions based on the query, usage frequency, and recency. Sorting should be done in a way that feels intuitive and surfaces the most relevant actions to the top.
 - [ ] Implement a system for modules to provide dynamic action lists that can change even when the query is stable, for example based on external data or timers. The picker should update the displayed actions accordingly without disrupting the user's current selection or query.
+
+### Phase 11: Application module
+
+- [ ] Create an application module that can list applications and their windows, and perform actions like launch, focus, quit
+- [ ] Implement actions for launching applications, cycle-focusing existing windows, and quitting applications
+- [ ] Provide SwiftUI views for application actions in the picker, showing application icons and window previews
+- [ ] Implement actions for focusing windows based on their title, application name, and other metadata
+
+### Phase 12: Tab module
+
+- [ ] Implement a tab module that can list, focus, open and close tabs in safari and chrome
+- [ ] Provide SwiftUI views for tab actions in the picker, showing tab titles and favicons
+- [ ] Implement actions for focusing tabs based on their title, URL, and other metadata
+
+### Phase 13: Favourites module
+
+- [ ] Create a favourites module that can list user-defined favourite actions and perform them
+- [ ] Favourites defined in config and can be assigned aliases for quick searching
+
+### Phase 14: Common helpers
+
+- [ ] Implement common windows helper for listing and focusing windows that can be used by application and window modules
+- [ ] Implement common browsers helper for listing browsers with profiles, open tabs and opening URLs in them that can be used by the URI handling and application modules
+
+### Phase 15: System module
+
+- [ ] Create a system module that can perform system actions like sleep, shutdown, restart, lock screen, etc
+- [ ] Implement actions for lock, reboot, shutdown, toggle appearance, empty trash, take screenshots, flush DNS, purge memory
+- [ ] Provide SwiftUI views for system actions in the picker
+
+### Phase 16: Audio module
+
+- [ ] Create an audio module that can control system audio
+- [ ] Implement actions for mute/unmute, mic mute/unmute, volume 20%/50%/80%, next/previous track, play/pause, select input/output devices
+- [ ] Provide SwiftUI views for audio actions in the picker, showing current volume levels and track information
+
+### Phase 17: Clipboard module
+
+- [ ] Create a clipboard module that can manage clipboard history and perform actions on clipboard items
+- [ ] Implement actions for listing clipboard history, selecting an item to paste, clearing history,
+
+### Phase 18: Spotify module
+
+- [ ] Create a Spotify module for searching artists/albums/playlists
+- [ ] Implement actions for searching Spotify and starting playback of artists, albums, playlist and tracks
+- [ ] Provide SwiftUI views for Spotify actions in the picker, showing album art and track information
+
+### Phase 19: Github module
+
+- [ ] Create a Github module for searching pull requests, issues and repositories
+- [ ] Implement actions for searching Github and opening pull requests, issues and repositories in the browser
+- [ ] Provide SwiftUI views for Github actions in the picker, showing repository avatars and issue/PR information
