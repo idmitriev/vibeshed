@@ -45,13 +45,20 @@ struct ParameterInputView: View {
                 description: Text("No options available for \(param.label)")
             )
         } else {
-            List(state.parameterOptions, selection: $state.selectedParameterOptionID) { option in
-                ParameterOptionRow(option: option)
-                    .tag(option.id)
+            ScrollViewReader { proxy in
+                List(state.parameterOptions, selection: $state.selectedParameterOptionID) { option in
+                    ParameterOptionRow(option: option)
+                        .tag(option.id)
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .accessibilityIdentifier("parameterOptionList")
+                .onChange(of: state.selectedParameterOptionID) { _, newID in
+                    if let newID {
+                        proxy.scrollTo(newID, anchor: nil)
+                    }
+                }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .accessibilityIdentifier("parameterOptionList")
         }
     }
 
