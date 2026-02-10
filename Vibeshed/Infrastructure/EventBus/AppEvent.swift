@@ -15,5 +15,6 @@ enum AppEvent: Sendable {
     case keybindingError(combo: String, message: String)
     case uriRouted(url: String, destination: String)
     case uriError(url: String, message: String)
+    case moduleActionsChanged(moduleID: String)
     case custom(name: String, payload: [String: String])
 }

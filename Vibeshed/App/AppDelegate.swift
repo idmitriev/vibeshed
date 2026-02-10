@@ -11,8 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let moduleRegistry: ModuleRegistry
     let keyComboManager: KeyComboManager
     let uriManager: URIManager
-
-    private var querySubscription: Any?
+    let usageTracker: UsageTracker
+    let pickerCoordinator: PickerCoordinator
 
     override init() {
         self.eventBus = EventBus()
@@ -25,6 +25,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             configManager: configManager,
             permissionsManager: permissionsManager
         )
+        self.usageTracker = UsageTracker()
+        self.pickerCoordinator = PickerCoordinator(
+            pickerState: pickerState,
+            moduleRegistry: moduleRegistry,
+            panelController: panelController,
+            eventBus: eventBus
+        )
+        pickerCoordinator.usageTracker = usageTracker
+        panelController.coordinator = pickerCoordinator
+
         // keyComboManager and uriManager need panelController, so we init them after
         let panel = panelController
         let picker = pickerState
@@ -61,7 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         moduleRegistry.startListeningForConfigChanges()
         permissionsManager.checkAll()
         permissionsManager.startPeriodicRecheck()
-        wireQueryToModules()
+        pickerCoordinator.start()
         keyComboManager.startListening()
         keyComboManager.applyBindings(configManager.config.keybindings)
         uriManager.start()
@@ -120,39 +130,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         panelController.show()
         return false
-    }
-
-    private func wireQueryToModules() {
-        querySubscription = pickerState.debouncedQuery
-            .sink { [weak self] query in
-                guard let self else { return }
-                pickerState.isLoading = true
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    let scoring = ScoringContext(
-                        usageCounts: [:],
-                        lastUsedDates: [:],
-                        query: query
-                    )
-                    let results = await moduleRegistry.queryAll(
-                        query: query,
-                        scoring: scoring
-                    )
-                    pickerState.actions = results.map { action in
-                        ActionItem(
-                            id: action.id,
-                            title: action.title,
-                            subtitle: action.subtitle,
-                            iconSystemName: action.iconName,
-                            score: action.relevanceScore,
-                            moduleID: String(action.id.rawValue.prefix(while: { $0 != "." }))
-                        )
-                    }
-                    if !pickerState.actions.isEmpty {
-                        pickerState.selectedActionID = pickerState.actions.first?.id
-                    }
-                    pickerState.isLoading = false
-                }
-            }
     }
 }

@@ -11,7 +11,7 @@ struct ActionListItemView: View {
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.title)
+                highlightedTitle
                     .font(.body)
                     .lineLimit(1)
 
@@ -24,8 +24,36 @@ struct ActionListItemView: View {
             }
 
             Spacer()
+
+            if item.hasParameters {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.quaternary)
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private var highlightedTitle: some View {
+        if let ranges = item.titleHighlightRanges, !ranges.isEmpty {
+            Text(highlightedAttributedString(item.title, ranges: ranges))
+        } else {
+            Text(item.title)
+        }
+    }
+
+    private func highlightedAttributedString(
+        _ string: String,
+        ranges: [Range<String.Index>]
+    ) -> AttributedString {
+        var attributed = AttributedString(string)
+        for range in ranges {
+            guard let attrRange = Range(range, in: attributed) else { continue }
+            attributed[attrRange].foregroundColor = .accentColor
+            attributed[attrRange].font = .body.bold()
+        }
+        return attributed
     }
 }
