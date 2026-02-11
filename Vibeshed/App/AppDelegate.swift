@@ -112,6 +112,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } catch {
                 Log.app.error("Failed to register window module: \(error.localizedDescription)")
             }
+
+            let applicationModule = ApplicationModule()
+            do {
+                try await moduleRegistry.register(applicationModule)
+            } catch {
+                Log.app.error("Failed to register application module: \(error.localizedDescription)")
+            }
         }
     }
 

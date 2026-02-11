@@ -84,24 +84,24 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [x] Implement a single instance lock to prevent multiple instances of the app from running at the same time
 
-### Phase 10: Proper picker UI
+### Phase 10: Proper picker UI (DONE)
 
-- [ ] Implement a beautiful animated searchable picker UI that can show actions provided by modules based on the current query - text, module and previously selected action that requires parameters. Picker should support keyboard navigation and selection.
-- [ ] Implement action parameter binding in the picker, so that when an action is selected, its parameters can be filled in using the query or other input methods. For example, if an action requires a window parameter, the picker can show a list of windows to choose from when the action is selected. Change action protocol if required to support this. This is a crucial part a superb solution is required here. For some actions parameter options can be provided upfront, but some will require dynamic fetching based on the query or other parameters.
-- [ ] Implement a useful preview pane in the picker that can show additional information about the selected action
-- [ ] Implement fuzzy searching and sorting of actions based on the query, usage frequency, and recency. Sorting should be done in a way that feels intuitive and surfaces the most relevant actions to the top.
-- [ ] Implement a system for modules to provide dynamic action lists that can change even when the query is stable, for example based on external data or timers. The picker should update the displayed actions accordingly without disrupting the user's current selection or query
+- [x] Implement a beautiful animated searchable picker UI that can show actions provided by modules based on the current query - text, module and previously selected action that requires parameters. Picker should support keyboard navigation and selection.
+- [x] Implement action parameter binding in the picker, so that when an action is selected, its parameters can be filled in using the query or other input methods. For example, if an action requires a window parameter, the picker can show a list of windows to choose from when the action is selected. Change action protocol if required to support this. This is a crucial part a superb solution is required here. For some actions parameter options can be provided upfront, but some will require dynamic fetching based on the query or other parameters.
+- [x] Implement a useful preview pane in the picker that can show additional information about the selected action
+- [x] Implement fuzzy searching and sorting of actions based on the query, usage frequency, and recency. Sorting should be done in a way that feels intuitive and surfaces the most relevant actions to the top.
+- [x] Implement a system for modules to provide dynamic action lists that can change even when the query is stable, for example based on external data or timers. The picker should update the displayed actions accordingly without disrupting the user's current selection or query
 
-### Phase 11: Application module
+### Phase 11: Application module (DONE)
 
-- [ ] Create an application module that can list applications and their windows, and perform actions like launch, focus, quit
-- [ ] Implement actions for launching applications, cycle-focusing existing windows, and quitting applications
-- [ ] Provide SwiftUI views for application actions in the picker, showing application icons and window previews
-- [ ] Implement actions for focusing windows based on their title, application name, and other metadata
+- [x] Create an application module that can list applications and their windows, and perform actions like launch, focus, quit
+- [x] Implement actions for launching applications, cycle-focusing existing windows, and quitting applications
+- [x] Provide SwiftUI views for application actions in the picker, showing application icons and window previews
+- [x] Implement actions for focusing windows based on their title, application name, and other metadata
 
-### Phase 12: Tab module
+### Phase 12: Browser module
 
-- [ ] Implement a tab module that can list, focus, open and close tabs in safari and chrome
+- [ ] Implement a browser module that can list, focus, open and close tabs in safari and chrome
 - [ ] Provide SwiftUI views for tab actions in the picker, showing tab titles and favicons
 - [ ] Implement actions for focusing tabs based on their title, URL, and other metadata
 
