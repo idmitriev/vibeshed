@@ -1,7 +1,13 @@
+import Foundation
 import OSLog
 
 enum Log {
     private static let subsystem = Bundle.main.bundleIdentifier ?? "com.vibeshed"
+
+    /// Mirror warning/error messages to stderr when running from a terminal.
+    static let stderrEnabled: Bool = {
+        isatty(STDERR_FILENO) != 0 || CommandLine.arguments.contains("--stderr-log")
+    }()
 
     static let app = Logger(subsystem: subsystem, category: "app")
     static let picker = Logger(subsystem: subsystem, category: "picker")
@@ -15,4 +21,17 @@ enum Log {
     static func module(_ name: String) -> Logger {
         Logger(subsystem: subsystem, category: "module.\(name)")
     }
+
+    /// Write a message to stderr so it appears in the launching terminal.
+    static func stderr(_ message: String) {
+        guard stderrEnabled else { return }
+        let timestamp = stderrDateFormatter.string(from: Date())
+        FileHandle.standardError.write(Data("[\(timestamp)] \(message)\n".utf8))
+    }
+
+    private static let stderrDateFormatter: DateFormatter = {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "HH:mm:ss"
+        return fmt
+    }()
 }

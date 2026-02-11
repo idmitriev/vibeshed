@@ -117,6 +117,20 @@ final class PermissionsManager {
         return status == noErr
     }
 
+    /// Probe automation permission for a specific app, optionally triggering the macOS consent dialog.
+    /// Returns `.noErr` if allowed, `errAEEventNotPermitted` if denied, `procNotFound` if not running.
+    @discardableResult
+    func probeAutomation(for bundleID: String, prompt: Bool) -> OSStatus {
+        let target = NSAppleEventDescriptor(bundleIdentifier: bundleID)
+        guard let aeDesc = target.aeDesc else { return OSStatus(errAEEventNotPermitted) }
+        return AEDeterminePermissionToAutomateTarget(
+            aeDesc,
+            typeWildCard,
+            typeWildCard,
+            prompt
+        )
+    }
+
     private func checkInputMonitoring() -> Bool {
         CGPreflightListenEventAccess()
     }

@@ -185,9 +185,12 @@ final class ModuleRegistry {
             let missing = permissionsManager.missingPermissions(from: required)
             if missing.isEmpty {
                 Log.modules.info("Retrying module '\(id)' after permission grant")
+                Log.stderr("  ↻ module: \(id) — retrying after permission grant")
                 do {
                     try await register(module)
+                    Log.stderr("  ✓ module: \(id) — loaded")
                 } catch {
+                    Log.stderr("  ✗ module: \(id) — retry failed: \(error.localizedDescription)")
                     Log.modules.error("Retry failed for module '\(id)': \(error.localizedDescription)")
                 }
             }

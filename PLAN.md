@@ -99,15 +99,17 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Provide SwiftUI views for application actions in the picker, showing application icons and window previews
 - [x] Implement actions for focusing windows based on their title, application name, and other metadata
 
-### Phase 12: Browser module
+### Phase 12: Browser module (DONE)
 
-- [ ] Implement a browser module that can list, focus, open and close tabs in safari and chrome
-- [ ] Provide SwiftUI views for tab actions in the picker, showing tab titles and favicons
-- [ ] Implement actions for focusing tabs based on their title, URL, and other metadata
+- [x] Create a browser module that can list, focus, open and close tabs in safari and chrome
+- [x] Implement action for searchin and opening tabs in safari and chrome based on their title, URL and other metadata
+- [x] Provide SwiftUI views for tab actions in the picker, showing tab titles and favicons
+- [x] Implement actions for focusing tabs based on their title, URL, and other metadata
 
 ### Phase 13: Favourites module
 
 - [ ] Create a favourites module that can list user-defined favourite actions and perform them
+- [ ] Allow pasing parameters for favourite actions, for example a search query for google search
 - [ ] Favourites defined in config and can be assigned aliases for quick searching
 
 ### Phase 14: Common helpers
@@ -143,3 +145,24 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] Create a Github module for searching pull requests, issues and repositories
 - [ ] Implement actions for searching Github and opening pull requests, issues and repositories in the browser
 - [ ] Provide SwiftUI views for Github actions in the picker, showing repository avatars and issue/PR information
+
+### Phase 20: AI chat module
+
+- [ ] Create an AI module that can search and open AI sessions in the browser on desktop apps
+- [ ] Implement actions for searching sessions in chatgpt, claude and opening them in the browser or claude-desktop/chatgpt-desktop apps
+- [ ] Provide SwiftUI views for AI chat actions in the picker, showing session titles and latest message previews
+
+### Phase 21: UI polish and animations
+
+- [ ] Add beautiful animations and UI polish to the picker and other UI elements of the app to make it feel smooth and delightful to use. This includes things like animated transitions, hover effects, and responsive design adjustments.
+- [ ] Implement a dark mode for the app that can be toggled in the settings and automatically adjusts the UI colors and styles accordingly. Make sure all UI elements look good in both light and dark modes.
+
+### Phase 22: Releases and distribution
+
+- [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
+- [ ] Publish the app on github with proper license, readme, and some documentation
+- [ ] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
+- [ ] Make sure it has a kickass name and icon
+- [ ] Make sure it follows apple UX guidelines and unix principles at least to some extent
+- [ ] Create a website on github pages for the app with documentation, screenshots, and download links
+- [ ] Setup github donations for the project to allow users to support development if they find the app useful
