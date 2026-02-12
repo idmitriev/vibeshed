@@ -112,6 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(WindowModule())
             await registerModule(ApplicationModule())
             await registerModule(FavouritesModule())
+            await registerModule(SystemModule())
             promptBrowserAutomation()
             await registerModule(BrowserModule())
             showPermissionAlertIfNeeded()

@@ -119,11 +119,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement common browsers helper for listing browsers with profiles, open tabs and opening URLs in them that can be used by the URI handling and application modules
 - [x] Based on future phases evaluate if more common helpers are needed for other domains like audio, system, spotify, github, etc and implement them as well
 
-### Phase 15: System module
+### Phase 15: System module (DONE)
 
-- [ ] Create a system module that can perform system actions like sleep, shutdown, restart, lock screen, etc
-- [ ] Implement actions for lock, reboot, shutdown, toggle appearance, empty trash, take screenshots (with params for cliboard/file and target), flush DNS, purge memory
-- [ ] Provide SwiftUI views for system actions in the picker
+- [x] Create a system module that can perform system actions like sleep, shutdown, restart, lock screen, etc
+- [x] Implement actions for lock, reboot, shutdown, toggle appearance, empty trash, take screenshots (with params for cliboard/file and target), flush DNS, purge memory
+- [x] Provide SwiftUI views for system actions in the picker
 
 ### Phase 16: Audio module
 
@@ -148,18 +148,38 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] Implement actions for searching Github and opening pull requests, issues and repositories in the browser
 - [ ] Provide SwiftUI views for Github actions in the picker, showing repository avatars and issue/PR information
 
-### Phase 20: AI chat module
+### Phase 20: VSCode module
+
+- [ ] Create a VSCode module for searching and opening projects VSCode
+- [ ] Implement actions for searching VSCode projects based on their name and path and opening  them in VSCode
+- [ ] Provide SwiftUI views for VSCode actions in the picker, showing project names and paths
+
+### Phase 21: Iterm module
+
+- [ ] Create an Iterm module for searching and opening sessions or running commands in Iterm
+- [ ] Implement actions for searching Iterm sessions based on their name and running commands in Iterm
+- [ ] Provide SwiftUI views for Iterm actions in the picker, showing session names
+
+### Phase 22: AI session module
 
 - [ ] Create an AI module that can search and open AI sessions in the browser on desktop apps
 - [ ] Implement actions for searching sessions in chatgpt, claude and opening them in the browser or claude-desktop/chatgpt-desktop/codex-deskop apps if they are installed
 - [ ] Provide SwiftUI views for AI chat actions in the picker, showing session titles and latest message previews
 
-### Phase 21: UI polish and animations
+### Phase 23: Telegram module
+
+- [ ] Create a Telegram module that can search and open chats and groups in the Telegram desktop app
+- [ ] Research if Telegram provides any APIs or AppleScript support for searching and opening chats/groups. If not, implement a solution using accessibility APIs to interact with the Telegram desktop app UI to perform these actions. If nothing works, read chats and groups ids from config file
+- [ ] Implement actions for searching chats and groups in Telegram based on their name and opening them in the Telegram desktop app
+
+- [ ] Provide SwiftUI views for Telegram chat actions in the picker, showing chat/group names
+
+### Phase 24: UI polish and animations
 
 - [ ] Add beautiful animations and UI polish to the picker and other UI elements of the app to make it feel smooth and delightful to use. This includes things like animated transitions, hover effects, and responsive design adjustments.
 - [ ] Implement a dark mode for the app that can be toggled in the settings and automatically adjusts the UI colors and styles accordingly. Make sure all UI elements look good in both light and dark modes.
 
-### Phase 22: Releases and distribution
+### Phase 25: Releases and distribution
 
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Publish the app on github with proper license, readme, and some documentation
