@@ -111,6 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             await registerModule(WindowModule())
             await registerModule(ApplicationModule())
+            await registerModule(FavouritesModule())
             promptBrowserAutomation()
             await registerModule(BrowserModule())
             showPermissionAlertIfNeeded()

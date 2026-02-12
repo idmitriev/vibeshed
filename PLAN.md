@@ -106,27 +106,29 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Provide SwiftUI views for tab actions in the picker, showing tab titles and favicons
 - [x] Implement actions for focusing tabs based on their title, URL, and other metadata
 
-### Phase 13: Favourites module
+### Phase 13: Favourites module (DONE)
 
-- [ ] Create a favourites module that can list user-defined favourite actions and perform them
-- [ ] Allow pasing parameters for favourite actions, for example a search query for google search
-- [ ] Favourites defined in config and can be assigned aliases for quick searching
+- [x] Create a favourites module that can list user-defined favourite actions configured and run them
+- [x] Implement action for running favourite actions
+- [x] Allow pasing parameters for favourite actions, for example a search query for google search
+- [x] Favourites defined in config and can be assigned aliases for quick searching
 
 ### Phase 14: Common helpers
 
 - [ ] Implement common windows helper for listing and focusing windows that can be used by application and window modules
 - [ ] Implement common browsers helper for listing browsers with profiles, open tabs and opening URLs in them that can be used by the URI handling and application modules
+- [ ] Based on future phases evaluate if more common helpers are needed for other domains like audio, system, spotify, github, etc and implement them as well
 
 ### Phase 15: System module
 
 - [ ] Create a system module that can perform system actions like sleep, shutdown, restart, lock screen, etc
-- [ ] Implement actions for lock, reboot, shutdown, toggle appearance, empty trash, take screenshots, flush DNS, purge memory
+- [ ] Implement actions for lock, reboot, shutdown, toggle appearance, empty trash, take screenshots (with params for cliboard/file and target), flush DNS, purge memory
 - [ ] Provide SwiftUI views for system actions in the picker
 
 ### Phase 16: Audio module
 
 - [ ] Create an audio module that can control system audio
-- [ ] Implement actions for mute/unmute, mic mute/unmute, volume 20%/50%/80%, next/previous track, play/pause, select input/output devices
+- [ ] Implement actions for mute/unmute, mic mute/unmute, volume 20%/50%/80%, next/previous track, play/pause, select specific input/output devices
 - [ ] Provide SwiftUI views for audio actions in the picker, showing current volume levels and track information
 
 ### Phase 17: Clipboard module
@@ -149,7 +151,7 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase 20: AI chat module
 
 - [ ] Create an AI module that can search and open AI sessions in the browser on desktop apps
-- [ ] Implement actions for searching sessions in chatgpt, claude and opening them in the browser or claude-desktop/chatgpt-desktop apps
+- [ ] Implement actions for searching sessions in chatgpt, claude and opening them in the browser or claude-desktop/chatgpt-desktop/codex-deskop apps if they are installed
 - [ ] Provide SwiftUI views for AI chat actions in the picker, showing session titles and latest message previews
 
 ### Phase 21: UI polish and animations
