@@ -44,7 +44,8 @@ struct ApplicationManager: Sendable {
                 let name = fileManager.displayName(atPath: path)
                     .replacingOccurrences(of: ".app", with: "")
                 let running = runningByBundleID[bundleID]
-                let windowCount = running.map { countWindows(for: $0.processIdentifier) } ?? 0
+                let windowCount = running
+                    .map { WindowListHelper.countWindows(for: $0.processIdentifier) } ?? 0
 
                 apps.append(AppInfo(
                     id: bundleID,
@@ -67,7 +68,7 @@ struct ApplicationManager: Sendable {
                 continue
             }
             seen.insert(bundleID)
-            let windowCount = countWindows(for: app.processIdentifier)
+            let windowCount = WindowListHelper.countWindows(for: app.processIdentifier)
             apps.append(AppInfo(
                 id: bundleID,
                 name: app.localizedName ?? bundleID,
@@ -95,7 +96,7 @@ struct ApplicationManager: Sendable {
             else {
                 continue
             }
-            let windowCount = countWindows(for: app.processIdentifier)
+            let windowCount = WindowListHelper.countWindows(for: app.processIdentifier)
             apps.append(AppInfo(
                 id: bundleID,
                 name: app.localizedName ?? bundleID,
@@ -146,36 +147,17 @@ struct ApplicationManager: Sendable {
     @MainActor
     private func cycleWindows(for app: NSRunningApplication) {
         let pid = app.processIdentifier
-        let appElement = AXUIElementCreateApplication(pid)
-
-        var windowsRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(
-            appElement, kAXWindowsAttribute as CFString, &windowsRef
-        ) == .success,
-            let axWindows = windowsRef as? [AXUIElement],
-            axWindows.count > 1
-        else {
-            // Single or no windows — just activate
+        let axWindows = AXWindowHelper.windows(for: pid)
+        guard axWindows.count > 1 else {
             app.activate(options: [])
             return
         }
 
-        // Find the currently focused window
-        var focusedRef: CFTypeRef?
-        let hasFocused = AXUIElementCopyAttributeValue(
-            appElement, kAXFocusedWindowAttribute as CFString, &focusedRef
-        ) == .success
-
-        if hasFocused, let focusedWindow = focusedRef {
-            // Find index of focused window and raise next one
-            var focusedID: CGWindowID = 0
-            // swiftlint:disable:next force_cast
-            _ = _AXUIElementGetWindow(focusedWindow as! AXUIElement, &focusedID)
-
+        if let focused = AXWindowHelper.focusedWindow(for: pid),
+           let focusedID = AXWindowHelper.windowID(for: focused)
+        {
             for (i, axWindow) in axWindows.enumerated() {
-                var windowID: CGWindowID = 0
-                _ = _AXUIElementGetWindow(axWindow, &windowID)
-                if windowID == focusedID {
+                if let windowID = AXWindowHelper.windowID(for: axWindow), windowID == focusedID {
                     let nextIndex = (i + 1) % axWindows.count
                     AXUIElementPerformAction(axWindows[nextIndex], kAXRaiseAction as CFString)
                     app.activate(options: [])
@@ -194,27 +176,5 @@ struct ApplicationManager: Sendable {
     @MainActor
     private func findRunningApp(bundleID: String) -> NSRunningApplication? {
         NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
-    }
-
-    private func countWindows(for pid: pid_t) -> Int {
-        let ownPID = ProcessInfo.processInfo.processIdentifier
-        guard pid != ownPID else { return 0 }
-
-        guard let windowList = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
-        ) as? [[CFString: Any]] else {
-            return 0
-        }
-
-        return windowList.filter { entry in
-            guard let ownerPID = entry[kCGWindowOwnerPID] as? pid_t,
-                  let layer = entry[kCGWindowLayer] as? Int,
-                  layer == 0,
-                  ownerPID == pid
-            else {
-                return false
-            }
-            return true
-        }.count
     }
 }

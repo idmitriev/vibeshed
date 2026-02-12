@@ -32,7 +32,7 @@ final class URIManager {
     // MARK: - Public
 
     func start() {
-        previousDefaultBrowser = BrowserLauncher.systemDefaultBrowserBundleID()
+        previousDefaultBrowser = BrowserRegistry.systemDefaultBundleID()
         currentConfig = configManager.config.urlRouting
         validateRules()
 
@@ -155,7 +155,7 @@ final class URIManager {
 
         if let browser = rule.browser {
             do {
-                try BrowserLauncher.open(url: url, browser: browser, profile: rule.profile)
+                try BrowserRegistry.open(url: url, browser: browser, profile: rule.profile)
                 let dest = browser + (rule.profile.map { "/\($0)" } ?? "")
                 Log.uri.info("Routed \(url) to \(dest)")
                 Task { await eventBus.publish(.uriRouted(url: url.absoluteString, destination: dest)) }
@@ -174,7 +174,7 @@ final class URIManager {
     private func openInDefaultBrowser(_ url: URL) {
         if let defaultBrowser = currentConfig.defaultBrowser {
             do {
-                try BrowserLauncher.open(url: url, browser: defaultBrowser, profile: currentConfig.defaultProfile)
+                try BrowserRegistry.open(url: url, browser: defaultBrowser, profile: currentConfig.defaultProfile)
                 Log.uri.info("Routed \(url) to default browser \(defaultBrowser)")
                 Task { await eventBus.publish(.uriRouted(url: url.absoluteString, destination: defaultBrowser)) }
             } catch {
@@ -192,7 +192,7 @@ final class URIManager {
            prevBrowser != Bundle.main.bundleIdentifier
         {
             do {
-                try BrowserLauncher.open(url: url, browser: prevBrowser, profile: nil)
+                try BrowserRegistry.open(url: url, browser: prevBrowser, profile: nil)
                 Log.uri.info("Routed \(url) to previous default browser \(prevBrowser)")
                 return
             } catch {
@@ -201,7 +201,7 @@ final class URIManager {
         }
         // Last resort: Safari
         do {
-            try BrowserLauncher.open(url: url, browser: "safari", profile: nil)
+            try BrowserRegistry.open(url: url, browser: "safari", profile: nil)
         } catch {
             Log.uri.error("Cannot open URL \(url): no browser available")
         }
@@ -248,8 +248,8 @@ final class URIManager {
             }
 
             if let browser = rule.browser {
-                let bundleID = BrowserLauncher.resolveBundleID(browser)
-                if !BrowserLauncher.isInstalled(bundleID) {
+                let bundleID = BrowserRegistry.resolveBundleID(browser)
+                if !BrowserRegistry.isInstalled(bundleID) {
                     Log.uri.warning("Browser '\(browser)' (bundle: \(bundleID)) not found for rule '\(rule.pattern)'")
                 }
             }
@@ -270,7 +270,7 @@ final class URIManager {
 
     private func registerAsDefaultBrowser() {
         if previousDefaultBrowser == nil {
-            previousDefaultBrowser = BrowserLauncher.systemDefaultBrowserBundleID()
+            previousDefaultBrowser = BrowserRegistry.systemDefaultBundleID()
         }
         Log.uri.info("App configured as http/https handler. User will be prompted to confirm.")
     }

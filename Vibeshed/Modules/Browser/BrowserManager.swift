@@ -37,19 +37,6 @@ private final class ResumeGate<T: Sendable>: @unchecked Sendable {
 }
 
 struct BrowserManager: Sendable {
-    // MARK: - Supported Browsers
-
-    /// Safari + Chromium browsers supported for tab access.
-    static let supportedBrowsers: [(name: String, bundleID: String)] = [
-        ("Safari", "com.apple.Safari"),
-        ("Chrome", "com.google.Chrome"),
-        ("Brave", "com.brave.Browser"),
-        ("Edge", "com.microsoft.edgemac"),
-        ("Arc", "company.thebrowser.Browser"),
-        ("Vivaldi", "com.vivaldi.Vivaldi"),
-        ("Opera", "com.operasoftware.Opera"),
-    ]
-
     // MARK: - Tab Listing
 
     func listTabs(for bundleID: String, browserName: String) async throws -> [TabInfo] {
@@ -63,7 +50,7 @@ struct BrowserManager: Sendable {
     func listAllTabs(browsers: [(name: String, bundleID: String)]) async -> [TabInfo] {
         await withTaskGroup(of: [TabInfo].self, returning: [TabInfo].self) { group in
             for browser in browsers {
-                guard Self.isRunning(bundleID: browser.bundleID) else { continue }
+                guard BrowserRegistry.isRunning( browser.bundleID) else { continue }
                 group.addTask {
                     (try? await self.listTabs(for: browser.bundleID, browserName: browser.name)) ?? []
                 }
@@ -79,7 +66,7 @@ struct BrowserManager: Sendable {
     // MARK: - Focus Tab
 
     func focusTab(_ tab: TabInfo) async throws {
-        guard Self.isRunning(bundleID: tab.browserBundleID) else {
+        guard BrowserRegistry.isRunning( tab.browserBundleID) else {
             throw BrowserError.browserNotRunning(tab.browserName)
         }
 
@@ -105,7 +92,7 @@ struct BrowserManager: Sendable {
     // MARK: - Close Tab
 
     func closeTab(_ tab: TabInfo) async throws {
-        guard Self.isRunning(bundleID: tab.browserBundleID) else {
+        guard BrowserRegistry.isRunning( tab.browserBundleID) else {
             throw BrowserError.browserNotRunning(tab.browserName)
         }
 
@@ -161,16 +148,6 @@ struct BrowserManager: Sendable {
         }
         try await runAppleScript(script)
         await activateBrowser(bundleID: bundleID)
-    }
-
-    // MARK: - Browser State
-
-    static func isRunning(bundleID: String) -> Bool {
-        !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty
-    }
-
-    static func installedBrowsers() -> [(name: String, bundleID: String)] {
-        supportedBrowsers.filter { BrowserLauncher.isInstalled($0.bundleID) }
     }
 
     // MARK: - Private: Script Builders

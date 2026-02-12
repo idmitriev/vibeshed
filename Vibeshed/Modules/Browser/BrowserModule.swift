@@ -38,7 +38,7 @@ actor BrowserModule: ModuleConfigurable {
             errors.append("maxResults must be non-negative")
         }
         for browser in config.browsers {
-            let resolved = BrowserLauncher.resolveBundleID(browser)
+            let resolved = BrowserRegistry.resolveBundleID(browser)
             // If it resolved to itself and doesn't look like a bundle ID, it's unknown
             if resolved == browser, !browser.contains(".") {
                 errors.append("Unknown browser name: '\(browser)'")
@@ -124,12 +124,11 @@ actor BrowserModule: ModuleConfigurable {
 
     private func resolveBrowserList() -> [(name: String, bundleID: String)] {
         if config.browsers.isEmpty {
-            return BrowserManager.supportedBrowsers
+            return BrowserRegistry.appleScriptCapable.map { ($0.name, $0.bundleID) }
         }
         return config.browsers.map { browser in
-            let bundleID = BrowserLauncher.resolveBundleID(browser)
-            let name = BrowserManager.supportedBrowsers.first(where: { $0.bundleID == bundleID })?.name
-                ?? browser.capitalized
+            let bundleID = BrowserRegistry.resolveBundleID(browser)
+            let name = BrowserRegistry.name(for: bundleID) ?? browser.capitalized
             return (name: name, bundleID: bundleID)
         }
     }
@@ -224,8 +223,7 @@ actor BrowserModule: ModuleConfigurable {
         let parts = tabID.split(separator: ":", maxSplits: 2)
         guard parts.count == 3 else { return nil }
         let bundleID = String(parts[0])
-        let browserName = BrowserManager.supportedBrowsers
-            .first(where: { $0.bundleID == bundleID })?.name ?? "Browser"
+        let browserName = BrowserRegistry.name(for: bundleID) ?? "Browser"
         let currentTabs = (try? await mgr.listTabs(for: bundleID, browserName: browserName)) ?? []
         return currentTabs.first(where: { $0.id == tabID })
     }

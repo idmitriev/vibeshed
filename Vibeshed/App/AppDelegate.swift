@@ -139,8 +139,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Then probe each running browser
-        for (name, bundleID) in BrowserManager.supportedBrowsers {
-            guard BrowserManager.isRunning(bundleID: bundleID) else { continue }
+        for entry in BrowserRegistry.appleScriptCapable {
+            let name = entry.name
+            let bundleID = entry.bundleID
+            guard BrowserRegistry.isRunning(bundleID) else { continue }
 
             let browserScript = """
             tell application id "\(bundleID)"

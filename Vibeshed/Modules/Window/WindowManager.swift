@@ -2,10 +2,6 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 
-// Private SPI to get CGWindowID from an AXUIElement
-@_silgen_name("_AXUIElementGetWindow")
-func _AXUIElementGetWindow(_ element: AXUIElement, _ outWindowID: UnsafeMutablePointer<CGWindowID>) -> AXError
-
 enum WindowManagerError: Error, LocalizedError {
     case noFocusedWindow
     case windowNotFound
@@ -28,65 +24,7 @@ struct WindowManager: Sendable {
 
     @MainActor
     func listWindows(includeMinimized: Bool) -> [WindowInfo] {
-        var options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
-        if includeMinimized {
-            options = [.excludeDesktopElements]
-        }
-
-        guard let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID)
-            as? [[CFString: Any]]
-        else {
-            return []
-        }
-
-        let ownPID = ProcessInfo.processInfo.processIdentifier
-
-        var results: [WindowInfo] = []
-        for entry in windowList {
-            guard let windowID = entry[kCGWindowNumber] as? Int,
-                  let ownerPID = entry[kCGWindowOwnerPID] as? pid_t,
-                  let layer = entry[kCGWindowLayer] as? Int,
-                  layer == 0,
-                  ownerPID != ownPID
-            else {
-                continue
-            }
-
-            let appName = entry[kCGWindowOwnerName] as? String ?? ""
-            let title = entry[kCGWindowName] as? String ?? ""
-            let isOnScreen = entry[kCGWindowIsOnscreen] as? Bool ?? false
-
-            guard let boundsDict = entry[kCGWindowBounds] as? [String: Double],
-                  let x = boundsDict["X"],
-                  let y = boundsDict["Y"],
-                  let w = boundsDict["Width"],
-                  let h = boundsDict["Height"]
-            else {
-                continue
-            }
-
-            let frame = CGRect(x: x, y: y, width: w, height: h)
-            let screenFrame = screenForFrame(frame)
-
-            let bundleID = NSRunningApplication(processIdentifier: ownerPID)?
-                .bundleIdentifier
-
-            let isMinimized = !isOnScreen && includeMinimized
-
-            results.append(WindowInfo(
-                id: windowID,
-                title: title,
-                appName: appName,
-                bundleID: bundleID,
-                pid: ownerPID,
-                frame: frame,
-                screenFrame: screenFrame,
-                isOnScreen: isOnScreen,
-                isMinimized: isMinimized
-            ))
-        }
-
-        return results
+        WindowListHelper.listWindows(includeMinimized: includeMinimized)
     }
 
     // MARK: - Get Focused Window
@@ -96,27 +34,15 @@ struct WindowManager: Sendable {
         guard let frontApp = NSWorkspace.shared.frontmostApplication else { return nil }
         let pid = frontApp.processIdentifier
 
-        let appElement = AXUIElementCreateApplication(pid)
-        var focusedRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(
-            appElement,
-            kAXFocusedWindowAttribute as CFString,
-            &focusedRef
-        )
-        guard result == .success, let windowElement = focusedRef else { return nil }
+        guard let axWindow = AXWindowHelper.focusedWindow(for: pid) else { return nil }
 
-        // swiftlint:disable:next force_cast
-        let axWindow = windowElement as! AXUIElement
-        let frame = axWindowFrame(axWindow)
-        let title = axWindowTitle(axWindow)
-        let screenFrame = screenForFrame(frame)
-
-        // Get the CGWindowID for this AX window
-        var windowID: CGWindowID = 0
-        _ = _AXUIElementGetWindow(axWindow, &windowID)
+        let frame = AXWindowHelper.frame(of: axWindow)
+        let title = AXWindowHelper.title(of: axWindow)
+        let screenFrame = WindowListHelper.screenForFrame(frame)
+        let windowID = AXWindowHelper.windowID(for: axWindow).map { Int($0) } ?? 0
 
         return WindowInfo(
-            id: Int(windowID),
+            id: windowID,
             title: title,
             appName: frontApp.localizedName ?? "",
             bundleID: frontApp.bundleIdentifier,
@@ -131,7 +57,7 @@ struct WindowManager: Sendable {
     // MARK: - Focus Window
 
     func focusWindow(_ window: WindowInfo) throws {
-        guard let axWindow = resolveAXWindow(for: window) else {
+        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
             throw WindowManagerError.windowNotFound
         }
         AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
@@ -143,7 +69,7 @@ struct WindowManager: Sendable {
     // MARK: - Set Frame
 
     func setFrame(_ window: WindowInfo, frame: CGRect) throws {
-        guard let axWindow = resolveAXWindow(for: window) else {
+        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
             throw WindowManagerError.windowNotFound
         }
 
@@ -168,7 +94,7 @@ struct WindowManager: Sendable {
     // MARK: - Minimize
 
     func minimizeWindow(_ window: WindowInfo) throws {
-        guard let axWindow = resolveAXWindow(for: window) else {
+        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
             throw WindowManagerError.windowNotFound
         }
         AXUIElementSetAttributeValue(
@@ -176,112 +102,5 @@ struct WindowManager: Sendable {
             kAXMinimizedAttribute as CFString,
             kCFBooleanTrue
         )
-    }
-
-    // MARK: - Private: Resolve AXUIElement
-
-    private func resolveAXWindow(for window: WindowInfo) -> AXUIElement? {
-        let appElement = AXUIElementCreateApplication(window.pid)
-
-        var windowsRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(
-            appElement,
-            kAXWindowsAttribute as CFString,
-            &windowsRef
-        )
-        guard result == .success,
-              let axWindows = windowsRef as? [AXUIElement]
-        else {
-            return nil
-        }
-
-        // First try matching by CGWindowID
-        for axWindow in axWindows {
-            var axWindowID: CGWindowID = 0
-            _ = _AXUIElementGetWindow(axWindow, &axWindowID)
-            if Int(axWindowID) == window.id {
-                return axWindow
-            }
-        }
-
-        // Fallback: match by frame proximity
-        let tolerance: Double = 5.0
-        for axWindow in axWindows {
-            let axFrame = axWindowFrame(axWindow)
-            if abs(axFrame.origin.x - window.frame.origin.x) <= tolerance,
-               abs(axFrame.origin.y - window.frame.origin.y) <= tolerance,
-               abs(axFrame.width - window.frame.width) <= tolerance,
-               abs(axFrame.height - window.frame.height) <= tolerance
-            {
-                return axWindow
-            }
-        }
-
-        return nil
-    }
-
-    // MARK: - Private: AX Helpers
-
-    private func axWindowFrame(_ element: AXUIElement) -> CGRect {
-        var positionRef: CFTypeRef?
-        var sizeRef: CFTypeRef?
-        var point = CGPoint.zero
-        var size = CGSize.zero
-
-        if AXUIElementCopyAttributeValue(
-            element, kAXPositionAttribute as CFString, &positionRef
-        ) == .success,
-            let posValue = positionRef
-        {
-            // swiftlint:disable:next force_cast
-            AXValueGetValue(posValue as! AXValue, .cgPoint, &point)
-        }
-
-        if AXUIElementCopyAttributeValue(
-            element, kAXSizeAttribute as CFString, &sizeRef
-        ) == .success,
-            let szValue = sizeRef
-        {
-            // swiftlint:disable:next force_cast
-            AXValueGetValue(szValue as! AXValue, .cgSize, &size)
-        }
-
-        return CGRect(origin: point, size: size)
-    }
-
-    private func axWindowTitle(_ element: AXUIElement) -> String {
-        var titleRef: CFTypeRef?
-        if AXUIElementCopyAttributeValue(
-            element, kAXTitleAttribute as CFString, &titleRef
-        ) == .success {
-            return titleRef as? String ?? ""
-        }
-        return ""
-    }
-
-    // MARK: - Private: Screen Detection
-
-    @MainActor
-    private func screenForFrame(_ frame: CGRect) -> CGRect {
-        let center = CGPoint(x: frame.midX, y: frame.midY)
-        for screen in NSScreen.screens {
-            let cgFrame = WindowSizing.visibleFrameCG(of: screen)
-            // Use the full screen frame (not just visible) for containment check
-            let primaryHeight = NSScreen.screens.first?.frame.height ?? screen.frame.height
-            let fullCG = CGRect(
-                x: screen.frame.origin.x,
-                y: primaryHeight - screen.frame.origin.y - screen.frame.height,
-                width: screen.frame.width,
-                height: screen.frame.height
-            )
-            if fullCG.contains(center) {
-                return cgFrame
-            }
-        }
-        // Fallback to primary screen
-        if let primary = NSScreen.main {
-            return WindowSizing.visibleFrameCG(of: primary)
-        }
-        return .zero
     }
 }

@@ -113,11 +113,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Allow pasing parameters for favourite actions, for example a search query for google search
 - [x] Favourites defined in config and can be assigned aliases for quick searching
 
-### Phase 14: Common helpers
+### Phase 14: Common helpers (DONE)
 
-- [ ] Implement common windows helper for listing and focusing windows that can be used by application and window modules
-- [ ] Implement common browsers helper for listing browsers with profiles, open tabs and opening URLs in them that can be used by the URI handling and application modules
-- [ ] Based on future phases evaluate if more common helpers are needed for other domains like audio, system, spotify, github, etc and implement them as well
+- [x] Implement common windows helper for listing and focusing windows that can be used by application and window modules
+- [x] Implement common browsers helper for listing browsers with profiles, open tabs and opening URLs in them that can be used by the URI handling and application modules
+- [x] Based on future phases evaluate if more common helpers are needed for other domains like audio, system, spotify, github, etc and implement them as well
 
 ### Phase 15: System module
 
