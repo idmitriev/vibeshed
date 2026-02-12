@@ -125,11 +125,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for lock, reboot, shutdown, toggle appearance, empty trash, take screenshots (with params for cliboard/file and target), flush DNS, purge memory
 - [x] Provide SwiftUI views for system actions in the picker
 
-### Phase 16: Audio module
+### Phase 16: Audio module (DONE)
 
-- [ ] Create an audio module that can control system audio
-- [ ] Implement actions for mute/unmute, mic mute/unmute, volume 20%/50%/80%, next/previous track, play/pause, select specific input/output devices
-- [ ] Provide SwiftUI views for audio actions in the picker, showing current volume levels and track information
+- [x] Create an audio module that can control system audio
+- [x] Implement actions for mute/unmute, mic mute/unmute, volume 20%/50%/80%, next/previous track, play/pause, select specific input/output devices
+- [x] Provide SwiftUI views for audio actions in the picker, showing current volume levels and track information
 
 ### Phase 17: Clipboard module
 
@@ -171,8 +171,17 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] Create a Telegram module that can search and open chats and groups in the Telegram desktop app
 - [ ] Research if Telegram provides any APIs or AppleScript support for searching and opening chats/groups. If not, implement a solution using accessibility APIs to interact with the Telegram desktop app UI to perform these actions. If nothing works, read chats and groups ids from config file
 - [ ] Implement actions for searching chats and groups in Telegram based on their name and opening them in the Telegram desktop app
-
 - [ ] Provide SwiftUI views for Telegram chat actions in the picker, showing chat/group names
+
+### Phase 24: Self module
+
+- [ ] Create a self module that can show actions related to the app itself, such as opening config file, reloading modules, viewing logs, exiting the app, etc
+- [ ] Implement actions for opening the config file in the default editor, reloading modules, viewing logs in the picker or opening log file, exiting the app, etc
+- [ ] Provide SwiftUI views for self actions in the picker, showing relevant information like log previews or config file path
+
+### Phase 24: Contextual actions
+
+- [ ] Provide actions with rank boost or filter them based on context: running/focusd application, current window sizes, system state, time day, date, current volume, media playing, calendar events, latest pull requests and comments, open VSCode projects, iterm session state, and overall vibe
 
 ### Phase 24: UI polish and animations
 
