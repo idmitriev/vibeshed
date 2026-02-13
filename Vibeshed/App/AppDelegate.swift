@@ -114,6 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(FavouritesModule())
             await registerModule(SystemModule())
             await registerModule(AudioModule())
+            await registerModule(ClipboardModule())
             promptBrowserAutomation()
             await registerModule(BrowserModule())
             showPermissionAlertIfNeeded()

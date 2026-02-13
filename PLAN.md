@@ -131,10 +131,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for mute/unmute, mic mute/unmute, volume 20%/50%/80%, next/previous track, play/pause, select specific input/output devices
 - [x] Provide SwiftUI views for audio actions in the picker, showing current volume levels and track information
 
-### Phase 17: Clipboard module
+### Phase 17: Clipboard module (DONE)
 
-- [ ] Create a clipboard module that can manage clipboard history and perform actions on clipboard items
-- [ ] Implement actions for listing clipboard history, selecting an item to paste, clearing history,
+- [x] Create a clipboard module that can manage clipboard history and perform actions on clipboard items
+- [x] Implement actions for listing clipboard history, selecting an item to paste, clearing history,
 
 ### Phase 18: Spotify module
 
@@ -188,7 +188,12 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] Add beautiful animations and UI polish to the picker and other UI elements of the app to make it feel smooth and delightful to use. This includes things like animated transitions, hover effects, and responsive design adjustments.
 - [ ] Implement a dark mode for the app that can be toggled in the settings and automatically adjusts the UI colors and styles accordingly. Make sure all UI elements look good in both light and dark modes.
 
-### Phase 25: Releases and distribution
+### Phase 25: Dynamic theme
+
+- [ ] Implement a dynamic theming system that can change the app's appearance based on current system theme/appearance, open apps color schemess, music playing and overal vibe. This can include changing colors, fonts, and other visual elements of the app to create a more immersive and personalized user experience.
+- [ ]  Allow user to configure how dramatic theme changes are from subtle accent color adjustment (0) to full on winamp-style theming based on the vibe (1)
+
+### Phase 26: Releases and distribution
 
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Publish the app on github with proper license, readme, and some documentation
