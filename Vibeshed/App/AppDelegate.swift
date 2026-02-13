@@ -117,6 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(ClipboardModule())
             promptBrowserAutomation()
             await registerModule(BrowserModule())
+            await registerModule(SpotifyModule())
             showPermissionAlertIfNeeded()
         }
     }

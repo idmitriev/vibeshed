@@ -136,11 +136,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Create a clipboard module that can manage clipboard history and perform actions on clipboard items
 - [x] Implement actions for listing clipboard history, selecting an item to paste, clearing history,
 
-### Phase 18: Spotify module
+### Phase 18: Spotify module (DONE)
 
-- [ ] Create a Spotify module for searching artists/albums/playlists
-- [ ] Implement actions for searching Spotify and starting playback of artists, albums, playlist and tracks
-- [ ] Provide SwiftUI views for Spotify actions in the picker, showing album art and track information
+- [x] Create a Spotify module for searching artists/albums/playlists
+- [x] Implement actions for searching Spotify and starting playback of artists, albums, playlist and tracks
+- [x] Provide SwiftUI views for Spotify actions in the picker, showing album art and track information
 
 ### Phase 19: Github module
 
