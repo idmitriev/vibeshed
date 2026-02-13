@@ -118,6 +118,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             promptBrowserAutomation()
             await registerModule(BrowserModule())
             await registerModule(SpotifyModule())
+            await registerModule(GitHubModule())
             showPermissionAlertIfNeeded()
         }
     }

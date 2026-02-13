@@ -142,11 +142,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for searching Spotify and starting playback of artists, albums, playlist and tracks
 - [x] Provide SwiftUI views for Spotify actions in the picker, showing album art and track information
 
-### Phase 19: Github module
+### Phase 19: Github module (DONE)
 
-- [ ] Create a Github module for searching pull requests, issues and repositories
-- [ ] Implement actions for searching Github and opening pull requests, issues and repositories in the browser
-- [ ] Provide SwiftUI views for Github actions in the picker, showing repository avatars and issue/PR information
+- [x] Create a Github module for searching pull requests, issues and repositories
+- [x] Implement actions for searching Github and opening pull requests, issues and repositories in the browser
+- [x] Provide SwiftUI views for Github actions in the picker, showing repository avatars and issue/PR information
 
 ### Phase 20: VSCode module
 
