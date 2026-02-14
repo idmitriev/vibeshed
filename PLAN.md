@@ -154,11 +154,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for searching VSCode projects based on their name and path and opening  them in VSCode
 - [x] Provide SwiftUI views for VSCode actions in the picker, showing project names and paths
 
-### Phase 21: Iterm module
+### Phase 21: Iterm module (DONE)
 
-- [ ] Create an Iterm module for searching and opening sessions or running commands in Iterm
-- [ ] Implement actions for searching Iterm sessions based on their name and running commands in Iterm
-- [ ] Provide SwiftUI views for Iterm actions in the picker, showing session names
+- [x] Create an Iterm module for searching and opening sessions or running commands in Iterm
+- [x] Implement actions for searching Iterm sessions based on their name and running commands in Iterm
+- [x] Provide SwiftUI views for Iterm actions in the picker, showing session names
 
 ### Phase 22: AI session module
 
