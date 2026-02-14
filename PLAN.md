@@ -148,11 +148,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for searching Github and opening pull requests, issues and repositories in the browser
 - [x] Provide SwiftUI views for Github actions in the picker, showing repository avatars and issue/PR information
 
-### Phase 20: VSCode module
+### Phase 20: VSCode module (DONE)
 
-- [ ] Create a VSCode module for searching and opening projects VSCode
-- [ ] Implement actions for searching VSCode projects based on their name and path and opening  them in VSCode
-- [ ] Provide SwiftUI views for VSCode actions in the picker, showing project names and paths
+- [x] Create a VSCode module for searching and opening projects VSCode
+- [x] Implement actions for searching VSCode projects based on their name and path and opening  them in VSCode
+- [x] Provide SwiftUI views for VSCode actions in the picker, showing project names and paths
 
 ### Phase 21: Iterm module
 
@@ -191,7 +191,7 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase 25: Dynamic theme
 
 - [ ] Implement a dynamic theming system that can change the app's appearance based on current system theme/appearance, open apps color schemess, music playing and overal vibe. This can include changing colors, fonts, and other visual elements of the app to create a more immersive and personalized user experience.
-- [ ]  Allow user to configure how dramatic theme changes are from subtle accent color adjustment (0) to full on winamp-style theming based on the vibe (1)
+- [ ]  Allow user to configure how dramatic theme changes are from subtle accent color adjustment (0) to full on winamp-style (1) theming based on the vibe
 
 ### Phase 26: Releases and distribution
 

@@ -119,6 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(BrowserModule())
             await registerModule(SpotifyModule())
             await registerModule(GitHubModule())
+            await registerModule(VSCodeModule())
             showPermissionAlertIfNeeded()
         }
     }

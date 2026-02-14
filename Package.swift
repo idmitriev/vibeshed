@@ -16,6 +16,7 @@ let package = Package(
             dependencies: ["Yams"],
             path: "Vibeshed",
             exclude: ["Info.plist", "Vibeshed.entitlements"],
+            linkerSettings: [.linkedLibrary("sqlite3")],
             plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
     ]
