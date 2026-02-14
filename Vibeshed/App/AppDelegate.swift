@@ -121,6 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(GitHubModule())
             await registerModule(VSCodeModule())
             await registerModule(ITermModule())
+            await registerModule(AIModule())
             showPermissionAlertIfNeeded()
         }
     }

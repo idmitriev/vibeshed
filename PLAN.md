@@ -160,11 +160,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for searching Iterm sessions based on their name and running commands in Iterm
 - [x] Provide SwiftUI views for Iterm actions in the picker, showing session names
 
-### Phase 22: AI session module
+### Phase 22: AI session module (DONE)
 
-- [ ] Create an AI module that can search and open AI sessions in the browser on desktop apps
-- [ ] Implement actions for searching sessions in chatgpt, claude and opening them in the browser or claude-desktop/chatgpt-desktop/codex-deskop apps if they are installed
-- [ ] Provide SwiftUI views for AI chat actions in the picker, showing session titles and latest message previews
+- [x] Create an AI module that can search and open AI sessions in the browser on desktop apps
+- [x] Implement actions for searching sessions in chatgpt, claude and opening them in the browser or claude-desktop/chatgpt-desktop/codex-deskop apps if they are installed
+- [x] Provide SwiftUI views for AI chat actions in the picker, showing session titles and latest message previews
 
 ### Phase 23: Telegram module
 
