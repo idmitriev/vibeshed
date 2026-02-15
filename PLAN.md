@@ -179,21 +179,21 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for opening the config file in the default editor, reloading modules, viewing logs in the picker or opening log file, exiting the app, etc
 - [x] Provide SwiftUI views for self actions in the picker, showing relevant information like log previews or config file path
 
-### Phase 24: Contextual actions
+### Phase 25: Contextual actions
 
 - [ ] Provide actions with rank boost or filter them based on context: running/focusd application, current window sizes, system state, time day, date, current volume, media playing, calendar events, latest pull requests and comments, open VSCode projects, iterm session state, and overall vibe
 
-### Phase 24: UI polish and animations
+### Phase 26: UI polish and animations
 
 - [ ] Add beautiful animations and UI polish to the picker and other UI elements of the app to make it feel smooth and delightful to use. This includes things like animated transitions, hover effects, and responsive design adjustments.
 - [ ] Implement a dark mode for the app that can be toggled in the settings and automatically adjusts the UI colors and styles accordingly. Make sure all UI elements look good in both light and dark modes.
 
-### Phase 25: Dynamic theme
+### Phase 27: Dynamic theme
 
 - [ ] Implement a dynamic theming system that can change the app's appearance based on current system theme/appearance, open apps color schemess, music playing and overal vibe. This can include changing colors, fonts, and other visual elements of the app to create a more immersive and personalized user experience.
 - [ ]  Allow user to configure how dramatic theme changes are from subtle accent color adjustment (0) to full on winamp-style (1) theming based on the vibe
 
-### Phase 26: Releases and distribution
+### Phase 28: Releases and distribution
 
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Publish the app on github with proper license, readme, and some documentation
