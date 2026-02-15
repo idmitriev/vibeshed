@@ -198,15 +198,19 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement an autostart mechanism to launch the app on system startup, add item to status bar menu to enable/disable autostart
 - [x] Cleanup permissions UI by showing a status bar menu item with check icon if all permissions are granted and warning icon with a dropdown of missing permissions if not. Also add an option to open the permissions tab in system preferences for each missing permission, remove all other modals asking for permissions and just show the status in the menu bar
 
-### Phase 28: Debug logging and error handling
+### Phase 28: Debug logging and error handling (DONE)
 
-- [ ] Add debug logging throughout the app to help with troubleshooting and understanding app behavior. Logs should be categorized and have different levels (info, warning, error) for better filtering.
+- [x] Add debug logging throughout the app to help with troubleshooting and understanding app behavior. Logs should be categorized and have different levels (info, warning, error) for better filtering.
 
 ### Phase 29: Testing
 
-- [ ] Write test lists for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.
+- [ ] Write checklist file for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.
 
-### Phase 30: Releases and distribution
+### Phase 30: Bugfixing and polishing
+
+- [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
+
+### Phase 31: Releases and distribution
 
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Publish the app on github with proper license, readme, and some documentation

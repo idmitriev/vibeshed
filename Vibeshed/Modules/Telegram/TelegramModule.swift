@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 
 private let telegramBundleID = "ru.keepcoder.Telegram"
 
@@ -14,13 +15,16 @@ actor TelegramModule: ModuleConfigurable {
 
     private var config: TelegramConfig = .init()
     private var context: ModuleContext?
+    private let log = Log.module("telegram")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("Telegram module initialized (\(self.config.chats.count) chats configured)")
     }
 
     func configDidUpdate(_ config: TelegramConfig) async {
         self.config = config
+        log.debug("Config updated (\(config.chats.count) chats)")
     }
 
     static func validate(

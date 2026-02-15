@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 import SwiftUI
 
 @MainActor
@@ -43,11 +44,13 @@ final class PanelController {
 
         panel.animateShow()
         isVisible = true
+        Log.picker.debug("Panel shown")
     }
 
     func hide() {
         guard let panel, isVisible else { return }
         panel.animateDismiss()
+        Log.picker.debug("Panel hidden")
         // isVisible is set to false by the onWillClose callback
     }
 

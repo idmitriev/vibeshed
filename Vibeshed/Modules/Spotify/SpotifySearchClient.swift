@@ -1,6 +1,9 @@
 import AuthenticationServices
 import CryptoKit
 import Foundation
+import OSLog
+
+private let log = Log.module("spotify")
 
 // MARK: - Search Result Types
 
@@ -86,6 +89,7 @@ final class SpotifySearchClient: @unchecked Sendable {
         }()
 
         guard !token.isEmpty else {
+            log.error("Search called but no access token available")
             throw SearchError.notAuthenticated
         }
 
@@ -109,10 +113,12 @@ final class SpotifySearchClient: @unchecked Sendable {
 
         if let httpResponse = response as? HTTPURLResponse {
             if httpResponse.statusCode == 401 {
+                log.debug("Spotify API returned 401, refreshing token")
                 try await refreshAccessToken()
                 return try await search(query: query, types: types, limit: limit)
             }
             guard (200 ... 299).contains(httpResponse.statusCode) else {
+                log.error("Spotify API error: HTTP \(httpResponse.statusCode)")
                 throw SearchError.apiError(httpResponse.statusCode)
             }
         }
@@ -149,6 +155,7 @@ final class SpotifySearchClient: @unchecked Sendable {
     // MARK: - Private: OAuth PKCE
 
     private func authenticate() async throws {
+        log.debug("Starting Spotify OAuth PKCE flow")
         let verifier = generateCodeVerifier()
         let challenge = generateCodeChallenge(verifier: verifier)
 
@@ -163,6 +170,7 @@ final class SpotifySearchClient: @unchecked Sendable {
         ]
 
         guard let authURL = components.url else {
+            log.error("Failed to construct Spotify auth URL")
             throw SearchError.authFailed("Invalid auth URL")
         }
 
@@ -173,6 +181,7 @@ final class SpotifySearchClient: @unchecked Sendable {
         else {
             let error = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
                 .queryItems?.first(where: { $0.name == "error" })?.value ?? "no code"
+            log.error("Spotify OAuth callback error: \(error)")
             throw SearchError.authFailed(error)
         }
 
@@ -220,13 +229,16 @@ final class SpotifySearchClient: @unchecked Sendable {
         guard let httpResponse = response as? HTTPURLResponse,
               (200 ... 299).contains(httpResponse.statusCode)
         else {
+            log.error("Spotify token exchange failed")
             throw SearchError.authFailed("Token exchange failed")
         }
 
         try parseAndStoreTokens(data)
+        log.debug("Spotify token exchange succeeded")
     }
 
     private func refreshAccessToken() async throws {
+        log.debug("Refreshing Spotify access token")
         let currentRefresh: String? = {
             lock.lock()
             defer { lock.unlock() }
@@ -234,6 +246,7 @@ final class SpotifySearchClient: @unchecked Sendable {
         }()
 
         guard let refreshToken = currentRefresh else {
+            log.debug("No refresh token, starting fresh auth")
             try await authenticate()
             return
         }
@@ -255,6 +268,7 @@ final class SpotifySearchClient: @unchecked Sendable {
         guard let httpResponse = response as? HTTPURLResponse,
               (200 ... 299).contains(httpResponse.statusCode)
         else {
+            log.warning("Spotify token refresh failed, clearing tokens and re-authenticating")
             lock.lock()
             self.accessToken = nil
             self.refreshToken = nil
@@ -274,6 +288,7 @@ final class SpotifySearchClient: @unchecked Sendable {
               let accessToken = json["access_token"] as? String,
               let expiresIn = json["expires_in"] as? Int
         else {
+            log.error("Invalid token response from Spotify")
             throw SearchError.authFailed("Invalid token response")
         }
 
@@ -292,8 +307,10 @@ final class SpotifySearchClient: @unchecked Sendable {
         guard let data = try? Data(contentsOf: tokenFileURL),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else {
+            log.debug("No saved Spotify tokens found")
             return
         }
+        log.debug("Loaded Spotify tokens from disk")
 
         lock.lock()
         accessToken = json["accessToken"] as? String
@@ -313,8 +330,15 @@ final class SpotifySearchClient: @unchecked Sendable {
         ]
         lock.unlock()
 
-        guard let data = try? JSONSerialization.data(withJSONObject: json) else { return }
-        try? data.write(to: tokenFileURL, options: .atomic)
+        guard let data = try? JSONSerialization.data(withJSONObject: json) else {
+            log.warning("Failed to serialize Spotify tokens for saving")
+            return
+        }
+        do {
+            try data.write(to: tokenFileURL, options: .atomic)
+        } catch {
+            log.warning("Failed to save Spotify tokens: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Private: PKCE Helpers
@@ -337,6 +361,7 @@ final class SpotifySearchClient: @unchecked Sendable {
 
     private func parseSearchResults(_ data: Data, types: [String]) throws -> SpotifySearchResults {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            log.error("Failed to parse Spotify search response as JSON")
             throw SearchError.parseFailed
         }
 

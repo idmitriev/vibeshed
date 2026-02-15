@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 
 actor ApplicationModule: ModuleConfigurable {
     let id = "application"
@@ -13,13 +14,16 @@ actor ApplicationModule: ModuleConfigurable {
     private var config: ApplicationConfig = .init()
     private let appManager = ApplicationManager()
     private var context: ModuleContext?
+    private let log = Log.module("application")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("Application module initialized")
     }
 
     func configDidUpdate(_ config: ApplicationConfig) async {
         self.config = config
+        log.debug("Config updated")
     }
 
     static func validate(_ config: ApplicationConfig) -> ConfigValidationResult {

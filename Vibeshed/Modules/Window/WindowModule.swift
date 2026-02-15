@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 
 actor WindowModule: ModuleConfigurable {
     let id = "window"
@@ -17,13 +18,16 @@ actor WindowModule: ModuleConfigurable {
     private var config: WindowConfig = .defaultValue
     private let windowManager = WindowManager()
     private var context: ModuleContext?
+    private let log = Log.module("window")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("Window module initialized")
     }
 
     func configDidUpdate(_ config: WindowConfig) async {
         self.config = config
+        log.debug("Config updated: \(config.horizontalStops.count) h-stops, \(config.verticalStops.count) v-stops")
     }
 
     static func validate(_ config: WindowConfig) -> ConfigValidationResult {

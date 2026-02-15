@@ -1,4 +1,7 @@
 import Foundation
+import OSLog
+
+private let log = Log.module("github")
 
 // MARK: - Response Types
 
@@ -140,6 +143,7 @@ final class GitHubAPIClient: @unchecked Sendable {
 
     func listNotifications(limit: Int) async throws -> [GitHubNotification] {
         guard token != nil else {
+            log.error("listNotifications called without a token")
             throw GitHubError.invalidToken
         }
         let request = try makeRequest(
@@ -197,19 +201,23 @@ final class GitHubAPIClient: @unchecked Sendable {
     }
 
     private func performRequest(_ request: URLRequest) async throws -> Any {
+        log.debug("GitHub API: \(request.httpMethod ?? "GET") \(request.url?.path ?? "")")
         let data: Data
         let response: URLResponse
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch {
+            log.error("GitHub network error: \(error.localizedDescription)")
             throw GitHubError.networkError(error)
         }
 
         guard let http = response as? HTTPURLResponse else {
+            log.error("GitHub response is not HTTPURLResponse")
             throw GitHubError.parseFailed
         }
 
         if http.statusCode == 401 {
+            log.error("GitHub token invalid or expired (401)")
             throw GitHubError.invalidToken
         }
 
@@ -219,18 +227,21 @@ final class GitHubAPIClient: @unchecked Sendable {
                 forHTTPHeaderField: "X-RateLimit-Remaining"
             )
             if remaining == "0" {
+                log.warning("GitHub rate limit exceeded, resets at \(resetDate?.description ?? "unknown")")
                 throw GitHubError.rateLimited(resetDate: resetDate)
             }
         }
 
         if !(200 ... 299).contains(http.statusCode) {
             let message = extractErrorMessage(from: data)
+            log.error("GitHub API error \(http.statusCode): \(message)")
             throw GitHubError.apiError(
                 statusCode: http.statusCode, message: message
             )
         }
 
         guard let json = try? JSONSerialization.jsonObject(with: data) else {
+            log.error("Failed to parse GitHub response as JSON")
             throw GitHubError.parseFailed
         }
         return json

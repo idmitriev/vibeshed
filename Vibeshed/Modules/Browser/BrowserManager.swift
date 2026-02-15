@@ -1,5 +1,8 @@
 import AppKit
 import Foundation
+import OSLog
+
+private let log = Log.module("browser")
 
 enum BrowserError: Error, LocalizedError {
     case scriptFailed(String)
@@ -40,11 +43,14 @@ struct BrowserManager: Sendable {
     // MARK: - Tab Listing
 
     func listTabs(for bundleID: String, browserName: String) async throws -> [TabInfo] {
+        log.debug("Listing tabs for \(browserName) (\(bundleID))")
         let script = bundleID == "com.apple.Safari"
             ? safariListScript()
             : chromiumListScript(bundleID: bundleID)
         let output = try await runAppleScript(script)
-        return parseTabOutput(output, bundleID: bundleID, browserName: browserName)
+        let tabs = parseTabOutput(output, bundleID: bundleID, browserName: browserName)
+        log.debug("Found \(tabs.count) tabs in \(browserName)")
+        return tabs
     }
 
     func listAllTabs(browsers: [(name: String, bundleID: String)]) async -> [TabInfo] {
@@ -52,7 +58,12 @@ struct BrowserManager: Sendable {
             for browser in browsers {
                 guard BrowserRegistry.isRunning( browser.bundleID) else { continue }
                 group.addTask {
-                    (try? await self.listTabs(for: browser.bundleID, browserName: browser.name)) ?? []
+                    do {
+                        return try await self.listTabs(for: browser.bundleID, browserName: browser.name)
+                    } catch {
+                        log.warning("listAllTabs: failed for \(browser.name): \(error.localizedDescription)")
+                        return []
+                    }
                 }
             }
             var all: [TabInfo] = []
@@ -67,6 +78,7 @@ struct BrowserManager: Sendable {
 
     func focusTab(_ tab: TabInfo) async throws {
         guard BrowserRegistry.isRunning( tab.browserBundleID) else {
+            log.error("focusTab: browser not running \(tab.browserName)")
             throw BrowserError.browserNotRunning(tab.browserName)
         }
 
@@ -75,6 +87,7 @@ struct BrowserManager: Sendable {
         guard let current = currentTabs.first(where: { $0.title == tab.title && $0.url == tab.url })
             ?? currentTabs.first(where: { $0.url == tab.url })
         else {
+            log.error("focusTab: tab not found after re-query: \(tab.displayLabel)")
             throw BrowserError.tabNotFound(tab.displayLabel)
         }
 
@@ -93,6 +106,7 @@ struct BrowserManager: Sendable {
 
     func closeTab(_ tab: TabInfo) async throws {
         guard BrowserRegistry.isRunning( tab.browserBundleID) else {
+            log.error("closeTab: browser not running \(tab.browserName)")
             throw BrowserError.browserNotRunning(tab.browserName)
         }
 
@@ -100,6 +114,7 @@ struct BrowserManager: Sendable {
         guard let current = currentTabs.first(where: { $0.title == tab.title && $0.url == tab.url })
             ?? currentTabs.first(where: { $0.url == tab.url })
         else {
+            log.error("closeTab: tab not found after re-query: \(tab.displayLabel)")
             throw BrowserError.tabNotFound(tab.displayLabel)
         }
 
@@ -248,6 +263,7 @@ struct BrowserManager: Sendable {
             let gate = ResumeGate(continuation: continuation)
 
             let timeoutWorkItem = DispatchWorkItem {
+                log.warning("AppleScript timed out after 5s")
                 gate.resume(with: .failure(BrowserError.scriptTimeout))
                 process.terminate()
             }
@@ -262,6 +278,7 @@ struct BrowserManager: Sendable {
                 if process.terminationStatus != 0 {
                     let errorMsg = String(data: errorData, encoding: .utf8)?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
+                    log.error("AppleScript failed (exit \(process.terminationStatus)): \(errorMsg)")
                     gate.resume(with: .failure(BrowserError.scriptFailed(errorMsg)))
                 } else {
                     let output = String(data: outputData, encoding: .utf8) ?? ""
@@ -275,6 +292,7 @@ struct BrowserManager: Sendable {
                 inputPipe.fileHandleForWriting.closeFile()
             } catch {
                 timeoutWorkItem.cancel()
+                log.error("Failed to launch osascript: \(error.localizedDescription)")
                 gate.resume(with: .failure(error))
             }
         }

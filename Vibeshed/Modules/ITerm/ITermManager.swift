@@ -1,5 +1,8 @@
 import AppKit
 import Foundation
+import OSLog
+
+private let log = Log.module("iterm")
 
 // MARK: - Data Types
 
@@ -65,9 +68,12 @@ enum ITermManager {
 
     /// Lists all sessions across all windows and tabs.
     static func listSessions() async throws -> [ITermSession] {
+        log.debug("Listing iTerm sessions")
         let script = buildListSessionsScript()
         let output = try await runScript(script)
-        return parseSessions(output)
+        let sessions = parseSessions(output)
+        log.debug("Found \(sessions.count) iTerm sessions")
+        return sessions
     }
 
     /// Focuses a session by its GUID, bringing its window and tab
@@ -282,7 +288,10 @@ enum ITermManager {
     private static func runScript(
         _ script: String
     ) async throws -> String {
-        guard isRunning() else { throw ITermError.notRunning }
+        guard isRunning() else {
+            log.debug("iTerm not running, skipping script")
+            throw ITermError.notRunning
+        }
 
         return try await withCheckedThrowingContinuation { cont in
             let process = Process()
@@ -300,6 +309,7 @@ enum ITermManager {
             let gate = ResumeGate(continuation: cont)
 
             let timeout = DispatchWorkItem {
+                log.warning("iTerm AppleScript timed out after 5s")
                 gate.resume(
                     with: .failure(ITermError.scriptTimeout)
                 )
@@ -321,6 +331,7 @@ enum ITermManager {
                         .trimmingCharacters(
                             in: .whitespacesAndNewlines
                         ) ?? "Unknown error"
+                    log.error("iTerm AppleScript failed (exit \(process.terminationStatus)): \(msg)")
                     gate.resume(
                         with: .failure(ITermError.scriptFailed(msg))
                     )
@@ -339,6 +350,7 @@ enum ITermManager {
                 inputPipe.fileHandleForWriting.closeFile()
             } catch {
                 timeout.cancel()
+                log.error("Failed to launch osascript for iTerm: \(error.localizedDescription)")
                 gate.resume(with: .failure(error))
             }
         }

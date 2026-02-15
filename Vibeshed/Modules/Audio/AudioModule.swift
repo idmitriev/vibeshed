@@ -1,5 +1,6 @@
 import CoreAudio
 import Foundation
+import OSLog
 
 actor AudioModule: ModuleConfigurable {
     let id = "audio"
@@ -12,13 +13,16 @@ actor AudioModule: ModuleConfigurable {
 
     private var config: AudioConfig = .init()
     private var context: ModuleContext?
+    private let log = Log.module("audio")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("Audio module initialized")
     }
 
     func configDidUpdate(_ config: AudioConfig) async {
         self.config = config
+        log.debug("Config updated")
     }
 
     static func validate(_ config: AudioConfig) -> ConfigValidationResult {

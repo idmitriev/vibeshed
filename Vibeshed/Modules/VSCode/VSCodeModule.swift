@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 import SwiftUI
 
 actor VSCodeModule: ModuleConfigurable {
@@ -16,10 +17,12 @@ actor VSCodeModule: ModuleConfigurable {
     private var cachedProjects: [VSCodeProject] = []
     private var lastCacheTime: Date = .distantPast
     private let cacheTTL: TimeInterval = 5
+    private let log = Log.module("vscode")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
         refreshCache()
+        log.info("VSCode module initialized (\(self.cachedProjects.count) projects found)")
     }
 
     func teardown() async {
@@ -29,6 +32,7 @@ actor VSCodeModule: ModuleConfigurable {
     func configDidUpdate(_ config: VSCodeConfig) async {
         self.config = config
         refreshCache()
+        log.debug("Config updated, cache refreshed (\(self.cachedProjects.count) projects)")
     }
 
     static func validate(

@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 actor SpotifyModule: ModuleConfigurable {
     let id = "spotify"
@@ -14,10 +15,12 @@ actor SpotifyModule: ModuleConfigurable {
     private var config: SpotifyConfig = .init()
     private var context: ModuleContext?
     private var searchClient: SpotifySearchClient?
+    private let log = Log.module("spotify")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
         updateSearchClient()
+        log.info("Spotify module initialized (searchClient: \(self.searchClient != nil ? "enabled" : "disabled"))")
     }
 
     func configDidUpdate(_ config: SpotifyConfig) async {
@@ -25,6 +28,7 @@ actor SpotifyModule: ModuleConfigurable {
         self.config = config
         if config.clientId != oldClientId {
             updateSearchClient()
+            log.info("Search client updated (clientId changed)")
         }
     }
 

@@ -1,5 +1,8 @@
 import AppKit
 import Foundation
+import OSLog
+
+private let log = Log.module("clipboard")
 
 enum ClipboardManager {
     /// Token returned from `startMonitoring` to control the polling timer.
@@ -55,7 +58,10 @@ enum ClipboardManager {
         // keyCode 9 = 'v'
         guard let keyDown = CGEvent(keyboardEventSource: nil, virtualKey: 9, keyDown: true),
               let keyUp = CGEvent(keyboardEventSource: nil, virtualKey: 9, keyDown: false)
-        else { return }
+        else {
+            log.error("Failed to create CGEvent for paste simulation")
+            return
+        }
         keyDown.flags = .maskCommand
         keyUp.flags = .maskCommand
         keyDown.post(tap: .cghidEventTap)

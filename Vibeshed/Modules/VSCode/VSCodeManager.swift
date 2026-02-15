@@ -1,6 +1,9 @@
 import AppKit
 import Foundation
+import OSLog
 import SQLite3
+
+private let log = Log.module("vscode")
 
 // MARK: - Data Types
 
@@ -59,8 +62,11 @@ enum VSCodeManager {
 
     static func resolveCodeCLI(customPath: String?) -> String? {
         if let custom = customPath {
-            return FileManager.default.isExecutableFile(atPath: custom)
-                ? custom : nil
+            if FileManager.default.isExecutableFile(atPath: custom) {
+                return custom
+            }
+            log.warning("Custom code CLI path not executable: \(custom)")
+            return nil
         }
         let candidates = [
             "/opt/homebrew/bin/code",
@@ -75,7 +81,7 @@ enum VSCodeManager {
 
     static func openProject(path: String, codePath: String?) {
         guard let cli = resolveCodeCLI(customPath: codePath) else {
-            // Fallback: try `open` with VSCode bundle
+            log.debug("No code CLI found, falling back to NSWorkspace.open")
             let url = URL(fileURLWithPath: path)
             DispatchQueue.main.async {
                 NSWorkspace.shared.open(
@@ -93,7 +99,11 @@ enum VSCodeManager {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: cli)
             process.arguments = [path]
-            try? process.run()
+            do {
+                try process.run()
+            } catch {
+                log.warning("openProject: code CLI failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -113,6 +123,7 @@ enum VSCodeManager {
             .path
 
         guard FileManager.default.fileExists(atPath: dbPath) else {
+            log.debug("No state.vscdb for \(variant) at \(dbPath)")
             return []
         }
 
@@ -134,6 +145,7 @@ enum VSCodeManager {
         guard sqlite3_open_v2(
             dbPath, &db, SQLITE_OPEN_READONLY, nil
         ) == SQLITE_OK else {
+            log.error("SQLite open failed for \(dbPath)")
             return []
         }
         defer { sqlite3_close(db) }
@@ -144,6 +156,7 @@ enum VSCodeManager {
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            log.error("SQLite prepare failed for \(variant)")
             return []
         }
         defer { sqlite3_finalize(stmt) }
@@ -176,6 +189,7 @@ enum VSCodeManager {
                   as? [String: Any],
               let entries = json["entries"] as? [[String: Any]]
         else {
+            log.warning("Failed to parse recentlyOpenedPathsList JSON for \(variant)")
             return []
         }
 

@@ -1,5 +1,8 @@
 import AppKit
 import Foundation
+import OSLog
+
+private let log = Log.module("system")
 
 enum SystemManager {
 
@@ -9,14 +12,22 @@ enum SystemManager {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
         task.arguments = ["displaysleepnow"]
-        try? task.run()
+        do {
+            try task.run()
+        } catch {
+            log.warning("lockScreen: pmset failed: \(error.localizedDescription)")
+        }
     }
 
     static func sleep() {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
         task.arguments = ["sleepnow"]
-        try? task.run()
+        do {
+            try task.run()
+        } catch {
+            log.warning("sleep: pmset failed: \(error.localizedDescription)")
+        }
     }
 
     static func restart() throws {
@@ -52,7 +63,11 @@ enum SystemManager {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
         task.arguments = ["delete", "NSGlobalDomain", "AppleInterfaceStyle"]
-        try? task.run()
+        do {
+            try task.run()
+        } catch {
+            log.warning("setAutoAppearance: defaults delete failed: \(error.localizedDescription)")
+        }
         task.waitUntilExit()
 
         let killTask = Process()
@@ -71,7 +86,11 @@ enum SystemManager {
                 end tell
             end tell
         """]
-        try? notify.run()
+        do {
+            try notify.run()
+        } catch {
+            log.warning("setAutoAppearance: notify script failed: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Trash
@@ -146,5 +165,8 @@ enum SystemManager {
         task.arguments = ["-e", source]
         try task.run()
         task.waitUntilExit()
+        if task.terminationStatus != 0 {
+            log.error("AppleScript exited with status \(task.terminationStatus)")
+        }
     }
 }

@@ -1,6 +1,9 @@
 import AppKit
 import ApplicationServices
 import CoreGraphics
+import OSLog
+
+private let log = Log.module("window")
 
 enum WindowManagerError: Error, LocalizedError {
     case noFocusedWindow
@@ -58,6 +61,7 @@ struct WindowManager: Sendable {
 
     func focusWindow(_ window: WindowInfo) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
+            log.error("focusWindow: could not resolve windowID=\(window.id) pid=\(window.pid)")
             throw WindowManagerError.windowNotFound
         }
         AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
@@ -70,18 +74,21 @@ struct WindowManager: Sendable {
 
     func setFrame(_ window: WindowInfo, frame: CGRect) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
+            log.error("setFrame: could not resolve windowID=\(window.id) pid=\(window.pid)")
             throw WindowManagerError.windowNotFound
         }
 
         // Set position first, then size (order matters for anchoring)
         var origin = frame.origin
         guard let posValue = AXValueCreate(.cgPoint, &origin) else {
+            log.error("setFrame: failed to create AXValue for position")
             throw WindowManagerError.accessibilityError("Failed to create position value")
         }
         AXUIElementSetAttributeValue(axWindow, kAXPositionAttribute as CFString, posValue)
 
         var size = frame.size
         guard let sizeValue = AXValueCreate(.cgSize, &size) else {
+            log.error("setFrame: failed to create AXValue for size")
             throw WindowManagerError.accessibilityError("Failed to create size value")
         }
         AXUIElementSetAttributeValue(axWindow, kAXSizeAttribute as CFString, sizeValue)
@@ -95,6 +102,7 @@ struct WindowManager: Sendable {
 
     func minimizeWindow(_ window: WindowInfo) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
+            log.error("minimizeWindow: could not resolve windowID=\(window.id) pid=\(window.pid)")
             throw WindowManagerError.windowNotFound
         }
         AXUIElementSetAttributeValue(

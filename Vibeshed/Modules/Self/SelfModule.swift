@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 
 struct ModuleStatusInfo: Sendable {
     struct Entry: Sendable {
@@ -28,6 +29,7 @@ actor SelfModule: ModuleConfigurable {
 
     private var config = SelfConfig()
     private var context: ModuleContext?
+    private let log = Log.module("self")
     private let configFileURL: URL
     private let configDirURL: URL
     private let reloadConfig: @Sendable () async -> Void
@@ -47,10 +49,12 @@ actor SelfModule: ModuleConfigurable {
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("Self module initialized")
     }
 
     func configDidUpdate(_ config: SelfConfig) async {
         self.config = config
+        log.debug("Config updated")
     }
 
     static func validate(_ config: SelfConfig) -> ConfigValidationResult {

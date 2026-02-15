@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 actor FavouritesModule: ModuleConfigurable {
     let id = "favourites"
@@ -11,13 +12,16 @@ actor FavouritesModule: ModuleConfigurable {
 
     private var config: FavouritesConfig = .init()
     private var context: ModuleContext?
+    private let log = Log.module("favourites")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("Favourites module initialized (\(self.config.favourites.count) favourites)")
     }
 
     func configDidUpdate(_ config: FavouritesConfig) async {
         self.config = config
+        log.debug("Config updated (\(config.favourites.count) favourites)")
     }
 
     static func validate(_ config: FavouritesConfig) -> ConfigValidationResult {

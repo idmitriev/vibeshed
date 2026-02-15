@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 
 actor BrowserModule: ModuleConfigurable {
     let id = "browser"
@@ -15,6 +16,7 @@ actor BrowserModule: ModuleConfigurable {
     private var config: BrowserConfig = .init()
     private let browserManager = BrowserManager()
     private var context: ModuleContext?
+    private let log = Log.module("browser")
 
     // Cache
     private var tabCache: [TabInfo] = []
@@ -22,11 +24,13 @@ actor BrowserModule: ModuleConfigurable {
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("Browser module initialized")
     }
 
     func configDidUpdate(_ config: BrowserConfig) async {
         self.config = config
         invalidateCache()
+        log.debug("Config updated, cache invalidated")
     }
 
     static func validate(_ config: BrowserConfig) -> ConfigValidationResult {

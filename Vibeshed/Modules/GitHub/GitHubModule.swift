@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 import SwiftUI
 
 actor GitHubModule: ModuleConfigurable {
@@ -14,10 +15,12 @@ actor GitHubModule: ModuleConfigurable {
     private var config: GitHubConfig = .init()
     private var context: ModuleContext?
     private var apiClient: GitHubAPIClient = .init(token: nil)
+    private let log = Log.module("github")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
         updateAPIClient()
+        log.info("GitHub module initialized (token: \(self.config.token != nil ? "configured" : "none"))")
     }
 
     func configDidUpdate(_ config: GitHubConfig) async {
@@ -25,6 +28,7 @@ actor GitHubModule: ModuleConfigurable {
         self.config = config
         if config.token != oldToken {
             updateAPIClient()
+            log.info("API client updated (token changed)")
         }
     }
 

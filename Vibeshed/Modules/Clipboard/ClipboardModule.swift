@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import OSLog
 
 actor ClipboardModule: ModuleConfigurable {
     let id = "clipboard"
@@ -14,6 +15,7 @@ actor ClipboardModule: ModuleConfigurable {
     private var context: ModuleContext?
     private var monitorToken: ClipboardManager.MonitorToken?
     private var history: ClipboardHistory?
+    private let log = Log.module("clipboard")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
@@ -24,12 +26,14 @@ actor ClipboardModule: ModuleConfigurable {
             excludePatterns: config.excludePatterns
         )
         await startMonitoring()
+        log.info("Clipboard module initialized (maxItems: \(self.config.maxItems), interval: \(self.config.pollingInterval)s)")
     }
 
     func teardown() async {
         let token = monitorToken
         await MainActor.run { token?.invalidate() }
         monitorToken = nil
+        log.info("Clipboard module torn down")
     }
 
     func configDidUpdate(_ config: ClipboardConfig) async {
@@ -46,6 +50,7 @@ actor ClipboardModule: ModuleConfigurable {
             let token = monitorToken
             await MainActor.run { token?.invalidate() }
             await startMonitoring()
+            log.debug("Polling interval changed to \(config.pollingInterval)s")
         }
     }
 

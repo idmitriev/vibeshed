@@ -133,6 +133,7 @@ final class PickerCoordinator {
     }
 
     private func executeAction(_ action: any Action, values: [String: Any]) async {
+        Log.picker.debug("Executing action '\(action.id)'")
         do {
             let result = try await action.run(with: values)
             usageTracker?.recordUsage(actionID: action.id)

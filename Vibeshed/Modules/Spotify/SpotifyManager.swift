@@ -1,5 +1,8 @@
 import AppKit
 import Foundation
+import OSLog
+
+private let log = Log.module("spotify")
 
 enum SpotifyError: Error, LocalizedError {
     case scriptFailed(String)
@@ -156,7 +159,10 @@ enum SpotifyManager {
 
     @discardableResult
     private static func runScript(_ script: String) async throws -> String {
-        guard isRunning() else { throw SpotifyError.notRunning }
+        guard isRunning() else {
+            log.debug("Spotify not running, skipping script")
+            throw SpotifyError.notRunning
+        }
 
         return try await withCheckedThrowingContinuation { continuation in
             let process = Process()
@@ -172,6 +178,7 @@ enum SpotifyManager {
             let gate = ResumeGate(continuation: continuation)
 
             let timeoutWorkItem = DispatchWorkItem {
+                log.warning("Spotify AppleScript timed out after 5s")
                 gate.resume(with: .failure(SpotifyError.scriptTimeout))
                 process.terminate()
             }
@@ -186,6 +193,7 @@ enum SpotifyManager {
                 if process.terminationStatus != 0 {
                     let errorMsg = String(data: errorData, encoding: .utf8)?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
+                    log.error("Spotify AppleScript failed (exit \(process.terminationStatus)): \(errorMsg)")
                     gate.resume(with: .failure(SpotifyError.scriptFailed(errorMsg)))
                 } else {
                     let output = String(data: outputData, encoding: .utf8) ?? ""
@@ -199,6 +207,7 @@ enum SpotifyManager {
                 inputPipe.fileHandleForWriting.closeFile()
             } catch {
                 timeoutWorkItem.cancel()
+                log.error("Failed to launch osascript for Spotify: \(error.localizedDescription)")
                 gate.resume(with: .failure(error))
             }
         }

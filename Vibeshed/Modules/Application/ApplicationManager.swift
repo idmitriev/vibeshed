@@ -1,6 +1,9 @@
 import AppKit
 import ApplicationServices
 import CoreGraphics
+import OSLog
+
+private let log = Log.module("application")
 
 struct ApplicationManager: Sendable {
     // MARK: - List Installed Applications
@@ -114,16 +117,21 @@ struct ApplicationManager: Sendable {
 
     @MainActor
     func launchApplication(_ app: AppInfo) async throws {
+        log.debug("Launching application: \(app.name) (\(app.id))")
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
         try await NSWorkspace.shared.openApplication(at: app.bundleURL, configuration: configuration)
+        log.debug("Launched application: \(app.name)")
     }
 
     // MARK: - Focus Application
 
     @MainActor
     func focusApplication(_ app: AppInfo) -> Bool {
-        guard let running = findRunningApp(bundleID: app.id) else { return false }
+        guard let running = findRunningApp(bundleID: app.id) else {
+            log.warning("focusApplication: app not running \(app.id)")
+            return false
+        }
 
         if running == NSWorkspace.shared.frontmostApplication {
             // Already frontmost — cycle to next window
@@ -138,8 +146,15 @@ struct ApplicationManager: Sendable {
 
     @MainActor
     func quitApplication(_ app: AppInfo) -> Bool {
-        guard let running = findRunningApp(bundleID: app.id) else { return false }
-        return running.terminate()
+        guard let running = findRunningApp(bundleID: app.id) else {
+            log.warning("quitApplication: app not running \(app.id)")
+            return false
+        }
+        let result = running.terminate()
+        if !result {
+            log.warning("quitApplication: terminate returned false for \(app.id)")
+        }
+        return result
     }
 
     // MARK: - Window Cycling

@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 actor SystemModule: ModuleConfigurable {
     let id = "system"
@@ -11,13 +12,16 @@ actor SystemModule: ModuleConfigurable {
 
     private var config: SystemConfig = .init()
     private var context: ModuleContext?
+    private let log = Log.module("system")
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
+        log.info("System module initialized")
     }
 
     func configDidUpdate(_ config: SystemConfig) async {
         self.config = config
+        log.debug("Config updated")
     }
 
     static func validate(_ config: SystemConfig) -> ConfigValidationResult {

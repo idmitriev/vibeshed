@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 enum ClipboardContentType: String, Codable, Sendable {
     case text
@@ -33,7 +34,12 @@ final class ClipboardHistory {
     func updateConfig(maxItems: Int, excludePatterns: [String]?) {
         self.maxItems = maxItems
         excludeRegexes = (excludePatterns ?? []).compactMap { pattern in
-            try? NSRegularExpression(pattern: pattern)
+            do {
+                return try NSRegularExpression(pattern: pattern)
+            } catch {
+                Log.module("clipboard").warning("Invalid exclude regex '\(pattern)': \(error.localizedDescription)")
+                return nil
+            }
         }
         trimToMax()
     }

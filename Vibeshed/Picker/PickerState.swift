@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import OSLog
 
 @MainActor
 @Observable
@@ -58,6 +59,7 @@ final class PickerState {
     func pushMode(_ newMode: PickerMode) {
         modeStack.append(mode)
         mode = newMode
+        Log.picker.debug("Mode pushed: \(String(describing: newMode))")
     }
 
     /// Returns `true` if a mode was popped, `false` if already at root (search).

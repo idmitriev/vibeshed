@@ -1,4 +1,7 @@
 import Foundation
+import OSLog
+
+private let log = Log.module("ai")
 
 // MARK: - Data Types
 
@@ -27,6 +30,7 @@ enum AISessionReader {
         providers: [String],
         maxResults: Int
     ) -> [AISession] {
+        log.debug("Reading AI sessions for providers: \(providers.joined(separator: ", "))")
         var sessions: [AISession] = []
 
         let desktopMeta = providers.contains("claudeDesktop")
@@ -57,6 +61,7 @@ enum AISessionReader {
         }
 
         sessions.sort { $0.timestamp > $1.timestamp }
+        log.debug("Total AI sessions found: \(sessions.count)")
         return Array(sessions.prefix(maxResults))
     }
 
@@ -72,7 +77,10 @@ enum AISessionReader {
         ).path
         guard let data = FileManager.default.contents(atPath: path),
               let content = String(data: data, encoding: .utf8)
-        else { return [] }
+        else {
+            log.debug("Claude Code history.jsonl not found or unreadable")
+            return []
+        }
 
         let entries = parseClaudeCodeEntries(content)
         let grouped = Dictionary(grouping: entries, by: \.sessionId)
@@ -175,6 +183,7 @@ enum AISessionReader {
                 "Library/Application Support/Claude/claude-code-sessions"
             )
         guard FileManager.default.fileExists(atPath: base.path) else {
+            log.debug("Claude Desktop sessions directory not found")
             return []
         }
 
@@ -322,7 +331,10 @@ enum AISessionReader {
             atPath: historyPath
         ),
               let content = String(data: data, encoding: .utf8)
-        else { return [] }
+        else {
+            log.debug("Codex history.jsonl not found or unreadable")
+            return []
+        }
 
         let entries = parseCodexEntries(content)
         let grouped = Dictionary(grouping: entries, by: \.sessionId)
