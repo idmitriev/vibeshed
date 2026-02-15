@@ -9,6 +9,7 @@ final class PickerCoordinator {
     private let panelController: PanelController
     private let eventBus: EventBus
     var usageTracker: UsageTracker?
+    var themeEngine: ThemeEngine?
 
     private var currentContext: SystemContext?
     private var parameterQuerySubscription: AnyCancellable?
@@ -210,6 +211,9 @@ final class PickerCoordinator {
                     guard let self else { return }
                     if currentContext == nil {
                         currentContext = SystemContext.capture()
+                        if let ctx = currentContext {
+                            Task { await self.themeEngine?.refresh(context: ctx) }
+                        }
                     }
                     let ctx = currentContext
                     let scoring = usageTracker?.makeScoringContext(query: query, systemContext: ctx)

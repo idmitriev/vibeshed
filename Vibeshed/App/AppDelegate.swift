@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let uriManager: URIManager
     let usageTracker: UsageTracker
     let pickerCoordinator: PickerCoordinator
+    let themeEngine: ThemeEngine
 
     override init() {
         self.eventBus = EventBus()
@@ -26,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             permissionsManager: permissionsManager
         )
         self.usageTracker = UsageTracker()
+        self.themeEngine = ThemeEngine(eventBus: eventBus)
         self.pickerCoordinator = PickerCoordinator(
             pickerState: pickerState,
             moduleRegistry: moduleRegistry,
@@ -33,7 +35,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             eventBus: eventBus
         )
         pickerCoordinator.usageTracker = usageTracker
+        pickerCoordinator.themeEngine = themeEngine
         panelController.coordinator = pickerCoordinator
+        panelController.themeEngine = themeEngine
 
         // keyComboManager and uriManager need panelController, so we init them after
         let panel = panelController
@@ -73,6 +77,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         permissionsManager.checkAll()
         logPermissionStatus()
         permissionsManager.startPeriodicRecheck()
+        themeEngine.start(
+            intensity: configManager.config.appearance.themeIntensity
+        )
         pickerCoordinator.start()
         keyComboManager.startListening()
         keyComboManager.applyBindings(configManager.config.keybindings)

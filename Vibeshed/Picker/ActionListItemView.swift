@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ActionListItemView: View {
     let item: ActionItem
+    @Environment(\.vibeTheme) private var theme
 
     var body: some View {
         HStack(spacing: 10) {
@@ -51,7 +52,7 @@ struct ActionListItemView: View {
         var attributed = AttributedString(string)
         for range in ranges {
             guard let attrRange = Range(range, in: attributed) else { continue }
-            attributed[attrRange].foregroundColor = .accentColor
+            attributed[attrRange].foregroundColor = theme.searchHighlight
             attributed[attrRange].font = .body.bold()
         }
         return attributed

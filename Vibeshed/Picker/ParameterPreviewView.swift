@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ParameterPreviewView: View {
     let state: PickerState
+    @Environment(\.vibeTheme) private var theme
 
     private var action: (any Action)? {
         state.activeAction
@@ -63,7 +64,7 @@ struct ParameterPreviewView: View {
 
         HStack(spacing: 8) {
             Image(systemName: isFilled ? "checkmark.circle.fill" : (isCurrent ? "circle.dotted" : "circle"))
-                .foregroundColor(isFilled ? .green : (isCurrent ? .accentColor : .gray))
+                .foregroundColor(isFilled ? .green : (isCurrent ? theme.accent : .gray))
                 .font(.body)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -93,7 +94,7 @@ struct ParameterPreviewView: View {
         }
         .padding(.vertical, 2)
         .padding(.horizontal, 8)
-        .background(isCurrent ? Color.accentColor.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 6))
+        .background(isCurrent ? theme.selectionHighlight : .clear, in: RoundedRectangle(cornerRadius: 6))
     }
 
     private func displayValue(_ value: Any, for param: ActionParameter) -> String {

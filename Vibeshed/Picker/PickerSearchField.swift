@@ -4,12 +4,13 @@ struct PickerSearchField: View {
     @Binding var text: String
     var placeholder: String = "Search actions..."
     @FocusState private var isFocused: Bool
+    @Environment(\.vibeTheme) private var theme
 
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.title2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.iconTint ?? .secondary)
 
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)

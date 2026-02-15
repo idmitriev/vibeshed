@@ -4,6 +4,7 @@ import SwiftUI
 struct PickerView: View {
     @Bindable var state: PickerState
     let panelController: PanelController
+    @Environment(\.vibeTheme) private var theme
 
     private var coordinator: PickerCoordinator? {
         panelController.coordinator
@@ -55,8 +56,23 @@ struct PickerView: View {
             content
         }
         .frame(width: 680, height: 460)
-        .background(.ultraThinMaterial)
+        .background {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+                if let tint = theme.backgroundTint {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(tint)
+                }
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            if let glow = theme.borderGlow {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(glow, lineWidth: 1)
+            }
+        }
         .accessibilityIdentifier("pickerView")
         .onKeyPress(.downArrow) { state.selectNext(); return .handled }
         .onKeyPress(.upArrow) { state.selectPrevious(); return .handled }

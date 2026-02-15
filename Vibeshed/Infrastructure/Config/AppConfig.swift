@@ -10,5 +10,6 @@ struct AppConfig: Sendable, Equatable {
         var panelWidth: Double = 680
         var panelHeight: Double = 460
         var cornerRadius: Double = 12
+        var themeIntensity: Double = 0
     }
 }

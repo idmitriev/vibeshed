@@ -7,6 +7,7 @@ final class PanelController {
     private var panel: FloatingPanel?
     private let pickerState: PickerState
     var coordinator: PickerCoordinator?
+    var themeEngine: ThemeEngine?
 
     private(set) var isVisible: Bool = false
 
@@ -28,6 +29,16 @@ final class PanelController {
             let x = screenFrame.midX - panel.frame.width / 2
             let y = screenFrame.maxY - panel.frame.height - screenFrame.height * 0.2
             panel.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+
+        if let shadowColor = themeEngine?.theme.shadowColor {
+            panel.contentView?.wantsLayer = true
+            panel.contentView?.layer?.shadowColor = NSColor(shadowColor).cgColor
+            panel.contentView?.layer?.shadowOpacity = 1
+            panel.contentView?.layer?.shadowRadius = 20
+            panel.contentView?.layer?.shadowOffset = .zero
+        } else {
+            panel.contentView?.layer?.shadowOpacity = 0
         }
 
         panel.animateShow()
@@ -57,9 +68,19 @@ final class PanelController {
             }
         }
 
-        newPanel.setSwiftUIContent(
-            PickerView(state: pickerState, panelController: self)
-        )
+        if let engine = themeEngine {
+            newPanel.setSwiftUIContent(
+                ThemedPickerWrapper(
+                    state: pickerState,
+                    panelController: self,
+                    themeEngine: engine
+                )
+            )
+        } else {
+            newPanel.setSwiftUIContent(
+                PickerView(state: pickerState, panelController: self)
+            )
+        }
 
         NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
@@ -73,5 +94,21 @@ final class PanelController {
 
         panel = newPanel
         return newPanel
+    }
+}
+
+// MARK: - Themed Wrapper
+
+/// Observes ThemeEngine and injects VibeTheme into the SwiftUI environment.
+/// Needed because NSHostingView content is set once, but @Observable
+/// dependency on themeEngine triggers re-renders when theme changes.
+private struct ThemedPickerWrapper: View {
+    @Bindable var state: PickerState
+    let panelController: PanelController
+    let themeEngine: ThemeEngine
+
+    var body: some View {
+        PickerView(state: state, panelController: panelController)
+            .environment(\.vibeTheme, themeEngine.theme)
     }
 }
