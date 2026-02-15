@@ -1,0 +1,356 @@
+# ~/.config/vibeshed/config.yaml
+# Vibeshed — macOS launcher configuration
+# Copy this file to ~/.config/vibeshed/config.yaml and customize.
+
+appearance:
+  panelWidth: 680
+  panelHeight: 460
+  cornerRadius: 12
+  themeIntensity: 0.5       # 0 = off, 0.3+ bg tint, 0.6+ icon tint, 0.8+ glow
+
+# ---------------------------------------------------------------------------
+# Keybindings
+# ---------------------------------------------------------------------------
+# Modifiers: cmd, ctrl, option/alt, shift, capslock (hyper), space
+# Keys: a-z, 0-9, f1-f20, arrows, return, tab, space, escape, delete,
+#        minus/-,  equal/=, leftbracket/[, rightbracket/], semicolon/;,
+#        quote/', comma/,, period/., slash//, backslash/\, backtick/`
+# Mouse: mouse1-mouse5, with optional modifier (ctrl+mouse4)
+#
+# "capslock+key" mirrors hyper layer from Hammerspoon/Karabiner setup.
+# ---------------------------------------------------------------------------
+keybindings:
+  # --- picker ---
+  - combo: "capslock+p"
+    action: "app.togglePicker"
+
+  # --- app focus (hyper + number row) ---
+  - combo: "capslock+1"
+    action: "favourites.Safari"
+  - combo: "capslock+2"
+    action: "favourites.Chrome"
+  - combo: "capslock+3"
+    action: "favourites.Zen"
+  - combo: "capslock+4"
+    action: "favourites.IntelliJ"
+  - combo: "capslock+5"
+    action: "favourites.VSCode"
+  - combo: "capslock+6"
+    action: "favourites.Spotify"
+  - combo: "capslock+7"
+    action: "favourites.Notes"
+  - combo: "capslock+8"
+    action: "favourites.Zoom"
+  - combo: "capslock+9"
+    action: "favourites.Telegram"
+  - combo: "capslock+0"
+    action: "favourites.iTerm"
+
+  # --- window management (hyper + letters) ---
+  - combo: "capslock+a"
+    action: "window.cycleLeft"
+  - combo: "capslock+h"
+    action: "window.cycleLeft"
+  - combo: "capslock+d"
+    action: "window.cycleRight"
+  - combo: "capslock+l"
+    action: "window.cycleRight"
+  - combo: "capslock+w"
+    action: "window.cycleTop"
+  - combo: "capslock+s"
+    action: "window.cycleBottom"
+  - combo: "capslock+m"
+    action: "window.maximize"
+  - combo: "capslock+r"
+    action: "window.center"
+  - combo: "capslock+backslash"
+    action: "window.tileLeft"          # split show 2 windows side by side
+  - combo: "capslock+n"
+    action: "window.focusWindow"       # move window to next screen
+  - combo: "capslock+minus"
+    action: "audio.volumeDown"         # make smaller → volume down
+  - combo: "capslock+equal"
+    action: "audio.volumeUp"           # make bigger → volume up
+
+  # --- window focus ---
+  - combo: "capslock+leftbracket"
+    action: "window.focusWindow"
+  - combo: "capslock+comma"
+    action: "window.focusWindow"
+  - combo: "capslock+rightbracket"
+    action: "window.focusWindow"
+  - combo: "capslock+period"
+    action: "window.focusWindow"
+
+  # --- system ---
+  - combo: "capslock+q"
+    action: "system.lock"
+
+  # --- mouse buttons ---
+  - combo: "mouse4"
+    action: "audio.previousTrack"
+  - combo: "mouse5"
+    action: "audio.nextTrack"
+
+# ---------------------------------------------------------------------------
+# Modules
+# ---------------------------------------------------------------------------
+modules:
+
+  # --- Window Management ---
+  # Requires: accessibility, screenRecording
+  window:
+    horizontalStops:
+      - { value: 50, unit: percent }
+      - { value: 33.33, unit: percent }
+      - { value: 66.67, unit: percent }
+      - { value: 100, unit: percent }
+    verticalStops:
+      - { value: 50, unit: percent }
+      - { value: 100, unit: percent }
+    padding:
+      top: 0
+      bottom: 0
+      left: 0
+      right: 0
+      gap: 8
+    includeMinimized: false
+
+  # --- Application Launcher ---
+  application:
+    showRunningOnly: false
+    excludedBundleIDs:
+      - "com.apple.Dock"
+      - "com.apple.loginwindow"
+
+  # --- Browser Tabs ---
+  # Requires: automation
+  browser:
+    browsers: []               # empty = all running supported browsers
+    cacheTTLSeconds: 3.0
+    maxResults: 50
+    showCloseActions: true
+
+  # --- Favourites (quick-access shortcuts) ---
+  favourites:
+    favourites:
+      # App-focus shortcuts (bound to hyper + 1-0 above)
+      - alias: "Safari"
+        action: "application.focus"
+        icon: "safari"
+        subtitle: "Primary browser"
+        parameters: { bundleID: "com.apple.Safari" }
+
+      - alias: "Chrome"
+        action: "application.focus"
+        icon: "globe"
+        subtitle: "Secondary browser"
+        parameters: { bundleID: "com.google.Chrome" }
+
+      - alias: "Zen"
+        action: "application.focus"
+        icon: "globe"
+        subtitle: "Tertiary browser"
+        parameters: { bundleID: "app.zen-browser.zen" }
+
+      - alias: "IntelliJ"
+        action: "application.focus"
+        icon: "hammer"
+        subtitle: "Primary editor"
+        parameters: { bundleID: "com.jetbrains.intellij" }
+
+      - alias: "VSCode"
+        action: "application.focus"
+        icon: "chevron.left.forwardslash.chevron.right"
+        subtitle: "Secondary editor"
+        parameters: { bundleID: "com.microsoft.VSCode" }
+
+      - alias: "Spotify"
+        action: "application.focus"
+        icon: "music.note"
+        subtitle: "Music"
+        parameters: { bundleID: "com.spotify.client" }
+
+      - alias: "Notes"
+        action: "application.focus"
+        icon: "note.text"
+        subtitle: "Apple Notes"
+        parameters: { bundleID: "com.apple.Notes" }
+
+      - alias: "Zoom"
+        action: "application.focus"
+        icon: "video"
+        subtitle: "Video calls"
+        parameters: { bundleID: "us.zoom.xos" }
+
+      - alias: "Telegram"
+        action: "application.focus"
+        icon: "paperplane"
+        subtitle: "Messaging"
+        parameters: { bundleID: "ru.keepcoder.Telegram" }
+
+      - alias: "iTerm"
+        action: "application.focus"
+        icon: "terminal"
+        subtitle: "Terminal"
+        parameters: { bundleID: "com.googlecode.iterm2" }
+
+      # Utility shortcuts
+      - alias: "Lock Screen"
+        action: "system.lock"
+        icon: "lock"
+        keywords: ["security", "away"]
+
+      - alias: "Toggle Dark Mode"
+        action: "system.toggleAppearance"
+        icon: "circle.lefthalf.filled"
+        keywords: ["theme", "light", "dark"]
+
+      - alias: "Search GitHub"
+        action: "github.searchRepos"
+        icon: "magnifyingglass"
+        subtitle: "Search GitHub repos..."
+        parameters:
+          query: "{query}"
+
+      - alias: "Search Spotify"
+        action: "spotify.search"
+        icon: "music.note"
+        subtitle: "Search tracks, albums, artists..."
+        parameters:
+          query: "{query}"
+
+  # --- System Utilities ---
+  system:
+    screenshotPath: "~/Screenshots"
+    enabledActions:
+      - lock
+      - sleep
+      - restart
+      - shutdown
+      - logout
+      - toggleAppearance
+      - autoAppearance
+      - emptyTrash
+      - screenshotFull
+      - screenshotClipboard
+      - screenshotInteractive
+      - flushDNS
+      - purgeMemory
+
+  # --- Audio Control ---
+  audio:
+    volumeSteps: [25, 50, 75, 100]
+    volumeStep: 10
+
+  # --- Clipboard History ---
+  clipboard:
+    maxItems: 200
+    pollingInterval: 0.5
+    showClearAction: true
+    pasteOnSelect: true
+    excludePatterns:
+      - "^ghp_"              # GitHub tokens
+      - "^sk-"               # OpenAI API keys
+      - "^AKIA"              # AWS access keys
+
+  # --- Spotify ---
+  # Requires: automation
+  # Get clientId from https://developer.spotify.com/dashboard
+  spotify:
+    clientId: null            # set to enable Web API search
+    maxSearchResults: 10
+    searchTypes: [track, album, artist, playlist]
+    showNowPlaying: true
+
+  # --- GitHub ---
+  # Token: https://github.com/settings/tokens (repo, notifications scopes)
+  github:
+    token: null               # set to increase rate limit & enable notifications
+    defaultOwner: null        # e.g. "myorg" — scopes searches to org by default
+    maxResults: 10
+    searchTypes: [repo, issue, pr]
+    showNotifications: true
+
+  # --- VSCode / Cursor / Windsurf ---
+  vscode:
+    maxResults: 20
+    showFiles: false
+    showRemote: false
+    variants:
+      "Cursor": "Cursor"
+      "Windsurf": "Windsurf"
+
+  # --- iTerm Sessions ---
+  # Requires: automation
+  iterm:
+    maxResults: 20
+    showCWD: true
+    showJobName: true
+    commands:
+      "Top": "btop"
+      "Lazygit": "lazygit"
+      "Lazydocker": "lazydocker"
+      "SSH Dev": "ssh user@dev.example.com"
+
+  # --- AI Sessions (Claude Code, Codex) ---
+  ai:
+    maxResults: 20
+    providers:
+      - claudeCode
+      - claudeDesktop
+      - codex
+    showLaunchers: true
+    terminalApp: "iterm"
+
+  # --- Telegram ---
+  telegram:
+    showLaunchAction: true
+    showSavedMessages: true
+    chats:
+      - name: "Saved Messages"
+        username: "saved"
+        type: chat
+        icon: "bookmark"
+
+  # --- Self (Vibeshed meta-actions) ---
+  self:
+    enabledActions:
+      - openConfig
+      - openConfigDir
+      - reloadConfig
+      - moduleStatus
+      - openLogs
+      - quit
+
+# ---------------------------------------------------------------------------
+# URL Routing (default browser replacement)
+# ---------------------------------------------------------------------------
+# Pattern syntax:
+#   Glob:  *.example.com/*
+#   Regex: /pattern/
+# Browser names: safari, chrome, firefox, brave, edge, arc, orion, vivaldi, opera
+# ---------------------------------------------------------------------------
+urlRouting:
+  registerAsDefaultBrowser: false
+  defaultBrowser: "safari"
+  rules:
+    # Work tools in Chrome
+    - pattern: "*.github.com/*"
+      browser: "chrome"
+    - pattern: "*.linear.app/*"
+      browser: "chrome"
+    - pattern: "*.notion.so/*"
+      browser: "chrome"
+    - pattern: "*.slack.com/*"
+      browser: "chrome"
+    - pattern: "*.figma.com/*"
+      browser: "chrome"
+
+    # Google services in Chrome
+    - pattern: "/.*\\.google\\.com/"
+      browser: "chrome"
+    - pattern: "*.googleapis.com/*"
+      browser: "chrome"
+
+    # Everything else falls through to defaultBrowser (Safari)
