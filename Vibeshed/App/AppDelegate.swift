@@ -122,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(VSCodeModule())
             await registerModule(ITermModule())
             await registerModule(AIModule())
+            await registerModule(TelegramModule())
             showPermissionAlertIfNeeded()
         }
     }

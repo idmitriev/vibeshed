@@ -166,12 +166,12 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for searching sessions in chatgpt, claude and opening them in the browser or claude-desktop/chatgpt-desktop/codex-deskop apps if they are installed
 - [x] Provide SwiftUI views for AI chat actions in the picker, showing session titles and latest message previews
 
-### Phase 23: Telegram module
+### Phase 23: Telegram module (DONE)
 
-- [ ] Create a Telegram module that can search and open chats and groups in the Telegram desktop app
-- [ ] Research if Telegram provides any APIs or AppleScript support for searching and opening chats/groups. If not, implement a solution using accessibility APIs to interact with the Telegram desktop app UI to perform these actions. If nothing works, read chats and groups ids from config file
-- [ ] Implement actions for searching chats and groups in Telegram based on their name and opening them in the Telegram desktop app
-- [ ] Provide SwiftUI views for Telegram chat actions in the picker, showing chat/group names
+- [x] Create a Telegram module that can search and open chats and groups in the Telegram desktop app
+- [x] Research if Telegram provides any APIs or AppleScript support for searching and opening chats/groups. If not, implement a solution using accessibility APIs to interact with the Telegram desktop app UI to perform these actions. If nothing works, read chats and groups ids from config file
+- [x] Implement actions for searching chats and groups in Telegram based on their name and opening them in the Telegram desktop app
+- [x] Provide SwiftUI views for Telegram chat actions in the picker, showing chat/group names
 
 ### Phase 24: Self module
 
