@@ -61,7 +61,7 @@ struct WindowManager: Sendable {
 
     func focusWindow(_ window: WindowInfo) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log.error("focusWindow: could not resolve windowID=\(window.id) pid=\(window.pid)")
+            log.error("focusWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)")
             throw WindowManagerError.windowNotFound
         }
         AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
@@ -74,7 +74,7 @@ struct WindowManager: Sendable {
 
     func setFrame(_ window: WindowInfo, frame: CGRect) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log.error("setFrame: could not resolve windowID=\(window.id) pid=\(window.pid)")
+            log.error("setFrame: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)")
             throw WindowManagerError.windowNotFound
         }
 
@@ -102,7 +102,7 @@ struct WindowManager: Sendable {
 
     func minimizeWindow(_ window: WindowInfo) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log.error("minimizeWindow: could not resolve windowID=\(window.id) pid=\(window.pid)")
+            log.error("minimizeWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)")
             throw WindowManagerError.windowNotFound
         }
         AXUIElementSetAttributeValue(

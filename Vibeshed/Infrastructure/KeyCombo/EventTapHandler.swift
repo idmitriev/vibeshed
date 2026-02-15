@@ -195,7 +195,7 @@ final class EventTapHandler: @unchecked Sendable {
         switch type {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             if let port = tapPort {
-                Log.keybindings.debug("Event tap re-enabled after \(type == .tapDisabledByTimeout ? "timeout" : "user input")")
+                Log.keybindings.debug("Event tap re-enabled after \(type == .tapDisabledByTimeout ? "timeout" : "user input", privacy: .public)")
                 CGEvent.tapEnable(tap: port, enable: true)
             }
             return Unmanaged.passUnretained(event)

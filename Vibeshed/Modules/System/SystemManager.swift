@@ -15,7 +15,7 @@ enum SystemManager {
         do {
             try task.run()
         } catch {
-            log.warning("lockScreen: pmset failed: \(error.localizedDescription)")
+            log.warning("lockScreen: pmset failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -26,7 +26,7 @@ enum SystemManager {
         do {
             try task.run()
         } catch {
-            log.warning("sleep: pmset failed: \(error.localizedDescription)")
+            log.warning("sleep: pmset failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -66,7 +66,7 @@ enum SystemManager {
         do {
             try task.run()
         } catch {
-            log.warning("setAutoAppearance: defaults delete failed: \(error.localizedDescription)")
+            log.warning("setAutoAppearance: defaults delete failed: \(error.localizedDescription, privacy: .public)")
         }
         task.waitUntilExit()
 
@@ -89,7 +89,7 @@ enum SystemManager {
         do {
             try notify.run()
         } catch {
-            log.warning("setAutoAppearance: notify script failed: \(error.localizedDescription)")
+            log.warning("setAutoAppearance: notify script failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -166,7 +166,7 @@ enum SystemManager {
         try task.run()
         task.waitUntilExit()
         if task.terminationStatus != 0 {
-            log.error("AppleScript exited with status \(task.terminationStatus)")
+            log.error("AppleScript exited with status \(task.terminationStatus, privacy: .public)")
         }
     }
 }

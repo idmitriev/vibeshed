@@ -107,9 +107,9 @@ final class ClipboardHistory {
             decoder.dateDecodingStrategy = .iso8601
             let stored = try decoder.decode(StoredHistory.self, from: data)
             items = stored.items
-            Log.modules.info("Loaded clipboard history: \(self.items.count) items")
+            Log.modules.info("Loaded clipboard history: \(self.items.count, privacy: .public) items")
         } catch {
-            Log.modules.error("Failed to load clipboard history: \(error.localizedDescription)")
+            Log.modules.error("Failed to load clipboard history: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -133,7 +133,7 @@ final class ClipboardHistory {
             let data = try encoder.encode(stored)
             try data.write(to: storageURL, options: .atomic)
         } catch {
-            Log.modules.error("Failed to save clipboard history: \(error.localizedDescription)")
+            Log.modules.error("Failed to save clipboard history: \(error.localizedDescription, privacy: .public)")
         }
     }
 

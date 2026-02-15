@@ -213,6 +213,7 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase 31: Releases and distribution
 
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
+- [ ] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems
 - [ ] Publish the app on github with proper license, readme, and some documentation
 - [ ] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
 - [ ] Make sure it has a kickass name and icon

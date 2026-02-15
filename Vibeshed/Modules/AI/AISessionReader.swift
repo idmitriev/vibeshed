@@ -30,7 +30,7 @@ enum AISessionReader {
         providers: [String],
         maxResults: Int
     ) -> [AISession] {
-        log.debug("Reading AI sessions for providers: \(providers.joined(separator: ", "))")
+        log.debug("Reading AI sessions for providers: \(providers.joined(separator: ", "), privacy: .public)")
         var sessions: [AISession] = []
 
         let desktopMeta = providers.contains("claudeDesktop")
@@ -61,7 +61,7 @@ enum AISessionReader {
         }
 
         sessions.sort { $0.timestamp > $1.timestamp }
-        log.debug("Total AI sessions found: \(sessions.count)")
+        log.debug("Total AI sessions found: \(sessions.count, privacy: .public)")
         return Array(sessions.prefix(maxResults))
     }
 

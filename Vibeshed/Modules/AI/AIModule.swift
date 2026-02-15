@@ -22,7 +22,7 @@ actor AIModule: ModuleConfigurable {
     func initialize(context: ModuleContext) async throws {
         self.context = context
         refreshCache()
-        log.info("AI module initialized (\(self.cachedSessions.count) sessions found)")
+        log.info("AI module initialized (\(self.cachedSessions.count, privacy: .public) sessions found)")
     }
 
     func teardown() async {
@@ -32,7 +32,7 @@ actor AIModule: ModuleConfigurable {
     func configDidUpdate(_ config: AIConfig) async {
         self.config = config
         refreshCache()
-        log.debug("Config updated, cache refreshed (\(self.cachedSessions.count) sessions)")
+        log.debug("Config updated, cache refreshed (\(self.cachedSessions.count, privacy: .public) sessions)")
     }
 
     static func validate(

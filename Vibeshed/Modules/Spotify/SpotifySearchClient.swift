@@ -118,7 +118,7 @@ final class SpotifySearchClient: @unchecked Sendable {
                 return try await search(query: query, types: types, limit: limit)
             }
             guard (200 ... 299).contains(httpResponse.statusCode) else {
-                log.error("Spotify API error: HTTP \(httpResponse.statusCode)")
+                log.error("Spotify API error: HTTP \(httpResponse.statusCode, privacy: .public)")
                 throw SearchError.apiError(httpResponse.statusCode)
             }
         }
@@ -181,7 +181,7 @@ final class SpotifySearchClient: @unchecked Sendable {
         else {
             let error = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
                 .queryItems?.first(where: { $0.name == "error" })?.value ?? "no code"
-            log.error("Spotify OAuth callback error: \(error)")
+            log.error("Spotify OAuth callback error: \(error, privacy: .public)")
             throw SearchError.authFailed(error)
         }
 
@@ -337,7 +337,7 @@ final class SpotifySearchClient: @unchecked Sendable {
         do {
             try data.write(to: tokenFileURL, options: .atomic)
         } catch {
-            log.warning("Failed to save Spotify tokens: \(error.localizedDescription)")
+            log.warning("Failed to save Spotify tokens: \(error.localizedDescription, privacy: .public)")
         }
     }
 

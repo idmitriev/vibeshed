@@ -117,11 +117,11 @@ struct ApplicationManager: Sendable {
 
     @MainActor
     func launchApplication(_ app: AppInfo) async throws {
-        log.debug("Launching application: \(app.name) (\(app.id))")
+        log.debug("Launching application: \(app.name, privacy: .public) (\(app.id, privacy: .public))")
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
         try await NSWorkspace.shared.openApplication(at: app.bundleURL, configuration: configuration)
-        log.debug("Launched application: \(app.name)")
+        log.debug("Launched application: \(app.name, privacy: .public)")
     }
 
     // MARK: - Focus Application
@@ -129,7 +129,7 @@ struct ApplicationManager: Sendable {
     @MainActor
     func focusApplication(_ app: AppInfo) -> Bool {
         guard let running = findRunningApp(bundleID: app.id) else {
-            log.warning("focusApplication: app not running \(app.id)")
+            log.warning("focusApplication: app not running \(app.id, privacy: .public)")
             return false
         }
 
@@ -147,12 +147,12 @@ struct ApplicationManager: Sendable {
     @MainActor
     func quitApplication(_ app: AppInfo) -> Bool {
         guard let running = findRunningApp(bundleID: app.id) else {
-            log.warning("quitApplication: app not running \(app.id)")
+            log.warning("quitApplication: app not running \(app.id, privacy: .public)")
             return false
         }
         let result = running.terminate()
         if !result {
-            log.warning("quitApplication: terminate returned false for \(app.id)")
+            log.warning("quitApplication: terminate returned false for \(app.id, privacy: .public)")
         }
         return result
     }

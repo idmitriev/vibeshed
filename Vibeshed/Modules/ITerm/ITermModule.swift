@@ -218,7 +218,7 @@ actor ITermModule: ModuleConfigurable {
         do {
             sessions = try await ITermManager.listSessions()
         } catch {
-            log.error("Failed to list iTerm sessions: \(error.localizedDescription)")
+            log.error("Failed to list iTerm sessions: \(error.localizedDescription, privacy: .public)")
             return []
         }
 

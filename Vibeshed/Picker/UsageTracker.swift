@@ -41,9 +41,9 @@ final class UsageTracker {
             let stored = try JSONDecoder().decode(StoredUsage.self, from: data)
             usageCounts = stored.counts
             lastUsedDates = stored.lastUsed
-            Log.picker.info("Loaded usage data: \(self.usageCounts.count) actions tracked")
+            Log.picker.info("Loaded usage data: \(self.usageCounts.count, privacy: .public) actions tracked")
         } catch {
-            Log.picker.error("Failed to load usage data: \(error.localizedDescription)")
+            Log.picker.error("Failed to load usage data: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -67,7 +67,7 @@ final class UsageTracker {
             let data = try encoder.encode(stored)
             try data.write(to: storageURL, options: .atomic)
         } catch {
-            Log.picker.error("Failed to save usage data: \(error.localizedDescription)")
+            Log.picker.error("Failed to save usage data: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

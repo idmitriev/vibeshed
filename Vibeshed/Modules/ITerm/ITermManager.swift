@@ -72,7 +72,7 @@ enum ITermManager {
         let script = buildListSessionsScript()
         let output = try await runScript(script)
         let sessions = parseSessions(output)
-        log.debug("Found \(sessions.count) iTerm sessions")
+        log.debug("Found \(sessions.count, privacy: .public) iTerm sessions")
         return sessions
     }
 
@@ -331,7 +331,7 @@ enum ITermManager {
                         .trimmingCharacters(
                             in: .whitespacesAndNewlines
                         ) ?? "Unknown error"
-                    log.error("iTerm AppleScript failed (exit \(process.terminationStatus)): \(msg)")
+                    log.error("iTerm AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(msg, privacy: .public)")
                     gate.resume(
                         with: .failure(ITermError.scriptFailed(msg))
                     )
@@ -350,7 +350,7 @@ enum ITermManager {
                 inputPipe.fileHandleForWriting.closeFile()
             } catch {
                 timeout.cancel()
-                log.error("Failed to launch osascript for iTerm: \(error.localizedDescription)")
+                log.error("Failed to launch osascript for iTerm: \(error.localizedDescription, privacy: .public)")
                 gate.resume(with: .failure(error))
             }
         }

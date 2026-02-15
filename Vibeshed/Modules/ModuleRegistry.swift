@@ -47,7 +47,7 @@ final class ModuleRegistry {
                 let error = PermissionError.denied(moduleID: id, permissions: missing)
                 permissionErrors[id] = error
                 pendingModules[id] = module
-                Log.modules.error("Module '\(id)' not loaded: \(error.localizedDescription)")
+                Log.modules.error("Module '\(id, privacy: .public)' not loaded: \(error.localizedDescription, privacy: .public)")
                 await eventBus.publish(.modulePermissionError(moduleID: id, missing: missing))
                 return
             }
@@ -64,7 +64,7 @@ final class ModuleRegistry {
                 let message = (error as? ModuleConfigError)?.errorDescription
                     ?? error.localizedDescription
                 configErrors[id] = message
-                Log.modules.error("Module '\(id)' not loaded: \(message)")
+                Log.modules.error("Module '\(id, privacy: .public)' not loaded: \(message, privacy: .public)")
                 await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
                 return
             }
@@ -90,7 +90,7 @@ final class ModuleRegistry {
         moduleIDs.append(id)
         permissionErrors.removeValue(forKey: id)
         pendingModules.removeValue(forKey: id)
-        Log.modules.info("Registered module: \(id)")
+        Log.modules.info("Registered module: \(id, privacy: .public)")
         await eventBus.publish(.moduleRegistered(id))
     }
 
@@ -102,7 +102,7 @@ final class ModuleRegistry {
         permissionErrors.removeValue(forKey: id)
         pendingModules.removeValue(forKey: id)
         await module.teardown()
-        Log.modules.info("Unregistered module: \(id)")
+        Log.modules.info("Unregistered module: \(id, privacy: .public)")
         await eventBus.publish(.moduleUnregistered(id))
     }
 
@@ -183,7 +183,7 @@ final class ModuleRegistry {
                 let message = (error as? ModuleConfigError)?.errorDescription
                     ?? error.localizedDescription
                 configErrors[id] = message
-                Log.modules.error("Config change rejected for module '\(id)': \(message)")
+                Log.modules.error("Config change rejected for module '\(id, privacy: .public)': \(message, privacy: .public)")
                 await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
             }
         }
@@ -195,14 +195,14 @@ final class ModuleRegistry {
             let required = type(of: module).requiredPermissions
             let missing = permissionsManager.missingPermissions(from: required)
             if missing.isEmpty {
-                Log.modules.info("Retrying module '\(id)' after permission grant")
+                Log.modules.info("Retrying module '\(id, privacy: .public)' after permission grant")
                 Log.stderr("  ↻ module: \(id) — retrying after permission grant")
                 do {
                     try await register(module)
                     Log.stderr("  ✓ module: \(id) — loaded")
                 } catch {
                     Log.stderr("  ✗ module: \(id) — retry failed: \(error.localizedDescription)")
-                    Log.modules.error("Retry failed for module '\(id)': \(error.localizedDescription)")
+                    Log.modules.error("Retry failed for module '\(id, privacy: .public)': \(error.localizedDescription, privacy: .public)")
                 }
             }
         }

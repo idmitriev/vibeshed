@@ -20,7 +20,7 @@ actor SpotifyModule: ModuleConfigurable {
     func initialize(context: ModuleContext) async throws {
         self.context = context
         updateSearchClient()
-        log.info("Spotify module initialized (searchClient: \(self.searchClient != nil ? "enabled" : "disabled"))")
+        log.info("Spotify module initialized (searchClient: \(self.searchClient != nil ? "enabled" : "disabled", privacy: .public))")
     }
 
     func configDidUpdate(_ config: SpotifyConfig) async {

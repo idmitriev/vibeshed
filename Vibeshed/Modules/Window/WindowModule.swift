@@ -27,7 +27,9 @@ actor WindowModule: ModuleConfigurable {
 
     func configDidUpdate(_ config: WindowConfig) async {
         self.config = config
-        log.debug("Config updated: \(config.horizontalStops.count) h-stops, \(config.verticalStops.count) v-stops")
+        log.debug(
+            "Config updated: \(config.horizontalStops.count, privacy: .public) h-stops, \(config.verticalStops.count, privacy: .public) v-stops"
+        )
     }
 
     static func validate(_ config: WindowConfig) -> ConfigValidationResult {

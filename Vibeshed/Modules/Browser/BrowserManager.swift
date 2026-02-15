@@ -43,13 +43,13 @@ struct BrowserManager: Sendable {
     // MARK: - Tab Listing
 
     func listTabs(for bundleID: String, browserName: String) async throws -> [TabInfo] {
-        log.debug("Listing tabs for \(browserName) (\(bundleID))")
+        log.debug("Listing tabs for \(browserName, privacy: .public) (\(bundleID, privacy: .public))")
         let script = bundleID == "com.apple.Safari"
             ? safariListScript()
             : chromiumListScript(bundleID: bundleID)
         let output = try await runAppleScript(script)
         let tabs = parseTabOutput(output, bundleID: bundleID, browserName: browserName)
-        log.debug("Found \(tabs.count) tabs in \(browserName)")
+        log.debug("Found \(tabs.count, privacy: .public) tabs in \(browserName, privacy: .public)")
         return tabs
     }
 
@@ -61,7 +61,7 @@ struct BrowserManager: Sendable {
                     do {
                         return try await self.listTabs(for: browser.bundleID, browserName: browser.name)
                     } catch {
-                        log.warning("listAllTabs: failed for \(browser.name): \(error.localizedDescription)")
+                        log.warning("listAllTabs: failed for \(browser.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
                         return []
                     }
                 }
@@ -78,7 +78,7 @@ struct BrowserManager: Sendable {
 
     func focusTab(_ tab: TabInfo) async throws {
         guard BrowserRegistry.isRunning( tab.browserBundleID) else {
-            log.error("focusTab: browser not running \(tab.browserName)")
+            log.error("focusTab: browser not running \(tab.browserName, privacy: .public)")
             throw BrowserError.browserNotRunning(tab.browserName)
         }
 
@@ -87,7 +87,7 @@ struct BrowserManager: Sendable {
         guard let current = currentTabs.first(where: { $0.title == tab.title && $0.url == tab.url })
             ?? currentTabs.first(where: { $0.url == tab.url })
         else {
-            log.error("focusTab: tab not found after re-query: \(tab.displayLabel)")
+            log.error("focusTab: tab not found after re-query: \(tab.displayLabel, privacy: .public)")
             throw BrowserError.tabNotFound(tab.displayLabel)
         }
 
@@ -106,7 +106,7 @@ struct BrowserManager: Sendable {
 
     func closeTab(_ tab: TabInfo) async throws {
         guard BrowserRegistry.isRunning( tab.browserBundleID) else {
-            log.error("closeTab: browser not running \(tab.browserName)")
+            log.error("closeTab: browser not running \(tab.browserName, privacy: .public)")
             throw BrowserError.browserNotRunning(tab.browserName)
         }
 
@@ -114,7 +114,7 @@ struct BrowserManager: Sendable {
         guard let current = currentTabs.first(where: { $0.title == tab.title && $0.url == tab.url })
             ?? currentTabs.first(where: { $0.url == tab.url })
         else {
-            log.error("closeTab: tab not found after re-query: \(tab.displayLabel)")
+            log.error("closeTab: tab not found after re-query: \(tab.displayLabel, privacy: .public)")
             throw BrowserError.tabNotFound(tab.displayLabel)
         }
 
@@ -278,7 +278,7 @@ struct BrowserManager: Sendable {
                 if process.terminationStatus != 0 {
                     let errorMsg = String(data: errorData, encoding: .utf8)?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
-                    log.error("AppleScript failed (exit \(process.terminationStatus)): \(errorMsg)")
+                    log.error("AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(errorMsg, privacy: .public)")
                     gate.resume(with: .failure(BrowserError.scriptFailed(errorMsg)))
                 } else {
                     let output = String(data: outputData, encoding: .utf8) ?? ""
@@ -292,7 +292,7 @@ struct BrowserManager: Sendable {
                 inputPipe.fileHandleForWriting.closeFile()
             } catch {
                 timeoutWorkItem.cancel()
-                log.error("Failed to launch osascript: \(error.localizedDescription)")
+                log.error("Failed to launch osascript: \(error.localizedDescription, privacy: .public)")
                 gate.resume(with: .failure(error))
             }
         }

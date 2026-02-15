@@ -107,7 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let existing = others.first else { return true }
 
         Log.app.warning(
-            "Another Vibeshed instance already running (PID \(existing.processIdentifier)). Terminating."
+            "Another Vibeshed instance already running (PID \(existing.processIdentifier, privacy: .public)). Terminating."
         )
         existing.activate()
         DispatchQueue.main.async {
@@ -187,7 +187,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try await moduleRegistry.register(module)
         } catch {
             Log.stderr("  ✗ module: \(id) — \(error.localizedDescription)")
-            Log.app.error("Failed to register \(id) module: \(error.localizedDescription)")
+            Log.app.error("Failed to register \(id, privacy: .public) module: \(error.localizedDescription, privacy: .public)")
             return
         }
         // register() returns without throwing when blocked by permissions — check if actually loaded

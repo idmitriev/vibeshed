@@ -16,12 +16,12 @@ actor FavouritesModule: ModuleConfigurable {
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
-        log.info("Favourites module initialized (\(self.config.favourites.count) favourites)")
+        log.info("Favourites module initialized (\(self.config.favourites.count, privacy: .public) favourites)")
     }
 
     func configDidUpdate(_ config: FavouritesConfig) async {
         self.config = config
-        log.debug("Config updated (\(config.favourites.count) favourites)")
+        log.debug("Config updated (\(config.favourites.count, privacy: .public) favourites)")
     }
 
     static func validate(_ config: FavouritesConfig) -> ConfigValidationResult {

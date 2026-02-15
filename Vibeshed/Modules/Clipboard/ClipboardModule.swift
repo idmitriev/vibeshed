@@ -26,7 +26,9 @@ actor ClipboardModule: ModuleConfigurable {
             excludePatterns: config.excludePatterns
         )
         await startMonitoring()
-        log.info("Clipboard module initialized (maxItems: \(self.config.maxItems), interval: \(self.config.pollingInterval)s)")
+        let maxItems = self.config.maxItems
+        let interval = self.config.pollingInterval
+        log.info("Clipboard module initialized (maxItems: \(maxItems, privacy: .public), interval: \(interval, privacy: .public)s)")
     }
 
     func teardown() async {
@@ -50,7 +52,7 @@ actor ClipboardModule: ModuleConfigurable {
             let token = monitorToken
             await MainActor.run { token?.invalidate() }
             await startMonitoring()
-            log.debug("Polling interval changed to \(config.pollingInterval)s")
+            log.debug("Polling interval changed to \(config.pollingInterval, privacy: .public)s")
         }
     }
 

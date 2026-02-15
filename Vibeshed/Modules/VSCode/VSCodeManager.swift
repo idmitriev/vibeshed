@@ -65,7 +65,7 @@ enum VSCodeManager {
             if FileManager.default.isExecutableFile(atPath: custom) {
                 return custom
             }
-            log.warning("Custom code CLI path not executable: \(custom)")
+            log.warning("Custom code CLI path not executable: \(custom, privacy: .public)")
             return nil
         }
         let candidates = [
@@ -102,7 +102,7 @@ enum VSCodeManager {
             do {
                 try process.run()
             } catch {
-                log.warning("openProject: code CLI failed: \(error.localizedDescription)")
+                log.warning("openProject: code CLI failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -123,7 +123,7 @@ enum VSCodeManager {
             .path
 
         guard FileManager.default.fileExists(atPath: dbPath) else {
-            log.debug("No state.vscdb for \(variant) at \(dbPath)")
+            log.debug("No state.vscdb for \(variant, privacy: .public) at \(dbPath, privacy: .public)")
             return []
         }
 
@@ -145,7 +145,7 @@ enum VSCodeManager {
         guard sqlite3_open_v2(
             dbPath, &db, SQLITE_OPEN_READONLY, nil
         ) == SQLITE_OK else {
-            log.error("SQLite open failed for \(dbPath)")
+            log.error("SQLite open failed for \(dbPath, privacy: .public)")
             return []
         }
         defer { sqlite3_close(db) }
@@ -156,7 +156,7 @@ enum VSCodeManager {
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-            log.error("SQLite prepare failed for \(variant)")
+            log.error("SQLite prepare failed for \(variant, privacy: .public)")
             return []
         }
         defer { sqlite3_finalize(stmt) }
@@ -189,7 +189,7 @@ enum VSCodeManager {
                   as? [String: Any],
               let entries = json["entries"] as? [[String: Any]]
         else {
-            log.warning("Failed to parse recentlyOpenedPathsList JSON for \(variant)")
+            log.warning("Failed to parse recentlyOpenedPathsList JSON for \(variant, privacy: .public)")
             return []
         }
 

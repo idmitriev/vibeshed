@@ -22,7 +22,7 @@ final class AutostartManager {
                 try SMAppService.mainApp.register()
             }
         } catch {
-            Log.app.error("Autostart toggle failed: \(error.localizedDescription)")
+            Log.app.error("Autostart toggle failed: \(error.localizedDescription, privacy: .public)")
         }
         refresh()
     }

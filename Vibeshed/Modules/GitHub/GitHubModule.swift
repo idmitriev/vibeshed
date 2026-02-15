@@ -20,7 +20,7 @@ actor GitHubModule: ModuleConfigurable {
     func initialize(context: ModuleContext) async throws {
         self.context = context
         updateAPIClient()
-        log.info("GitHub module initialized (token: \(self.config.token != nil ? "configured" : "none"))")
+        log.info("GitHub module initialized (token: \(self.config.token != nil ? "configured" : "none", privacy: .public))")
     }
 
     func configDidUpdate(_ config: GitHubConfig) async {

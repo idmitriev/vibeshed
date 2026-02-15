@@ -19,12 +19,12 @@ actor TelegramModule: ModuleConfigurable {
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
-        log.info("Telegram module initialized (\(self.config.chats.count) chats configured)")
+        log.info("Telegram module initialized (\(self.config.chats.count, privacy: .public) chats configured)")
     }
 
     func configDidUpdate(_ config: TelegramConfig) async {
         self.config = config
-        log.debug("Config updated (\(config.chats.count) chats)")
+        log.debug("Config updated (\(config.chats.count, privacy: .public) chats)")
     }
 
     static func validate(

@@ -201,13 +201,13 @@ final class GitHubAPIClient: @unchecked Sendable {
     }
 
     private func performRequest(_ request: URLRequest) async throws -> Any {
-        log.debug("GitHub API: \(request.httpMethod ?? "GET") \(request.url?.path ?? "")")
+        log.debug("GitHub API: \(request.httpMethod ?? "GET", privacy: .public) \(request.url?.path ?? "", privacy: .public)")
         let data: Data
         let response: URLResponse
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch {
-            log.error("GitHub network error: \(error.localizedDescription)")
+            log.error("GitHub network error: \(error.localizedDescription, privacy: .public)")
             throw GitHubError.networkError(error)
         }
 
@@ -227,14 +227,14 @@ final class GitHubAPIClient: @unchecked Sendable {
                 forHTTPHeaderField: "X-RateLimit-Remaining"
             )
             if remaining == "0" {
-                log.warning("GitHub rate limit exceeded, resets at \(resetDate?.description ?? "unknown")")
+                log.warning("GitHub rate limit exceeded, resets at \(resetDate?.description ?? "unknown", privacy: .public)")
                 throw GitHubError.rateLimited(resetDate: resetDate)
             }
         }
 
         if !(200 ... 299).contains(http.statusCode) {
             let message = extractErrorMessage(from: data)
-            log.error("GitHub API error \(http.statusCode): \(message)")
+            log.error("GitHub API error \(http.statusCode, privacy: .public): \(message, privacy: .public)")
             throw GitHubError.apiError(
                 statusCode: http.statusCode, message: message
             )

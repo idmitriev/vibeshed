@@ -22,7 +22,7 @@ actor VSCodeModule: ModuleConfigurable {
     func initialize(context: ModuleContext) async throws {
         self.context = context
         refreshCache()
-        log.info("VSCode module initialized (\(self.cachedProjects.count) projects found)")
+        log.info("VSCode module initialized (\(self.cachedProjects.count, privacy: .public) projects found)")
     }
 
     func teardown() async {
@@ -32,7 +32,7 @@ actor VSCodeModule: ModuleConfigurable {
     func configDidUpdate(_ config: VSCodeConfig) async {
         self.config = config
         refreshCache()
-        log.debug("Config updated, cache refreshed (\(self.cachedProjects.count) projects)")
+        log.debug("Config updated, cache refreshed (\(self.cachedProjects.count, privacy: .public) projects)")
     }
 
     static func validate(

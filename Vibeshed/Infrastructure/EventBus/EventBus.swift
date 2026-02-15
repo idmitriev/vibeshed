@@ -4,7 +4,7 @@ actor EventBus {
     private var continuations: [UUID: AsyncStream<AppEvent>.Continuation] = [:]
 
     func publish(_ event: AppEvent) {
-        Log.events.debug("Publishing event: \(String(describing: event))")
+        Log.events.debug("Publishing event: \(String(describing: event), privacy: .public)")
         for (_, continuation) in continuations {
             continuation.yield(event)
         }

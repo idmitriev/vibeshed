@@ -193,7 +193,7 @@ enum SpotifyManager {
                 if process.terminationStatus != 0 {
                     let errorMsg = String(data: errorData, encoding: .utf8)?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
-                    log.error("Spotify AppleScript failed (exit \(process.terminationStatus)): \(errorMsg)")
+                    log.error("Spotify AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(errorMsg, privacy: .public)")
                     gate.resume(with: .failure(SpotifyError.scriptFailed(errorMsg)))
                 } else {
                     let output = String(data: outputData, encoding: .utf8) ?? ""
@@ -207,7 +207,7 @@ enum SpotifyManager {
                 inputPipe.fileHandleForWriting.closeFile()
             } catch {
                 timeoutWorkItem.cancel()
-                log.error("Failed to launch osascript for Spotify: \(error.localizedDescription)")
+                log.error("Failed to launch osascript for Spotify: \(error.localizedDescription, privacy: .public)")
                 gate.resume(with: .failure(error))
             }
         }

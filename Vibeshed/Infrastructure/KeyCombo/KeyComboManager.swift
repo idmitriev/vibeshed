@@ -160,7 +160,7 @@ final class KeyComboManager {
                         guard let self else { return }
                         if await moduleRegistry.findAction(id: actionID) == nil {
                             Log.keybindings.warning(
-                                "Action '\(entry.action)' for combo '\(entry.combo)' not currently available"
+                                "Action '\(entry.action, privacy: .public)' for combo '\(entry.combo, privacy: .public)' not currently available"
                             )
                         }
                     }
@@ -168,7 +168,7 @@ final class KeyComboManager {
             } catch {
                 let message = error.localizedDescription
                 bindingErrors[entry.combo] = message
-                Log.keybindings.error("Invalid keybinding '\(entry.combo)': \(message)")
+                Log.keybindings.error("Invalid keybinding '\(entry.combo, privacy: .public)': \(message, privacy: .public)")
                 Task { await eventBus.publish(.keybindingError(combo: entry.combo, message: message)) }
             }
         }
@@ -194,7 +194,7 @@ final class KeyComboManager {
         if !missing.isEmpty {
             let names = missing.map(\.displayName).sorted().joined(separator: ", ")
             let message = "Event tap requires permissions: \(names)"
-            Log.keybindings.error("Event tap requires permissions: \(names)")
+            Log.keybindings.error("Event tap requires permissions: \(names, privacy: .public)")
             // Mark all bindings as errored due to permissions
             for entry in currentEntries where bindingErrors[entry.combo] == nil {
                 bindingErrors[entry.combo] = message
@@ -204,7 +204,7 @@ final class KeyComboManager {
 
         eventTapHandler.start()
         eventTapRunning = true
-        Log.keybindings.info("Applied \(totalBindings) keybinding(s)")
+        Log.keybindings.info("Applied \(totalBindings, privacy: .public) keybinding(s)")
     }
 
     private func needsEventTap() -> Bool {
@@ -221,7 +221,7 @@ final class KeyComboManager {
         eventBus: EventBus
     ) async {
         guard let action = await moduleRegistry.findAction(id: actionID) else {
-            Log.keybindings.error("Action not found: \(actionID)")
+            Log.keybindings.error("Action not found: \(actionID, privacy: .public)")
             await eventBus.publish(.actionFailed(actionID, message: "Action not found"))
             return
         }
@@ -231,7 +231,7 @@ final class KeyComboManager {
             _ = try await action.run(with: [:])
             await eventBus.publish(.actionExecuted(actionID, moduleID: moduleID))
         } catch {
-            Log.keybindings.error("Action \(actionID) failed: \(error.localizedDescription)")
+            Log.keybindings.error("Action \(actionID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
             await eventBus.publish(.actionFailed(actionID, message: error.localizedDescription))
         }
     }

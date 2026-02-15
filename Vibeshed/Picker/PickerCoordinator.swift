@@ -133,14 +133,14 @@ final class PickerCoordinator {
     }
 
     private func executeAction(_ action: any Action, values: [String: Any]) async {
-        Log.picker.debug("Executing action '\(action.id)'")
+        Log.picker.debug("Executing action '\(action.id, privacy: .public)'")
         do {
             let result = try await action.run(with: values)
             usageTracker?.recordUsage(actionID: action.id)
             await eventBus.publish(.actionExecuted(action.id, moduleID: String(action.id.rawValue.prefix(while: { $0 != "." }))))
             handleActionResult(result)
         } catch {
-            Log.picker.error("Action '\(action.id)' failed: \(error.localizedDescription)")
+            Log.picker.error("Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)")
             await eventBus.publish(.actionFailed(action.id, message: error.localizedDescription))
             pickerState.pushMode(.result(title: "Error", body: error.localizedDescription))
         }
@@ -188,7 +188,7 @@ final class PickerCoordinator {
         case let .chain(actionID, stringValues):
             Task {
                 guard let action = await moduleRegistry.findAction(id: actionID) else {
-                    Log.picker.error("Chained action '\(actionID)' not found")
+                    Log.picker.error("Chained action '\(actionID, privacy: .public)' not found")
                     return
                 }
                 var values: [String: Any] = [:]

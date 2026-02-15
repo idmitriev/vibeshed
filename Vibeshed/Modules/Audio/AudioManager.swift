@@ -27,7 +27,7 @@ enum AudioManager {
 
         let status = AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &volume)
         guard status == noErr else {
-            log.error("getOutputVolume: AudioObjectGetPropertyData failed (status \(status))")
+            log.error("getOutputVolume: AudioObjectGetPropertyData failed (status \(status, privacy: .public))")
             return 0
         }
         return volume
@@ -50,7 +50,7 @@ enum AudioManager {
 
         let setStatus = AudioObjectSetPropertyData(deviceID, &address, 0, nil, size, &clamped)
         if setStatus != noErr {
-            log.error("setOutputVolume: AudioObjectSetPropertyData failed (status \(setStatus))")
+            log.error("setOutputVolume: AudioObjectSetPropertyData failed (status \(setStatus, privacy: .public))")
         }
     }
 
@@ -216,7 +216,7 @@ enum AudioManager {
 
         let status = AudioObjectGetPropertyData(device, &address, 0, nil, &size, &muted)
         guard status == noErr else {
-            log.error("getMute: AudioObjectGetPropertyData failed (status \(status))")
+            log.error("getMute: AudioObjectGetPropertyData failed (status \(status, privacy: .public))")
             return false
         }
         return muted != 0
@@ -237,7 +237,7 @@ enum AudioManager {
 
         let setStatus = AudioObjectSetPropertyData(device, &address, 0, nil, size, &value)
         if setStatus != noErr {
-            log.error("setMute: AudioObjectSetPropertyData failed (status \(setStatus))")
+            log.error("setMute: AudioObjectSetPropertyData failed (status \(setStatus, privacy: .public))")
         }
     }
 
@@ -266,7 +266,7 @@ enum AudioManager {
             &address, 0, nil, &size
         )
         guard status == noErr, size > 0 else {
-            log.error("allDevices: failed to get device list size (status \(status))")
+            log.error("allDevices: failed to get device list size (status \(status, privacy: .public))")
             return []
         }
 
@@ -278,7 +278,7 @@ enum AudioManager {
             &address, 0, nil, &size, &deviceIDs
         )
         guard status == noErr else {
-            log.error("allDevices: failed to get device IDs (status \(status))")
+            log.error("allDevices: failed to get device IDs (status \(status, privacy: .public))")
             return []
         }
 
@@ -301,7 +301,7 @@ enum AudioManager {
         let status = AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &name)
         guard status == noErr, let cfName = name?.takeRetainedValue() else {
             if status != noErr {
-                log.error("deviceName: failed for device \(deviceID) (status \(status))")
+                log.error("deviceName: failed for device \(deviceID, privacy: .public) (status \(status, privacy: .public))")
             }
             return nil
         }
@@ -345,7 +345,7 @@ enum AudioManager {
         )
 
         guard let event else {
-            log.warning("postMediaKeyEvent: failed to create NSEvent for keyType \(keyType)")
+            log.warning("postMediaKeyEvent: failed to create NSEvent for keyType \(keyType, privacy: .public)")
             return
         }
         let cgEvent = event.cgEvent

@@ -24,7 +24,7 @@ final class PermissionsManager {
             let granted = check(permission)
             updateStatus(permission, granted: granted)
         }
-        Log.permissions.info("Permissions: \(self.statusSummary)")
+        Log.permissions.info("Permissions: \(self.statusSummary, privacy: .public)")
     }
 
     func isGranted(_ permission: Permission) -> Bool {
@@ -151,7 +151,7 @@ final class PermissionsManager {
         statuses[permission] = granted
         if previous != granted {
             Log.permissions.info(
-                "Permission \(permission.displayName) changed: \(previous) -> \(granted)"
+                "Permission \(permission.displayName, privacy: .public) changed: \(previous, privacy: .public) -> \(granted, privacy: .public)"
             )
             Task {
                 await eventBus.publish(.permissionChanged(permission, granted: granted))

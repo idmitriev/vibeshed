@@ -43,7 +43,7 @@ final class ConfigManager {
 
     private func loadConfig() {
         guard FileManager.default.fileExists(atPath: configFileURL.path) else {
-            Log.config.info("No config file at \(self.configFileURL.path), using defaults")
+            Log.config.info("No config file at \(self.configFileURL.path, privacy: .public), using defaults")
             return
         }
         do {
@@ -57,7 +57,7 @@ final class ConfigManager {
             Log.config.info("Config loaded successfully")
             Task { await eventBus.publish(.configReloaded) }
         } catch {
-            Log.config.error("Failed to load config: \(error.localizedDescription)")
+            Log.config.error("Failed to load config: \(error.localizedDescription, privacy: .public)")
         }
     }
 
