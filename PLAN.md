@@ -186,12 +186,18 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] ContextualScorer applies additive boosts [-0.15, +0.15] based on context signals: focused app → module affinity, Spotify running state, time of day, audio mute/volume state, visible window count
 - [x] Context captured once per picker show, reused across queries for that session
 
-### Phase 26: Dynamic theme (DONE)
+### Phase 26: Autostart and permissions cleanup
+
+- [ ] Implement an autostart mechanism to launch the app on system startup, add item to status bar menu to enable/disable autostart
+- [ ] Cleanup permissions UI by showing a status bar menu item with check icon if all permissions are granted and warning icon with a dropdown of missing permissions if not. Also add an option to open the permissions tab in system preferences for each missing permission, remove all other modals asking for permissions and just show the status in the menu bar
+
+
+### Phase 27: Dynamic theme (DONE)
 
 - [x] Implement a dynamic theming system that can change the app's appearance based on current system theme/appearance, open apps color schemes, music playing and overal vibe. This can include changing colors, fonts, and other visual elements of the app to create a more immersive and personalized user experience.
 - [x]  Allow user to configure how dramatic theme changes are from subtle accent color adjustment (0) to full on winamp-style (1) theming based on the vibe
 
-### Phase 27: Releases and distribution
+### Phase 28: Releases and distribution
 
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Publish the app on github with proper license, readme, and some documentation

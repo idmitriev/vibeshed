@@ -139,61 +139,61 @@ modules:
         action: "application.focus"
         icon: "safari"
         subtitle: "Primary browser"
-        parameters: { bundleID: "com.apple.Safari" }
+        parameters: { app: "com.apple.Safari" }
 
       - alias: "Chrome"
         action: "application.focus"
         icon: "globe"
         subtitle: "Secondary browser"
-        parameters: { bundleID: "com.google.Chrome" }
+        parameters: { app: "com.google.Chrome" }
 
       - alias: "Zen"
         action: "application.focus"
         icon: "globe"
         subtitle: "Tertiary browser"
-        parameters: { bundleID: "app.zen-browser.zen" }
+        parameters: { app: "app.zen-browser.zen" }
 
       - alias: "IntelliJ"
         action: "application.focus"
         icon: "hammer"
         subtitle: "Primary editor"
-        parameters: { bundleID: "com.jetbrains.intellij" }
+        parameters: { app: "com.jetbrains.intellij" }
 
       - alias: "VSCode"
         action: "application.focus"
         icon: "chevron.left.forwardslash.chevron.right"
         subtitle: "Secondary editor"
-        parameters: { bundleID: "com.microsoft.VSCode" }
+        parameters: { app: "com.microsoft.VSCode" }
 
       - alias: "Spotify"
         action: "application.focus"
         icon: "music.note"
         subtitle: "Music"
-        parameters: { bundleID: "com.spotify.client" }
+        parameters: { app: "com.spotify.client" }
 
       - alias: "Notes"
         action: "application.focus"
         icon: "note.text"
         subtitle: "Apple Notes"
-        parameters: { bundleID: "com.apple.Notes" }
+        parameters: { app: "com.apple.Notes" }
 
       - alias: "Zoom"
         action: "application.focus"
         icon: "video"
         subtitle: "Video calls"
-        parameters: { bundleID: "us.zoom.xos" }
+        parameters: { app: "us.zoom.xos" }
 
       - alias: "Telegram"
         action: "application.focus"
         icon: "paperplane"
         subtitle: "Messaging"
-        parameters: { bundleID: "ru.keepcoder.Telegram" }
+        parameters: { app: "ru.keepcoder.Telegram" }
 
       - alias: "iTerm"
         action: "application.focus"
         icon: "terminal"
         subtitle: "Terminal"
-        parameters: { bundleID: "com.googlecode.iterm2" }
+        parameters: { app: "com.googlecode.iterm2" }
 
       # Utility shortcuts
       - alias: "Lock Screen"

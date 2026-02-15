@@ -40,9 +40,10 @@ enum ColorExtractor {
 
     static let thumbSize = 16
 
-    static func rasterize(_ cgImage: CGImage) -> UnsafeMutablePointer<UInt8>? {
+    static func rasterize(_ cgImage: CGImage) -> [UInt8]? {
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
+        let byteCount = thumbSize * thumbSize * 4
         guard let ctx = CGContext(
             data: nil, width: thumbSize, height: thumbSize,
             bitsPerComponent: 8, bytesPerRow: thumbSize * 4,
@@ -53,13 +54,16 @@ enum ColorExtractor {
             cgImage,
             in: CGRect(x: 0, y: 0, width: thumbSize, height: thumbSize)
         )
-        return ctx.data?.bindMemory(
-            to: UInt8.self, capacity: thumbSize * thumbSize * 4
+        guard let data = ctx.data else { return nil }
+        // Copy pixel data out before CGContext is deallocated
+        let ptr = data.bindMemory(
+            to: UInt8.self, capacity: byteCount
         )
+        return Array(UnsafeBufferPointer(start: ptr, count: byteCount))
     }
 
     static func analyzePixels(
-        _ buffer: UnsafeMutablePointer<UInt8>
+        _ buffer: [UInt8]
     ) -> (dominant: NSColor, vibrant: NSColor) {
         var totalRed = 0.0, totalGreen = 0.0, totalBlue = 0.0
         var bestScore = 0.0

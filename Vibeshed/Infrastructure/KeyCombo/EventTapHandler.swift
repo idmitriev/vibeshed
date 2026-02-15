@@ -10,6 +10,7 @@ final class EventTapHandler: @unchecked Sendable {
     private var runLoopSource: CFRunLoopSource?
     private var tapRunLoop: CFRunLoop?
     private var thread: Thread?
+    private var retainedSelf: Unmanaged<EventTapHandler>?
 
     // Binding tables — guarded by lock
     private var lock = os_unfair_lock()
@@ -45,7 +46,7 @@ final class EventTapHandler: @unchecked Sendable {
                 | (1 << CGEventType.otherMouseUp.rawValue)
         )
 
-        // `self` is passed as userInfo to the C callback
+        // `self` is passed as userInfo to the C callback; balance with release() in stop()
         let unmanaged = Unmanaged.passRetained(self)
 
         guard let port = CGEvent.tapCreate(
@@ -60,6 +61,8 @@ final class EventTapHandler: @unchecked Sendable {
             Log.keybindings.error("Failed to create CGEventTap — accessibility permission likely missing")
             return
         }
+
+        retainedSelf = unmanaged
 
         tapPort = port
 
@@ -91,9 +94,8 @@ final class EventTapHandler: @unchecked Sendable {
             CFRunLoopRemoveSource(runLoop, source, .commonModes)
         }
         // Release the retained self that was passed to tapCreate
-        if tapPort != nil {
-            Unmanaged<EventTapHandler>.passUnretained(self).release()
-        }
+        retainedSelf?.release()
+        retainedSelf = nil
         tapPort = nil
         runLoopSource = nil
         tapRunLoop = nil
