@@ -6,8 +6,8 @@ import Yams
 final class ConfigManager {
     private(set) var config: AppConfig = .init()
 
-    private let configDirectoryURL: URL
-    private let configFileURL: URL
+    let configDirectoryURL: URL
+    let configFileURL: URL
     private let eventBus: EventBus
     private var fileMonitor: DispatchSourceFileSystemObject?
     private var fileDescriptor: Int32 = -1
@@ -35,6 +35,10 @@ final class ConfigManager {
             at: configDirectoryURL,
             withIntermediateDirectories: true
         )
+    }
+
+    func reload() {
+        loadConfig()
     }
 
     private func loadConfig() {

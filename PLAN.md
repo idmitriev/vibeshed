@@ -173,11 +173,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for searching chats and groups in Telegram based on their name and opening them in the Telegram desktop app
 - [x] Provide SwiftUI views for Telegram chat actions in the picker, showing chat/group names
 
-### Phase 24: Self module
+### Phase 24: Self module (DONE)
 
-- [ ] Create a self module that can show actions related to the app itself, such as opening config file, reloading modules, viewing logs, exiting the app, etc
-- [ ] Implement actions for opening the config file in the default editor, reloading modules, viewing logs in the picker or opening log file, exiting the app, etc
-- [ ] Provide SwiftUI views for self actions in the picker, showing relevant information like log previews or config file path
+- [x] Create a self module that can show actions related to the app itself, such as opening config file, reloading modules, viewing logs, exiting the app, etc
+- [x] Implement actions for opening the config file in the default editor, reloading modules, viewing logs in the picker or opening log file, exiting the app, etc
+- [x] Provide SwiftUI views for self actions in the picker, showing relevant information like log previews or config file path
 
 ### Phase 24: Contextual actions
 

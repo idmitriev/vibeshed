@@ -113,6 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(ApplicationModule())
             await registerModule(FavouritesModule())
             await registerModule(SystemModule())
+            await registerModule(buildSelfModule())
             await registerModule(AudioModule())
             await registerModule(ClipboardModule())
             promptBrowserAutomation()
@@ -190,6 +191,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             Log.stderr("  ✓ module: \(id)")
         }
+    }
+
+    private func buildSelfModule() -> SelfModule {
+        let cfgManager = configManager
+        let registry = moduleRegistry
+
+        return SelfModule(
+            configFileURL: cfgManager.configFileURL,
+            configDirURL: cfgManager.configDirectoryURL,
+            reloadConfig: { @MainActor in
+                cfgManager.reload()
+            },
+            getModuleStatus: { @MainActor in
+                var entries: [ModuleStatusInfo.Entry] = []
+                for id in registry.moduleIDs {
+                    entries.append(.init(id: id, status: .loaded, message: nil))
+                }
+                for (id, msg) in registry.configErrors {
+                    entries.append(.init(
+                        id: id, status: .configError, message: msg
+                    ))
+                }
+                for (id, err) in registry.permissionErrors {
+                    entries.append(.init(
+                        id: id,
+                        status: .permissionError,
+                        message: err.localizedDescription
+                    ))
+                }
+                return ModuleStatusInfo(
+                    entries: entries.sorted { $0.id < $1.id }
+                )
+            }
+        )
     }
 
     private func logPermissionStatus() {
