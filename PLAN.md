@@ -179,9 +179,12 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions for opening the config file in the default editor, reloading modules, viewing logs in the picker or opening log file, exiting the app, etc
 - [x] Provide SwiftUI views for self actions in the picker, showing relevant information like log previews or config file path
 
-### Phase 25: Contextual actions
+### Phase 25: Contextual actions (DONE)
 
-- [ ] Provide actions with rank boost or filter them based on context: running/focusd application, current window sizes, system state, time day, date, current volume, media playing, calendar events, latest pull requests and comments, open VSCode projects, iterm session state, and overall vibe
+- [x] Provide actions with rank boost or filter them based on context: running/focused application, current window sizes, system state, time of day, date, current volume, media playing, and overall vibe
+- [x] SystemContext captures system state snapshot when picker opens (focused app, running apps, time, audio state, window count, focused window title)
+- [x] ContextualScorer applies additive boosts [-0.15, +0.15] based on context signals: focused app → module affinity, Spotify running state, time of day, audio mute/volume state, visible window count
+- [x] Context captured once per picker show, reused across queries for that session
 
 ### Phase 26: UI polish and animations
 

@@ -21,6 +21,7 @@ final class PanelController {
     func show() {
         let panel = getOrCreatePanel()
         pickerState.reset()
+        coordinator?.clearContext()
 
         if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame

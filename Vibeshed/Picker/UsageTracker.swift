@@ -23,11 +23,12 @@ final class UsageTracker {
         scheduleSave()
     }
 
-    func makeScoringContext(query: String) -> ScoringContext {
+    func makeScoringContext(query: String, systemContext: SystemContext? = nil) -> ScoringContext {
         ScoringContext(
             usageCounts: usageCounts,
             lastUsedDates: lastUsedDates,
-            query: query
+            query: query,
+            systemContext: systemContext
         )
     }
 

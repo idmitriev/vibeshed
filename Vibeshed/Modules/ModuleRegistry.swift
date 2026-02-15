@@ -142,7 +142,7 @@ final class ModuleRegistry {
         guard let module = modules[moduleID] else { return nil }
         let actions = await module.provideActions(
             query: "",
-            scoring: ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "")
+            scoring: ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil)
         )
         return actions.first { $0.id == id }
     }

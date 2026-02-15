@@ -4,6 +4,7 @@ struct ScoringContext: Sendable {
     let usageCounts: [String: Int]
     let lastUsedDates: [String: Date]
     let query: String
+    let systemContext: SystemContext?
 
     func recencyScore(for actionID: ActionID) -> Double {
         guard let lastUsed = lastUsedDates[actionID.rawValue] else { return 0 }

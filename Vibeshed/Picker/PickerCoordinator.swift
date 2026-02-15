@@ -10,6 +10,7 @@ final class PickerCoordinator {
     private let eventBus: EventBus
     var usageTracker: UsageTracker?
 
+    private var currentContext: SystemContext?
     private var parameterQuerySubscription: AnyCancellable?
     private var querySubscription: AnyCancellable?
     private var actionRefreshSubscription: Any?
@@ -207,8 +208,12 @@ final class PickerCoordinator {
                 pickerState.isLoading = true
                 Task { @MainActor [weak self] in
                     guard let self else { return }
-                    let scoring = usageTracker?.makeScoringContext(query: query)
-                        ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query)
+                    if currentContext == nil {
+                        currentContext = SystemContext.capture()
+                    }
+                    let ctx = currentContext
+                    let scoring = usageTracker?.makeScoringContext(query: query, systemContext: ctx)
+                        ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: ctx)
                     let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
                     guard case .search = pickerState.mode else { return }
 
@@ -241,18 +246,29 @@ final class PickerCoordinator {
             // If query is non-empty and fuzzy matcher rejects, skip
             guard let result else { continue }
 
+            let moduleID = String(action.id.rawValue.prefix(while: { $0 != "." }))
+            let contextBoost: Double
+            if let ctx = scoring.systemContext {
+                contextBoost = ContextualScorer.boost(
+                    actionID: action.id, moduleID: moduleID, context: ctx
+                )
+            } else {
+                contextBoost = 0
+            }
+            let finalScore = result.score + contextBoost
+
             let item = ActionItem(
                 id: action.id,
                 title: action.title,
                 subtitle: action.subtitle,
                 iconSystemName: action.iconName,
-                score: result.score,
-                moduleID: String(action.id.rawValue.prefix(while: { $0 != "." })),
+                score: finalScore,
+                moduleID: moduleID,
                 hasParameters: !action.parameters.filter(\.isRequired).isEmpty,
                 keywords: action.keywords,
                 titleHighlightRanges: result.titleRanges.isEmpty ? nil : result.titleRanges
             )
-            scored.append((item: item, action: action, score: result.score))
+            scored.append((item: item, action: action, score: finalScore))
             cache[action.id] = action
         }
 
@@ -327,10 +343,15 @@ final class PickerCoordinator {
         }
     }
 
+    func clearContext() {
+        currentContext = nil
+    }
+
     func refreshActions() async {
         let query = pickerState.query
-        let scoring = usageTracker?.makeScoringContext(query: query)
-            ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query)
+        let ctx = currentContext
+        let scoring = usageTracker?.makeScoringContext(query: query, systemContext: ctx)
+            ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: ctx)
         let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
         guard case .search = pickerState.mode else { return }
 
