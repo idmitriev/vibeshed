@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let usageTracker: UsageTracker
     let pickerCoordinator: PickerCoordinator
     let themeEngine: ThemeEngine
+    let autostartManager: AutostartManager
 
     override init() {
         self.eventBus = EventBus()
@@ -28,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         self.usageTracker = UsageTracker()
         self.themeEngine = ThemeEngine(eventBus: eventBus)
+        self.autostartManager = AutostartManager()
         self.pickerCoordinator = PickerCoordinator(
             pickerState: pickerState,
             moduleRegistry: moduleRegistry,
@@ -131,7 +133,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(ITermModule())
             await registerModule(AIModule())
             await registerModule(TelegramModule())
-            showPermissionAlertIfNeeded()
         }
     }
 
@@ -239,44 +240,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let granted = permissionsManager.isGranted(permission)
             let mark = granted ? "✓" : "✗"
             Log.stderr("  \(mark) permission: \(permission.displayName)")
-        }
-    }
-
-    private func showPermissionAlertIfNeeded() {
-        let pending = moduleRegistry.permissionErrors
-        guard !pending.isEmpty else { return }
-
-        var lines: [String] = []
-        for (moduleID, error) in pending.sorted(by: { $0.key < $1.key }) {
-            lines.append("• \(moduleID)")
-            for instruction in error.grantInstructions {
-                lines.append("  \(instruction)")
-            }
-        }
-
-        let message = lines.joined(separator: "\n")
-        Log.stderr("⚠ Modules blocked by missing permissions:\n\(message)")
-
-        let alert = NSAlert()
-        alert.messageText = "Missing Permissions"
-        alert.informativeText = """
-            Some modules could not load due to missing permissions. \
-            Grant the permissions below and they will activate automatically.
-
-            \(message)
-            """
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Later")
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            // Open the first missing permission's settings pane
-            if case .denied(_, let permissions) = pending.values.first {
-                if let url = permissions.first?.systemSettingsURL {
-                    NSWorkspace.shared.open(url)
-                }
-            }
         }
     }
 

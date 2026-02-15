@@ -133,6 +133,17 @@ final class ModuleRegistry {
         }
     }
 
+    var requiredPermissions: Set<Permission> {
+        var result = Set<Permission>()
+        for module in modules.values {
+            result.formUnion(type(of: module).requiredPermissions)
+        }
+        for module in pendingModules.values {
+            result.formUnion(type(of: module).requiredPermissions)
+        }
+        return result
+    }
+
     func module(id: String) -> (any Module)? {
         modules[id]
     }

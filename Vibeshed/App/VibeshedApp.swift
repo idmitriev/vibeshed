@@ -6,7 +6,12 @@ struct VibeshedApp: App {
 
     var body: some Scene {
         MenuBarExtra("Vibeshed", systemImage: "sparkle") {
-            StatusBarView(panelController: appDelegate.panelController)
+            StatusBarView(
+                panelController: appDelegate.panelController,
+                permissionsManager: appDelegate.permissionsManager,
+                moduleRegistry: appDelegate.moduleRegistry,
+                autostartManager: appDelegate.autostartManager
+            )
         }
     }
 }
