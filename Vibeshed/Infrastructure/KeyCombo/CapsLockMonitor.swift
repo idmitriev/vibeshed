@@ -23,8 +23,10 @@ final class CapsLockMonitor: @unchecked Sendable {
 
     private init() {}
 
-    func start() {
-        guard hidManager == nil else { return }
+    /// Attempts to start monitoring. Returns `true` on success.
+    @discardableResult
+    func start() -> Bool {
+        guard hidManager == nil else { return true }
 
         let manager = IOHIDManagerCreate(
             kCFAllocatorDefault,
@@ -62,8 +64,9 @@ final class CapsLockMonitor: @unchecked Sendable {
             IOOptionBits(kIOHIDOptionsTypeNone)
         )
         if result != kIOReturnSuccess {
+            let desc = ioReturnDescription(result)
             Log.keybindings.error(
-                "CapsLockMonitor: failed to open HID manager (\(result, privacy: .public))"
+                "CapsLockMonitor: IOHIDManagerOpen failed: \(desc, privacy: .public) (\(result, privacy: .public))"
             )
             // Clean up — unschedule and discard the manager
             IOHIDManagerUnscheduleFromRunLoop(
@@ -72,10 +75,22 @@ final class CapsLockMonitor: @unchecked Sendable {
                 CFRunLoopMode.commonModes.rawValue
             )
             hidManager = nil
-            return
+            return false
         }
 
         Log.keybindings.info("CapsLockMonitor started")
+        return true
+    }
+
+    private func ioReturnDescription(_ code: IOReturn) -> String {
+        switch code {
+        case kIOReturnSuccess: return "success"
+        case kIOReturnNotPermitted: return "kIOReturnNotPermitted — grant Input Monitoring"
+        case kIOReturnNotPrivileged: return "kIOReturnNotPrivileged"
+        case kIOReturnBadArgument: return "kIOReturnBadArgument"
+        case kIOReturnExclusiveAccess: return "kIOReturnExclusiveAccess"
+        default: return "unknown IOReturn 0x\(String(UInt32(bitPattern: code), radix: 16))"
+        }
     }
 
     func restart() {

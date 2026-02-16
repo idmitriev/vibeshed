@@ -142,10 +142,14 @@ final class PermissionsManager {
     }
 
     private func checkInputMonitoring() -> Bool {
-        // CGRequestListenEventAccess registers the app in System
-        // Settings > Input Monitoring on first call (shows consent
-        // prompt). Subsequent calls just return current status.
-        CGRequestListenEventAccess()
+        // CGPreflightListenEventAccess checks the CGEvent listen
+        // capability without prompting.  IOKit HID (used by
+        // CapsLockMonitor) may require a broader Input Monitoring
+        // grant, but probing IOKit on every recheck is expensive
+        // and can show duplicate dialogs.  We rely on the CGEvent
+        // check here and let CapsLockMonitor.start() surface the
+        // IOKit-specific failure at runtime.
+        CGPreflightListenEventAccess()
     }
 
     private func checkFullDiskAccess() -> Bool {

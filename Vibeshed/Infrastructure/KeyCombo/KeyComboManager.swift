@@ -30,13 +30,21 @@ final class KeyComboManager {
         self.togglePicker = togglePicker
         self.eventTapHandler = EventTapHandler { [weak moduleRegistry, weak eventBus, togglePicker] actionID in
             Task { @MainActor in
+                Log.keybindings.info("Executing action: \(actionID.rawValue, privacy: .public)")
                 // Built-in actions
                 if actionID.rawValue == "app.togglePicker" {
+                    Log.keybindings.debug("Toggling picker (built-in action)")
                     togglePicker()
                     return
                 }
 
-                guard let moduleRegistry, let eventBus else { return }
+                guard let moduleRegistry, let eventBus else {
+                    let aid = actionID.rawValue
+                    Log.keybindings.error(
+                        "Cannot execute \(aid, privacy: .public): deallocated"
+                    )
+                    return
+                }
                 await Self.executeAction(
                     actionID,
                     moduleRegistry: moduleRegistry,
@@ -70,6 +78,10 @@ final class KeyComboManager {
     }
 
     func applyBindings(_ entries: [KeyBindingEntry]) {
+        Log.keybindings.info("applyBindings called with \(entries.count, privacy: .public) entries")
+        for entry in entries {
+            Log.keybindings.debug("  Config entry: '\(entry.combo, privacy: .public)' → '\(entry.action, privacy: .public)'")
+        }
         currentEntries = entries
         rebindAll()
     }
@@ -89,7 +101,14 @@ final class KeyComboManager {
 
     private func handleConfigReloaded() {
         let newEntries = configManager.config.keybindings
-        guard newEntries != currentEntries else { return }
+        guard newEntries != currentEntries else {
+            Log.keybindings.debug("Config reloaded but keybindings unchanged")
+            return
+        }
+        let oldCount = currentEntries.count
+        Log.keybindings.info(
+            "Config reloaded: \(newEntries.count, privacy: .public) keybindings (was \(oldCount, privacy: .public))"
+        )
         currentEntries = newEntries
         rebindAll()
     }
@@ -97,12 +116,19 @@ final class KeyComboManager {
     private func handlePermissionChanged(
         permission: Permission, granted: Bool
     ) {
+        let status = granted ? "granted" : "denied"
+        let name = permission.displayName
+        let tapState = eventTapRunning
+        Log.keybindings.info(
+            "Permission changed: \(name, privacy: .public) → \(status, privacy: .public) (tapRunning=\(tapState, privacy: .public))"
+        )
         switch permission {
         case .accessibility:
             // Retry event tap when accessibility changes — the
             // preflight APIs are unreliable for ad-hoc signed apps,
             // so we just attempt to create the tap again.
             if !eventTapRunning, needsEventTap() {
+                Log.keybindings.info("Accessibility changed, retrying event tap")
                 rebindAll()
             }
         case .inputMonitoring:
@@ -145,13 +171,19 @@ final class KeyComboManager {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     private func rebindAll() {
+        let entryCount = currentEntries.count
+        Log.keybindings.info("rebindAll: processing \(entryCount, privacy: .public) entries")
+
         // Stop existing tap and CapsLockMonitor
         if eventTapRunning {
+            Log.keybindings.debug("rebindAll: stopping existing event tap")
             eventTapHandler.stop()
             eventTapRunning = false
         }
         if capsLockMonitorRunning {
+            Log.keybindings.debug("rebindAll: stopping CapsLockMonitor")
             CapsLockMonitor.shared.stop()
             capsLockMonitorRunning = false
         }
@@ -183,14 +215,28 @@ final class KeyComboManager {
                 )
 
                 switch comboType {
-                case .standard:
+                case .standard(let keyCode, let modifiers):
                     standard.append(binding)
-                case .capsLockModifier:
+                    let fl = modifiers.rawValue
+                    Log.keybindings.debug(
+                        "  Parsed '\(entry.combo, privacy: .public)': standard key=\(keyCode, privacy: .public) flags=\(fl, privacy: .public)"
+                    )
+                case .capsLockModifier(let keyCode):
                     capsLock.append(binding)
-                case .spaceModifier:
+                    Log.keybindings.debug(
+                        "  Parsed '\(entry.combo, privacy: .public)': capslock keyCode=\(keyCode, privacy: .public)"
+                    )
+                case .spaceModifier(let keyCode):
                     space.append(binding)
-                case .mouseButton:
+                    Log.keybindings.debug(
+                        "  Parsed '\(entry.combo, privacy: .public)': space keyCode=\(keyCode, privacy: .public)"
+                    )
+                case .mouseButton(let button, let modifiers):
                     mouse.append(binding)
+                    let fl = modifiers.rawValue
+                    Log.keybindings.debug(
+                        "  Parsed '\(entry.combo, privacy: .public)': mouse btn=\(button, privacy: .public) flags=\(fl, privacy: .public)"
+                    )
                 }
 
             } catch {
@@ -212,15 +258,28 @@ final class KeyComboManager {
         // Start event tap if we have any bindings
         let totalBindings = standard.count + capsLock.count + space.count + mouse.count
         guard totalBindings > 0 else {
-            Log.keybindings.info("No keybindings configured")
+            Log.keybindings.info("No keybindings configured — skipping event tap")
+            Log.stderr("  ⚠ keybindings: none configured")
             return
         }
+
+        let std = standard.count
+        let caps = capsLock.count
+        let spc = space.count
+        let mse = mouse.count
+        let summary = "\(std)/\(caps)/\(spc)/\(mse) std/caps/spc/mouse"
+        Log.keybindings.info(
+            "Starting event tap: \(totalBindings, privacy: .public) bindings (\(summary, privacy: .public))"
+        )
 
         // Try to create the event tap (needs Accessibility permission).
         // We skip preflight checks — CGEvent.tapCreate is the real test.
         guard eventTapHandler.start() else {
             let message =
                 "Event tap failed — grant Accessibility permission"
+            Log.keybindings.error(
+                "Event tap creation failed — all \(totalBindings, privacy: .public) bindings inactive"
+            )
             for entry in currentEntries where bindingErrors[entry.combo] == nil {
                 bindingErrors[entry.combo] = message
             }
@@ -228,8 +287,9 @@ final class KeyComboManager {
         }
         eventTapRunning = true
         Log.keybindings.info(
-            "Applied \(totalBindings, privacy: .public) keybinding(s)"
+            "Applied \(totalBindings, privacy: .public) keybinding(s) (\(summary, privacy: .public))"
         )
+        Log.stderr("  ✓ keybindings: \(totalBindings) applied")
 
         // CapsLockMonitor needs Input Monitoring — manage separately
         manageCapsLockMonitor(hasCapsLockBindings: !capsLock.isEmpty)
@@ -245,20 +305,21 @@ final class KeyComboManager {
         if hasCapsLockBindings {
             if permissionsManager.isGranted(.inputMonitoring) {
                 if !capsLockMonitorRunning {
-                    CapsLockMonitor.shared.start()
-                    capsLockMonitorRunning = true
+                    if CapsLockMonitor.shared.start() {
+                        capsLockMonitorRunning = true
+                    } else {
+                        // IOKit HID open failed despite CGEvent check
+                        let msg = "CapsLock monitor failed — remove and re-add app in Input Monitoring"
+                        Log.keybindings.error("\(msg, privacy: .public)")
+                        Log.stderr("  ✗ CapsLock: IOKit HID denied — re-grant Input Monitoring")
+                        setCapsLockErrors(msg)
+                    }
                 }
             } else {
                 let msg =
                     "CapsLock combos need Input Monitoring permission"
                 Log.keybindings.warning("\(msg, privacy: .public)")
-                for entry in currentEntries {
-                    if let ct = try? KeyComboParser.parse(entry.combo),
-                       case .capsLockModifier = ct
-                    {
-                        bindingErrors[entry.combo] = msg
-                    }
-                }
+                setCapsLockErrors(msg)
                 if capsLockMonitorRunning {
                     CapsLockMonitor.shared.stop()
                     capsLockMonitorRunning = false
@@ -267,6 +328,16 @@ final class KeyComboManager {
         } else if capsLockMonitorRunning {
             CapsLockMonitor.shared.stop()
             capsLockMonitorRunning = false
+        }
+    }
+
+    private func setCapsLockErrors(_ message: String) {
+        for entry in currentEntries {
+            if let ct = try? KeyComboParser.parse(entry.combo),
+               case .capsLockModifier = ct
+            {
+                bindingErrors[entry.combo] = message
+            }
         }
     }
 

@@ -62,6 +62,7 @@ final class EventTapHandler: @unchecked Sendable {
             Log.keybindings.error(
                 "Failed to create CGEventTap — grant Accessibility permission"
             )
+            Log.stderr("  ✗ event tap: CGEvent.tapCreate failed — Accessibility permission not granted")
             return false
         }
 
@@ -83,7 +84,8 @@ final class EventTapHandler: @unchecked Sendable {
         tapThread.start()
         thread = tapThread
 
-        Log.keybindings.info("Event tap started")
+        Log.keybindings.info("Event tap started (thread: \(tapThread.name ?? "unnamed", privacy: .public))")
+        Log.stderr("  ✓ event tap: created and running on dedicated thread")
         return true
     }
 
@@ -118,6 +120,12 @@ final class EventTapHandler: @unchecked Sendable {
         for binding in standard {
             if case .standard(let keyCode, let modifiers) = binding.comboType {
                 newStandard[StandardKey(keyCode: keyCode, modifiers: modifiers)] = binding.actionID
+                let action = binding.actionID.rawValue
+                let combo = binding.rawCombo
+                let fl = modifiers.rawValue
+                Log.keybindings.debug(
+                    "  standard key=\(keyCode, privacy: .public) flags=\(fl, privacy: .public) → \(action, privacy: .public)"
+                )
             }
         }
 
@@ -125,6 +133,11 @@ final class EventTapHandler: @unchecked Sendable {
         for binding in capsLock {
             if case .capsLockModifier(let keyCode) = binding.comboType {
                 newCapsLock[keyCode] = binding.actionID
+                let action = binding.actionID.rawValue
+                let combo = binding.rawCombo
+                Log.keybindings.debug(
+                    "  capslock key=\(keyCode, privacy: .public) → \(action, privacy: .public) (\(combo, privacy: .public))"
+                )
             }
         }
 
@@ -132,6 +145,11 @@ final class EventTapHandler: @unchecked Sendable {
         for binding in space {
             if case .spaceModifier(let keyCode) = binding.comboType {
                 newSpace[keyCode] = binding.actionID
+                let action = binding.actionID.rawValue
+                let combo = binding.rawCombo
+                Log.keybindings.debug(
+                    "  space key=\(keyCode, privacy: .public) → \(action, privacy: .public) (\(combo, privacy: .public))"
+                )
             }
         }
 
@@ -139,8 +157,22 @@ final class EventTapHandler: @unchecked Sendable {
         for binding in mouse {
             if case .mouseButton(let button, let modifiers) = binding.comboType {
                 newMouse[MouseKey(button: button, modifiers: modifiers)] = binding.actionID
+                let action = binding.actionID.rawValue
+                let combo = binding.rawCombo
+                let fl = modifiers.rawValue
+                Log.keybindings.debug(
+                    "  mouse btn=\(button, privacy: .public) flags=\(fl, privacy: .public) → \(action, privacy: .public) (\(combo, privacy: .public))"
+                )
             }
         }
+
+        let std = newStandard.count
+        let caps = newCapsLock.count
+        let spc = newSpace.count
+        let mse = newMouse.count
+        Log.keybindings.debug(
+            "Binding tables: \(std, privacy: .public)/\(caps, privacy: .public)/\(spc, privacy: .public)/\(mse, privacy: .public) std/caps/spc/mouse"
+        )
 
         os_unfair_lock_lock(&lock)
         standardBindings = newStandard
@@ -199,8 +231,9 @@ final class EventTapHandler: @unchecked Sendable {
         switch type {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             if let port = tapPort {
-                Log.keybindings.debug(
-                    "Event tap re-enabled after \(type == .tapDisabledByTimeout ? "timeout" : "user input", privacy: .public)"
+                let reason = type == .tapDisabledByTimeout ? "timeout" : "user input"
+                Log.keybindings.warning(
+                    "Event tap disabled by \(reason, privacy: .public), re-enabling"
                 )
                 CGEvent.tapEnable(tap: port, enable: true)
             }
@@ -254,6 +287,15 @@ final class EventTapHandler: @unchecked Sendable {
     private func handleKeyDown(event: CGEvent) -> Unmanaged<CGEvent>? {
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let spaceKeyCode = UInt16(kVK_Space)
+
+        // Strip alphaShift so held capslock doesn't uppercase letters
+        os_unfair_lock_lock(&lock)
+        let stripCaps = !capsLockBindings.isEmpty
+        os_unfair_lock_unlock(&lock)
+        if stripCaps, event.flags.contains(.maskAlphaShift) {
+            event.flags = event.flags.subtracting(.maskAlphaShift)
+        }
+
         let flags = maskedFlags(event.flags)
 
         // Space-as-modifier: space key pressed
@@ -302,6 +344,7 @@ final class EventTapHandler: @unchecked Sendable {
         // Standard modifier+key combos
         os_unfair_lock_lock(&lock)
         let actionID = standardBindings[StandardKey(keyCode: keyCode, modifiers: flags)]
+        let bindingCount = standardBindings.count
         os_unfair_lock_unlock(&lock)
 
         if let actionID {
@@ -313,12 +356,29 @@ final class EventTapHandler: @unchecked Sendable {
             return nil
         }
 
+        // Log unmatched events when modifiers are held (skip plain typing)
+        if flags.rawValue != 0 {
+            let f = flags.rawValue
+            let cnt = bindingCount
+            Log.keybindings.debug(
+                "Unmatched keyDown: key=\(keyCode, privacy: .public) flags=\(f, privacy: .public) (\(cnt, privacy: .public) bindings)"
+            )
+        }
+
         return Unmanaged.passUnretained(event)
     }
 
     private func handleKeyUp(event: CGEvent) -> Unmanaged<CGEvent>? {
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let spaceKeyCode = UInt16(kVK_Space)
+
+        // Strip alphaShift so held capslock doesn't uppercase letters
+        os_unfair_lock_lock(&lock)
+        let stripCaps = !capsLockBindings.isEmpty
+        os_unfair_lock_unlock(&lock)
+        if stripCaps, event.flags.contains(.maskAlphaShift) {
+            event.flags = event.flags.subtracting(.maskAlphaShift)
+        }
 
         if keyCode == spaceKeyCode, spaceHeld {
             spaceHeld = false
@@ -348,6 +408,11 @@ final class EventTapHandler: @unchecked Sendable {
             executor(actionID)
             return nil
         }
+
+        let f = flags.rawValue
+        Log.keybindings.debug(
+            "Unmatched mouseDown: button=\(button, privacy: .public) flags=\(f, privacy: .public)"
+        )
 
         return Unmanaged.passUnretained(event)
     }
