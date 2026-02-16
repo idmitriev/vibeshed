@@ -184,7 +184,7 @@ actor SelfModule: ModuleConfigurable {
                     }
                 }
                 return .pushActions(subActions)
-            },
+            }
         ]
     }
 
@@ -217,7 +217,7 @@ actor SelfModule: ModuleConfigurable {
                 ]
             ) { _ in
                 await MainActor.run {
-                    let bundleID = Bundle.main.bundleIdentifier ?? "com.vibeshed"
+                    let bundleID = Bundle.main.bundleIdentifier ?? "com.ivandmitriev.Vibeshed"
                     let url = URL(
                         string: "x-apple.systempreferences:com.apple.Console"
                     )

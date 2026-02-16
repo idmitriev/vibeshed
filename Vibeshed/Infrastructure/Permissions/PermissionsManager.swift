@@ -40,7 +40,10 @@ final class PermissionsManager {
         case .accessibility:
             let granted = checkAccessibility(prompt: true)
             updateStatus(permission, granted: granted)
-        case .screenRecording, .automation, .inputMonitoring, .fullDiskAccess:
+        case .inputMonitoring:
+            let granted = CGRequestListenEventAccess()
+            updateStatus(permission, granted: granted)
+        case .screenRecording, .automation, .fullDiskAccess:
             if let url = permission.systemSettingsURL {
                 NSWorkspace.shared.open(url)
             }
@@ -83,7 +86,14 @@ final class PermissionsManager {
         let options = [
             kAXTrustedCheckOptionPrompt.takeUnretainedValue(): prompt,
         ] as CFDictionary
-        return AXIsProcessTrustedWithOptions(options)
+        if AXIsProcessTrustedWithOptions(options) {
+            return true
+        }
+        // AXIsProcessTrustedWithOptions can return false for unsigned
+        // debug builds even when the permission is actually granted.
+        // Fall back to CGPreflightPostEventAccess which reflects the
+        // real runtime capability.
+        return CGPreflightPostEventAccess()
     }
 
     private func checkScreenRecording() -> Bool {
@@ -132,7 +142,10 @@ final class PermissionsManager {
     }
 
     private func checkInputMonitoring() -> Bool {
-        CGPreflightListenEventAccess()
+        // CGRequestListenEventAccess registers the app in System
+        // Settings > Input Monitoring on first call (shows consent
+        // prompt). Subsequent calls just return current status.
+        CGRequestListenEventAccess()
     }
 
     private func checkFullDiskAccess() -> Bool {

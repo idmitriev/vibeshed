@@ -20,8 +20,6 @@ final class EventTapHandler: @unchecked Sendable {
     private var mouseBindings: [MouseKey: ActionID] = [:]
 
     // Modifier hold state — only accessed from tap callback thread
-    private var capsLockHeld = false
-    private var capsLockUsedAsModifier = false
     private var spaceHeld = false
     private var spaceUsedAsModifier = false
 
@@ -35,31 +33,36 @@ final class EventTapHandler: @unchecked Sendable {
 
     // MARK: - Public
 
-    func start() {
-        guard tapPort == nil else { return }
+    /// Attempts to start the CGEvent tap. Returns `true` on success.
+    @discardableResult
+    func start() -> Bool {
+        guard tapPort == nil else { return true }
 
-        let eventMask: CGEventMask = (
-            (1 << CGEventType.keyDown.rawValue)
+        let eventMask: CGEventMask =
+            ((1 << CGEventType.keyDown.rawValue)
                 | (1 << CGEventType.keyUp.rawValue)
                 | (1 << CGEventType.flagsChanged.rawValue)
                 | (1 << CGEventType.otherMouseDown.rawValue)
-                | (1 << CGEventType.otherMouseUp.rawValue)
-        )
+                | (1 << CGEventType.otherMouseUp.rawValue))
 
         // `self` is passed as userInfo to the C callback; balance with release() in stop()
         let unmanaged = Unmanaged.passRetained(self)
 
-        guard let port = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .headInsertEventTap,
-            options: .defaultTap,
-            eventsOfInterest: eventMask,
-            callback: eventTapCallback,
-            userInfo: unmanaged.toOpaque()
-        ) else {
+        guard
+            let port = CGEvent.tapCreate(
+                tap: .cgSessionEventTap,
+                place: .headInsertEventTap,
+                options: .defaultTap,
+                eventsOfInterest: eventMask,
+                callback: eventTapCallback,
+                userInfo: unmanaged.toOpaque()
+            )
+        else {
             unmanaged.release()
-            Log.keybindings.error("Failed to create CGEventTap — accessibility permission likely missing")
-            return
+            Log.keybindings.error(
+                "Failed to create CGEventTap — grant Accessibility permission"
+            )
+            return false
         }
 
         retainedSelf = unmanaged
@@ -75,12 +78,13 @@ final class EventTapHandler: @unchecked Sendable {
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
             CFRunLoopRun()
         }
-        tapThread.name = "com.vibeshed.eventtap"
+        tapThread.name = "com.ivandmitriev.Vibeshed.eventtap"
         tapThread.qualityOfService = .userInteractive
         tapThread.start()
         thread = tapThread
 
         Log.keybindings.info("Event tap started")
+        return true
     }
 
     func stop() {
@@ -112,28 +116,28 @@ final class EventTapHandler: @unchecked Sendable {
     ) {
         var newStandard: [StandardKey: ActionID] = [:]
         for binding in standard {
-            if case let .standard(keyCode, modifiers) = binding.comboType {
+            if case .standard(let keyCode, let modifiers) = binding.comboType {
                 newStandard[StandardKey(keyCode: keyCode, modifiers: modifiers)] = binding.actionID
             }
         }
 
         var newCapsLock: [UInt16: ActionID] = [:]
         for binding in capsLock {
-            if case let .capsLockModifier(keyCode) = binding.comboType {
+            if case .capsLockModifier(let keyCode) = binding.comboType {
                 newCapsLock[keyCode] = binding.actionID
             }
         }
 
         var newSpace: [UInt16: ActionID] = [:]
         for binding in space {
-            if case let .spaceModifier(keyCode) = binding.comboType {
+            if case .spaceModifier(let keyCode) = binding.comboType {
                 newSpace[keyCode] = binding.actionID
             }
         }
 
         var newMouse: [MouseKey: ActionID] = [:]
         for binding in mouse {
-            if case let .mouseButton(button, modifiers) = binding.comboType {
+            if case .mouseButton(let button, let modifiers) = binding.comboType {
                 newMouse[MouseKey(button: button, modifiers: modifiers)] = binding.actionID
             }
         }
@@ -195,7 +199,9 @@ final class EventTapHandler: @unchecked Sendable {
         switch type {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             if let port = tapPort {
-                Log.keybindings.debug("Event tap re-enabled after \(type == .tapDisabledByTimeout ? "timeout" : "user input", privacy: .public)")
+                Log.keybindings.debug(
+                    "Event tap re-enabled after \(type == .tapDisabledByTimeout ? "timeout" : "user input", privacy: .public)"
+                )
                 CGEvent.tapEnable(tap: port, enable: true)
             }
             return Unmanaged.passUnretained(event)
@@ -221,37 +227,25 @@ final class EventTapHandler: @unchecked Sendable {
     }
 
     private func handleFlagsChanged(event: CGEvent) -> Unmanaged<CGEvent>? {
-        let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
-        let capsLockKeyCode: UInt16 = UInt16(kVK_CapsLock)
-
-        guard keyCode == capsLockKeyCode else {
-            return Unmanaged.passUnretained(event)
-        }
-
+        // CapsLock state is tracked via IOKit HID (CapsLockMonitor).
+        // Suppress the capslock flagsChanged event when we have
+        // capslock bindings to prevent the LED toggle.
         os_unfair_lock_lock(&lock)
         let hasCapsBindings = !capsLockBindings.isEmpty
         os_unfair_lock_unlock(&lock)
 
-        guard hasCapsBindings else {
-            return Unmanaged.passUnretained(event)
-        }
-
-        let flags = event.flags
-        let capsLockOn = flags.contains(.maskAlphaShift)
-
-        if capsLockOn, !capsLockHeld {
-            // Caps lock just pressed
-            capsLockHeld = true
-            capsLockUsedAsModifier = false
-            return nil // Suppress to prevent LED toggle
-        } else if !capsLockOn, capsLockHeld {
-            // Caps lock released
-            capsLockHeld = false
-            if !capsLockUsedAsModifier {
-                // Was tapped without combo — pass through original toggle
-                return Unmanaged.passUnretained(event)
+        if hasCapsBindings {
+            let keyCode = UInt16(
+                event.getIntegerValueField(.keyboardEventKeycode)
+            )
+            if keyCode == UInt16(kVK_CapsLock) {
+                return nil  // Suppress LED toggle
             }
-            return nil // Suppress if used as modifier
+            // Also strip alphaShift from other modifier events
+            // so held capslock doesn't affect letter case.
+            if event.flags.contains(.maskAlphaShift) {
+                event.flags = event.flags.subtracting(.maskAlphaShift)
+            }
         }
 
         return Unmanaged.passUnretained(event)
@@ -271,18 +265,20 @@ final class EventTapHandler: @unchecked Sendable {
             if hasSpaceBindings {
                 spaceHeld = true
                 spaceUsedAsModifier = false
-                return nil // Suppress space character until we know if it's a modifier
+                return nil  // Suppress space character until we know if it's a modifier
             }
         }
 
-        // Caps-lock modifier combos
-        if capsLockHeld {
+        // Caps-lock modifier combos (state from IOKit HID)
+        if CapsLockMonitor.shared.isPressed {
             os_unfair_lock_lock(&lock)
             let actionID = capsLockBindings[keyCode]
             os_unfair_lock_unlock(&lock)
 
             if let actionID {
-                capsLockUsedAsModifier = true
+                Log.keybindings.info(
+                    "CapsLock+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)"
+                )
                 executor(actionID)
                 return nil
             }
@@ -296,6 +292,8 @@ final class EventTapHandler: @unchecked Sendable {
 
             if let actionID {
                 spaceUsedAsModifier = true
+                Log.keybindings.info(
+                    "Space+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)")
                 executor(actionID)
                 return nil
             }
@@ -307,6 +305,10 @@ final class EventTapHandler: @unchecked Sendable {
         os_unfair_lock_unlock(&lock)
 
         if let actionID {
+            let f = flags.rawValue
+            Log.keybindings.info(
+                "Key \(keyCode, privacy: .public) flags=\(f, privacy: .public) → \(actionID.rawValue, privacy: .public)"
+            )
             executor(actionID)
             return nil
         }
@@ -339,6 +341,10 @@ final class EventTapHandler: @unchecked Sendable {
         os_unfair_lock_unlock(&lock)
 
         if let actionID {
+            let f = flags.rawValue
+            Log.keybindings.info(
+                "Mouse \(button, privacy: .public) flags=\(f, privacy: .public) → \(actionID.rawValue, privacy: .public)"
+            )
             executor(actionID)
             return nil
         }
@@ -353,7 +359,7 @@ final class EventTapHandler: @unchecked Sendable {
         let spaceCode = UInt16(kVK_Space)
 
         if let down = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: true),
-           let up = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: false)
+            let up = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: false)
         {
             down.post(tap: .cgSessionEventTap)
             up.post(tap: .cgSessionEventTap)

@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 
 enum Log {
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.vibeshed"
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.ivandmitriev.Vibeshed"
 
     /// Mirror warning/error messages to stderr when running from a terminal.
     static let stderrEnabled: Bool = {

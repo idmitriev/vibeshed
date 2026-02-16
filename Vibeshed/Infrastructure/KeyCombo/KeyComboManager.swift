@@ -14,6 +14,7 @@ final class KeyComboManager {
     private let eventTapHandler: EventTapHandler
     private var currentEntries: [KeyBindingEntry] = []
     private var eventTapRunning = false
+    private var capsLockMonitorRunning = false
 
     init(
         eventBus: EventBus,
@@ -55,10 +56,12 @@ final class KeyComboManager {
                 switch event {
                 case .configReloaded:
                     self.handleConfigReloaded()
-                case .permissionChanged:
-                    self.handlePermissionChanged()
+                case .permissionChanged(let permission, let granted):
+                    self.handlePermissionChanged(
+                        permission: permission, granted: granted
+                    )
                 case .moduleRegistered:
-                    self.revalidateWarnings()
+                    self.validateBindings()
                 default:
                     break
                 }
@@ -74,6 +77,10 @@ final class KeyComboManager {
     func stop() {
         eventTapHandler.stop()
         eventTapRunning = false
+        if capsLockMonitorRunning {
+            CapsLockMonitor.shared.stop()
+            capsLockMonitorRunning = false
+        }
         currentEntries = []
         bindingErrors = [:]
     }
@@ -87,33 +94,66 @@ final class KeyComboManager {
         rebindAll()
     }
 
-    private func handlePermissionChanged() {
-        // If we have bindings that need the event tap but it wasn't running, retry
-        if !eventTapRunning, needsEventTap() {
-            rebindAll()
+    private func handlePermissionChanged(
+        permission: Permission, granted: Bool
+    ) {
+        switch permission {
+        case .accessibility:
+            // Retry event tap when accessibility changes — the
+            // preflight APIs are unreliable for ad-hoc signed apps,
+            // so we just attempt to create the tap again.
+            if !eventTapRunning, needsEventTap() {
+                rebindAll()
+            }
+        case .inputMonitoring:
+            if eventTapRunning {
+                let hasCaps = currentEntries.contains { entry in
+                    if let ct = try? KeyComboParser.parse(entry.combo),
+                       case .capsLockModifier = ct
+                    {
+                        return true
+                    }
+                    return false
+                }
+                manageCapsLockMonitor(hasCapsLockBindings: hasCaps)
+            }
+        default:
+            break
         }
     }
 
-    private func revalidateWarnings() {
-        // On module registration, re-validate action IDs that had warnings
-        for (combo, _) in bindingErrors {
-            // Clear errors for actions that are now findable
-            if let entry = currentEntries.first(where: { $0.combo == combo }) {
-                let actionID = ActionID(entry.action)
-                Task {
-                    if await moduleRegistry.findAction(id: actionID) != nil {
-                        bindingErrors.removeValue(forKey: combo)
-                    }
+    private func validateBindings() {
+        for entry in currentEntries {
+            let actionID = ActionID(entry.action)
+            guard actionID.rawValue != "app.togglePicker" else { continue }
+
+            let moduleID = String(actionID.rawValue.prefix(while: { $0 != "." }))
+            // Only warn if the module is registered but the action doesn't exist
+            guard moduleRegistry.module(id: moduleID) != nil else { continue }
+
+            Task { [weak self] in
+                guard let self else { return }
+                if await moduleRegistry.findAction(id: actionID) == nil {
+                    bindingErrors[entry.combo] = "Action '\(entry.action)' not found in module '\(moduleID)'"
+                    Log.keybindings.warning(
+                        "Action '\(entry.action, privacy: .public)' for combo '\(entry.combo, privacy: .public)' not available"
+                    )
+                } else {
+                    bindingErrors.removeValue(forKey: entry.combo)
                 }
             }
         }
     }
 
     private func rebindAll() {
-        // Stop existing tap
+        // Stop existing tap and CapsLockMonitor
         if eventTapRunning {
             eventTapHandler.stop()
             eventTapRunning = false
+        }
+        if capsLockMonitorRunning {
+            CapsLockMonitor.shared.stop()
+            capsLockMonitorRunning = false
         }
 
         bindingErrors = [:]
@@ -153,18 +193,6 @@ final class KeyComboManager {
                     mouse.append(binding)
                 }
 
-                // Soft-validate action existence (warning only)
-                let actionID = ActionID(entry.action)
-                if actionID.rawValue != "app.togglePicker" {
-                    Task { [weak self] in
-                        guard let self else { return }
-                        if await moduleRegistry.findAction(id: actionID) == nil {
-                            Log.keybindings.warning(
-                                "Action '\(entry.action, privacy: .public)' for combo '\(entry.combo, privacy: .public)' not currently available"
-                            )
-                        }
-                    }
-                }
             } catch {
                 let message = error.localizedDescription
                 bindingErrors[entry.combo] = message
@@ -188,28 +216,57 @@ final class KeyComboManager {
             return
         }
 
-        // Check permissions
-        let required: Set<Permission> = [.accessibility, .inputMonitoring]
-        let missing = permissionsManager.missingPermissions(from: required)
-        if !missing.isEmpty {
-            let names = missing.map(\.displayName).sorted().joined(separator: ", ")
-            let message = "Event tap requires permissions: \(names)"
-            Log.keybindings.error("Event tap requires permissions: \(names, privacy: .public)")
-            // Mark all bindings as errored due to permissions
+        // Try to create the event tap (needs Accessibility permission).
+        // We skip preflight checks — CGEvent.tapCreate is the real test.
+        guard eventTapHandler.start() else {
+            let message =
+                "Event tap failed — grant Accessibility permission"
             for entry in currentEntries where bindingErrors[entry.combo] == nil {
                 bindingErrors[entry.combo] = message
             }
             return
         }
-
-        eventTapHandler.start()
         eventTapRunning = true
-        Log.keybindings.info("Applied \(totalBindings, privacy: .public) keybinding(s)")
+        Log.keybindings.info(
+            "Applied \(totalBindings, privacy: .public) keybinding(s)"
+        )
+
+        // CapsLockMonitor needs Input Monitoring — manage separately
+        manageCapsLockMonitor(hasCapsLockBindings: !capsLock.isEmpty)
     }
 
     private func needsEventTap() -> Bool {
         currentEntries.contains { entry in
             (try? KeyComboParser.parse(entry.combo)) != nil
+        }
+    }
+
+    private func manageCapsLockMonitor(hasCapsLockBindings: Bool) {
+        if hasCapsLockBindings {
+            if permissionsManager.isGranted(.inputMonitoring) {
+                if !capsLockMonitorRunning {
+                    CapsLockMonitor.shared.start()
+                    capsLockMonitorRunning = true
+                }
+            } else {
+                let msg =
+                    "CapsLock combos need Input Monitoring permission"
+                Log.keybindings.warning("\(msg, privacy: .public)")
+                for entry in currentEntries {
+                    if let ct = try? KeyComboParser.parse(entry.combo),
+                       case .capsLockModifier = ct
+                    {
+                        bindingErrors[entry.combo] = msg
+                    }
+                }
+                if capsLockMonitorRunning {
+                    CapsLockMonitor.shared.stop()
+                    capsLockMonitorRunning = false
+                }
+            }
+        } else if capsLockMonitorRunning {
+            CapsLockMonitor.shared.stop()
+            capsLockMonitorRunning = false
         }
     }
 

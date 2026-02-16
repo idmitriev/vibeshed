@@ -1,6 +1,6 @@
 BINARY = .build/debug/Vibeshed
 ENTITLEMENTS = Vibeshed/Vibeshed.entitlements
-BUNDLE_ID = com.vibeshed.app
+BUNDLE_ID = com.ivandmitriev.Vibeshed
 APP_NAME = Vibeshed
 APP_BUNDLE = .build/$(APP_NAME).app
 APP_BINARY = $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
@@ -19,7 +19,7 @@ build:
 		-e 's/$$(PRODUCT_NAME)/$(APP_NAME)/g' \
 		-e 's/$$(DEVELOPMENT_LANGUAGE)/en/g' \
 		Vibeshed/Info.plist > "$(APP_BUNDLE)/Contents/Info.plist"
-	@codesign --force --sign - \
+	@codesign --force --sign "Apple Development: iam@ivandmitriev.com (BDFRA4JH67)" \
 		--entitlements $(ENTITLEMENTS) \
 		--identifier $(BUNDLE_ID) \
 		--options runtime \

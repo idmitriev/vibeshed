@@ -79,6 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         permissionsManager.checkAll()
         logPermissionStatus()
         permissionsManager.startPeriodicRecheck()
+        // Prompt for Accessibility + Input Monitoring so the app is
+        // registered in System Settings and the user can grant them.
+        permissionsManager.request(.accessibility)
+        permissionsManager.request(.inputMonitoring)
         themeEngine.start(
             intensity: configManager.config.appearance.themeIntensity
         )
@@ -100,7 +104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Returns `true` if this is the only running instance, `false` if another instance was found and activated.
     private func ensureSingleInstance() -> Bool {
         let currentPID = ProcessInfo.processInfo.processIdentifier
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.vibeshed"
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.ivandmitriev.Vibeshed"
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
             .filter { $0.processIdentifier != currentPID }
 
@@ -142,15 +146,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func promptBrowserAutomation() {
         // First, request System Events automation (triggers TCC registration)
         let systemEventsScript = """
-        tell application "System Events"
-            return name of first process
-        end tell
-        """
+            tell application "System Events"
+                return name of first process
+            end tell
+            """
         if let script = NSAppleScript(source: systemEventsScript) {
             var error: NSDictionary?
             script.executeAndReturnError(&error)
             if let error {
-                Log.stderr("  ⚠ automation: System Events — \(error[NSAppleScript.errorMessage] ?? "denied")")
+                Log.stderr(
+                    "  ⚠ automation: System Events — \(error[NSAppleScript.errorMessage] ?? "denied")"
+                )
             } else {
                 Log.stderr("  ✓ automation: System Events")
             }
@@ -163,10 +169,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard BrowserRegistry.isRunning(bundleID) else { continue }
 
             let browserScript = """
-            tell application id "\(bundleID)"
-                return name
-            end tell
-            """
+                tell application id "\(bundleID)"
+                    return name
+                end tell
+                """
             if let script = NSAppleScript(source: browserScript) {
                 var error: NSDictionary?
                 script.executeAndReturnError(&error)
@@ -187,12 +193,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try await moduleRegistry.register(module)
         } catch {
             Log.stderr("  ✗ module: \(id) — \(error.localizedDescription)")
-            Log.app.error("Failed to register \(id, privacy: .public) module: \(error.localizedDescription, privacy: .public)")
+            Log.app.error(
+                "Failed to register \(id, privacy: .public) module: \(error.localizedDescription, privacy: .public)"
+            )
             return
         }
         // register() returns without throwing when blocked by permissions — check if actually loaded
         if moduleRegistry.permissionErrors[id] != nil {
-            let missing = moduleRegistry.permissionErrors[id]!.grantInstructions.joined(separator: ", ")
+            let missing = moduleRegistry.permissionErrors[id]!.grantInstructions.joined(
+                separator: ", ")
             Log.stderr("  ⚠ module: \(id) — waiting for permissions (\(missing))")
         } else if moduleRegistry.configErrors[id] != nil {
             Log.stderr("  ✗ module: \(id) — config error: \(moduleRegistry.configErrors[id]!)")
@@ -217,16 +226,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     entries.append(.init(id: id, status: .loaded, message: nil))
                 }
                 for (id, msg) in registry.configErrors {
-                    entries.append(.init(
-                        id: id, status: .configError, message: msg
-                    ))
+                    entries.append(
+                        .init(
+                            id: id, status: .configError, message: msg
+                        ))
                 }
                 for (id, err) in registry.permissionErrors {
-                    entries.append(.init(
-                        id: id,
-                        status: .permissionError,
-                        message: err.localizedDescription
-                    ))
+                    entries.append(
+                        .init(
+                            id: id,
+                            status: .permissionError,
+                            message: err.localizedDescription
+                        ))
                 }
                 return ModuleStatusInfo(
                     entries: entries.sorted { $0.id < $1.id }
@@ -255,7 +266,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         uriManager.handleURLs(urls)
     }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)
+        -> Bool
+    {
         panelController.show()
         return false
     }

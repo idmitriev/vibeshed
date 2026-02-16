@@ -1,6 +1,6 @@
 name: Vibeshed
 options:
-  bundleIdPrefix: com.vibeshed
+  bundleIdPrefix: com.ivandmitriev
   deploymentTarget:
     macOS: "14.0"
   xcodeVersion: "16.0"
@@ -39,14 +39,14 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - vibeshed
-            CFBundleURLName: com.vibeshed.url
+            CFBundleURLName: com.ivandmitriev.Vibeshed.url
     settings:
       base:
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_IDENTITY: "-"
-        PRODUCT_BUNDLE_IDENTIFIER: com.vibeshed.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.ivandmitriev.Vibeshed
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_APP_SANDBOX: NO
 

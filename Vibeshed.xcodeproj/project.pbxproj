@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -94,6 +94,7 @@
 		A9E8C9D11773C40D5293BF92 /* GitHubViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20EF9C2DC8C7A310750AF32C /* GitHubViews.swift */; };
 		AA8729442A5EC8BAD6A0894B /* SpotifyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8144EFCFF5CF8435248E1A /* SpotifyAction.swift */; };
 		AAB630428DB3F870EED6552D /* SelfModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0E5FA52B3627E5042B95D9A /* SelfModule.swift */; };
+		ACA2BC676B901EE437D6634F /* CapsLockMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161DDBD097B45417F2BDBE4B /* CapsLockMonitor.swift */; };
 		ADC6087F25E247683654EABC /* ApplicationModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4CC26ADC704B3CC3834E8C /* ApplicationModule.swift */; };
 		AEBBD3F6196A0B9F547E4DDB /* WindowModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34322DC8FA556E2C9F0859F /* WindowModule.swift */; };
 		B0F1D7E315BE53FEAB80AE30 /* AIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74736F84987CF95740A618 /* AIConfig.swift */; };
@@ -165,6 +166,7 @@
 		1513BE419E01E789723255D9 /* ModuleConfigurable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleConfigurable.swift; sourceTree = "<group>"; };
 		15895EBC1EC438F221591968 /* TelegramConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelegramConfig.swift; sourceTree = "<group>"; };
 		15A98A537C97C7284F255A5E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		161DDBD097B45417F2BDBE4B /* CapsLockMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsLockMonitor.swift; sourceTree = "<group>"; };
 		1A4BB7D19489F0599928D94B /* SystemViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemViews.swift; sourceTree = "<group>"; };
 		1AA10C3A80C434A2BF4EFA72 /* TelegramAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelegramAction.swift; sourceTree = "<group>"; };
 		1FCAB27C3F7A49EAD6D99512 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
@@ -649,6 +651,7 @@
 		EA31E4E1E1129E37285178D2 /* KeyCombo */ = {
 			isa = PBXGroup;
 			children = (
+				161DDBD097B45417F2BDBE4B /* CapsLockMonitor.swift */,
 				A97DC18026FF987749FD0A76 /* EventTapHandler.swift */,
 				C73328491BF69E906AE66D82 /* KeyComboConfig.swift */,
 				CC8A56B0D9DDF840F687CFC1 /* KeyComboError.swift */,
@@ -782,7 +785,6 @@
 				02770868DD0B43DE82B9EBBA /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
 				E8F92D1DD3B0A98E4075AD23 /* XCRemoteSwiftPackageReference "Yams" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -832,6 +834,7 @@
 				995EDEFBC259CBEFA481EFB2 /* BrowserModule.swift in Sources */,
 				255C340B0D6F21FB2C5A835C /* BrowserRegistry.swift in Sources */,
 				4352D3AFA3A1921997B26856 /* BrowserViews.swift in Sources */,
+				ACA2BC676B901EE437D6634F /* CapsLockMonitor.swift in Sources */,
 				204E452B5DD345D8E75F60E6 /* ClipboardAction.swift in Sources */,
 				4B81ED2F3B74EF92D0E4497F /* ClipboardConfig.swift in Sources */,
 				264B011C2509938D22DD7E0A /* ClipboardHistory.swift in Sources */,
@@ -952,17 +955,30 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				INFOPLIST_FILE = Vibeshed/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vibeshed.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ivandmitriev.Vibeshed;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -1098,7 +1114,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vibeshed.VibeshedUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ivandmitriev.VibeshedUITests;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 				TEST_TARGET_NAME = Vibeshed;
@@ -1109,17 +1125,30 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				INFOPLIST_FILE = Vibeshed/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vibeshed.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ivandmitriev.Vibeshed;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -1136,7 +1165,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vibeshed.VibeshedUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ivandmitriev.VibeshedUITests;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 				TEST_TARGET_NAME = Vibeshed;
