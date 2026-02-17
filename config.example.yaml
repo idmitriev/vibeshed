@@ -136,61 +136,61 @@ modules:
     favourites:
       # App-focus shortcuts (bound to hyper + 1-0 above)
       - alias: "Safari"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "safari"
         subtitle: "Primary browser"
         parameters: { app: "com.apple.Safari" }
 
       - alias: "Chrome"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "globe"
         subtitle: "Secondary browser"
         parameters: { app: "com.google.Chrome" }
 
       - alias: "Zen"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "globe"
         subtitle: "Tertiary browser"
         parameters: { app: "app.zen-browser.zen" }
 
       - alias: "IntelliJ"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "hammer"
         subtitle: "Primary editor"
         parameters: { app: "com.jetbrains.intellij" }
 
       - alias: "VSCode"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "chevron.left.forwardslash.chevron.right"
         subtitle: "Secondary editor"
         parameters: { app: "com.microsoft.VSCode" }
 
       - alias: "Spotify"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "music.note"
         subtitle: "Music"
         parameters: { app: "com.spotify.client" }
 
       - alias: "Notes"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "note.text"
         subtitle: "Apple Notes"
         parameters: { app: "com.apple.Notes" }
 
       - alias: "Zoom"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "video"
         subtitle: "Video calls"
         parameters: { app: "us.zoom.xos" }
 
       - alias: "Telegram"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "paperplane"
         subtitle: "Messaging"
         parameters: { app: "ru.keepcoder.Telegram" }
 
       - alias: "iTerm"
-        action: "application.focus"
+        action: "application.launchOrFocus"
         icon: "terminal"
         subtitle: "Terminal"
         parameters: { app: "com.googlecode.iterm2" }
@@ -326,15 +326,22 @@ modules:
 # ---------------------------------------------------------------------------
 # URL Routing (default browser replacement)
 # ---------------------------------------------------------------------------
+# When registerAsDefaultBrowser is true, the app becomes the system default
+# browser. URLs matching a rule open directly in the configured browser/profile.
+# URLs that don't match any rule show a picker with installed browsers so you
+# can choose where to open the link. Chromium browser profiles are discovered
+# automatically.
+#
 # Pattern syntax:
 #   Glob:  *.example.com/*
 #   Regex: /pattern/
 # Browser names: safari, chrome, firefox, brave, edge, arc, orion, vivaldi, opera
 # ---------------------------------------------------------------------------
 urlRouting:
-  registerAsDefaultBrowser: false
-  defaultBrowser: "safari"
+  registerAsDefaultBrowser: true
+  defaultBrowser: "safari"    # Pre-selected in the browser chooser picker
   rules:
+    # URLs matching rules open directly without showing the chooser
     # Work tools in Chrome
     - pattern: "*.github.com/*"
       browser: "chrome"
@@ -353,4 +360,4 @@ urlRouting:
     - pattern: "*.googleapis.com/*"
       browser: "chrome"
 
-    # Everything else falls through to defaultBrowser (Safari)
+    # Everything else shows the browser chooser picker

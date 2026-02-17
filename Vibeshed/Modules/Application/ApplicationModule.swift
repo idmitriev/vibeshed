@@ -68,8 +68,9 @@ actor ApplicationModule: ModuleConfigurable {
         let cfg = config
         let actionName = actionID.rawValue
 
-        // launch shows all apps; focus/quit show only running
-        let showAll = actionName.hasSuffix(".launch") && !cfg.showRunningOnly
+        // launch/launchOrFocus show all apps; focus/quit show only running
+        let showAll = (actionName.hasSuffix(".launch") || actionName.hasSuffix(".launchOrFocus"))
+            && !cfg.showRunningOnly
 
         let apps: [AppInfo]
         if showAll {
@@ -97,12 +98,12 @@ actor ApplicationModule: ModuleConfigurable {
     // MARK: - Build Actions
 
     private func buildActions() -> [ApplicationAction] {
+        [buildLaunchAction(), buildLaunchOrFocusAction(), buildFocusAction(), buildQuitAction()]
+    }
+
+    private func buildLaunchAction() -> ApplicationAction {
         let mgr = appManager
-
-        var actions: [ApplicationAction] = []
-
-        // MARK: Launch Application
-        actions.append(ApplicationAction(
+        return ApplicationAction(
             id: ActionID(module: "application", name: "launch"),
             title: "Launch Application",
             subtitle: "Launch or activate an application",
@@ -127,10 +128,49 @@ actor ApplicationModule: ModuleConfigurable {
             }
             try await mgr.launchApplication(app)
             return .dismiss
-        })
+        }
+    }
 
-        // MARK: Focus Application
-        actions.append(ApplicationAction(
+    private func buildLaunchOrFocusAction() -> ApplicationAction {
+        let mgr = appManager
+        return ApplicationAction(
+            id: ActionID(module: "application", name: "launchOrFocus"),
+            title: "Launch or Focus Application",
+            subtitle: "Launch if not running, focus or cycle windows if running",
+            iconName: "arrow.up.forward.app.fill",
+            relevanceScore: 0.9,
+            keywords: ["launch", "focus", "open", "switch", "activate", "cycle", "app"],
+            parameters: [
+                ActionParameter(
+                    id: "app",
+                    label: "Application",
+                    type: .dynamicSelection(hint: "app"),
+                    isRequired: true
+                ),
+            ]
+        ) { values in
+            guard let bundleID = values["app"] as? String else {
+                return .showResult(title: "Error", body: "No application selected")
+            }
+            let apps = await MainActor.run { mgr.listInstalledApplications() }
+            guard let app = apps.first(where: { $0.id == bundleID }) else {
+                return .showResult(title: "Error", body: "Application not found")
+            }
+            if app.isRunning {
+                let focused = await MainActor.run { mgr.focusApplication(app) }
+                if !focused {
+                    return .showResult(title: "Error", body: "Failed to focus \(app.name)")
+                }
+            } else {
+                try await mgr.launchApplication(app)
+            }
+            return .dismiss
+        }
+    }
+
+    private func buildFocusAction() -> ApplicationAction {
+        let mgr = appManager
+        return ApplicationAction(
             id: ActionID(module: "application", name: "focus"),
             title: "Focus Application",
             subtitle: "Activate a running application or cycle its windows",
@@ -158,10 +198,12 @@ actor ApplicationModule: ModuleConfigurable {
                 return .showResult(title: "Error", body: "Failed to focus application")
             }
             return .dismiss
-        })
+        }
+    }
 
-        // MARK: Quit Application
-        actions.append(ApplicationAction(
+    private func buildQuitAction() -> ApplicationAction {
+        let mgr = appManager
+        return ApplicationAction(
             id: ActionID(module: "application", name: "quit"),
             title: "Quit Application",
             subtitle: "Quit a running application",
@@ -189,9 +231,7 @@ actor ApplicationModule: ModuleConfigurable {
                 return .showResult(title: "Error", body: "Failed to quit application")
             }
             return .dismiss
-        })
-
-        return actions
+        }
     }
 
     // MARK: - Per-App Top-Level Action

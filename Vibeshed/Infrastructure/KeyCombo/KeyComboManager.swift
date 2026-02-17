@@ -348,19 +348,41 @@ final class KeyComboManager {
         moduleRegistry: ModuleRegistry,
         eventBus: EventBus
     ) async {
-        guard let action = await moduleRegistry.findAction(id: actionID) else {
-            Log.keybindings.error("Action not found: \(actionID, privacy: .public)")
-            await eventBus.publish(.actionFailed(actionID, message: "Action not found"))
-            return
+        var currentID = actionID
+        var currentValues: [String: Any] = [:]
+        let maxChainDepth = 5
+
+        for depth in 0..<maxChainDepth {
+            guard let action = await moduleRegistry.findAction(id: currentID) else {
+                Log.keybindings.error("Action not found: \(currentID, privacy: .public)")
+                await eventBus.publish(.actionFailed(currentID, message: "Action not found"))
+                return
+            }
+
+            let moduleID = String(currentID.rawValue.prefix(while: { $0 != "." }))
+            let result: ActionResult
+            do {
+                result = try await action.run(with: currentValues)
+                await eventBus.publish(.actionExecuted(currentID, moduleID: moduleID))
+            } catch {
+                Log.keybindings.error("Action \(currentID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+                await eventBus.publish(.actionFailed(currentID, message: error.localizedDescription))
+                return
+            }
+
+            guard case let .chain(nextID, stringValues) = result else {
+                return
+            }
+
+            Log.keybindings.info("Chaining \(currentID, privacy: .public) → \(nextID, privacy: .public) (depth \(depth, privacy: .public))")
+            currentID = nextID
+            currentValues = [:]
+            for (key, value) in stringValues {
+                currentValues[key] = value
+            }
         }
 
-        let moduleID = String(actionID.rawValue.prefix(while: { $0 != "." }))
-        do {
-            _ = try await action.run(with: [:])
-            await eventBus.publish(.actionExecuted(actionID, moduleID: moduleID))
-        } catch {
-            Log.keybindings.error("Action \(actionID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-            await eventBus.publish(.actionFailed(actionID, message: error.localizedDescription))
-        }
+        Log.keybindings.error("Chain depth exceeded at \(currentID, privacy: .public)")
+        await eventBus.publish(.actionFailed(currentID, message: "Chain depth exceeded"))
     }
 }

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -74,6 +74,7 @@
 		8067EBE14A4A6CC56B5838B5 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F96BD0F02421A8BE5B321BB /* PermissionsManager.swift */; };
 		83548603855D56F887FA1C0F /* SystemModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98A6F4088BAAC926B805DC4B /* SystemModule.swift */; };
 		84486301758DD5C33D0D5757 /* SpotifyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0A31EA4F7FB33A56398DD6 /* SpotifyViews.swift */; };
+		8A8B4CD40443036A400BE9D2 /* URLChooserAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D56C6E06B3E47FC20BD7D2D /* URLChooserAction.swift */; };
 		8C11BFBAED563CBCCD082962 /* PickerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C5FBF0D0478B3732EABBAAB /* PickerUITests.swift */; };
 		8D4A6AF37A22F230F3CF8791 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8CD4D9B93D1B87153D0DED1 /* AppConfig.swift */; };
 		8D622AD2D81A1C58F12B450A /* FuzzyMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936D19BB79AA1298EBF0BD9B /* FuzzyMatcher.swift */; };
@@ -86,6 +87,7 @@
 		96686EA3FD30E50AABF6C407 /* ParameterPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B021CFF3230A350FC6F59BE7 /* ParameterPreviewView.swift */; };
 		97222BF01431BBCE9C523AC8 /* PermissionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDBF7BDA779DC1A420CB667D /* PermissionError.swift */; };
 		995EDEFBC259CBEFA481EFB2 /* BrowserModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA71D1CAA60BF993D081784 /* BrowserModule.swift */; };
+		9FF862D11767FEC583C516B5 /* URLChooserViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36FAACF4FC7093748557BB75 /* URLChooserViews.swift */; };
 		A0CEC1A7E201671142F6B2FB /* ScoringContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F6A1AC73A792839AFF18D5 /* ScoringContext.swift */; };
 		A31111C9B280F568344A91BC /* VibeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB6E95CDF04FD4669FC5B1B /* VibeTheme.swift */; };
 		A3157878BE2F89DCB2C83726 /* FavouritesConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5158C2F2311D61BE3095AD6 /* FavouritesConfig.swift */; };
@@ -111,6 +113,7 @@
 		CBC5FB40DFFBBD5901BC63B9 /* GitHubConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DDB60FC612FD4033396668E /* GitHubConfig.swift */; };
 		CFD458CE359FC6A096F0D12B /* ActionProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB49F846148B963183589DE2 /* ActionProtocol.swift */; };
 		D0A9E3E624D15B9BF2ED768E /* AudioConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14A02F97B4331F9F8949813 /* AudioConfig.swift */; };
+		D123295FC0FB201379E635F6 /* ChromiumProfileDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11591DB8077BFEEF1F2FB38C /* ChromiumProfileDiscovery.swift */; };
 		D57CB56AE1C390661CEE2813 /* AIAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8569D673AF6EF12860F21D9D /* AIAction.swift */; };
 		D676EC37BEBC703711937B7F /* SystemAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE796874DA00543249B5D5C8 /* SystemAction.swift */; };
 		D7964BBAA974A80FF8251325 /* ITermModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23919FA10C14BD6E11CC3C55 /* ITermModule.swift */; };
@@ -162,6 +165,7 @@
 		0D9E864CC6A3B2C40E0A6309 /* ApplicationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationManager.swift; sourceTree = "<group>"; };
 		0DF379388C55ACA27C16CB7A /* SelfAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelfAction.swift; sourceTree = "<group>"; };
 		0F55A3B785B7D36B4925CCF3 /* AppColorMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppColorMap.swift; sourceTree = "<group>"; };
+		11591DB8077BFEEF1F2FB38C /* ChromiumProfileDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumProfileDiscovery.swift; sourceTree = "<group>"; };
 		1195B84DE0470B9ECA7FA886 /* VSCodeModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeModule.swift; sourceTree = "<group>"; };
 		1513BE419E01E789723255D9 /* ModuleConfigurable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleConfigurable.swift; sourceTree = "<group>"; };
 		15895EBC1EC438F221591968 /* TelegramConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelegramConfig.swift; sourceTree = "<group>"; };
@@ -169,6 +173,7 @@
 		161DDBD097B45417F2BDBE4B /* CapsLockMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsLockMonitor.swift; sourceTree = "<group>"; };
 		1A4BB7D19489F0599928D94B /* SystemViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemViews.swift; sourceTree = "<group>"; };
 		1AA10C3A80C434A2BF4EFA72 /* TelegramAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelegramAction.swift; sourceTree = "<group>"; };
+		1D56C6E06B3E47FC20BD7D2D /* URLChooserAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLChooserAction.swift; sourceTree = "<group>"; };
 		1FCAB27C3F7A49EAD6D99512 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
 		208003692F680ED31E2FCFD0 /* PickerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerState.swift; sourceTree = "<group>"; };
 		20AE5A9B5F9C29692AF3F7E9 /* PanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelController.swift; sourceTree = "<group>"; };
@@ -179,6 +184,7 @@
 		2DD782530B7A954DC31BE9B5 /* VSCodeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeManager.swift; sourceTree = "<group>"; };
 		352E1E4FAE31463DB02908E6 /* PickerCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerCoordinator.swift; sourceTree = "<group>"; };
 		3588A93D7FFED0E21344E66A /* ApplicationAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationAction.swift; sourceTree = "<group>"; };
+		36FAACF4FC7093748557BB75 /* URLChooserViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLChooserViews.swift; sourceTree = "<group>"; };
 		38B01404B1E693B7475E0E89 /* UsageTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTracker.swift; sourceTree = "<group>"; };
 		3EB6E95CDF04FD4669FC5B1B /* VibeTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VibeTheme.swift; sourceTree = "<group>"; };
 		446B8B1E026DA6512EA13140 /* ClipboardAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardAction.swift; sourceTree = "<group>"; };
@@ -531,6 +537,7 @@
 			isa = PBXGroup;
 			children = (
 				DC593BC750E29EC863FBAA1E /* BrowserRegistry.swift */,
+				11591DB8077BFEEF1F2FB38C /* ChromiumProfileDiscovery.swift */,
 			);
 			path = Browsers;
 			sourceTree = "<group>";
@@ -697,6 +704,8 @@
 			children = (
 				CB189CAEA77A313F970D2B5E /* URIError.swift */,
 				606BA634897E6297AF0F4511 /* URIManager.swift */,
+				1D56C6E06B3E47FC20BD7D2D /* URLChooserAction.swift */,
+				36FAACF4FC7093748557BB75 /* URLChooserViews.swift */,
 				B7D2B996C06917CBD6F59A15 /* URLPatternMatcher.swift */,
 				7C8EDB21158ABED019BCA712 /* URLRoutingConfig.swift */,
 			);
@@ -785,6 +794,7 @@
 				02770868DD0B43DE82B9EBBA /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
 				E8F92D1DD3B0A98E4075AD23 /* XCRemoteSwiftPackageReference "Yams" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -835,6 +845,7 @@
 				255C340B0D6F21FB2C5A835C /* BrowserRegistry.swift in Sources */,
 				4352D3AFA3A1921997B26856 /* BrowserViews.swift in Sources */,
 				ACA2BC676B901EE437D6634F /* CapsLockMonitor.swift in Sources */,
+				D123295FC0FB201379E635F6 /* ChromiumProfileDiscovery.swift in Sources */,
 				204E452B5DD345D8E75F60E6 /* ClipboardAction.swift in Sources */,
 				4B81ED2F3B74EF92D0E4497F /* ClipboardConfig.swift in Sources */,
 				264B011C2509938D22DD7E0A /* ClipboardHistory.swift in Sources */,
@@ -911,6 +922,8 @@
 				0E3EB6D3F4FB891E856CB009 /* ThemeEngine.swift in Sources */,
 				283D9C1C11FB31FA39CDFD8E /* URIError.swift in Sources */,
 				695F443E3B19E77126B270EE /* URIManager.swift in Sources */,
+				8A8B4CD40443036A400BE9D2 /* URLChooserAction.swift in Sources */,
+				9FF862D11767FEC583C516B5 /* URLChooserViews.swift in Sources */,
 				B60EF7639141052C47AD73A2 /* URLPatternMatcher.swift in Sources */,
 				EDE87CBDEFE85C9F204C7812 /* URLRoutingConfig.swift in Sources */,
 				7B2F5E52F149A38353B71DFF /* UsageTracker.swift in Sources */,
@@ -955,17 +968,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				INFOPLIST_FILE = Vibeshed/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -973,12 +979,6 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ivandmitriev.Vibeshed;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -1125,17 +1125,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				INFOPLIST_FILE = Vibeshed/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1143,12 +1136,6 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ivandmitriev.Vibeshed;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};

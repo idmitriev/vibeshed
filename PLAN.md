@@ -186,8 +186,6 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] ContextualScorer applies additive boosts [-0.15, +0.15] based on context signals: focused app → module affinity, Spotify running state, time of day, audio mute/volume state, visible window count
 - [x] Context captured once per picker show, reused across queries for that session
 
-
-
 ### Phase 26: Dynamic theme (DONE)
 
 - [x] Implement a dynamic theming system that can change the app's appearance based on current system theme/appearance, open apps color schemes, music playing and overal vibe. This can include changing colors, fonts, and other visual elements of the app to create a more immersive and personalized user experience.
@@ -202,15 +200,58 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [x] Add debug logging throughout the app to help with troubleshooting and understanding app behavior. Logs should be categorized and have different levels (info, warning, error) for better filtering.
 
-### Phase 29: Testing
+### Phase 29: Open URL picker action (DONE)
+
+- [x] Register as URL handler application on start
+- [x] On url open request show picker with browser/profile options
+- [x] For configured URL patterns open configured browser/profile directly without showing the picker
+
+### Phase 30: More window actions
+
+- [ ] Enlarge/shrink window keeping split/anchor action
+- [ ] Implement an action for maximizing and restoring windows that can toggle between maximized and previous size/position states. This will allow users to quickly maximize a window and then restore it to its original size and position with the same action.
+
+### Phase 31: Action aliasing
+
+- [ ] Implement action aliasing in the config file to allow users to define custom aliases for actions. This will make it easier for users to search for and remember actions by using their own terminology.
+
+### Phase 32 : App scoped key-combos/remaps
+
+- [ ] Implement a system for app scoped key-combos or remaps that can trigger actions only when a specific application is focused. 
+- [ ] Implement key remapping functionality that allows users to remap keys or key-combos to different actions on a per-application basis.
+
+### Phase 33: Better previews
+
+- [ ] Implement better previews for actions in the picker, showing more relevant information and visuals to help users understand what the action does and what parameters it requires
+- [ ] For windows show screenshot previews with highlighted focused window
+- [ ] For browser tabs show website favicons and titles
+- [ ] For spotify show album art and track info
+- [ ] For github show repo avatars and issue/PR info, etc
+
+### Phase 34: Deduplication of similar actions
+
+- [ ] Dedupe actions that do the same, for example favourite action for launching app and application launch action
+
+### Phase 35: Navigation in picker
+
+- [ ] Implement navigation in the picker to allow users to easily go back from action parameter selection to the main action list
+- [ ] Support paging in the action list when there are many actions available
+
+### Phase _: Missing features
+
+- [ ] Jetbrains IDEs module for searching and opening projects
+- [ ] Zoom module to start/join meetings
+- [ ] Calendar module to open events
+
+### Phase _: Testing
 
 - [ ] Write checklist file for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.
 
-### Phase 30: Bugfixing and polishing
+### Phase _: Bugfixing and polishing
 
 - [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
 
-### Phase 31: Releases and distribution
+### Phase _: Releases and distribution
 
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems

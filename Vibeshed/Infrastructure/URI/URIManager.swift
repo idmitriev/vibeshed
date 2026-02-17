@@ -1,4 +1,5 @@
 import AppKit
+import CoreServices
 import Foundation
 
 @MainActor
@@ -11,6 +12,7 @@ final class URIManager {
     private let moduleRegistry: ModuleRegistry
     private let showPicker: (String?) -> Void
     private let togglePicker: () -> Void
+    private let showURLChooser: (URL, [any Action]) -> Void
 
     private var currentConfig: URLRoutingConfig = .init()
     private var previousDefaultBrowser: String?
@@ -20,13 +22,15 @@ final class URIManager {
         configManager: ConfigManager,
         moduleRegistry: ModuleRegistry,
         showPicker: @escaping (String?) -> Void,
-        togglePicker: @escaping () -> Void
+        togglePicker: @escaping () -> Void,
+        showURLChooser: @escaping (URL, [any Action]) -> Void
     ) {
         self.eventBus = eventBus
         self.configManager = configManager
         self.moduleRegistry = moduleRegistry
         self.showPicker = showPicker
         self.togglePicker = togglePicker
+        self.showURLChooser = showURLChooser
     }
 
     // MARK: - Public
@@ -129,7 +133,7 @@ final class URIManager {
                 return
             }
         }
-        openInDefaultBrowser(url)
+        showBrowserChooser(for: url)
     }
 
     private func applyRule(_ rule: URLRoutingRule, for url: URL) {
@@ -210,6 +214,116 @@ final class URIManager {
         }
     }
 
+    // MARK: - Browser Chooser
+
+    private func showBrowserChooser(for url: URL) {
+        let actions = buildChooserActions(for: url)
+        if actions.isEmpty {
+            Log.uri.warning("No browsers found for chooser, falling back")
+            openInDefaultBrowser(url)
+            return
+        }
+        showURLChooser(url, actions)
+        Log.uri.info("Showing browser chooser for \(url, privacy: .public)")
+        Task {
+            await eventBus.publish(
+                .uriRouted(url: url.absoluteString, destination: "chooser")
+            )
+        }
+    }
+
+    private func buildChooserActions(for url: URL) -> [any Action] {
+        let installed = BrowserRegistry.all.filter {
+            BrowserRegistry.isInstalled($0.bundleID)
+        }
+        let defaultBundleID = resolveDefaultBundleID()
+        let sorted = installed.sorted { a, b in
+            let aDefault = a.bundleID == defaultBundleID
+            let bDefault = b.bundleID == defaultBundleID
+            if aDefault != bDefault { return aDefault }
+            return a.name < b.name
+        }
+
+        var actions: [any Action] = []
+        var counter = 0
+        for browser in sorted {
+            let isDefault = browser.bundleID == defaultBundleID
+            let profiles = browser.isChromium
+                ? ChromiumProfileDiscovery.discoverProfiles(bundleID: browser.bundleID)
+                : []
+            if profiles.count > 1 {
+                buildProfileActions(
+                    for: url, browser: browser, profiles: profiles,
+                    isDefault: isDefault, counter: &counter, into: &actions
+                )
+            } else {
+                buildSingleAction(
+                    for: url, browser: browser, profile: profiles.first,
+                    isDefault: isDefault, counter: &counter, into: &actions
+                )
+            }
+        }
+        return actions
+    }
+
+    private func buildProfileActions(
+        for url: URL, browser: BrowserEntry,
+        profiles: [ChromiumProfile], isDefault: Bool,
+        counter: inout Int, into actions: inout [any Action]
+    ) {
+        for profile in profiles {
+            let relevance = (isDefault ? 0.95 : 0.8) - Double(counter) * 0.001
+            let bundleID = browser.bundleID
+            let dir = profile.directoryName
+            actions.append(URLChooserAction(
+                id: ActionID(module: "url", name: "open.\(counter)"),
+                title: "\(browser.name) — \(profile.displayName)",
+                subtitle: url.absoluteString,
+                iconName: "globe",
+                relevanceScore: relevance,
+                keywords: [browser.name.lowercased(), profile.displayName.lowercased()],
+                browserBundleID: bundleID,
+                profileDirectory: dir
+            ) { _ in
+                try BrowserRegistry.open(url: url, browser: bundleID, profile: dir)
+                return .dismiss
+            })
+            counter += 1
+        }
+    }
+
+    private func buildSingleAction(
+        for url: URL, browser: BrowserEntry,
+        profile: ChromiumProfile?, isDefault: Bool,
+        counter: inout Int, into actions: inout [any Action]
+    ) {
+        let title = profile.map { "\(browser.name) — \($0.displayName)" } ?? browser.name
+        let relevance = (isDefault ? 0.95 : 0.8) - Double(counter) * 0.001
+        let bundleID = browser.bundleID
+        let dir = profile?.directoryName
+        actions.append(URLChooserAction(
+            id: ActionID(module: "url", name: "open.\(counter)"),
+            title: title,
+            subtitle: url.absoluteString,
+            iconName: "globe",
+            relevanceScore: relevance,
+            keywords: [browser.name.lowercased()],
+            browserBundleID: bundleID,
+            profileDirectory: dir
+        ) { _ in
+            try BrowserRegistry.open(url: url, browser: bundleID, profile: dir)
+            return .dismiss
+        })
+        counter += 1
+    }
+
+    private func resolveDefaultBundleID() -> String? {
+        if let defaultBrowser = currentConfig.defaultBrowser {
+            return BrowserRegistry.resolveBundleID(defaultBrowser)
+        }
+        return previousDefaultBrowser
+    }
+
     // MARK: - Config Reload
 
     private func handleConfigReloaded() {
@@ -278,7 +392,37 @@ final class URIManager {
         if previousDefaultBrowser == nil {
             previousDefaultBrowser = BrowserRegistry.systemDefaultBundleID()
         }
-        Log.uri.info("App configured as http/https handler. User will be prompted to confirm.")
+
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.ivandmitriev.Vibeshed"
+
+        if BrowserRegistry.systemDefaultBundleID() == bundleID {
+            Log.uri.info("Already registered as default browser")
+            return
+        }
+
+        let httpResult = LSSetDefaultHandlerForURLScheme(
+            "http" as CFString, bundleID as CFString
+        )
+        let httpsResult = LSSetDefaultHandlerForURLScheme(
+            "https" as CFString, bundleID as CFString
+        )
+
+        if httpResult == noErr, httpsResult == noErr {
+            Log.uri.info("Registered as default browser")
+        } else {
+            Log.uri.warning(
+                "Default browser registration returned: http=\(httpResult, privacy: .public), https=\(httpsResult, privacy: .public)"
+            )
+        }
+
+        // On macOS 12+ the system may not show a dialog from LSSetDefaultHandler.
+        // Open System Settings so the user can confirm.
+        if BrowserRegistry.systemDefaultBundleID() != bundleID {
+            Log.uri.info("Opening System Settings for default browser selection")
+            if let url = URL(string: "x-apple.systempreferences:com.apple.Desktop-Settings.extension") {
+                NSWorkspace.shared.open(url)
+            }
+        }
     }
 
     // MARK: - Action Execution

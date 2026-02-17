@@ -61,7 +61,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     picker.query = query
                 }
             },
-            togglePicker: { panel.toggle() }
+            togglePicker: { panel.toggle() },
+            showURLChooser: { url, actions in
+                panel.show()
+                picker.query = ""
+                let items = actions.map { action in
+                    ActionItem(
+                        id: action.id,
+                        title: action.title,
+                        subtitle: action.subtitle,
+                        iconSystemName: action.iconName,
+                        score: action.relevanceScore,
+                        moduleID: "url",
+                        hasParameters: false,
+                        keywords: action.keywords
+                    )
+                }
+                var cache: [ActionID: any Action] = [:]
+                for action in actions {
+                    cache[action.id] = action
+                }
+                picker.pushMode(.pushedActions)
+                picker.updateActions(items, cache: cache)
+            }
         )
         super.init()
     }
