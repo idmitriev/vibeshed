@@ -60,7 +60,7 @@ keybindings:
   - combo: "capslock+s"
     action: "window.cycleBottom"
   - combo: "capslock+m"
-    action: "window.maximize"
+    action: "window.toggleMaximize"
   - combo: "capslock+r"
     action: "window.center"
   - combo: "capslock+backslash"
@@ -68,9 +68,9 @@ keybindings:
   - combo: "capslock+n"
     action: "window.focusWindow"       # move window to next screen
   - combo: "capslock+minus"
-    action: "audio.volumeDown"         # make smaller → volume down
+    action: "window.shrinkWidth"       # make window narrower
   - combo: "capslock+equal"
-    action: "audio.volumeUp"           # make bigger → volume up
+    action: "window.enlargeWidth"      # make window wider
 
   # --- window focus ---
   - combo: "capslock+leftbracket"

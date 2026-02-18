@@ -206,10 +206,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] On url open request show picker with browser/profile options
 - [x] For configured URL patterns open configured browser/profile directly without showing the picker
 
-### Phase 30: More window actions
+### Phase 30: More window actions (DONE)
 
-- [ ] Enlarge/shrink window keeping split/anchor action
-- [ ] Implement an action for maximizing and restoring windows that can toggle between maximized and previous size/position states. This will allow users to quickly maximize a window and then restore it to its original size and position with the same action.
+- [x] Enlarge/shrink window keeping split/anchor action
+- [x] Implement an action for maximizing and restoring windows that can toggle between maximized and previous size/position states.
 
 ### Phase 31: Action aliasing
 

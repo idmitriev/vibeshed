@@ -5,6 +5,8 @@ struct WindowConfig: Codable, Sendable, Equatable {
     var verticalStops: [SizeStop]
     var padding: PaddingConfig
     var includeMinimized: Bool
+    var enlargeShrinkStep: SizeStop
+    var toggleMaximizeRestoreSize: SizeStop
 
     static let defaultValue = WindowConfig(
         horizontalStops: [
@@ -18,7 +20,9 @@ struct WindowConfig: Codable, Sendable, Equatable {
             SizeStop(value: 100, unit: .percent),
         ],
         padding: PaddingConfig(),
-        includeMinimized: false
+        includeMinimized: false,
+        enlargeShrinkStep: SizeStop(value: 10, unit: .percent),
+        toggleMaximizeRestoreSize: SizeStop(value: 80, unit: .percent)
     )
 }
 

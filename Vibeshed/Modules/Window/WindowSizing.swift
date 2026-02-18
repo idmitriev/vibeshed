@@ -180,4 +180,161 @@ enum WindowSizing {
         let y = area.origin.y + halfHeight + padding.gap
         return CGRect(x: area.origin.x, y: y, width: area.width, height: halfHeight)
     }
+
+    // MARK: - Enlarge/Shrink
+
+    /// Determines the horizontal anchor of a window based on its position relative to screen center
+    static func detectHorizontalAnchor(currentFrame: CGRect, screenFrame: CGRect, padding: PaddingConfig) -> Anchor {
+        let area = usableArea(screenFrame: screenFrame, padding: padding)
+        let centerX = area.midX
+        let windowCenterX = currentFrame.midX
+        return windowCenterX < centerX ? .left : .right
+    }
+
+    /// Determines the vertical anchor of a window based on its position relative to screen center
+    static func detectVerticalAnchor(currentFrame: CGRect, screenFrame: CGRect, padding: PaddingConfig) -> Anchor {
+        let area = usableArea(screenFrame: screenFrame, padding: padding)
+        let centerY = area.midY
+        let windowCenterY = currentFrame.midY
+        return windowCenterY < centerY ? .top : .bottom
+    }
+
+    static func enlargeHorizontal(
+        currentFrame: CGRect,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        step: SizeStop
+    ) -> CGRect {
+        let area = usableArea(screenFrame: screenFrame, padding: padding)
+        let resolvedStep = resolveStop(step, screenDimension: area.width)
+        let anchor = detectHorizontalAnchor(currentFrame: currentFrame, screenFrame: screenFrame, padding: padding)
+
+        let newWidth = min(currentFrame.width + resolvedStep, area.width)
+        let newHeight = currentFrame.height
+
+        let newX: Double
+        switch anchor {
+        case .left:
+            newX = area.origin.x
+        case .right:
+            newX = area.maxX - newWidth
+        default:
+            newX = currentFrame.origin.x
+        }
+
+        return CGRect(x: newX, y: currentFrame.origin.y, width: newWidth, height: newHeight)
+    }
+
+    static func shrinkHorizontal(
+        currentFrame: CGRect,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        step: SizeStop
+    ) -> CGRect {
+        let area = usableArea(screenFrame: screenFrame, padding: padding)
+        let resolvedStep = resolveStop(step, screenDimension: area.width)
+        let anchor = detectHorizontalAnchor(currentFrame: currentFrame, screenFrame: screenFrame, padding: padding)
+
+        let newWidth = max(currentFrame.width - resolvedStep, resolvedStep)
+        let newHeight = currentFrame.height
+
+        let newX: Double
+        switch anchor {
+        case .left:
+            newX = area.origin.x
+        case .right:
+            newX = area.maxX - newWidth
+        default:
+            newX = currentFrame.origin.x
+        }
+
+        return CGRect(x: newX, y: currentFrame.origin.y, width: newWidth, height: newHeight)
+    }
+
+    static func enlargeVertical(
+        currentFrame: CGRect,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        step: SizeStop
+    ) -> CGRect {
+        let area = usableArea(screenFrame: screenFrame, padding: padding)
+        let resolvedStep = resolveStop(step, screenDimension: area.height)
+        let anchor = detectVerticalAnchor(currentFrame: currentFrame, screenFrame: screenFrame, padding: padding)
+
+        let newWidth = currentFrame.width
+        let newHeight = min(currentFrame.height + resolvedStep, area.height)
+
+        let newY: Double
+        switch anchor {
+        case .top:
+            newY = area.origin.y
+        case .bottom:
+            newY = area.maxY - newHeight
+        default:
+            newY = currentFrame.origin.y
+        }
+
+        return CGRect(x: currentFrame.origin.x, y: newY, width: newWidth, height: newHeight)
+    }
+
+    static func shrinkVertical(
+        currentFrame: CGRect,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        step: SizeStop
+    ) -> CGRect {
+        let area = usableArea(screenFrame: screenFrame, padding: padding)
+        let resolvedStep = resolveStop(step, screenDimension: area.height)
+        let anchor = detectVerticalAnchor(currentFrame: currentFrame, screenFrame: screenFrame, padding: padding)
+
+        let newWidth = currentFrame.width
+        let newHeight = max(currentFrame.height - resolvedStep, resolvedStep)
+
+        let newY: Double
+        switch anchor {
+        case .top:
+            newY = area.origin.y
+        case .bottom:
+            newY = area.maxY - newHeight
+        default:
+            newY = currentFrame.origin.y
+        }
+
+        return CGRect(x: currentFrame.origin.x, y: newY, width: newWidth, height: newHeight)
+    }
+
+    // MARK: - Toggle Maximize/Restore
+
+    static func isMaximized(currentFrame: CGRect, screenFrame: CGRect, padding: PaddingConfig, tolerance: Double = 5.0) -> Bool {
+        let area = usableArea(screenFrame: screenFrame, padding: padding)
+        let widthMatch = abs(currentFrame.width - area.width) <= tolerance
+        let heightMatch = abs(currentFrame.height - area.height) <= tolerance
+        let xMatch = abs(currentFrame.origin.x - area.origin.x) <= tolerance
+        let yMatch = abs(currentFrame.origin.y - area.origin.y) <= tolerance
+        return widthMatch && heightMatch && xMatch && yMatch
+    }
+
+    static func toggleMaximize(
+        currentFrame: CGRect,
+        currentSize: CGSize,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        restoreSize: SizeStop
+    ) -> CGRect {
+        if isMaximized(currentFrame: currentFrame, screenFrame: screenFrame, padding: padding) {
+            let area = usableArea(screenFrame: screenFrame, padding: padding)
+            let resolvedRestoreWidth = resolveStop(restoreSize, screenDimension: area.width)
+            let resolvedRestoreHeight = resolveStop(restoreSize, screenDimension: area.height)
+
+            let restoreWidth = min(resolvedRestoreWidth, area.width)
+            let restoreHeight = min(resolvedRestoreHeight, area.height)
+
+            let x = area.origin.x + (area.width - restoreWidth) / 2.0
+            let y = area.origin.y + (area.height - restoreHeight) / 2.0
+
+            return CGRect(x: x, y: y, width: restoreWidth, height: restoreHeight)
+        } else {
+            return maximize(screenFrame: screenFrame, padding: padding)
+        }
+    }
 }

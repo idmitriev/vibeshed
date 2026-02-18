@@ -196,8 +196,7 @@ final class URIManager {
     private func fallbackOpen(_ url: URL) {
         // Use the browser that was default before we registered, skipping ourselves
         if let prevBrowser = previousDefaultBrowser,
-           prevBrowser != Bundle.main.bundleIdentifier
-        {
+           prevBrowser != Bundle.main.bundleIdentifier {
             do {
                 try BrowserRegistry.open(url: url, browser: prevBrowser, profile: nil)
                 Log.uri.info("Routed \(url, privacy: .public) to previous default browser \(prevBrowser, privacy: .public)")

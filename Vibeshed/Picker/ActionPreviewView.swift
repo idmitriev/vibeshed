@@ -14,8 +14,7 @@ struct ActionPreviewView: View {
         Group {
             if let item = selectedItem {
                 if let action = actionCache[item.id],
-                   let customPreview = action.makePreviewView()
-                {
+                   let customPreview = action.makePreviewView() {
                     customPreview
                 } else {
                     defaultPreview(for: item)

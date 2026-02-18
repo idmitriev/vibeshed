@@ -135,8 +135,7 @@ final class KeyComboManager {
             if eventTapRunning {
                 let hasCaps = currentEntries.contains { entry in
                     if let ct = try? KeyComboParser.parse(entry.combo),
-                       case .capsLockModifier = ct
-                    {
+                       case .capsLockModifier = ct {
                         return true
                     }
                     return false
@@ -334,8 +333,7 @@ final class KeyComboManager {
     private func setCapsLockErrors(_ message: String) {
         for entry in currentEntries {
             if let ct = try? KeyComboParser.parse(entry.combo),
-               case .capsLockModifier = ct
-            {
+               case .capsLockModifier = ct {
                 bindingErrors[entry.combo] = message
             }
         }

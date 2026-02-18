@@ -176,8 +176,7 @@ enum AISessionReader {
     // MARK: - Claude Desktop
 
     private static func readClaudeDesktopMetadata()
-        -> [DesktopSessionMeta]
-    {
+        -> [DesktopSessionMeta] {
         let base = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(
                 "Library/Application Support/Claude/claude-code-sessions"

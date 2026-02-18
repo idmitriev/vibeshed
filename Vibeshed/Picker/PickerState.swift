@@ -128,8 +128,7 @@ final class PickerState {
         actions = newActions
         actionCache = cache
         if preservingSelection, let prev = previousSelection,
-           newActions.contains(where: { $0.id == prev })
-        {
+           newActions.contains(where: { $0.id == prev }) {
             selectedActionID = prev
         } else {
             selectedActionID = newActions.first?.id

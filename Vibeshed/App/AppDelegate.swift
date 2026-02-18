@@ -62,7 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             },
             togglePicker: { panel.toggle() },
-            showURLChooser: { url, actions in
+            showURLChooser: { _, actions in
                 panel.show()
                 picker.query = ""
                 let items = actions.map { action in
@@ -289,8 +289,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)
-        -> Bool
-    {
+        -> Bool {
         panelController.show()
         return false
     }

@@ -81,7 +81,6 @@ enum KeyComboParser {
 
     // MARK: - Key Code Dictionary
 
-    // swiftlint:disable:next function_body_length
     private static let keyCodes: [String: UInt16] = {
         var map: [String: UInt16] = [:]
 

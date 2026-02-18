@@ -72,8 +72,7 @@ final class PickerCoordinator {
             pickerState.enterParameterMode(action: action)
             // Trigger initial fetch for dynamicSelection
             if let param = pickerState.currentParameter,
-               case .dynamicSelection = param.type
-            {
+               case .dynamicSelection = param.type {
                 fetchParameterOptions(for: param, actionID: action.id, query: "")
             }
         }
@@ -117,8 +116,7 @@ final class PickerCoordinator {
             // Trigger fetch for dynamicSelection
             if let nextParam = pickerState.currentParameter,
                case .dynamicSelection = nextParam.type,
-               let action = pickerState.activeAction
-            {
+               let action = pickerState.activeAction {
                 fetchParameterOptions(for: nextParam, actionID: action.id, query: "")
             }
         }
@@ -322,8 +320,7 @@ final class PickerCoordinator {
             // Only apply if still in the same parameter mode
             if case let .parameterInput(currentActionID, _) = pickerState.mode,
                currentActionID == actionID,
-               pickerState.currentParameter?.id == param.id
-            {
+               pickerState.currentParameter?.id == param.id {
                 pickerState.parameterOptions = options
                 pickerState.selectedParameterOptionID = options.first?.id
                 pickerState.isLoadingOptions = false
@@ -340,8 +337,7 @@ final class PickerCoordinator {
             for await event in stream {
                 if case .moduleActionsChanged = event,
                    panelController.isVisible,
-                   case .search = pickerState.mode
-                {
+                   case .search = pickerState.mode {
                     await refreshActions()
                 }
             }

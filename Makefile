@@ -4,8 +4,9 @@ BUNDLE_ID = com.ivandmitriev.Vibeshed
 APP_NAME = Vibeshed
 APP_BUNDLE = .build/$(APP_NAME).app
 APP_BINARY = $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
+SWIFTLINT = .build/artifacts/swiftlintplugins/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint
 
-.PHONY: build run run-debug clean log
+.PHONY: build run run-debug clean log lint lint-fix
 
 build:
 	swift build
@@ -41,3 +42,9 @@ log:
 clean:
 	swift package clean
 	rm -rf "$(APP_BUNDLE)"
+
+lint:
+	$(SWIFTLINT) lint --reporter xcode
+
+lint-fix:
+	$(SWIFTLINT) lint --fix --reporter xcode

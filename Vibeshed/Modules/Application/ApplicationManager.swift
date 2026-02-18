@@ -169,8 +169,7 @@ struct ApplicationManager: Sendable {
         }
 
         if let focused = AXWindowHelper.focusedWindow(for: pid),
-           let focusedID = AXWindowHelper.windowID(for: focused)
-        {
+           let focusedID = AXWindowHelper.windowID(for: focused) {
             for (i, axWindow) in axWindows.enumerated() {
                 if let windowID = AXWindowHelper.windowID(for: axWindow), windowID == focusedID {
                     let nextIndex = (i + 1) % axWindows.count

@@ -24,8 +24,7 @@ enum AXWindowHelper {
         if AXUIElementCopyAttributeValue(
             element, kAXPositionAttribute as CFString, &positionRef
         ) == .success,
-            let posValue = positionRef
-        {
+            let posValue = positionRef {
             // swiftlint:disable:next force_cast
             AXValueGetValue(posValue as! AXValue, .cgPoint, &point)
         }
@@ -33,8 +32,7 @@ enum AXWindowHelper {
         if AXUIElementCopyAttributeValue(
             element, kAXSizeAttribute as CFString, &sizeRef
         ) == .success,
-            let szValue = sizeRef
-        {
+            let szValue = sizeRef {
             // swiftlint:disable:next force_cast
             AXValueGetValue(szValue as! AXValue, .cgSize, &size)
         }
@@ -95,8 +93,7 @@ enum AXWindowHelper {
             if abs(axFrame.origin.x - frame.origin.x) <= tolerance,
                abs(axFrame.origin.y - frame.origin.y) <= tolerance,
                abs(axFrame.width - frame.width) <= tolerance,
-               abs(axFrame.height - frame.height) <= tolerance
-            {
+               abs(axFrame.height - frame.height) <= tolerance {
                 return axWindow
             }
         }

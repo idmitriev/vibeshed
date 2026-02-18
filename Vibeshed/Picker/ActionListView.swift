@@ -9,8 +9,7 @@ struct ActionListView: View {
         ScrollViewReader { proxy in
             List(actions, selection: $selectedID) { item in
                 if let action = actionCache[item.id],
-                   let customView = action.makeListItemView()
-                {
+                   let customView = action.makeListItemView() {
                     customView.tag(item.id)
                 } else {
                     ActionListItemView(item: item)

@@ -43,8 +43,7 @@ enum FuzzyMatcher {
 
                 // Bonus: consecutive match
                 if matchedIndices.count >= 2,
-                   matchedIndices[matchedIndices.count - 1] == matchedIndices[matchedIndices.count - 2] + 1
-                {
+                   matchedIndices[matchedIndices.count - 1] == matchedIndices[matchedIndices.count - 2] + 1 {
                     totalScore += 0.1
                 }
 

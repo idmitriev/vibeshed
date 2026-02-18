@@ -424,8 +424,7 @@ final class EventTapHandler: @unchecked Sendable {
         let spaceCode = UInt16(kVK_Space)
 
         if let down = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: true),
-            let up = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: false)
-        {
+            let up = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: false) {
             down.post(tap: .cgSessionEventTap)
             up.post(tap: .cgSessionEventTap)
         }

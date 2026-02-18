@@ -101,14 +101,12 @@ struct ParameterPreviewView: View {
         if let stringValue = value as? String {
             // For selections, try to find the label
             if case let .selection(options) = param.type,
-               let option = options.first(where: { $0.id == stringValue })
-            {
+               let option = options.first(where: { $0.id == stringValue }) {
                 return option.label
             }
             // For dynamic selections, look in current options
             if case .dynamicSelection = param.type,
-               let option = state.parameterOptions.first(where: { $0.id == stringValue })
-            {
+               let option = state.parameterOptions.first(where: { $0.id == stringValue }) {
                 return option.label
             }
             if stringValue == "true" { return "On" }

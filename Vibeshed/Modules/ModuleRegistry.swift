@@ -150,12 +150,31 @@ final class ModuleRegistry {
 
     func findAction(id: ActionID) async -> (any Action)? {
         let moduleID = String(id.rawValue.prefix(while: { $0 != "." }))
-        guard let module = modules[moduleID] else { return nil }
+
+        // Check if module is loaded
+        guard let module = modules[moduleID] else {
+            // Check if it's pending (permissions not granted)
+            if pendingModules[moduleID] != nil {
+                Log.modules.warning("Action '\(id, privacy: .public)' not available: module '\(moduleID, privacy: .public)' waiting for permissions")
+            } else {
+                Log.modules.warning("Action '\(id, privacy: .public)' not found: module '\(moduleID, privacy: .public)' not registered")
+            }
+            return nil
+        }
+
         let actions = await module.provideActions(
             query: "",
             scoring: ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil)
         )
-        return actions.first { $0.id == id }
+
+        guard let action = actions.first(where: { $0.id == id }) else {
+            let availableActions = actions.map { $0.id }
+            Log.modules.warning("Action '\(id, privacy: .public)' not found in module '\(moduleID, privacy: .public)'")
+            Log.modules.debug("Available actions: \(availableActions, privacy: .public)")
+            return nil
+        }
+
+        return action
     }
 
     // MARK: - Private

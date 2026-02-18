@@ -88,8 +88,7 @@ final class ConfigManager {
         }
 
         if let modulesNode = rootMapping[Node("modules")],
-           let modulesMapping = modulesNode.mapping
-        {
+           let modulesMapping = modulesNode.mapping {
             for (keyNode, valueNode) in modulesMapping {
                 if let key = keyNode.string {
                     let moduleYAML = try Yams.serialize(node: valueNode)

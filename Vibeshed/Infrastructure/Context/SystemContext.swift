@@ -41,8 +41,7 @@ struct SystemContext: Sendable {
         // Focused window title — needs accessibility, gracefully returns nil if denied
         var windowTitle: String?
         if let pid = frontApp?.processIdentifier,
-           let axWindow = AXWindowHelper.focusedWindow(for: pid)
-        {
+           let axWindow = AXWindowHelper.focusedWindow(for: pid) {
             let title = AXWindowHelper.title(of: axWindow)
             if !title.isEmpty {
                 windowTitle = title

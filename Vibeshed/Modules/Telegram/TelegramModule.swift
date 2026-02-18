@@ -50,8 +50,7 @@ actor TelegramModule: ModuleConfigurable {
             if let username = entry.username,
                username.trimmingCharacters(
                    in: .whitespacesAndNewlines
-               ).isEmpty
-            {
+               ).isEmpty {
                 errors.append(
                     "Chat '\(entry.name)' has an empty username"
                 )
@@ -59,8 +58,7 @@ actor TelegramModule: ModuleConfigurable {
             if let phone = entry.phone,
                phone.trimmingCharacters(
                    in: .whitespacesAndNewlines
-               ).isEmpty
-            {
+               ).isEmpty {
                 errors.append(
                     "Chat '\(entry.name)' has an empty phone"
                 )
