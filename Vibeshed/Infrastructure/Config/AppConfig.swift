@@ -5,6 +5,7 @@ struct AppConfig: Sendable, Equatable {
     var keybindings: [KeyBindingEntry] = []
     var moduleConfigs: [String: Data] = [:]
     var urlRouting: URLRoutingConfig = .init()
+    var aliases: [AliasEntry] = []
 
     struct AppearanceConfig: Codable, Sendable, Equatable {
         var panelWidth: Double = 680

@@ -105,6 +105,14 @@ final class ConfigManager {
             )
         }
 
+        if let aliasesNode = rootMapping[Node("aliases")] {
+            let aliasesYAML = try Yams.serialize(node: aliasesNode)
+            config.aliases = try decoder.decode(
+                [AliasEntry].self,
+                from: aliasesYAML
+            )
+        }
+
         return config
     }
 

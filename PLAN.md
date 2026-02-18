@@ -228,10 +228,6 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] For spotify show album art and track info
 - [ ] For github show repo avatars and issue/PR info, etc
 
-### Phase 34: Deduplication of similar actions
-
-- [ ] Dedupe actions that do the same, for example favourite action for launching app and application launch action
-
 ### Phase 35: Navigation in picker
 
 - [ ] Implement navigation in the picker to allow users to easily go back from action parameter selection to the main action list

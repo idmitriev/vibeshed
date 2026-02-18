@@ -10,6 +10,7 @@ final class PickerCoordinator {
     private let eventBus: EventBus
     var usageTracker: UsageTracker?
     var themeEngine: ThemeEngine?
+    var aliasManager: AliasManager?
 
     private var currentContext: SystemContext?
     private var parameterQuerySubscription: AnyCancellable?
@@ -232,16 +233,25 @@ final class PickerCoordinator {
         query: String,
         scoring: ScoringContext
     ) -> ([ActionItem], [ActionID: any Action]) {
+        // Apply aliases: enrich keywords for parameterless aliases,
+        // create synthetic actions for parameterized ones
+        let aliasResult = aliasManager?.applyAliases(to: actions)
+        let enrichments = aliasResult?.keywordEnrichments ?? [:]
+        let allActions: [any Action] = actions + (aliasResult?.syntheticActions ?? [])
+
         var scored: [(item: ActionItem, action: any Action, score: Double)] = []
         var cache: [ActionID: any Action] = [:]
 
-        for action in actions {
+        for action in allActions {
+            let extraKeywords = enrichments[action.id] ?? []
+            let combinedKeywords = action.keywords + extraKeywords
+
             let usageBoost = scoring.usageBoost(for: action.id)
             let result = FuzzyMatcher.score(
                 query: query,
                 title: action.title,
                 subtitle: action.subtitle,
-                keywords: action.keywords,
+                keywords: combinedKeywords,
                 relevanceScore: action.relevanceScore,
                 usageBoost: usageBoost
             )
@@ -268,7 +278,7 @@ final class PickerCoordinator {
                 score: finalScore,
                 moduleID: moduleID,
                 hasParameters: !action.parameters.filter(\.isRequired).isEmpty,
-                keywords: action.keywords,
+                keywords: combinedKeywords,
                 titleHighlightRanges: result.titleRanges.isEmpty ? nil : result.titleRanges
             )
             scored.append((item: item, action: action, score: finalScore))

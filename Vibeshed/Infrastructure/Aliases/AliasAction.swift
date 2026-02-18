@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct FavouritesAction: Action {
+struct AliasAction: Action {
     let id: ActionID
     let title: String
     let subtitle: String
@@ -53,11 +53,11 @@ struct FavouritesAction: Action {
 
     @MainActor
     func makeListItemView() -> AnyView? {
-        AnyView(FavouritesActionListItemView(action: self))
+        AnyView(AliasActionListItemView(action: self))
     }
 
     @MainActor
     func makePreviewView() -> AnyView? {
-        AnyView(FavouritesActionPreviewView(action: self))
+        AnyView(AliasActionPreviewView(action: self))
     }
 }

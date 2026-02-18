@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct FavouritesActionListItemView: View {
-    let action: FavouritesAction
+struct AliasActionListItemView: View {
+    let action: AliasAction
 
     var body: some View {
         HStack(spacing: 10) {
@@ -30,8 +30,8 @@ struct FavouritesActionListItemView: View {
     }
 }
 
-struct FavouritesActionPreviewView: View {
-    let action: FavouritesAction
+struct AliasActionPreviewView: View {
+    let action: AliasAction
 
     var body: some View {
         VStack(spacing: 12) {
@@ -47,7 +47,7 @@ struct FavouritesActionPreviewView: View {
                 .font(.body)
                 .foregroundStyle(.secondary)
 
-            Text("Module: favourites")
+            Text("Module: alias")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }

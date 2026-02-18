@@ -24,25 +24,25 @@ keybindings:
 
   # --- app focus (hyper + number row) ---
   - combo: "capslock+1"
-    action: "favourites.Safari"
+    action: "alias.Safari"
   - combo: "capslock+2"
-    action: "favourites.Chrome"
+    action: "alias.Chrome"
   - combo: "capslock+3"
-    action: "favourites.Zen"
+    action: "alias.Zen"
   - combo: "capslock+4"
-    action: "favourites.IntelliJ"
+    action: "alias.IntelliJ"
   - combo: "capslock+5"
-    action: "favourites.VSCode"
+    action: "alias.VSCode"
   - combo: "capslock+6"
-    action: "favourites.Spotify"
+    action: "alias.Spotify"
   - combo: "capslock+7"
-    action: "favourites.Notes"
+    action: "alias.Notes"
   - combo: "capslock+8"
-    action: "favourites.Zoom"
+    action: "alias.Zoom"
   - combo: "capslock+9"
-    action: "favourites.Telegram"
+    action: "alias.Telegram"
   - combo: "capslock+0"
-    action: "favourites.iTerm"
+    action: "alias.iTerm"
 
   # --- window management (hyper + letters) ---
   - combo: "capslock+a"
@@ -91,6 +91,91 @@ keybindings:
     action: "audio.nextTrack"
 
 # ---------------------------------------------------------------------------
+# Aliases (action shortcuts with optional pre-filled parameters)
+# ---------------------------------------------------------------------------
+# Aliases create searchable shortcuts for actions. Two types:
+#   - With parameters: creates a new picker entry (e.g. "Safari" launches Safari)
+#   - Without parameters: enriches the original action with alias keywords
+#     (e.g. "Lock Screen" alias makes system.lock findable by "lock screen")
+# Alias actions have IDs like "alias.Safari" for use in keybindings.
+# ---------------------------------------------------------------------------
+aliases:
+  # App-focus shortcuts (bound to hyper + 1-0 above)
+  # Use exact per-app action IDs so the alias enriches the existing action
+  # (no duplicate entry in picker). The action ID format is:
+  # application.app.{bundleID}
+  - alias: "Safari"
+    action: "application.app.com.apple.Safari"
+    icon: "safari"
+    keywords: ["browser"]
+
+  - alias: "Chrome"
+    action: "application.app.com.google.Chrome"
+    icon: "globe"
+    keywords: ["browser"]
+
+  - alias: "IntelliJ"
+    action: "application.app.com.jetbrains.intellij"
+    icon: "hammer"
+    keywords: ["editor", "ide", "java"]
+
+  - alias: "VSCode"
+    action: "application.app.com.microsoft.VSCode"
+    icon: "chevron.left.forwardslash.chevron.right"
+    keywords: ["editor", "code"]
+
+  - alias: "Spotify"
+    action: "application.app.com.spotify.client"
+    icon: "music.note"
+    keywords: ["music"]
+
+  - alias: "Notes"
+    action: "application.app.com.apple.Notes"
+    icon: "note.text"
+    keywords: ["notes"]
+
+  - alias: "Zoom"
+    action: "application.app.us.zoom.xos"
+    icon: "video"
+    keywords: ["video", "calls"]
+
+  - alias: "Telegram"
+    action: "application.app.ru.keepcoder.Telegram"
+    icon: "paperplane"
+    keywords: ["messaging", "chat"]
+
+  - alias: "iTerm"
+    action: "application.app.com.googlecode.iterm2"
+    icon: "terminal"
+    keywords: ["terminal", "shell"]
+
+  # Parameterless aliases — enrich original actions with extra keywords
+  - alias: "Lock Screen"
+    action: "system.lock"
+    icon: "lock"
+    keywords: ["security", "away"]
+
+  - alias: "Toggle Dark Mode"
+    action: "system.toggleAppearance"
+    icon: "circle.lefthalf.filled"
+    keywords: ["theme", "light", "dark"]
+
+  # Parameterized aliases with query placeholder (creates separate picker entries)
+  - alias: "Search GitHub"
+    action: "github.searchRepos"
+    icon: "magnifyingglass"
+    subtitle: "Search GitHub repos..."
+    parameters:
+      query: "{query}"
+
+  - alias: "Search Spotify"
+    action: "spotify.search"
+    icon: "music.note"
+    subtitle: "Search tracks, albums, artists..."
+    parameters:
+      query: "{query}"
+
+# ---------------------------------------------------------------------------
 # Modules
 # ---------------------------------------------------------------------------
 modules:
@@ -132,94 +217,6 @@ modules:
     cacheTTLSeconds: 3.0
     maxResults: 50
     showCloseActions: true
-
-  # --- Favourites (quick-access shortcuts) ---
-  favourites:
-    favourites:
-      # App-focus shortcuts (bound to hyper + 1-0 above)
-      - alias: "Safari"
-        action: "application.launchOrFocus"
-        icon: "safari"
-        subtitle: "Primary browser"
-        parameters: { app: "com.apple.Safari" }
-
-      - alias: "Chrome"
-        action: "application.launchOrFocus"
-        icon: "globe"
-        subtitle: "Secondary browser"
-        parameters: { app: "com.google.Chrome" }
-
-      - alias: "Zen"
-        action: "application.launchOrFocus"
-        icon: "globe"
-        subtitle: "Tertiary browser"
-        parameters: { app: "app.zen-browser.zen" }
-
-      - alias: "IntelliJ"
-        action: "application.launchOrFocus"
-        icon: "hammer"
-        subtitle: "Primary editor"
-        parameters: { app: "com.jetbrains.intellij" }
-
-      - alias: "VSCode"
-        action: "application.launchOrFocus"
-        icon: "chevron.left.forwardslash.chevron.right"
-        subtitle: "Secondary editor"
-        parameters: { app: "com.microsoft.VSCode" }
-
-      - alias: "Spotify"
-        action: "application.launchOrFocus"
-        icon: "music.note"
-        subtitle: "Music"
-        parameters: { app: "com.spotify.client" }
-
-      - alias: "Notes"
-        action: "application.launchOrFocus"
-        icon: "note.text"
-        subtitle: "Apple Notes"
-        parameters: { app: "com.apple.Notes" }
-
-      - alias: "Zoom"
-        action: "application.launchOrFocus"
-        icon: "video"
-        subtitle: "Video calls"
-        parameters: { app: "us.zoom.xos" }
-
-      - alias: "Telegram"
-        action: "application.launchOrFocus"
-        icon: "paperplane"
-        subtitle: "Messaging"
-        parameters: { app: "ru.keepcoder.Telegram" }
-
-      - alias: "iTerm"
-        action: "application.launchOrFocus"
-        icon: "terminal"
-        subtitle: "Terminal"
-        parameters: { app: "com.googlecode.iterm2" }
-
-      - alias: "Lock Screen"
-        action: "system.lock"
-        icon: "lock"
-        keywords: ["security", "away"]
-
-      - alias: "Toggle Dark Mode"
-        action: "system.toggleAppearance"
-        icon: "circle.lefthalf.filled"
-        keywords: ["theme", "light", "dark"]
-
-      - alias: "Search GitHub"
-        action: "github.searchRepos"
-        icon: "magnifyingglass"
-        subtitle: "Search GitHub repos..."
-        parameters:
-          query: "{query}"
-
-      - alias: "Search Spotify"
-        action: "spotify.search"
-        icon: "music.note"
-        subtitle: "Search tracks, albums, artists..."
-        parameters:
-          query: "{query}"
 
   # --- System Utilities ---
   system:

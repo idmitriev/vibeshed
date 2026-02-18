@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let pickerCoordinator: PickerCoordinator
     let themeEngine: ThemeEngine
     let autostartManager: AutostartManager
+    let aliasManager: AliasManager
 
     override init() {
         self.eventBus = EventBus()
@@ -36,8 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panelController: panelController,
             eventBus: eventBus
         )
+        self.aliasManager = AliasManager(configManager: configManager, eventBus: eventBus)
         pickerCoordinator.usageTracker = usageTracker
         pickerCoordinator.themeEngine = themeEngine
+        pickerCoordinator.aliasManager = aliasManager
+        moduleRegistry.aliasManager = aliasManager
         panelController.coordinator = pickerCoordinator
         panelController.themeEngine = themeEngine
 
@@ -97,6 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Log.stderr("Vibeshed starting…")
         configManager.start()
+        aliasManager.start()
         moduleRegistry.startListeningForConfigChanges()
         permissionsManager.checkAll()
         logPermissionStatus()
@@ -146,7 +151,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             await registerModule(WindowModule())
             await registerModule(ApplicationModule())
-            await registerModule(FavouritesModule())
             await registerModule(SystemModule())
             await registerModule(buildSelfModule())
             await registerModule(AudioModule())

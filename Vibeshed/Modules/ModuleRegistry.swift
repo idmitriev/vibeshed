@@ -9,6 +9,7 @@ final class ModuleRegistry {
     private var modules: [String: any Module] = [:]
     private var configDecoders: [String: ModuleConfigDecoder] = [:]
     private var pendingModules: [String: any Module] = [:]
+    var aliasManager: AliasManager?
     private let eventBus: EventBus
     private let configManager: ConfigManager
     private let permissionsManager: PermissionsManager
@@ -154,6 +155,16 @@ final class ModuleRegistry {
 
     func findAction(id: ActionID) async -> (any Action)? {
         let moduleID = String(id.rawValue.prefix(while: { $0 != "." }))
+
+        // Check if this is an alias action
+        if moduleID == "alias", let aliasManager {
+            let aliasName = String(id.rawValue.dropFirst("alias.".count))
+            if let entry = aliasManager.findEntry(named: aliasName) {
+                return aliasManager.buildAction(from: entry)
+            }
+            Log.modules.warning("Alias '\(aliasName, privacy: .public)' not found in config")
+            return nil
+        }
 
         // Check if module is loaded
         guard let module = modules[moduleID] else {
