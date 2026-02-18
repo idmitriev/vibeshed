@@ -47,7 +47,9 @@ final class ModuleRegistry {
                 let error = PermissionError.denied(moduleID: id, permissions: missing)
                 permissionErrors[id] = error
                 pendingModules[id] = module
-                Log.modules.error("Module '\(id, privacy: .public)' not loaded: \(error.localizedDescription, privacy: .public)")
+                Log.modules.error(
+                    "Module '\(id, privacy: .public)' not loaded: \(error.localizedDescription, privacy: .public)"
+                )
                 await eventBus.publish(.modulePermissionError(moduleID: id, missing: missing))
                 return
             }
@@ -61,10 +63,12 @@ final class ModuleRegistry {
             do {
                 try decoder.validate(rawYAML)
             } catch {
-                let message = (error as? ModuleConfigError)?.errorDescription
+                let message =
+                    (error as? ModuleConfigError)?.errorDescription
                     ?? error.localizedDescription
                 configErrors[id] = message
-                Log.modules.error("Module '\(id, privacy: .public)' not loaded: \(message, privacy: .public)")
+                Log.modules.error(
+                    "Module '\(id, privacy: .public)' not loaded: \(message, privacy: .public)")
                 await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
                 return
             }
@@ -155,21 +159,32 @@ final class ModuleRegistry {
         guard let module = modules[moduleID] else {
             // Check if it's pending (permissions not granted)
             if pendingModules[moduleID] != nil {
-                Log.modules.warning("Action '\(id, privacy: .public)' not available: module '\(moduleID, privacy: .public)' waiting for permissions")
+                Log.modules.warning(
+                    "Action '\(id, privacy: .public)' not available: module '\(moduleID, privacy: .public)' waiting for permissions"
+                )
             } else {
-                Log.modules.warning("Action '\(id, privacy: .public)' not found: module '\(moduleID, privacy: .public)' not registered")
+                Log.modules.warning(
+                    "Action '\(id, privacy: .public)' not found: module '\(moduleID, privacy: .public)' not registered"
+                )
             }
             return nil
         }
 
         let actions = await module.provideActions(
             query: "",
-            scoring: ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil)
+            scoring: ScoringContext(
+                usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil)
         )
+
+        // Log.modules.debug(
+        //     "Looking for action '\(id, privacy: .public)' in module '\(moduleID, privacy: .public)' among \(actions.count) actions"
+        // )
 
         guard let action = actions.first(where: { $0.id == id }) else {
             let availableActions = actions.map { $0.id }
-            Log.modules.warning("Action '\(id, privacy: .public)' not found in module '\(moduleID, privacy: .public)'")
+            Log.modules.warning(
+                "Action '\(id, privacy: .public)' not found in module '\(moduleID, privacy: .public)'"
+            )
             Log.modules.debug("Available actions: \(availableActions, privacy: .public)")
             return nil
         }
@@ -199,10 +214,13 @@ final class ModuleRegistry {
                 try await decoder.apply(rawYAML)
                 configErrors.removeValue(forKey: id)
             } catch {
-                let message = (error as? ModuleConfigError)?.errorDescription
+                let message =
+                    (error as? ModuleConfigError)?.errorDescription
                     ?? error.localizedDescription
                 configErrors[id] = message
-                Log.modules.error("Config change rejected for module '\(id, privacy: .public)': \(message, privacy: .public)")
+                Log.modules.error(
+                    "Config change rejected for module '\(id, privacy: .public)': \(message, privacy: .public)"
+                )
                 await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
             }
         }
@@ -221,7 +239,9 @@ final class ModuleRegistry {
                     Log.stderr("  ✓ module: \(id) — loaded")
                 } catch {
                     Log.stderr("  ✗ module: \(id) — retry failed: \(error.localizedDescription)")
-                    Log.modules.error("Retry failed for module '\(id, privacy: .public)': \(error.localizedDescription, privacy: .public)")
+                    Log.modules.error(
+                        "Retry failed for module '\(id, privacy: .public)': \(error.localizedDescription, privacy: .public)"
+                    )
                 }
             }
         }

@@ -6,7 +6,7 @@ appearance:
   panelWidth: 680
   panelHeight: 460
   cornerRadius: 12
-  themeIntensity: 0.5       # 0 = off, 0.3+ bg tint, 0.6+ icon tint, 0.8+ glow
+  themeIntensity: 0.85       # 0 = off, 0.3+ bg tint, 0.6+ icon tint, 0.8+ glow
 
 # ---------------------------------------------------------------------------
 # Keybindings
@@ -16,8 +16,6 @@ appearance:
 #        minus/-,  equal/=, leftbracket/[, rightbracket/], semicolon/;,
 #        quote/', comma/,, period/., slash//, backslash/\, backtick/`
 # Mouse: mouse1-mouse5, with optional modifier (ctrl+mouse4)
-#
-# "capslock+key" mirrors hyper layer from Hammerspoon/Karabiner setup.
 # ---------------------------------------------------------------------------
 keybindings:
   # --- picker ---
@@ -98,7 +96,6 @@ keybindings:
 modules:
 
   # --- Window Management ---
-  # Requires: accessibility, screenRecording
   window:
     horizontalStops:
       - { value: 50, unit: percent }
@@ -115,6 +112,12 @@ modules:
       right: 0
       gap: 8
     includeMinimized: false
+    enlargeShrinkStep: 
+      value: 10
+      unit: percent
+    toggleMaximizeRestoreSize: 
+      value : 80
+      unit: percent
 
   # --- Application Launcher ---
   application:
@@ -124,7 +127,6 @@ modules:
       - "com.apple.loginwindow"
 
   # --- Browser Tabs ---
-  # Requires: automation
   browser:
     browsers: []               # empty = all running supported browsers
     cacheTTLSeconds: 3.0
@@ -195,7 +197,6 @@ modules:
         subtitle: "Terminal"
         parameters: { app: "com.googlecode.iterm2" }
 
-      # Utility shortcuts
       - alias: "Lock Screen"
         action: "system.lock"
         icon: "lock"
@@ -255,7 +256,6 @@ modules:
       - "^AKIA"              # AWS access keys
 
   # --- Spotify ---
-  # Requires: automation
   # Get clientId from https://developer.spotify.com/dashboard
   spotify:
     clientId: null            # set to enable Web API search
@@ -282,7 +282,6 @@ modules:
       "Windsurf": "Windsurf"
 
   # --- iTerm Sessions ---
-  # Requires: automation
   iterm:
     maxResults: 20
     showCWD: true
@@ -342,7 +341,6 @@ urlRouting:
   defaultBrowser: "safari"    # Pre-selected in the browser chooser picker
   rules:
     # URLs matching rules open directly without showing the chooser
-    # Work tools in Chrome
     - pattern: "*.github.com/*"
       browser: "chrome"
     - pattern: "*.linear.app/*"
