@@ -363,6 +363,11 @@ final class EventTapHandler: @unchecked Sendable {
 
     // swiftlint:disable:next function_body_length
     private func handleKeyDown(event: CGEvent) -> Unmanaged<CGEvent>? {
+        // Pass through events we injected ourselves (e.g. mouse remaps)
+        if event.getIntegerValueField(.eventSourceUserData) == Self.injectedMarker {
+            return Unmanaged.passUnretained(event)
+        }
+
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let spaceKeyCode = UInt16(kVK_Space)
 
@@ -465,6 +470,11 @@ final class EventTapHandler: @unchecked Sendable {
     }
 
     private func handleKeyUp(event: CGEvent) -> Unmanaged<CGEvent>? {
+        // Pass through events we injected ourselves
+        if event.getIntegerValueField(.eventSourceUserData) == Self.injectedMarker {
+            return Unmanaged.passUnretained(event)
+        }
+
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let spaceKeyCode = UInt16(kVK_Space)
 
@@ -527,12 +537,18 @@ final class EventTapHandler: @unchecked Sendable {
 
     // MARK: - Helpers
 
+    /// Marker value set on `eventSourceUserData` so the tap recognises
+    /// injected events and passes them through untouched.
+    private static let injectedMarker: Int64 = 0x5649_4245  // "VIBE"
+
     private func injectKeyPress(keyCode: UInt16, modifiers: CGEventFlags) {
         let source = CGEventSource(stateID: .combinedSessionState)
         if let down = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true),
             let up = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false) {
             down.flags = modifiers
             up.flags = modifiers
+            down.setIntegerValueField(.eventSourceUserData, value: Self.injectedMarker)
+            up.setIntegerValueField(.eventSourceUserData, value: Self.injectedMarker)
             down.post(tap: .cgSessionEventTap)
             up.post(tap: .cgSessionEventTap)
         }

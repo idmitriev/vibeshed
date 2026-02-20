@@ -131,9 +131,9 @@ appRemaps:
 # Target must be a standard modifier+key combo.
 # ---------------------------------------------------------------------------
 mouseRemaps:
-  - from: "mouse3"
-    to: "cmd+["                    # browser back
   - from: "mouse4"
+    to: "cmd+["                    # browser back
+  - from: "mouse5"
     to: "cmd+]"                    # browser forward
 
 # ---------------------------------------------------------------------------
