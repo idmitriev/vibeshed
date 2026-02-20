@@ -11,7 +11,7 @@ actor BrowserModule: ModuleConfigurable {
     typealias Config = BrowserConfig
     static var defaultConfig: Config? { .init() }
 
-    static var requiredPermissions: Set<Permission> { [.automation] }
+    static var requiredPermissions: Set<Permission> { [] }
 
     private var config: BrowserConfig = .init()
     private let browserManager = BrowserManager()

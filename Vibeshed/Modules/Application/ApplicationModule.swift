@@ -98,7 +98,7 @@ actor ApplicationModule: ModuleConfigurable {
     // MARK: - Build Actions
 
     private func buildActions() -> [ApplicationAction] {
-        [buildLaunchAction(), buildLaunchOrFocusAction(), buildFocusAction(), buildQuitAction()]
+        [buildLaunchAction(), buildLaunchOrFocusAction(), buildQuitAction()]
     }
 
     private func buildLaunchAction() -> ApplicationAction {
@@ -163,39 +163,6 @@ actor ApplicationModule: ModuleConfigurable {
                 }
             } else {
                 try await mgr.launchApplication(app)
-            }
-            return .dismiss
-        }
-    }
-
-    private func buildFocusAction() -> ApplicationAction {
-        let mgr = appManager
-        return ApplicationAction(
-            id: ActionID(module: "application", name: "focus"),
-            title: "Focus Application",
-            subtitle: "Activate a running application or cycle its windows",
-            iconName: "app.badge.checkmark",
-            relevanceScore: 0.85,
-            keywords: ["focus", "switch", "activate", "application", "app", "cycle"],
-            parameters: [
-                ActionParameter(
-                    id: "app",
-                    label: "Application",
-                    type: .dynamicSelection(hint: "app"),
-                    isRequired: true
-                ),
-            ]
-        ) { values in
-            guard let bundleID = values["app"] as? String else {
-                return .showResult(title: "Error", body: "No application selected")
-            }
-            let apps = await MainActor.run { mgr.listRunningApplications() }
-            guard let app = apps.first(where: { $0.id == bundleID }) else {
-                return .showResult(title: "Error", body: "Application is not running")
-            }
-            let focused = await MainActor.run { mgr.focusApplication(app) }
-            if !focused {
-                return .showResult(title: "Error", body: "Failed to focus application")
             }
             return .dismiss
         }

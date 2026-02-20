@@ -10,7 +10,7 @@ actor ITermModule: ModuleConfigurable {
     typealias Config = ITermConfig
     static var defaultConfig: Config? { .init() }
 
-    static var requiredPermissions: Set<Permission> { [.automation] }
+    static var requiredPermissions: Set<Permission> { [] }
 
     private var config: ITermConfig = .init()
     private var context: ModuleContext?

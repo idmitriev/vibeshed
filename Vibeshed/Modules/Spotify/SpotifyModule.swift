@@ -10,7 +10,7 @@ actor SpotifyModule: ModuleConfigurable {
     typealias Config = SpotifyConfig
     static var defaultConfig: Config? { .init() }
 
-    static var requiredPermissions: Set<Permission> { [.automation] }
+    static var requiredPermissions: Set<Permission> { [] }
 
     private var config: SpotifyConfig = .init()
     private var context: ModuleContext?

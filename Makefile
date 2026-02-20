@@ -28,11 +28,13 @@ build:
 
 # Launch as .app bundle (required for permissions to work)
 run: build
+	@-pkill -x $(APP_NAME) 2>/dev/null && sleep 0.5 || true
 	@open "$(APP_BUNDLE)"
 	@echo "Vibeshed launched — use 'make log' in another terminal for live logs"
 
 # Run the bundle binary directly with stderr output in this terminal
 run-debug: build
+	@-pkill -x $(APP_NAME) 2>/dev/null && sleep 0.5 || true
 	"$(APP_BINARY)"
 
 # Stream all Vibeshed OSLog messages (run in a separate terminal alongside `make run`)
