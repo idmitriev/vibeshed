@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ParameterPreviewView: View {
@@ -8,19 +9,32 @@ struct ParameterPreviewView: View {
         state.activeAction
     }
 
+    private var selectedOption: ParameterOption? {
+        guard let selectedID = state.selectedParameterOptionID else { return nil }
+        return state.parameterOptions.first { $0.id == selectedID }
+    }
+
     var body: some View {
         Group {
             if let action {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        // Action header
-                        Image(systemName: action.iconName ?? "sparkle")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
+                        // Action header — show selected option's icon when available
+                        Group {
+                            if let iconURL = selectedOption?.iconURL {
+                                Image(nsImage: NSWorkspace.shared.icon(forFile: iconURL.path))
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            } else {
+                                Image(systemName: action.iconName ?? "sparkle")
+                                    .font(.system(size: 48))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(width: 56, height: 56)
+                        .frame(maxWidth: .infinity)
 
-                        Text(action.title)
+                        Text(selectedOption?.label ?? action.title)
                             .font(.title3)
                             .fontWeight(.medium)
                             .lineLimit(2)

@@ -130,12 +130,18 @@ struct ParameterOptionRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            if let iconName = option.iconName {
-                Image(systemName: iconName)
-                    .font(.title3)
-                    .frame(width: 28, height: 28)
-                    .foregroundStyle(.secondary)
+            Group {
+                if let iconURL = option.iconURL {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: iconURL.path))
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } else if let iconName = option.iconName {
+                    Image(systemName: iconName)
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
             }
+            .frame(width: 28, height: 28)
 
             Text(option.label)
                 .font(.body)

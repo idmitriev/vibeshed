@@ -86,7 +86,8 @@ actor ApplicationModule: ModuleConfigurable {
             ParameterOption(
                 id: app.id,
                 label: app.isRunning ? app.displayLabel : app.name,
-                iconName: "app"
+                iconName: "app",
+                iconURL: app.bundleURL
             )
         }
 
