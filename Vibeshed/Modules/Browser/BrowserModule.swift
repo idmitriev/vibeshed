@@ -81,7 +81,16 @@ actor BrowserModule: ModuleConfigurable {
         case "tab":
             let tabs = await getCachedOrFreshTabs()
             let options = tabs.map { tab in
-                ParameterOption(id: tab.id, label: tab.displayLabel, iconName: "globe")
+                let appURL = NSWorkspace.shared.urlForApplication(
+                    withBundleIdentifier: tab.browserBundleID
+                )
+                return ParameterOption(
+                    id: tab.id,
+                    label: tab.displayLabel,
+                    subtitle: tab.displaySubtitle,
+                    iconName: "globe",
+                    iconURL: appURL
+                )
             }
             guard !query.isEmpty else { return options }
             let lowered = query.lowercased()
@@ -92,7 +101,15 @@ actor BrowserModule: ModuleConfigurable {
         case "browser":
             let browsers = resolveBrowserList()
             let options = browsers.map { browser in
-                ParameterOption(id: browser.bundleID, label: browser.name, iconName: "globe")
+                let appURL = NSWorkspace.shared.urlForApplication(
+                    withBundleIdentifier: browser.bundleID
+                )
+                return ParameterOption(
+                    id: browser.bundleID,
+                    label: browser.name,
+                    iconName: "globe",
+                    iconURL: appURL
+                )
             }
             guard !query.isEmpty else { return options }
             let lowered = query.lowercased()

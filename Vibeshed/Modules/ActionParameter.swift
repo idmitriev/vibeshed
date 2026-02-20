@@ -34,12 +34,14 @@ enum ParameterType: Sendable {
 struct ParameterOption: Sendable, Identifiable, Hashable {
     let id: String
     let label: String
+    let subtitle: String?
     let iconName: String?
     let iconURL: URL?
 
-    init(id: String, label: String, iconName: String? = nil, iconURL: URL? = nil) {
+    init(id: String, label: String, subtitle: String? = nil, iconName: String? = nil, iconURL: URL? = nil) {
         self.id = id
         self.label = label
+        self.subtitle = subtitle
         self.iconName = iconName
         self.iconURL = iconURL
     }

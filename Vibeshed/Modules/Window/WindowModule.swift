@@ -108,10 +108,14 @@ actor WindowModule: ModuleConfigurable {
             windowManager.listWindows(includeMinimized: includeMinimized)
         }
         let options = windows.map { window in
-            ParameterOption(
+            let appURL = window.bundleID.flatMap {
+                NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)
+            }
+            return ParameterOption(
                 id: String(window.id),
                 label: window.displayLabel,
-                iconName: "macwindow"
+                iconName: "macwindow",
+                iconURL: appURL
             )
         }
         guard !query.isEmpty else { return options }

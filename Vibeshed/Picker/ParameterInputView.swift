@@ -135,17 +135,26 @@ struct ParameterOptionRow: View {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: iconURL.path))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                } else if let iconName = option.iconName {
-                    Image(systemName: iconName)
+                } else {
+                    Image(systemName: option.iconName ?? "sparkle")
                         .font(.title3)
                         .foregroundStyle(.secondary)
                 }
             }
             .frame(width: 28, height: 28)
 
-            Text(option.label)
-                .font(.body)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(option.label)
+                    .font(.body)
+                    .lineLimit(1)
+
+                if let subtitle = option.subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
+            }
 
             Spacer()
         }

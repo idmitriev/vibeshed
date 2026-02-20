@@ -14,12 +14,18 @@ struct ParameterPreviewView: View {
         return state.parameterOptions.first { $0.id == selectedID }
     }
 
+    private var moduleName: String {
+        action?.id.moduleID ?? "unknown"
+    }
+
     var body: some View {
         Group {
             if let action {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        // Action header — show selected option's icon when available
+                PreviewLayout(moduleName: moduleName) {
+                    PreviewHeader(
+                        title: selectedOption?.label ?? action.title,
+                        subtitle: selectedOption?.subtitle ?? action.subtitle
+                    ) {
                         Group {
                             if let iconURL = selectedOption?.iconURL {
                                 Image(nsImage: NSWorkspace.shared.icon(forFile: iconURL.path))
@@ -31,36 +37,22 @@ struct ParameterPreviewView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .frame(width: 56, height: 56)
-                        .frame(maxWidth: .infinity)
-
-                        Text(selectedOption?.label ?? action.title)
-                            .font(.title3)
-                            .fontWeight(.medium)
-                            .lineLimit(2)
-
-                        Text(action.subtitle)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(3)
-
-                        Divider()
-
-                        // Parameter progress
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Parameters")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                                .textCase(.uppercase)
-
-                            ForEach(action.parameters) { param in
-                                parameterRow(param)
-                            }
-                        }
-
-                        Spacer(minLength: 8)
+                        .frame(width: 64, height: 64)
                     }
-                    .padding()
+
+                    Divider()
+
+                    // Parameter progress
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Parameters")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .textCase(.uppercase)
+
+                        ForEach(action.parameters) { param in
+                            parameterRow(param)
+                        }
+                    }
                 }
             } else {
                 ContentUnavailableView(

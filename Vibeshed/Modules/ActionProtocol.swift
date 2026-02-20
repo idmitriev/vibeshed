@@ -16,6 +16,10 @@ struct ActionID: Hashable, Sendable, Codable, CustomStringConvertible {
     var description: String {
         rawValue
     }
+
+    var moduleID: String {
+        String(rawValue.prefix(while: { $0 != "." }))
+    }
 }
 
 // MARK: - Action Protocol
