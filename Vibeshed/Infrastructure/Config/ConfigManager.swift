@@ -113,6 +113,14 @@ final class ConfigManager {
             )
         }
 
+        if let mouseRemapsNode = rootMapping[Node("mouseRemaps")] {
+            let mouseRemapsYAML = try Yams.serialize(node: mouseRemapsNode)
+            config.mouseRemaps = try decoder.decode(
+                [MouseRemapEntry].self,
+                from: mouseRemapsYAML
+            )
+        }
+
         if let aliasesNode = rootMapping[Node("aliases")] {
             let aliasesYAML = try Yams.serialize(node: aliasesNode)
             config.aliases = try decoder.decode(

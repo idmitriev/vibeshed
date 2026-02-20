@@ -254,6 +254,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
 - [ ] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
 
+
+### Phase 40: Browser bookmark actions
+- [ ] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.
+- [ ] Implement bookmark actions for Safari and Chrome at least, showing bookmark titles and favicons in the picker previews
+
 ### Phase _: Testing
 
 - [ ] Write checklist file for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.

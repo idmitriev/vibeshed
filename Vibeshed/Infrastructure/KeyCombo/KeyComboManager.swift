@@ -10,11 +10,13 @@ final class KeyComboManager {
     private let moduleRegistry: ModuleRegistry
     private let permissionsManager: PermissionsManager
     private let togglePicker: () -> Void
+    private let showParameterInput: (any Action) -> Void
 
     private let focusedAppTracker = FocusedAppTracker()
     private let eventTapHandler: EventTapHandler
     private var currentEntries: [KeyBindingEntry] = []
     private var currentRemaps: [AppRemapGroup] = []
+    private var currentMouseRemaps: [MouseRemapEntry] = []
     private var eventTapRunning = false
     private var capsLockMonitorRunning = false
 
@@ -23,16 +25,18 @@ final class KeyComboManager {
         configManager: ConfigManager,
         moduleRegistry: ModuleRegistry,
         permissionsManager: PermissionsManager,
-        togglePicker: @escaping () -> Void
+        togglePicker: @escaping () -> Void,
+        showParameterInput: @escaping (any Action) -> Void
     ) {
         self.eventBus = eventBus
         self.configManager = configManager
         self.moduleRegistry = moduleRegistry
         self.permissionsManager = permissionsManager
         self.togglePicker = togglePicker
+        self.showParameterInput = showParameterInput
         self.eventTapHandler = EventTapHandler(
             focusedAppTracker: focusedAppTracker
-        ) { [weak moduleRegistry, weak eventBus, togglePicker] actionID in
+        ) { [weak moduleRegistry, weak eventBus, togglePicker, showParameterInput] actionID in
             Task { @MainActor in
                 Log.keybindings.info("Executing action: \(actionID.rawValue, privacy: .public)")
                 // Built-in actions
@@ -52,7 +56,8 @@ final class KeyComboManager {
                 await Self.executeAction(
                     actionID,
                     moduleRegistry: moduleRegistry,
-                    eventBus: eventBus
+                    eventBus: eventBus,
+                    showParameterInput: showParameterInput
                 )
             }
         }
@@ -93,6 +98,7 @@ final class KeyComboManager {
         }
         currentEntries = entries
         currentRemaps = configManager.config.appRemaps
+        currentMouseRemaps = configManager.config.mouseRemaps
         rebindAll()
     }
 
@@ -106,6 +112,7 @@ final class KeyComboManager {
         }
         currentEntries = []
         currentRemaps = []
+        currentMouseRemaps = []
         bindingErrors = [:]
     }
 
@@ -114,16 +121,19 @@ final class KeyComboManager {
     private func handleConfigReloaded() {
         let newEntries = configManager.config.keybindings
         let newRemaps = configManager.config.appRemaps
-        guard newEntries != currentEntries || newRemaps != currentRemaps else {
+        let newMouseRemaps = configManager.config.mouseRemaps
+        guard newEntries != currentEntries || newRemaps != currentRemaps || newMouseRemaps != currentMouseRemaps else {
             Log.keybindings.debug("Config reloaded but keybindings/remaps unchanged")
             return
         }
         let oldCount = currentEntries.count
         let oldRemapCount = currentRemaps.count
-        let summary = "\(newEntries.count) bindings (was \(oldCount)), \(newRemaps.count) remaps (was \(oldRemapCount))"
+        let mrmp = newMouseRemaps.count
+        let summary = "\(newEntries.count) bindings (was \(oldCount)), \(newRemaps.count) remaps (was \(oldRemapCount)), \(mrmp) mouseRemaps"
         Log.keybindings.info("Config reloaded: \(summary, privacy: .public)")
         currentEntries = newEntries
         currentRemaps = newRemaps
+        currentMouseRemaps = newMouseRemaps
         rebindAll()
     }
 
@@ -301,18 +311,51 @@ final class KeyComboManager {
             }
         }
 
+        // Parse mouse remap entries
+        var resolvedMouseRemaps: [ResolvedMouseRemap] = []
+        for entry in currentMouseRemaps {
+            let errorKey = "mouseRemap:\(entry.from.lowercased())"
+            do {
+                let fromType = try KeyComboParser.parse(entry.from)
+                guard case .mouseButton(let button, let modifiers) = fromType else {
+                    let err = KeyComboError.invalidRemap(
+                        from: entry.from, to: entry.to,
+                        reason: "source must be a mouse button (e.g. mouse3, ctrl+mouse4)"
+                    )
+                    bindingErrors[errorKey] = err.localizedDescription
+                    continue
+                }
+                let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(entry.to)
+                resolvedMouseRemaps.append(ResolvedMouseRemap(
+                    button: button,
+                    modifiers: modifiers,
+                    toKeyCode: toKeyCode,
+                    toModifiers: toModifiers,
+                    rawFrom: entry.from,
+                    rawTo: entry.to
+                ))
+            } catch {
+                bindingErrors[errorKey] = error.localizedDescription
+                let msg = error.localizedDescription
+                Log.keybindings.error(
+                    "Invalid mouseRemap '\(entry.from, privacy: .public)' → '\(entry.to, privacy: .public)': \(msg, privacy: .public)"
+                )
+            }
+        }
+
         // Update bindings on the handler (thread-safe)
         eventTapHandler.updateBindings(
             standard: standard,
             capsLock: capsLock,
             space: space,
             mouse: mouse,
-            remaps: resolvedRemaps
+            remaps: resolvedRemaps,
+            mouseRemapList: resolvedMouseRemaps
         )
 
         // Start event tap if we have any bindings or remaps
         let totalBindings = standard.count + capsLock.count + space.count + mouse.count
-        let totalRemaps = resolvedRemaps.count
+        let totalRemaps = resolvedRemaps.count + resolvedMouseRemaps.count
         guard totalBindings + totalRemaps > 0 else {
             Log.keybindings.info("No keybindings or remaps configured — skipping event tap")
             Log.stderr("  ⚠ keybindings: none configured")
@@ -356,7 +399,8 @@ final class KeyComboManager {
             (try? KeyComboParser.parse(entry.combo)) != nil
         }
         let hasRemaps = !currentRemaps.isEmpty
-        return hasBindings || hasRemaps
+        let hasMouseRemaps = !currentMouseRemaps.isEmpty
+        return hasBindings || hasRemaps || hasMouseRemaps
     }
 
     private func manageCapsLockMonitor(hasCapsLockBindings: Bool) {
@@ -410,7 +454,8 @@ final class KeyComboManager {
     private static func executeAction(
         _ actionID: ActionID,
         moduleRegistry: ModuleRegistry,
-        eventBus: EventBus
+        eventBus: EventBus,
+        showParameterInput: @escaping (any Action) -> Void
     ) async {
         var currentID = actionID
         var currentValues: [String: Any] = [:]
@@ -423,14 +468,28 @@ final class KeyComboManager {
                 return
             }
 
+            // If the action has required parameters and none were provided,
+            // show the picker in parameter-input mode instead of executing.
+            let requiredParams = action.parameters.filter(\.isRequired)
+            if !requiredParams.isEmpty, currentValues.isEmpty {
+                Log.keybindings.info(
+                    "Action \(currentID, privacy: .public) needs parameters — showing picker"
+                )
+                showParameterInput(action)
+                return
+            }
+
             let moduleID = String(currentID.rawValue.prefix(while: { $0 != "." }))
             let result: ActionResult
             do {
                 result = try await action.run(with: currentValues)
                 await eventBus.publish(.actionExecuted(currentID, moduleID: moduleID))
             } catch {
-                Log.keybindings.error("Action \(currentID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-                await eventBus.publish(.actionFailed(currentID, message: error.localizedDescription))
+                let msg = error.localizedDescription
+                Log.keybindings.error(
+                    "Action \(currentID, privacy: .public) failed: \(msg, privacy: .public)"
+                )
+                await eventBus.publish(.actionFailed(currentID, message: msg))
                 return
             }
 
@@ -438,7 +497,9 @@ final class KeyComboManager {
                 return
             }
 
-            Log.keybindings.info("Chaining \(currentID, privacy: .public) → \(nextID, privacy: .public) (depth \(depth, privacy: .public))")
+            Log.keybindings.info(
+                "Chaining \(currentID, privacy: .public) → \(nextID, privacy: .public) (depth \(depth, privacy: .public))"
+            )
             currentID = nextID
             currentValues = [:]
             for (key, value) in stringValues {

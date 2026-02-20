@@ -19,6 +19,7 @@ final class EventTapHandler: @unchecked Sendable {
     private var capsLockBindings: [UInt16: BindingSlot] = [:]
     private var spaceBindings: [UInt16: BindingSlot] = [:]
     private var mouseBindings: [MouseKey: BindingSlot] = [:]
+    private var mouseRemaps: [MouseKey: RemapTarget] = [:]
     private var standardRemaps: [StandardKey: [String: RemapTarget]] = [:]
 
     // Modifier hold state — only accessed from tap callback thread
@@ -138,7 +139,8 @@ final class EventTapHandler: @unchecked Sendable {
         capsLock: [ResolvedBinding],
         space: [ResolvedBinding],
         mouse: [ResolvedBinding],
-        remaps: [ResolvedRemap]
+        remaps: [ResolvedRemap],
+        mouseRemapList: [ResolvedMouseRemap] = []
     ) {
         var newStandard: [StandardKey: BindingSlot] = [:]
         for binding in standard {
@@ -229,12 +231,22 @@ final class EventTapHandler: @unchecked Sendable {
             }
         }
 
+        var newMouseRemaps: [MouseKey: RemapTarget] = [:]
+        for mr in mouseRemapList {
+            let key = MouseKey(button: mr.button, modifiers: mr.modifiers)
+            newMouseRemaps[key] = RemapTarget(keyCode: mr.toKeyCode, modifiers: mr.toModifiers)
+            Log.keybindings.debug(
+                "  mouseRemap \(mr.rawFrom, privacy: .public) → \(mr.rawTo, privacy: .public)"
+            )
+        }
+
         let std = newStandard.count
         let caps = newCapsLock.count
         let spc = newSpace.count
         let mse = newMouse.count
         let rmp = newRemaps.count
-        let summary = "\(std)/\(caps)/\(spc)/\(mse)+\(rmp)rmp"
+        let mrmp = newMouseRemaps.count
+        let summary = "\(std)/\(caps)/\(spc)/\(mse)+\(rmp)rmp+\(mrmp)mrmp"
         Log.keybindings.debug("Bindings: \(summary, privacy: .public)")
 
         os_unfair_lock_lock(&lock)
@@ -242,6 +254,7 @@ final class EventTapHandler: @unchecked Sendable {
         capsLockBindings = newCapsLock
         spaceBindings = newSpace
         mouseBindings = newMouse
+        mouseRemaps = newMouseRemaps
         standardRemaps = newRemaps
         os_unfair_lock_unlock(&lock)
     }
@@ -479,10 +492,21 @@ final class EventTapHandler: @unchecked Sendable {
         let button = Int(event.getIntegerValueField(.mouseEventButtonNumber))
         let flags = maskedFlags(event.flags)
         let focusedApp = focusedAppTracker.focusedBundleID
+        let mouseKey = MouseKey(button: button, modifiers: flags)
 
         os_unfair_lock_lock(&lock)
-        let slot = mouseBindings[MouseKey(button: button, modifiers: flags)]
+        let remap = mouseRemaps[mouseKey]
+        let slot = mouseBindings[mouseKey]
         os_unfair_lock_unlock(&lock)
+
+        // Mouse remaps take priority — inject key event instead
+        if let remap {
+            Log.keybindings.info(
+                "MouseRemap btn=\(button, privacy: .public) → key=\(remap.keyCode, privacy: .public)"
+            )
+            injectKeyPress(keyCode: remap.keyCode, modifiers: remap.modifiers)
+            return nil
+        }
 
         if let actionID = slot?.resolve(focusedApp: focusedApp) {
             let f = flags.rawValue
@@ -502,6 +526,17 @@ final class EventTapHandler: @unchecked Sendable {
     }
 
     // MARK: - Helpers
+
+    private func injectKeyPress(keyCode: UInt16, modifiers: CGEventFlags) {
+        let source = CGEventSource(stateID: .combinedSessionState)
+        if let down = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true),
+            let up = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false) {
+            down.flags = modifiers
+            up.flags = modifiers
+            down.post(tap: .cgSessionEventTap)
+            up.post(tap: .cgSessionEventTap)
+        }
+    }
 
     private func injectSpacePress() {
         let source = CGEventSource(stateID: .combinedSessionState)

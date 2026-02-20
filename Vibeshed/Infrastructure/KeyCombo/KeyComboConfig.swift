@@ -39,6 +39,22 @@ struct RemapEntry: Codable, Sendable, Equatable {
     let to: String
 }
 
+// MARK: - Mouse Remaps
+
+struct MouseRemapEntry: Codable, Sendable, Equatable {
+    let from: String
+    let to: String
+}
+
+struct ResolvedMouseRemap: Sendable, Equatable {
+    let button: Int
+    let modifiers: CGEventFlags
+    let toKeyCode: UInt16
+    let toModifiers: CGEventFlags
+    let rawFrom: String
+    let rawTo: String
+}
+
 struct ResolvedRemap: Sendable, Equatable {
     let fromType: KeyComboType
     let toKeyCode: UInt16

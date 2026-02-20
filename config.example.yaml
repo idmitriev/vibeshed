@@ -19,7 +19,7 @@ appearance:
 # ---------------------------------------------------------------------------
 keybindings:
   # --- picker ---
-  - combo: "capslock+p"
+  - combo: "capslock+space"
     action: "app.togglePicker"
 
   # --- app focus (hyper + number row) ---
@@ -61,8 +61,12 @@ keybindings:
     action: "window.toggleMaximize"
   - combo: "capslock+r"
     action: "window.center"
+  - combo: "capslock+p"
+    action: "window.focusWindow"       # show focus window picker
+  - combo: "capslock+g"
+    action: "system.missionControl"    # show all windows and desktops
   - combo: "capslock+backslash"
-    action: "window.tileLeft"          # split show 2 windows side by side
+    action: "window.tileRight"         # tile window to right half
   - combo: "capslock+n"
     action: "window.focusWindow"       # move window to next screen
   - combo: "capslock+minus"
@@ -83,12 +87,6 @@ keybindings:
   # --- system ---
   - combo: "capslock+q"
     action: "system.lock"
-
-  # --- mouse buttons ---
-  - combo: "mouse4"
-    action: "audio.previousTrack"
-  - combo: "mouse5"
-    action: "audio.nextTrack"
 
   # --- app-scoped bindings (only fire when that app is focused) ---
   # - combo: "cmd+k"
@@ -124,6 +122,19 @@ appRemaps:
   #   remaps:
   #     - from: "cmd+t"
   #       to: "ctrl+shift+t"
+
+# ---------------------------------------------------------------------------
+# Mouse Remaps
+# ---------------------------------------------------------------------------
+# Remap mouse buttons to keyboard combos globally.
+# Uses the same mouse button syntax as keybindings (mouse1-mouse5).
+# Target must be a standard modifier+key combo.
+# ---------------------------------------------------------------------------
+mouseRemaps:
+  - from: "mouse3"
+    to: "cmd+["                    # browser back
+  - from: "mouse4"
+    to: "cmd+]"                    # browser forward
 
 # ---------------------------------------------------------------------------
 # Aliases (action shortcuts with optional pre-filled parameters)
@@ -262,6 +273,7 @@ modules:
       - restart
       - shutdown
       - logout
+      - missionControl
       - toggleAppearance
       - autoAppearance
       - emptyTrash

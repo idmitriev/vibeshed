@@ -51,6 +51,7 @@ actor SystemModule: ModuleConfigurable {
         var actions: [SystemAction] = []
 
         actions.append(contentsOf: buildPowerActions())
+        actions.append(contentsOf: buildDesktopActions())
         actions.append(contentsOf: buildAppearanceActions())
         actions.append(contentsOf: buildTrashActions())
         actions.append(contentsOf: buildScreenshotActions(path: config.screenshotPath))
@@ -123,6 +124,22 @@ actor SystemModule: ModuleConfigurable {
                 keywords: ["logout", "log out", "sign out", "session", "system"]
             ) { _ in
                 try SystemManager.logout()
+                return .dismiss
+            },
+        ]
+    }
+
+    private func buildDesktopActions() -> [SystemAction] {
+        [
+            SystemAction(
+                id: ActionID(module: "system", name: "missionControl"),
+                title: "Mission Control",
+                subtitle: "Show all windows and desktops",
+                iconName: "rectangle.3.group",
+                relevanceScore: 0.8,
+                keywords: ["mission", "control", "expose", "windows", "desktops", "overview", "system"]
+            ) { _ in
+                SystemManager.missionControl()
                 return .dismiss
             },
         ]

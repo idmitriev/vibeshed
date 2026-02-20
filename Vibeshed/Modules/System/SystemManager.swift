@@ -133,6 +133,19 @@ enum SystemManager {
         try task.run()
     }
 
+    // MARK: - Mission Control
+
+    static func missionControl() {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-a", "Mission Control"]
+        do {
+            try task.run()
+        } catch {
+            log.warning("missionControl: open failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     // MARK: - System Maintenance
 
     static func flushDNS() throws {

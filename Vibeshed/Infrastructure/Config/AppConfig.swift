@@ -4,6 +4,7 @@ struct AppConfig: Sendable, Equatable {
     var appearance: AppearanceConfig = .init()
     var keybindings: [KeyBindingEntry] = []
     var appRemaps: [AppRemapGroup] = []
+    var mouseRemaps: [MouseRemapEntry] = []
     var moduleConfigs: [String: Data] = [:]
     var urlRouting: URLRoutingConfig = .init()
     var aliases: [AliasEntry] = []

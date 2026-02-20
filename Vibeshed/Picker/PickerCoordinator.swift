@@ -29,6 +29,20 @@ final class PickerCoordinator {
         self.eventBus = eventBus
     }
 
+    // MARK: - Public API
+
+    /// Shows the picker in parameter-input mode for the given action.
+    /// Called from keybinding executor when an action has required parameters.
+    func showForParameterInput(action: any Action) {
+        panelController.show()
+        pickerState.enterParameterMode(action: action)
+        // Trigger initial fetch for dynamicSelection
+        if let param = pickerState.currentParameter,
+           case .dynamicSelection = param.type {
+            fetchParameterOptions(for: param, actionID: action.id, query: "")
+        }
+    }
+
     // MARK: - Setup
 
     func start() {

@@ -48,12 +48,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // keyComboManager and uriManager need panelController, so we init them after
         let panel = panelController
         let picker = pickerState
+        let coordinator = pickerCoordinator
         self.keyComboManager = KeyComboManager(
             eventBus: eventBus,
             configManager: configManager,
             moduleRegistry: moduleRegistry,
             permissionsManager: permissionsManager,
-            togglePicker: { panel.toggle() }
+            togglePicker: { panel.toggle() },
+            showParameterInput: { action in
+                coordinator.showForParameterInput(action: action)
+            }
         )
         self.uriManager = URIManager(
             eventBus: eventBus,
