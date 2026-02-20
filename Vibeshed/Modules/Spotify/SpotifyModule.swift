@@ -121,7 +121,8 @@ actor SpotifyModule: ModuleConfigurable {
                 np.trackName.lowercased(), np.artistName.lowercased(),
             ],
             artworkURL: np.artworkURL,
-            spotifyItemType: .nowPlaying
+            spotifyItemType: .nowPlaying,
+            durationMs: np.durationMs
         ) { _ in
             try await SpotifyManager.playPause()
             return .dismiss
@@ -284,7 +285,8 @@ actor SpotifyModule: ModuleConfigurable {
                 relevanceScore: max(0.3, 0.95 - Double(index) * 0.02),
                 keywords: ["track", track.name.lowercased(), track.artistName.lowercased()],
                 artworkURL: track.artworkURL,
-                spotifyItemType: .track
+                spotifyItemType: .track,
+                durationMs: track.durationMs
             ) { _ in
                 try await SpotifyManager.openURI(track.uri)
                 return .dismiss

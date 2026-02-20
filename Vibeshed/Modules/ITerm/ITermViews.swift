@@ -78,54 +78,49 @@ struct ITermActionPreviewView: View {
     let action: ITermAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "iterm") {
             Image(systemName: previewIcon)
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(previewColor)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
-                .multilineTextAlignment(.center)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             if !action.subtitle.isEmpty {
                 Text(action.subtitle)
-                    .font(.body)
+                    .font(.callout)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            if let path = action.sessionPath {
-                Label(
-                    abbreviatePath(path),
-                    systemImage: "folder"
-                )
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-            }
-
-            if let profile = action.profileName {
-                Label(profile, systemImage: "person.circle")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .lineLimit(3)
             }
 
             if let isAtPrompt = action.isAtPrompt {
-                Label(
-                    isAtPrompt ? "At shell prompt" : "Running job",
-                    systemImage: isAtPrompt
-                        ? "checkmark.circle" : "play.circle"
+                PreviewPill(
+                    text: isAtPrompt ? "At shell prompt" : "Running job",
+                    icon: isAtPrompt ? "checkmark.circle" : "play.circle",
+                    color: isAtPrompt ? .green : .orange
                 )
-                .font(.caption)
-                .foregroundStyle(isAtPrompt ? .green : .orange)
             }
 
-            Text("Module: iterm")
-                .font(.caption)
-                .foregroundStyle(.quaternary)
+            if let path = action.sessionPath {
+                PreviewMetadataRow(
+                    icon: "folder",
+                    label: "Path",
+                    value: abbreviatePath(path)
+                )
+            }
+
+            if let profile = action.profileName {
+                PreviewMetadataRow(
+                    icon: "person.circle",
+                    label: "Profile",
+                    value: profile
+                )
+            }
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var previewIcon: String {

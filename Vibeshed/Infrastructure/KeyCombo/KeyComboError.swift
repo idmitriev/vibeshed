@@ -7,6 +7,7 @@ enum KeyComboError: Error, LocalizedError {
     case actionNotFound(ActionID)
     case permissionRequired(Set<Permission>)
     case duplicateBinding(String)
+    case invalidRemap(from: String, to: String, reason: String)
 
     var errorDescription: String? {
         switch self {
@@ -23,6 +24,8 @@ enum KeyComboError: Error, LocalizedError {
             return "Permissions required: \(names)"
         case let .duplicateBinding(combo):
             return "Duplicate binding for '\(combo)'"
+        case let .invalidRemap(from, to, reason):
+            return "Invalid remap '\(from)' → '\(to)': \(reason)"
         }
     }
 }

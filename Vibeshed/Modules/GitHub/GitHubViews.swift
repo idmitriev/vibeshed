@@ -73,46 +73,35 @@ struct GitHubActionPreviewView: View {
     let action: GitHubAction
 
     var body: some View {
-        VStack(spacing: 12) {
-            previewAvatarOrIcon
-                .frame(width: 64, height: 64)
-                .clipShape(Circle())
+        PreviewLayout(moduleName: "github") {
+            avatarHero
 
             Text(action.title)
-                .font(.title2)
-                .multilineTextAlignment(.center)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             Text(action.subtitle)
-                .font(.body)
+                .font(.callout)
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
 
-            if let stateIcon = action.stateIcon,
-               let stateColor = action.stateColor {
-                Label(stateLabel, systemImage: stateIcon)
+            badgeRow
+
+            if let desc = action.itemDescription, !desc.isEmpty {
+                Text(desc)
                     .font(.caption)
-                    .foregroundStyle(stateColor)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(4)
             }
 
-            if let itemType = action.githubItemType {
-                Label(
-                    typeLabel(for: itemType),
-                    systemImage: iconForType(itemType)
-                )
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-            }
+            labelsRow
 
-            Text("Module: github")
-                .font(.caption)
-                .foregroundStyle(.quaternary)
+            metadataSection
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
-    private var previewAvatarOrIcon: some View {
+    private var avatarHero: some View {
         if let avatarURL = action.avatarURL,
            let url = URL(string: avatarURL) {
             AsyncImage(url: url) { phase in
@@ -123,6 +112,11 @@ struct GitHubActionPreviewView: View {
                     previewFallbackIcon
                 }
             }
+            .frame(width: 80, height: 80)
+            .clipShape(action.githubItemType == .repo
+                ? AnyShape(RoundedRectangle(cornerRadius: 12))
+                : AnyShape(Circle()))
+            .frame(maxWidth: .infinity)
         } else {
             previewFallbackIcon
         }
@@ -133,8 +127,81 @@ struct GitHubActionPreviewView: View {
             systemName: action.iconName
                 ?? "chevron.left.forwardslash.chevron.right"
         )
-        .font(.largeTitle)
+        .font(.system(size: 48))
         .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
+        .frame(height: 56)
+    }
+
+    @ViewBuilder
+    private var badgeRow: some View {
+        HStack(spacing: 8) {
+            if let stateIcon = action.stateIcon,
+               let stateColor = action.stateColor {
+                PreviewPill(
+                    text: stateLabel,
+                    icon: stateIcon,
+                    color: stateColor
+                )
+            }
+            if let itemType = action.githubItemType {
+                PreviewPill(
+                    text: typeLabel(for: itemType),
+                    icon: iconForType(itemType),
+                    color: .secondary
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var labelsRow: some View {
+        if let labels = action.labels, !labels.isEmpty {
+            GitHubFlowLayout(spacing: 4) {
+                ForEach(labels, id: \.self) { label in
+                    Text(label)
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.accentColor.opacity(0.15))
+                        .clipShape(Capsule())
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var metadataSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let stars = action.repoStars {
+                PreviewMetadataRow(
+                    icon: "star",
+                    label: "Stars",
+                    value: formatCount(stars)
+                )
+            }
+            if let lang = action.repoLanguage {
+                PreviewMetadataRow(
+                    icon: "chevron.left.forwardslash.chevron.right",
+                    label: "Language",
+                    value: lang
+                )
+            }
+            if let created = action.createdAt {
+                PreviewMetadataRow(
+                    icon: "calendar",
+                    label: "Created",
+                    value: formatDate(created)
+                )
+            }
+            if let htmlURL = action.htmlURL {
+                Text(htmlURL)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .textSelection(.enabled)
+            }
+        }
     }
 
     private var stateLabel: String {
@@ -150,6 +217,74 @@ struct GitHubActionPreviewView: View {
             }
         }
         return ""
+    }
+
+    private func formatCount(_ count: Int) -> String {
+        if count >= 1000 {
+            return String(format: "%.1fk", Double(count) / 1000.0)
+        }
+        return "\(count)"
+    }
+
+    private func formatDate(_ isoDate: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: isoDate) {
+            let display = DateFormatter()
+            display.dateStyle = .medium
+            return display.string(from: date)
+        }
+        formatter.formatOptions = [.withInternetDateTime]
+        if let date = formatter.date(from: isoDate) {
+            let display = DateFormatter()
+            display.dateStyle = .medium
+            return display.string(from: date)
+        }
+        return isoDate
+    }
+}
+
+// MARK: - Flow Layout
+
+private struct GitHubFlowLayout: Layout {
+    var spacing: CGFloat = 4
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {
+        arrange(proposal: proposal, subviews: subviews).size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) {
+        let result = arrange(proposal: proposal, subviews: subviews)
+        for (index, position) in result.positions.enumerated() where index < subviews.count {
+            subviews[index].place(
+                at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y),
+                proposal: .unspecified
+            )
+        }
+    }
+
+    private func arrange(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
+        let maxWidth = proposal.width ?? .infinity
+        var positions: [CGPoint] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var totalHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > maxWidth, x > 0 {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            positions.append(CGPoint(x: x, y: y))
+            rowHeight = max(rowHeight, size.height)
+            x += size.width + spacing
+            totalHeight = y + rowHeight
+        }
+
+        return (CGSize(width: maxWidth, height: totalHeight), positions)
     }
 }
 

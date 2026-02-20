@@ -65,6 +65,19 @@ enum KeyComboParser {
         return .standard(carbonKeyCode: keyCode, modifiers: modifiers)
     }
 
+    /// Parse a combo string and extract keyCode + modifiers for standard combos only.
+    /// Used for remap targets where we need the raw key data.
+    static func parseStandard(_ combo: String) throws -> (keyCode: UInt16, modifiers: CGEventFlags) {
+        let comboType = try parse(combo)
+        guard case .standard(let keyCode, let modifiers) = comboType else {
+            throw KeyComboError.invalidCombo(
+                combo,
+                reason: "remap target must be a standard key combo (not capslock/space/mouse)"
+            )
+        }
+        return (keyCode, modifiers)
+    }
+
     static func carbonKeyCode(for name: String) throws -> UInt16 {
         guard let code = keyCodes[name.lowercased()] else {
             throw KeyComboError.unknownKey(name)

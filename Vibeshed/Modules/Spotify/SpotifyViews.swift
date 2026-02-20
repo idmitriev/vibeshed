@@ -64,41 +64,50 @@ struct SpotifyActionPreviewView: View {
     let action: SpotifyAction
 
     var body: some View {
-        VStack(spacing: 12) {
-            previewArtworkOrIcon
-                .frame(width: 64, height: 64)
-                .cornerRadius(8)
-                .clipped()
+        PreviewLayout(moduleName: "spotify") {
+            artworkHero
 
             Text(action.title)
-                .font(.title2)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             Text(action.subtitle)
-                .font(.body)
+                .font(.callout)
                 .foregroundStyle(.secondary)
+                .lineLimit(3)
 
-            if let itemType = action.spotifyItemType {
-                Label(itemType.rawValue.capitalized, systemImage: iconForType(itemType))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+            HStack(spacing: 8) {
+                if let itemType = action.spotifyItemType {
+                    PreviewPill(
+                        text: itemType.rawValue.capitalized,
+                        icon: iconForType(itemType),
+                        color: .green
+                    )
+                }
+                if let ms = action.durationMs, ms > 0 {
+                    PreviewPill(
+                        text: formatDuration(ms),
+                        icon: "clock",
+                        color: .secondary
+                    )
+                }
             }
-
-            Text("Module: spotify")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
-    private var previewArtworkOrIcon: some View {
+    private var artworkHero: some View {
         if let artworkURL = action.artworkURL,
            let url = URL(string: artworkURL) {
             AsyncImage(url: url) { phase in
                 switch phase {
                 case .success(let image):
-                    image.resizable().aspectRatio(contentMode: .fill)
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .cornerRadius(8)
                 default:
                     previewFallbackIcon
                 }
@@ -110,8 +119,17 @@ struct SpotifyActionPreviewView: View {
 
     private var previewFallbackIcon: some View {
         Image(systemName: action.iconName ?? "music.note")
-            .font(.largeTitle)
+            .font(.system(size: 48))
             .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+    }
+
+    private func formatDuration(_ ms: Int) -> String {
+        let totalSeconds = ms / 1000
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 }
 

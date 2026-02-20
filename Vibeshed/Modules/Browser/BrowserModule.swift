@@ -242,7 +242,8 @@ actor BrowserModule: ModuleConfigurable {
             iconName: "globe",
             relevanceScore: 0.65,
             keywords: ["tab", "browser", tab.browserName.lowercased(), tab.domain.lowercased()],
-            browserBundleID: tab.browserBundleID
+            browserBundleID: tab.browserBundleID,
+            tabURL: tab.url
         ) { [mgr] _ in
             do {
                 try await mgr.focusTab(tab)

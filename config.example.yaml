@@ -90,6 +90,41 @@ keybindings:
   - combo: "mouse5"
     action: "audio.nextTrack"
 
+  # --- app-scoped bindings (only fire when that app is focused) ---
+  # - combo: "cmd+k"
+  #   action: "app.togglePicker"
+  #   app: "com.googlecode.iterm2"
+  # - combo: "cmd+shift+p"
+  #   action: "app.togglePicker"
+  #   app: "com.microsoft.VSCode"
+
+# ---------------------------------------------------------------------------
+# App Key Remaps
+# ---------------------------------------------------------------------------
+# Remap key combos to different keys on a per-application basis.
+# Only standard modifier+key combos are supported (not capslock/space/mouse).
+# When the target app is focused, the remapped combo fires instead of the
+# original. When any other app is focused, the key passes through unchanged.
+# ---------------------------------------------------------------------------
+appRemaps:
+  - app: "com.apple.Safari"
+    remaps:
+      - from: "cmd+,"
+        to: "ctrl+shift+tab"    # previous tab
+      - from: "cmd+."
+        to: "ctrl+tab"          # next tab
+
+  # - app: "com.microsoft.VSCode"
+  #   remaps:
+  #     - from: "ctrl+h"
+  #       to: "cmd+backspace"
+  #     - from: "ctrl+d"
+  #       to: "forwarddelete"
+  # - app: "com.apple.Terminal"
+  #   remaps:
+  #     - from: "cmd+t"
+  #       to: "ctrl+shift+t"
+
 # ---------------------------------------------------------------------------
 # Aliases (action shortcuts with optional pre-filled parameters)
 # ---------------------------------------------------------------------------

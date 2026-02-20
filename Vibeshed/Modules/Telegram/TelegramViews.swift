@@ -55,38 +55,33 @@ struct TelegramActionPreviewView: View {
     let action: TelegramAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "telegram") {
             Image(systemName: action.iconName ?? previewIcon)
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(previewColor)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
-                .multilineTextAlignment(.center)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             if !action.subtitle.isEmpty {
                 Text(action.subtitle)
-                    .font(.body)
+                    .font(.callout)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
             }
 
             if let chatType = action.chatType {
-                Label(
-                    chatTypeLabel(chatType),
-                    systemImage: iconForChatType(chatType)
+                PreviewPill(
+                    text: chatTypeLabel(chatType),
+                    icon: iconForChatType(chatType),
+                    color: previewColor
                 )
-                .font(.caption)
-                .foregroundStyle(.tertiary)
             }
-
-            Text("Module: telegram")
-                .font(.caption)
-                .foregroundStyle(.quaternary)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var previewIcon: String {

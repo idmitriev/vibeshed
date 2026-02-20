@@ -34,24 +34,22 @@ struct SystemActionPreviewView: View {
     let action: SystemAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "system") {
             Image(systemName: action.iconName ?? "gearshape")
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             Text(action.subtitle)
-                .font(.body)
+                .font(.callout)
                 .foregroundStyle(.secondary)
-
-            Text("Module: system")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .lineLimit(3)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

@@ -80,43 +80,48 @@ struct VSCodeActionPreviewView: View {
     let action: VSCodeAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "vscode") {
             Image(systemName: previewIcon)
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(previewColor)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
-                .multilineTextAlignment(.center)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             if !action.subtitle.isEmpty {
                 Text(action.subtitle)
-                    .font(.body)
+                    .font(.callout)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
             }
 
             if let path = action.projectPath {
-                Text(abbreviatePath(path))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
-                    .textSelection(.enabled)
+                PreviewMetadataRow(
+                    icon: "folder",
+                    label: "Path",
+                    value: abbreviatePath(path)
+                )
+                .textSelection(.enabled)
             }
 
-            if let variant = action.variant {
-                Text(variant)
-                    .font(.caption)
-                    .foregroundStyle(.quaternary)
+            HStack(spacing: 8) {
+                if let itemType = action.vscodeItemType {
+                    PreviewPill(
+                        text: itemType == .project ? "Project"
+                            : itemType == .remote ? "Remote" : "File",
+                        icon: typeIcon(itemType),
+                        color: previewColor
+                    )
+                }
+                if let variant = action.variant {
+                    PreviewPill(text: variant, color: .secondary)
+                }
             }
-
-            Text("Module: vscode")
-                .font(.caption)
-                .foregroundStyle(.quaternary)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var previewIcon: String {

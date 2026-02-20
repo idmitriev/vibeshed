@@ -389,7 +389,9 @@ actor WindowModule: ModuleConfigurable {
                     subtitle: "Move to \(opposite.name.lowercased()) half of screen",
                     iconName: opposite.icon,
                     relevanceScore: 0.9,
-                    keywords: ["tile", opposite.name.lowercased()]
+                    keywords: ["tile", opposite.name.lowercased()],
+                    windowID: window.id,
+                    appBundleID: window.bundleID
                 ) { _ in
                     let oppFrame = tileFuncs.opposite(focused.screenFrame, cfg.padding)
                     try mgr.setFrame(window, frame: oppFrame)

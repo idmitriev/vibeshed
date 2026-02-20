@@ -20,6 +20,7 @@ struct SpotifyAction: Action {
 
     let artworkURL: String?
     let spotifyItemType: SpotifyItemType?
+    let durationMs: Int?
 
     private let runner: @Sendable ([String: Any]) async throws -> ActionResult
 
@@ -33,6 +34,7 @@ struct SpotifyAction: Action {
         parameters: [ActionParameter] = [],
         artworkURL: String? = nil,
         spotifyItemType: SpotifyItemType? = nil,
+        durationMs: Int? = nil,
         runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
     ) {
         self.id = id
@@ -44,6 +46,7 @@ struct SpotifyAction: Action {
         self.parameters = parameters
         self.artworkURL = artworkURL
         self.spotifyItemType = spotifyItemType
+        self.durationMs = durationMs
         self.runner = runner
     }
 

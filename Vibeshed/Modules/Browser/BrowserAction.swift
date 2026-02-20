@@ -11,6 +11,7 @@ struct BrowserAction: Action {
 
     private let runner: @Sendable ([String: Any]) async throws -> ActionResult
     let browserBundleID: String?
+    let tabURL: String?
 
     init(
         id: ActionID,
@@ -21,6 +22,7 @@ struct BrowserAction: Action {
         keywords: [String] = [],
         parameters: [ActionParameter] = [],
         browserBundleID: String? = nil,
+        tabURL: String? = nil,
         runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
     ) {
         self.id = id
@@ -31,6 +33,7 @@ struct BrowserAction: Action {
         self.keywords = keywords
         self.parameters = parameters
         self.browserBundleID = browserBundleID
+        self.tabURL = tabURL
         self.runner = runner
     }
 

@@ -34,24 +34,22 @@ struct AudioActionPreviewView: View {
     let action: AudioAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "audio") {
             Image(systemName: action.iconName ?? "speaker.wave.2")
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             Text(action.subtitle)
-                .font(.body)
+                .font(.callout)
                 .foregroundStyle(.secondary)
-
-            Text("Module: audio")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .lineLimit(3)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

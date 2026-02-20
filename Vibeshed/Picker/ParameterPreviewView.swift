@@ -11,41 +11,43 @@ struct ParameterPreviewView: View {
     var body: some View {
         Group {
             if let action {
-                VStack(spacing: 16) {
-                    // Action header
-                    Image(systemName: action.iconName ?? "sparkle")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.secondary)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Action header
+                        Image(systemName: action.iconName ?? "sparkle")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
 
-                    Text(action.title)
-                        .font(.title3)
-                        .fontWeight(.medium)
+                        Text(action.title)
+                            .font(.title3)
+                            .fontWeight(.medium)
+                            .lineLimit(2)
 
-                    Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                        Text(action.subtitle)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(3)
 
-                    Divider()
-                        .padding(.horizontal)
+                        Divider()
 
-                    // Parameter progress
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Parameters")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                            .textCase(.uppercase)
+                        // Parameter progress
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Parameters")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .textCase(.uppercase)
 
-                        ForEach(action.parameters) { param in
-                            parameterRow(param)
+                            ForEach(action.parameters) { param in
+                                parameterRow(param)
+                            }
                         }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
 
-                    Spacer()
+                        Spacer(minLength: 8)
+                    }
+                    .padding()
                 }
-                .padding(.top)
             } else {
                 ContentUnavailableView(
                     "No Action",

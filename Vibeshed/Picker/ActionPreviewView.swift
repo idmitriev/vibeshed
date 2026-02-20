@@ -33,28 +33,16 @@ struct ActionPreviewView: View {
 
     @ViewBuilder
     private func defaultPreview(for item: ActionItem) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: item.iconSystemName ?? "sparkle")
-                .font(.system(size: 36))
-                .foregroundStyle(.secondary)
-
-            Text(item.title)
-                .font(.title2)
-                .fontWeight(.medium)
-
-            Text(item.subtitle)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
-
-            Text("Module: \(item.moduleID)")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+        PreviewLayout(moduleName: item.moduleID) {
+            PreviewHeader(title: item.title, subtitle: item.subtitle) {
+                Image(systemName: item.iconSystemName ?? "sparkle")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.secondary)
+                    .frame(height: 56)
+            }
 
             if let action = actionCache[item.id], !action.parameters.isEmpty {
                 Divider()
-                    .padding(.horizontal)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Parameters")
@@ -79,10 +67,8 @@ struct ActionPreviewView: View {
                         }
                     }
                 }
-                .padding(.horizontal)
             }
         }
-        .padding()
     }
 
     private func parameterIcon(for type: ParameterType) -> String {

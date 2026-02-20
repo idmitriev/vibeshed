@@ -58,56 +58,57 @@ struct AIActionPreviewView: View {
     let action: AIAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "ai") {
             Image(systemName: action.iconName ?? "brain")
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(previewColor)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
-                .multilineTextAlignment(.center)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             if !action.subtitle.isEmpty {
                 Text(action.subtitle)
-                    .font(.body)
+                    .font(.callout)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            if let path = action.projectPath {
-                Label(abbreviatePath(path), systemImage: "folder")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-
-            if let model = action.modelName {
-                Label(model, systemImage: "cpu")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .lineLimit(3)
             }
 
             if let provider = action.provider {
-                Label(
-                    providerFullLabel(provider),
-                    systemImage: providerIcon(provider)
+                PreviewPill(
+                    text: providerFullLabel(provider),
+                    icon: providerIcon(provider),
+                    color: previewColor
                 )
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            }
+
+            if let path = action.projectPath {
+                PreviewMetadataRow(
+                    icon: "folder",
+                    label: "Project",
+                    value: abbreviatePath(path)
+                )
+            }
+
+            if let model = action.modelName {
+                PreviewMetadataRow(
+                    icon: "cpu",
+                    label: "Model",
+                    value: model
+                )
             }
 
             if let timestamp = action.sessionTimestamp {
-                Label(formatDate(timestamp), systemImage: "clock")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                PreviewMetadataRow(
+                    icon: "clock",
+                    label: "Session",
+                    value: formatDate(timestamp)
+                )
             }
-
-            Text("Module: ai")
-                .font(.caption)
-                .foregroundStyle(.quaternary)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var previewColor: Color {

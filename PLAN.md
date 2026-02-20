@@ -213,31 +213,46 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 ### Phase 31: Action aliasing
 
-- [ ] Implement action aliasing in the config file to allow users to define custom aliases for actions. This will make it easier for users to search for and remember actions by using their own terminology.
+- [x] Implement action aliasing in the config file to allow users to define custom aliases for actions. This will make it easier for users to search for and remember actions by using their own terminology.
 
-### Phase 32 : App scoped key-combos/remaps
+### Phase 32 : App scoped key-combos/remaps (DONE)
 
-- [ ] Implement a system for app scoped key-combos or remaps that can trigger actions only when a specific application is focused. 
-- [ ] Implement key remapping functionality that allows users to remap keys or key-combos to different actions on a per-application basis.
+- [x] Implement a system for app scoped key-combos or remaps that can trigger actions only when a specific application is focused.
+- [x] Implement key remapping functionality that allows users to remap keys or key-combos to different actions on a per-application basis.
 
-### Phase 33: Better previews
+### Phase 33: Better previews (DONE)
 
-- [ ] Implement better previews for actions in the picker, showing more relevant information and visuals to help users understand what the action does and what parameters it requires
-- [ ] For windows show screenshot previews with highlighted focused window
-- [ ] For browser tabs show website favicons and titles
-- [ ] For spotify show album art and track info
-- [ ] For github show repo avatars and issue/PR info, etc
+- [x] Make preview layout more spread out using all available space and not centered like now
+- [x] Implement better previews for actions in the picker, showing more relevant information and visuals to help users understand what the action does and what parameters it requires
+- [x] For windows show screenshot previews with highlighted focused window
+- [x] For browser tabs show website favicons and titles
+- [x] For spotify show album art and track info
+- [x] For github show repo avatars and issue/PR info, etc
 
 ### Phase 35: Navigation in picker
 
-- [ ] Implement navigation in the picker to allow users to easily go back from action parameter selection to the main action list
+- [ ] Implement navigation in the picker to allow users to easily go back from action parameter selection to the main action list, show selected action as a pill in the query that can be removed to go back, etc
 - [ ] Support paging in the action list when there are many actions available
 
-### Phase _: Missing features
+### Phase 36: Jetbrains module
 
-- [ ] Jetbrains IDEs module for searching and opening projects
-- [ ] Zoom module to start/join meetings
-- [ ] Calendar module to open events
+- [ ] Create a Jetbrains IDEs module for searching and opening projects in Jetbrains IDEs
+- [ ] Implement actions for searching Jetbrains IDE projects based on their name and path and opening
+
+### Phase 37: Calendar module
+
+- [ ] Create a calendar module for searching and opening calendar events in the browser or calendar apps
+- [ ] Implement actions for searching calendar events based on their title and opening them in browser, calendar.app, zoom or google meet in browser
+
+### Phase 38: Zoom module
+
+- [ ] Create a zoom module for searching and joining zoom meetings
+- [ ] Implement actions for searching zoom meetings based on their title and joining them in the zoom, action for starting meetings as well
+
+### Phase 39: Prepare for meeting module
+
+- [ ] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
+- [ ] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
 
 ### Phase _: Testing
 
@@ -247,13 +262,14 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
 
-### Phase _: Releases and distribution
+### Phase _: Releases and distribution 
 
-- [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
-- [ ] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems
-- [ ] Publish the app on github with proper license, readme, and some documentation
+- [ ] Make sure app has a kickass name and icon
 - [ ] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
-- [ ] Make sure it has a kickass name and icon
 - [ ] Make sure it follows apple UX guidelines and unix principles at least to some extent
+- [ ] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems
+- [ ] Make gitingnore file is configured to not include any sensitive information, build artifacts, or other unnecessary files in the repository
+- [ ] Publish the app on github with proper license, readme, and some documentation
+- [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Create a website on github pages for the app with documentation, screenshots, and download links
 - [ ] Setup github donations for the project to allow users to support development if they find the app useful

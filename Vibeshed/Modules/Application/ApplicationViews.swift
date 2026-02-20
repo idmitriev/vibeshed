@@ -42,7 +42,7 @@ struct ApplicationActionPreviewView: View {
     let action: ApplicationAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "application") {
             Group {
                 if let icon = action.appIcon {
                     Image(nsImage: icon)
@@ -50,23 +50,22 @@ struct ApplicationActionPreviewView: View {
                         .aspectRatio(contentMode: .fit)
                 } else {
                     Image(systemName: action.iconName ?? "app")
-                        .font(.largeTitle)
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 80, height: 80)
+            .frame(maxWidth: .infinity)
 
             Text(action.title)
-                .font(.title2)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             Text(action.subtitle)
-                .font(.body)
+                .font(.callout)
                 .foregroundStyle(.secondary)
-
-            Text("Module: application")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .lineLimit(3)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

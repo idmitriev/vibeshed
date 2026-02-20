@@ -34,24 +34,22 @@ struct SelfActionPreviewView: View {
     let action: SelfAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "vibeshed") {
             Image(systemName: action.iconName ?? "sparkle")
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             Text(action.subtitle)
-                .font(.body)
+                .font(.callout)
                 .foregroundStyle(.secondary)
-
-            Text("Module: vibeshed")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .lineLimit(3)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

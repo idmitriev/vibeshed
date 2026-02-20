@@ -358,7 +358,10 @@ actor GitHubModule: ModuleConfigurable {
                 ].compactMap { $0 },
                 avatarURL: repo.avatarURL,
                 githubItemType: .repo,
-                htmlURL: repo.htmlURL
+                htmlURL: repo.htmlURL,
+                itemDescription: repo.description,
+                repoStars: repo.stars,
+                repoLanguage: repo.language
             ) { _ in
                 openURL(repo.htmlURL)
                 return .dismiss
@@ -388,7 +391,10 @@ actor GitHubModule: ModuleConfigurable {
                 githubItemType: .issue,
                 htmlURL: issue.htmlURL,
                 stateIcon: icon,
-                stateColor: color
+                stateColor: color,
+                itemDescription: issue.body.map { String($0.prefix(200)) },
+                labels: issue.labels.isEmpty ? nil : issue.labels,
+                createdAt: issue.createdAt
             ) { _ in
                 openURL(issue.htmlURL)
                 return .dismiss
@@ -418,7 +424,9 @@ actor GitHubModule: ModuleConfigurable {
                 githubItemType: .pr,
                 htmlURL: pr.htmlURL,
                 stateIcon: icon,
-                stateColor: color
+                stateColor: color,
+                itemDescription: pr.body.map { String($0.prefix(200)) },
+                createdAt: pr.createdAt
             ) { _ in
                 openURL(pr.htmlURL)
                 return .dismiss

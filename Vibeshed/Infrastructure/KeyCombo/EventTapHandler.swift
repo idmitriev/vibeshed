@@ -5,6 +5,7 @@ import os
 
 final class EventTapHandler: @unchecked Sendable {
     private let executor: @Sendable (ActionID) -> Void
+    private let focusedAppTracker: FocusedAppTracker
 
     private var tapPort: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -14,21 +15,42 @@ final class EventTapHandler: @unchecked Sendable {
 
     // Binding tables — guarded by lock
     private var lock = os_unfair_lock()
-    private var standardBindings: [StandardKey: ActionID] = [:]
-    private var capsLockBindings: [UInt16: ActionID] = [:]
-    private var spaceBindings: [UInt16: ActionID] = [:]
-    private var mouseBindings: [MouseKey: ActionID] = [:]
+    private var standardBindings: [StandardKey: BindingSlot] = [:]
+    private var capsLockBindings: [UInt16: BindingSlot] = [:]
+    private var spaceBindings: [UInt16: BindingSlot] = [:]
+    private var mouseBindings: [MouseKey: BindingSlot] = [:]
+    private var standardRemaps: [StandardKey: [String: RemapTarget]] = [:]
 
     // Modifier hold state — only accessed from tap callback thread
     private var spaceHeld = false
     private var spaceUsedAsModifier = false
 
-    init(executor: @escaping @Sendable (ActionID) -> Void) {
+    init(
+        focusedAppTracker: FocusedAppTracker,
+        executor: @escaping @Sendable (ActionID) -> Void
+    ) {
+        self.focusedAppTracker = focusedAppTracker
         self.executor = executor
     }
 
     deinit {
         stop()
+    }
+
+    // MARK: - Internal Types
+
+    private struct BindingSlot {
+        var global: ActionID?
+        var appSpecific: [String: ActionID] = [:]
+
+        func resolve(focusedApp: String) -> ActionID? {
+            appSpecific[focusedApp] ?? global
+        }
+    }
+
+    private struct RemapTarget {
+        let keyCode: UInt16
+        let modifiers: CGEventFlags
     }
 
     // MARK: - Public
@@ -110,29 +132,44 @@ final class EventTapHandler: @unchecked Sendable {
         Log.keybindings.info("Event tap stopped")
     }
 
+    // swiftlint:disable:next function_body_length
     func updateBindings(
         standard: [ResolvedBinding],
         capsLock: [ResolvedBinding],
         space: [ResolvedBinding],
-        mouse: [ResolvedBinding]
+        mouse: [ResolvedBinding],
+        remaps: [ResolvedRemap]
     ) {
-        var newStandard: [StandardKey: ActionID] = [:]
+        var newStandard: [StandardKey: BindingSlot] = [:]
         for binding in standard {
             if case .standard(let keyCode, let modifiers) = binding.comboType {
-                newStandard[StandardKey(keyCode: keyCode, modifiers: modifiers)] = binding.actionID
+                let key = StandardKey(keyCode: keyCode, modifiers: modifiers)
+                var slot = newStandard[key] ?? BindingSlot()
+                if let app = binding.app {
+                    slot.appSpecific[app] = binding.actionID
+                } else {
+                    slot.global = binding.actionID
+                }
+                newStandard[key] = slot
                 let action = binding.actionID.rawValue
-                let combo = binding.rawCombo
                 let fl = modifiers.rawValue
+                let scope = binding.app ?? "global"
                 Log.keybindings.debug(
-                    "  standard key=\(keyCode, privacy: .public) flags=\(fl, privacy: .public) → \(action, privacy: .public)"
+                    "  std key=\(keyCode, privacy: .public) fl=\(fl, privacy: .public) → \(action, privacy: .public) [\(scope, privacy: .public)]"
                 )
             }
         }
 
-        var newCapsLock: [UInt16: ActionID] = [:]
+        var newCapsLock: [UInt16: BindingSlot] = [:]
         for binding in capsLock {
             if case .capsLockModifier(let keyCode) = binding.comboType {
-                newCapsLock[keyCode] = binding.actionID
+                var slot = newCapsLock[keyCode] ?? BindingSlot()
+                if let app = binding.app {
+                    slot.appSpecific[app] = binding.actionID
+                } else {
+                    slot.global = binding.actionID
+                }
+                newCapsLock[keyCode] = slot
                 let action = binding.actionID.rawValue
                 let combo = binding.rawCombo
                 Log.keybindings.debug(
@@ -141,10 +178,16 @@ final class EventTapHandler: @unchecked Sendable {
             }
         }
 
-        var newSpace: [UInt16: ActionID] = [:]
+        var newSpace: [UInt16: BindingSlot] = [:]
         for binding in space {
             if case .spaceModifier(let keyCode) = binding.comboType {
-                newSpace[keyCode] = binding.actionID
+                var slot = newSpace[keyCode] ?? BindingSlot()
+                if let app = binding.app {
+                    slot.appSpecific[app] = binding.actionID
+                } else {
+                    slot.global = binding.actionID
+                }
+                newSpace[keyCode] = slot
                 let action = binding.actionID.rawValue
                 let combo = binding.rawCombo
                 Log.keybindings.debug(
@@ -153,10 +196,17 @@ final class EventTapHandler: @unchecked Sendable {
             }
         }
 
-        var newMouse: [MouseKey: ActionID] = [:]
+        var newMouse: [MouseKey: BindingSlot] = [:]
         for binding in mouse {
             if case .mouseButton(let button, let modifiers) = binding.comboType {
-                newMouse[MouseKey(button: button, modifiers: modifiers)] = binding.actionID
+                let key = MouseKey(button: button, modifiers: modifiers)
+                var slot = newMouse[key] ?? BindingSlot()
+                if let app = binding.app {
+                    slot.appSpecific[app] = binding.actionID
+                } else {
+                    slot.global = binding.actionID
+                }
+                newMouse[key] = slot
                 let action = binding.actionID.rawValue
                 let combo = binding.rawCombo
                 let fl = modifiers.rawValue
@@ -166,19 +216,33 @@ final class EventTapHandler: @unchecked Sendable {
             }
         }
 
+        var newRemaps: [StandardKey: [String: RemapTarget]] = [:]
+        for remap in remaps {
+            if case .standard(let keyCode, let modifiers) = remap.fromType {
+                let key = StandardKey(keyCode: keyCode, modifiers: modifiers)
+                var appMap = newRemaps[key] ?? [:]
+                appMap[remap.app] = RemapTarget(keyCode: remap.toKeyCode, modifiers: remap.toModifiers)
+                newRemaps[key] = appMap
+                Log.keybindings.debug(
+                    "  remap \(remap.rawFrom, privacy: .public) → \(remap.rawTo, privacy: .public) [\(remap.app, privacy: .public)]"
+                )
+            }
+        }
+
         let std = newStandard.count
         let caps = newCapsLock.count
         let spc = newSpace.count
         let mse = newMouse.count
-        Log.keybindings.debug(
-            "Binding tables: \(std, privacy: .public)/\(caps, privacy: .public)/\(spc, privacy: .public)/\(mse, privacy: .public) std/caps/spc/mouse"
-        )
+        let rmp = newRemaps.count
+        let summary = "\(std)/\(caps)/\(spc)/\(mse)+\(rmp)rmp"
+        Log.keybindings.debug("Bindings: \(summary, privacy: .public)")
 
         os_unfair_lock_lock(&lock)
         standardBindings = newStandard
         capsLockBindings = newCapsLock
         spaceBindings = newSpace
         mouseBindings = newMouse
+        standardRemaps = newRemaps
         os_unfair_lock_unlock(&lock)
     }
 
@@ -284,9 +348,13 @@ final class EventTapHandler: @unchecked Sendable {
         return Unmanaged.passUnretained(event)
     }
 
+    // swiftlint:disable:next function_body_length
     private func handleKeyDown(event: CGEvent) -> Unmanaged<CGEvent>? {
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let spaceKeyCode = UInt16(kVK_Space)
+
+        // Read focused app once for all lookups in this event
+        let focusedApp = focusedAppTracker.focusedBundleID
 
         // Strip alphaShift so held capslock doesn't uppercase letters
         os_unfair_lock_lock(&lock)
@@ -314,10 +382,10 @@ final class EventTapHandler: @unchecked Sendable {
         // Caps-lock modifier combos (state from IOKit HID)
         if CapsLockMonitor.shared.isPressed {
             os_unfair_lock_lock(&lock)
-            let actionID = capsLockBindings[keyCode]
+            let slot = capsLockBindings[keyCode]
             os_unfair_lock_unlock(&lock)
 
-            if let actionID {
+            if let actionID = slot?.resolve(focusedApp: focusedApp) {
                 Log.keybindings.info(
                     "CapsLock+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)"
                 )
@@ -329,10 +397,10 @@ final class EventTapHandler: @unchecked Sendable {
         // Space modifier combos
         if spaceHeld, keyCode != spaceKeyCode {
             os_unfair_lock_lock(&lock)
-            let actionID = spaceBindings[keyCode]
+            let slot = spaceBindings[keyCode]
             os_unfair_lock_unlock(&lock)
 
-            if let actionID {
+            if let actionID = slot?.resolve(focusedApp: focusedApp) {
                 spaceUsedAsModifier = true
                 Log.keybindings.info(
                     "Space+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)")
@@ -341,13 +409,28 @@ final class EventTapHandler: @unchecked Sendable {
             }
         }
 
-        // Standard modifier+key combos
+        // Standard modifier+key combos — check remaps first, then bindings
+        let key = StandardKey(keyCode: keyCode, modifiers: flags)
         os_unfair_lock_lock(&lock)
-        let actionID = standardBindings[StandardKey(keyCode: keyCode, modifiers: flags)]
+        let remapTarget = standardRemaps[key]?[focusedApp]
+        let bindingSlot = standardBindings[key]
         let bindingCount = standardBindings.count
         os_unfair_lock_unlock(&lock)
 
-        if let actionID {
+        // Remap: modify the event in-place and pass it through
+        if let remap = remapTarget {
+            Log.keybindings.info(
+                "Remap key=\(keyCode, privacy: .public) → key=\(remap.keyCode, privacy: .public) [\(focusedApp, privacy: .public)]"
+            )
+            event.setIntegerValueField(.keyboardEventKeycode, value: Int64(remap.keyCode))
+            // Set target modifiers, preserving non-relevant flags (e.g. alphaShift)
+            let preserved = event.flags.subtracting(Self.relevantModifiers)
+            event.flags = remap.modifiers.union(preserved)
+            return Unmanaged.passUnretained(event)
+        }
+
+        // Action binding
+        if let actionID = bindingSlot?.resolve(focusedApp: focusedApp) {
             let f = flags.rawValue
             Log.keybindings.info(
                 "Key \(keyCode, privacy: .public) flags=\(f, privacy: .public) → \(actionID.rawValue, privacy: .public)"
@@ -395,12 +478,13 @@ final class EventTapHandler: @unchecked Sendable {
     private func handleMouseDown(event: CGEvent) -> Unmanaged<CGEvent>? {
         let button = Int(event.getIntegerValueField(.mouseEventButtonNumber))
         let flags = maskedFlags(event.flags)
+        let focusedApp = focusedAppTracker.focusedBundleID
 
         os_unfair_lock_lock(&lock)
-        let actionID = mouseBindings[MouseKey(button: button, modifiers: flags)]
+        let slot = mouseBindings[MouseKey(button: button, modifiers: flags)]
         os_unfair_lock_unlock(&lock)
 
-        if let actionID {
+        if let actionID = slot?.resolve(focusedApp: focusedApp) {
             let f = flags.rawValue
             Log.keybindings.info(
                 "Mouse \(button, privacy: .public) flags=\(f, privacy: .public) → \(actionID.rawValue, privacy: .public)"

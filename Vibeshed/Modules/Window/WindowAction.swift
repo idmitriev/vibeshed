@@ -9,6 +9,9 @@ struct WindowAction: Action {
     let keywords: [String]
     let parameters: [ActionParameter]
 
+    let windowID: Int?
+    let appBundleID: String?
+
     private let runner: @Sendable ([String: Any]) async throws -> ActionResult
 
     init(
@@ -19,6 +22,8 @@ struct WindowAction: Action {
         relevanceScore: Double = 0.8,
         keywords: [String] = [],
         parameters: [ActionParameter] = [],
+        windowID: Int? = nil,
+        appBundleID: String? = nil,
         runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
     ) {
         self.id = id
@@ -28,6 +33,8 @@ struct WindowAction: Action {
         self.relevanceScore = relevanceScore
         self.keywords = keywords
         self.parameters = parameters
+        self.windowID = windowID
+        self.appBundleID = appBundleID
         self.runner = runner
     }
 

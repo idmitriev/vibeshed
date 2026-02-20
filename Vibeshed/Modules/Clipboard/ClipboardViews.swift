@@ -40,49 +40,47 @@ struct ClipboardActionPreviewView: View {
     let action: ClipboardAction
 
     var body: some View {
-        VStack(spacing: 12) {
+        PreviewLayout(moduleName: "clipboard") {
             Image(systemName: action.iconName ?? "doc.on.clipboard")
-                .font(.largeTitle)
+                .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-                .frame(width: 64, height: 64)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
 
             Text(action.title)
-                .font(.title2)
+                .font(.title3)
+                .fontWeight(.medium)
+                .lineLimit(2)
 
             if let preview = action.contentPreview {
                 ScrollView {
                     Text(preview)
-                        .font(.system(.body, design: .monospaced))
+                        .font(.system(.caption, design: .monospaced))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(8)
                 }
                 .background(Color(nsColor: .controlBackgroundColor))
                 .cornerRadius(6)
-                .frame(maxHeight: 200)
+                .frame(maxHeight: 240)
             }
 
-            HStack(spacing: 16) {
+            HStack(spacing: 8) {
                 if let contentType = action.contentType {
-                    Label(
-                        contentType.rawValue.capitalized,
-                        systemImage: iconForContentType(contentType)
+                    PreviewPill(
+                        text: contentType.rawValue.capitalized,
+                        icon: iconForContentType(contentType),
+                        color: .secondary
                     )
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
                 }
                 if let timestamp = action.timestamp {
-                    Label(relativeTimeString(from: timestamp), systemImage: "clock")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    PreviewPill(
+                        text: relativeTimeString(from: timestamp),
+                        icon: "clock",
+                        color: .secondary
+                    )
                 }
             }
-
-            Text("Module: clipboard")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

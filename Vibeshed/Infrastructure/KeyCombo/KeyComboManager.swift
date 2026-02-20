@@ -11,8 +11,10 @@ final class KeyComboManager {
     private let permissionsManager: PermissionsManager
     private let togglePicker: () -> Void
 
+    private let focusedAppTracker = FocusedAppTracker()
     private let eventTapHandler: EventTapHandler
     private var currentEntries: [KeyBindingEntry] = []
+    private var currentRemaps: [AppRemapGroup] = []
     private var eventTapRunning = false
     private var capsLockMonitorRunning = false
 
@@ -28,7 +30,9 @@ final class KeyComboManager {
         self.moduleRegistry = moduleRegistry
         self.permissionsManager = permissionsManager
         self.togglePicker = togglePicker
-        self.eventTapHandler = EventTapHandler { [weak moduleRegistry, weak eventBus, togglePicker] actionID in
+        self.eventTapHandler = EventTapHandler(
+            focusedAppTracker: focusedAppTracker
+        ) { [weak moduleRegistry, weak eventBus, togglePicker] actionID in
             Task { @MainActor in
                 Log.keybindings.info("Executing action: \(actionID.rawValue, privacy: .public)")
                 // Built-in actions
@@ -57,6 +61,8 @@ final class KeyComboManager {
     // MARK: - Public
 
     func startListening() {
+        focusedAppTracker.start()
+
         Task { @MainActor [weak self] in
             guard let self else { return }
             let (_, stream) = await eventBus.subscribe()
@@ -80,20 +86,26 @@ final class KeyComboManager {
     func applyBindings(_ entries: [KeyBindingEntry]) {
         Log.keybindings.info("applyBindings called with \(entries.count, privacy: .public) entries")
         for entry in entries {
-            Log.keybindings.debug("  Config entry: '\(entry.combo, privacy: .public)' → '\(entry.action, privacy: .public)'")
+            let scope = entry.app ?? "global"
+            Log.keybindings.debug(
+                "  entry: '\(entry.combo, privacy: .public)' → '\(entry.action, privacy: .public)' [\(scope, privacy: .public)]"
+            )
         }
         currentEntries = entries
+        currentRemaps = configManager.config.appRemaps
         rebindAll()
     }
 
     func stop() {
         eventTapHandler.stop()
         eventTapRunning = false
+        focusedAppTracker.stop()
         if capsLockMonitorRunning {
             CapsLockMonitor.shared.stop()
             capsLockMonitorRunning = false
         }
         currentEntries = []
+        currentRemaps = []
         bindingErrors = [:]
     }
 
@@ -101,15 +113,17 @@ final class KeyComboManager {
 
     private func handleConfigReloaded() {
         let newEntries = configManager.config.keybindings
-        guard newEntries != currentEntries else {
-            Log.keybindings.debug("Config reloaded but keybindings unchanged")
+        let newRemaps = configManager.config.appRemaps
+        guard newEntries != currentEntries || newRemaps != currentRemaps else {
+            Log.keybindings.debug("Config reloaded but keybindings/remaps unchanged")
             return
         }
         let oldCount = currentEntries.count
-        Log.keybindings.info(
-            "Config reloaded: \(newEntries.count, privacy: .public) keybindings (was \(oldCount, privacy: .public))"
-        )
+        let oldRemapCount = currentRemaps.count
+        let summary = "\(newEntries.count) bindings (was \(oldCount)), \(newRemaps.count) remaps (was \(oldRemapCount))"
+        Log.keybindings.info("Config reloaded: \(summary, privacy: .public)")
         currentEntries = newEntries
+        currentRemaps = newRemaps
         rebindAll()
     }
 
@@ -156,15 +170,16 @@ final class KeyComboManager {
             // Only warn if the module is registered but the action doesn't exist
             guard moduleRegistry.module(id: moduleID) != nil else { continue }
 
+            let errorKey = bindingErrorKey(combo: entry.combo, app: entry.app)
             Task { [weak self] in
                 guard let self else { return }
                 if await moduleRegistry.findAction(id: actionID) == nil {
-                    bindingErrors[entry.combo] = "Action '\(entry.action)' not found in module '\(moduleID)'"
+                    bindingErrors[errorKey] = "Action '\(entry.action)' not found in module '\(moduleID)'"
                     Log.keybindings.warning(
                         "Action '\(entry.action, privacy: .public)' for combo '\(entry.combo, privacy: .public)' not available"
                     )
                 } else {
-                    bindingErrors.removeValue(forKey: entry.combo)
+                    bindingErrors.removeValue(forKey: errorKey)
                 }
             }
         }
@@ -173,7 +188,8 @@ final class KeyComboManager {
     // swiftlint:disable:next function_body_length
     private func rebindAll() {
         let entryCount = currentEntries.count
-        Log.keybindings.info("rebindAll: processing \(entryCount, privacy: .public) entries")
+        let remapGroupCount = currentRemaps.count
+        Log.keybindings.info("rebindAll: processing \(entryCount, privacy: .public) entries + \(remapGroupCount, privacy: .public) remap groups")
 
         // Stop existing tap and CapsLockMonitor
         if eventTapRunning {
@@ -189,7 +205,7 @@ final class KeyComboManager {
 
         bindingErrors = [:]
 
-        // Parse all entries
+        // Parse keybinding entries
         var standard: [ResolvedBinding] = []
         var capsLock: [ResolvedBinding] = []
         var space: [ResolvedBinding] = []
@@ -197,20 +213,24 @@ final class KeyComboManager {
         var seenCombos: Set<String> = []
 
         for entry in currentEntries {
-            let comboKey = entry.combo.lowercased()
-            if seenCombos.contains(comboKey) {
-                bindingErrors[entry.combo] = KeyComboError.duplicateBinding(entry.combo).localizedDescription
-                Task { await eventBus.publish(.keybindingError(combo: entry.combo, message: bindingErrors[entry.combo]!)) }
+            // Duplicate key includes app scope so same combo can exist for different apps
+            let dupeKey = "\(entry.combo.lowercased())@\(entry.app ?? "*")"
+            let errorKey = bindingErrorKey(combo: entry.combo, app: entry.app)
+
+            if seenCombos.contains(dupeKey) {
+                bindingErrors[errorKey] = KeyComboError.duplicateBinding(entry.combo).localizedDescription
+                Task { await eventBus.publish(.keybindingError(combo: entry.combo, message: bindingErrors[errorKey]!)) }
                 continue
             }
-            seenCombos.insert(comboKey)
+            seenCombos.insert(dupeKey)
 
             do {
                 let comboType = try KeyComboParser.parse(entry.combo)
                 let binding = ResolvedBinding(
                     comboType: comboType,
                     actionID: ActionID(entry.action),
-                    rawCombo: entry.combo
+                    rawCombo: entry.combo,
+                    app: entry.app
                 )
 
                 switch comboType {
@@ -240,9 +260,44 @@ final class KeyComboManager {
 
             } catch {
                 let message = error.localizedDescription
-                bindingErrors[entry.combo] = message
+                bindingErrors[errorKey] = message
                 Log.keybindings.error("Invalid keybinding '\(entry.combo, privacy: .public)': \(message, privacy: .public)")
                 Task { await eventBus.publish(.keybindingError(combo: entry.combo, message: message)) }
+            }
+        }
+
+        // Parse remap entries
+        var resolvedRemaps: [ResolvedRemap] = []
+        for group in currentRemaps {
+            for remap in group.remaps {
+                let errorKey = "remap:\(remap.from.lowercased())@\(group.app)"
+                do {
+                    let fromType = try KeyComboParser.parse(remap.from)
+                    guard case .standard = fromType else {
+                        let err = KeyComboError.invalidRemap(
+                            from: remap.from, to: remap.to,
+                            reason: "source must be a standard key combo (not capslock/space/mouse)"
+                        )
+                        bindingErrors[errorKey] = err.localizedDescription
+                        continue
+                    }
+                    let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap.to)
+
+                    resolvedRemaps.append(ResolvedRemap(
+                        fromType: fromType,
+                        toKeyCode: toKeyCode,
+                        toModifiers: toModifiers,
+                        app: group.app,
+                        rawFrom: remap.from,
+                        rawTo: remap.to
+                    ))
+                } catch {
+                    bindingErrors[errorKey] = error.localizedDescription
+                    let msg = error.localizedDescription
+                    Log.keybindings.error(
+                        "Invalid remap '\(remap.from, privacy: .public)' → '\(remap.to, privacy: .public)': \(msg, privacy: .public)"
+                    )
+                }
             }
         }
 
@@ -251,13 +306,15 @@ final class KeyComboManager {
             standard: standard,
             capsLock: capsLock,
             space: space,
-            mouse: mouse
+            mouse: mouse,
+            remaps: resolvedRemaps
         )
 
-        // Start event tap if we have any bindings
+        // Start event tap if we have any bindings or remaps
         let totalBindings = standard.count + capsLock.count + space.count + mouse.count
-        guard totalBindings > 0 else {
-            Log.keybindings.info("No keybindings configured — skipping event tap")
+        let totalRemaps = resolvedRemaps.count
+        guard totalBindings + totalRemaps > 0 else {
+            Log.keybindings.info("No keybindings or remaps configured — skipping event tap")
             Log.stderr("  ⚠ keybindings: none configured")
             return
         }
@@ -266,9 +323,9 @@ final class KeyComboManager {
         let caps = capsLock.count
         let spc = space.count
         let mse = mouse.count
-        let summary = "\(std)/\(caps)/\(spc)/\(mse) std/caps/spc/mouse"
+        let summary = "\(std)/\(caps)/\(spc)/\(mse) std/caps/spc/mouse + \(totalRemaps) remaps"
         Log.keybindings.info(
-            "Starting event tap: \(totalBindings, privacy: .public) bindings (\(summary, privacy: .public))"
+            "Starting event tap: \(totalBindings + totalRemaps, privacy: .public) bindings+remaps (\(summary, privacy: .public))"
         )
 
         // Try to create the event tap (needs Accessibility permission).
@@ -277,27 +334,29 @@ final class KeyComboManager {
             let message =
                 "Event tap failed — grant Accessibility permission"
             Log.keybindings.error(
-                "Event tap creation failed — all \(totalBindings, privacy: .public) bindings inactive"
+                "Event tap creation failed — all \(totalBindings + totalRemaps, privacy: .public) bindings+remaps inactive"
             )
-            for entry in currentEntries where bindingErrors[entry.combo] == nil {
-                bindingErrors[entry.combo] = message
+            for entry in currentEntries where bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] == nil {
+                bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
             }
             return
         }
         eventTapRunning = true
         Log.keybindings.info(
-            "Applied \(totalBindings, privacy: .public) keybinding(s) (\(summary, privacy: .public))"
+            "Applied \(totalBindings + totalRemaps, privacy: .public) keybinding(s)+remap(s) (\(summary, privacy: .public))"
         )
-        Log.stderr("  ✓ keybindings: \(totalBindings) applied")
+        Log.stderr("  ✓ keybindings: \(totalBindings) applied + \(totalRemaps) remaps")
 
         // CapsLockMonitor needs Input Monitoring — manage separately
         manageCapsLockMonitor(hasCapsLockBindings: !capsLock.isEmpty)
     }
 
     private func needsEventTap() -> Bool {
-        currentEntries.contains { entry in
+        let hasBindings = currentEntries.contains { entry in
             (try? KeyComboParser.parse(entry.combo)) != nil
         }
+        let hasRemaps = !currentRemaps.isEmpty
+        return hasBindings || hasRemaps
     }
 
     private func manageCapsLockMonitor(hasCapsLockBindings: Bool) {
@@ -334,9 +393,16 @@ final class KeyComboManager {
         for entry in currentEntries {
             if let ct = try? KeyComboParser.parse(entry.combo),
                case .capsLockModifier = ct {
-                bindingErrors[entry.combo] = message
+                bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
             }
         }
+    }
+
+    private func bindingErrorKey(combo: String, app: String?) -> String {
+        if let app {
+            return "\(combo)@\(app)"
+        }
+        return combo
     }
 
     // MARK: - Action Execution

@@ -105,6 +105,14 @@ final class ConfigManager {
             )
         }
 
+        if let appRemapsNode = rootMapping[Node("appRemaps")] {
+            let appRemapsYAML = try Yams.serialize(node: appRemapsNode)
+            config.appRemaps = try decoder.decode(
+                [AppRemapGroup].self,
+                from: appRemapsYAML
+            )
+        }
+
         if let aliasesNode = rootMapping[Node("aliases")] {
             let aliasesYAML = try Yams.serialize(node: aliasesNode)
             config.aliases = try decoder.decode(
