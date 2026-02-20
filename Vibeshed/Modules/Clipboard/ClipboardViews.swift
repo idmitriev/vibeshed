@@ -41,16 +41,11 @@ struct ClipboardActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "clipboard") {
-            Image(systemName: action.iconName ?? "doc.on.clipboard")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
+            PreviewHeader(
+                title: action.title,
+                subtitle: action.subtitle,
+                systemIcon: action.iconName ?? "doc.on.clipboard"
+            )
 
             if let preview = action.contentPreview {
                 ScrollView {

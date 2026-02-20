@@ -58,17 +58,9 @@ struct BrowserActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "browser") {
-            heroSection
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
+            PreviewHeader(title: action.title, subtitle: action.subtitle) {
+                heroSection
+            }
 
             if let tabURL = action.tabURL {
                 Divider()
@@ -117,8 +109,7 @@ struct BrowserActionPreviewView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 56, height: 56)
-            .frame(maxWidth: .infinity)
+            .frame(width: 64, height: 64)
         }
     }
 

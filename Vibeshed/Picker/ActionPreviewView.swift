@@ -38,7 +38,7 @@ struct ActionPreviewView: View {
                 Image(systemName: item.iconSystemName ?? "sparkle")
                     .font(.system(size: 48))
                     .foregroundStyle(.secondary)
-                    .frame(height: 56)
+                    .frame(width: 64, height: 64)
             }
 
             if let action = actionCache[item.id], !action.parameters.isEmpty {

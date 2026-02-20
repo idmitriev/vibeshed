@@ -65,17 +65,9 @@ struct SpotifyActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "spotify") {
-            artworkHero
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
+            PreviewHeader(title: action.title, subtitle: action.subtitle) {
+                artworkHero
+            }
 
             HStack(spacing: 8) {
                 if let itemType = action.spotifyItemType {
@@ -106,12 +98,12 @@ struct SpotifyActionPreviewView: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity)
                         .cornerRadius(8)
                 default:
                     previewFallbackIcon
                 }
             }
+            .frame(maxHeight: 200)
         } else {
             previewFallbackIcon
         }
@@ -121,8 +113,7 @@ struct SpotifyActionPreviewView: View {
         Image(systemName: action.iconName ?? "music.note")
             .font(.system(size: 48))
             .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
+            .frame(width: 64, height: 64)
     }
 
     private func formatDuration(_ ms: Int) -> String {

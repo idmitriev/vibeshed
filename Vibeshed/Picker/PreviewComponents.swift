@@ -10,7 +10,6 @@ struct PreviewHeader<Hero: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             hero()
-                .frame(maxWidth: .infinity)
 
             Text(title)
                 .font(.title3)
@@ -23,6 +22,26 @@ struct PreviewHeader<Hero: View>: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(3)
             }
+        }
+    }
+}
+
+extension PreviewHeader where Hero == AnyView {
+    init(
+        title: String,
+        subtitle: String,
+        systemIcon: String,
+        iconColor: Color = .secondary
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.hero = {
+            AnyView(
+                Image(systemName: systemIcon)
+                    .font(.system(size: 48))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 64, height: 64)
+            )
         }
     }
 }

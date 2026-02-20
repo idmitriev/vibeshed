@@ -35,21 +35,11 @@ struct SystemActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "system") {
-            Image(systemName: action.iconName ?? "gearshape")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
+            PreviewHeader(
+                title: action.title,
+                subtitle: action.subtitle,
+                systemIcon: action.iconName ?? "gearshape"
+            )
         }
     }
 }

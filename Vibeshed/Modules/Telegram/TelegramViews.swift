@@ -56,23 +56,12 @@ struct TelegramActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "telegram") {
-            Image(systemName: action.iconName ?? previewIcon)
-                .font(.system(size: 48))
-                .foregroundStyle(previewColor)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            if !action.subtitle.isEmpty {
-                Text(action.subtitle)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-            }
+            PreviewHeader(
+                title: action.title,
+                subtitle: action.subtitle,
+                systemIcon: action.iconName ?? previewIcon,
+                iconColor: previewColor
+            )
 
             if let chatType = action.chatType {
                 PreviewPill(

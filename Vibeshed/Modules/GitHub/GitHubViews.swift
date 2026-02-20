@@ -74,16 +74,9 @@ struct GitHubActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "github") {
-            avatarHero
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+            PreviewHeader(title: action.title, subtitle: action.subtitle) {
+                avatarHero
+            }
 
             badgeRow
 
@@ -112,11 +105,10 @@ struct GitHubActionPreviewView: View {
                     previewFallbackIcon
                 }
             }
-            .frame(width: 80, height: 80)
+            .frame(width: 64, height: 64)
             .clipShape(action.githubItemType == .repo
-                ? AnyShape(RoundedRectangle(cornerRadius: 12))
+                ? AnyShape(RoundedRectangle(cornerRadius: 10))
                 : AnyShape(Circle()))
-            .frame(maxWidth: .infinity)
         } else {
             previewFallbackIcon
         }
@@ -129,8 +121,7 @@ struct GitHubActionPreviewView: View {
         )
         .font(.system(size: 48))
         .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity)
-        .frame(height: 56)
+        .frame(width: 64, height: 64)
     }
 
     @ViewBuilder

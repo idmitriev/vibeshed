@@ -36,25 +36,19 @@ struct WindowActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "window") {
-            if let screenshot {
-                screenshotHero(screenshot)
-            } else if action.windowID != nil {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 160)
-            } else {
-                iconHero
+            PreviewHeader(title: action.title, subtitle: action.subtitle) {
+                if let screenshot {
+                    screenshotHero(screenshot)
+                } else if action.windowID != nil {
+                    ProgressView()
+                        .frame(height: 160)
+                } else {
+                    Image(systemName: action.iconName ?? "macwindow")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 64, height: 64)
+                }
             }
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
 
             if let bundleID = action.appBundleID {
                 appInfoRow(bundleID: bundleID)
@@ -71,21 +65,12 @@ struct WindowActionPreviewView: View {
         Image(nsImage: image)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .frame(maxWidth: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(.tertiary, lineWidth: 1)
             }
             .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
-    }
-
-    private var iconHero: some View {
-        Image(systemName: action.iconName ?? "macwindow")
-            .font(.system(size: 48))
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
     }
 
     @ViewBuilder

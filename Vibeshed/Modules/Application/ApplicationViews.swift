@@ -43,29 +43,20 @@ struct ApplicationActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "application") {
-            Group {
-                if let icon = action.appIcon {
-                    Image(nsImage: icon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } else {
-                    Image(systemName: action.iconName ?? "app")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
+            PreviewHeader(title: action.title, subtitle: action.subtitle) {
+                Group {
+                    if let icon = action.appIcon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } else {
+                        Image(systemName: action.iconName ?? "app")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .frame(width: 64, height: 64)
             }
-            .frame(width: 80, height: 80)
-            .frame(maxWidth: .infinity)
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
         }
     }
 }

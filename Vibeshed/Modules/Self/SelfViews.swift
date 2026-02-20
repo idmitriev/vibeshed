@@ -35,21 +35,11 @@ struct SelfActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "vibeshed") {
-            Image(systemName: action.iconName ?? "sparkle")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
+            PreviewHeader(
+                title: action.title,
+                subtitle: action.subtitle,
+                systemIcon: action.iconName ?? "sparkle"
+            )
         }
     }
 }

@@ -35,21 +35,11 @@ struct AudioActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "audio") {
-            Image(systemName: action.iconName ?? "speaker.wave.2")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            Text(action.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
+            PreviewHeader(
+                title: action.title,
+                subtitle: action.subtitle,
+                systemIcon: action.iconName ?? "speaker.wave.2"
+            )
         }
     }
 }

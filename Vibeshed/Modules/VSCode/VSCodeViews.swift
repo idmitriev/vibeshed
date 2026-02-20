@@ -81,23 +81,12 @@ struct VSCodeActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "vscode") {
-            Image(systemName: previewIcon)
-                .font(.system(size: 48))
-                .foregroundStyle(previewColor)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-
-            Text(action.title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .lineLimit(2)
-
-            if !action.subtitle.isEmpty {
-                Text(action.subtitle)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-            }
+            PreviewHeader(
+                title: action.title,
+                subtitle: action.subtitle,
+                systemIcon: previewIcon,
+                iconColor: previewColor
+            )
 
             if let path = action.projectPath {
                 PreviewMetadataRow(
