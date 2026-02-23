@@ -27,35 +27,7 @@ struct BreadcrumbView: View {
 
     @ViewBuilder
     private var breadcrumbText: some View {
-        switch state.mode {
-        case .search:
-            EmptyView()
-
-        case .parameterInput:
-            if let action = state.activeAction, let param = state.currentParameter {
-                HStack(spacing: 4) {
-                    Text(action.title)
-                        .fontWeight(.medium)
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                    Text(param.label)
-                }
-            }
-
-        case .pushedActions:
-            if let action = state.activeAction {
-                HStack(spacing: 4) {
-                    Text(action.title)
-                        .fontWeight(.medium)
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                    Text("Choose...")
-                }
-            } else {
-                Text("Choose...")
-            }
-
-        case let .result(title, _):
+        if case let .result(title, _) = state.mode {
             HStack(spacing: 4) {
                 if let action = state.activeAction {
                     Text(action.title)

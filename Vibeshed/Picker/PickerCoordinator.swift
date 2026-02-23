@@ -73,12 +73,34 @@ final class PickerCoordinator {
         }
     }
 
+    func handleCmdNumber(_ number: Int) {
+        let index = number - 1
+        switch pickerState.mode {
+        case .search, .pushedActions:
+            activateAction(at: index)
+        case .parameterInput:
+            guard index < pickerState.parameterOptions.count else { return }
+            pickerState.selectedParameterOptionID = pickerState.parameterOptions[index].id
+            handleReturnInParameterMode()
+        case .result:
+            break
+        }
+    }
+
     // MARK: - Return handlers per mode
 
     private func handleReturnInActionList() {
         guard let selectedID = pickerState.selectedActionID,
-              let action = pickerState.actionCache[selectedID]
+              let idx = pickerState.actions.firstIndex(where: { $0.id == selectedID })
         else { return }
+        activateAction(at: idx)
+    }
+
+    private func activateAction(at index: Int) {
+        guard index >= 0, index < pickerState.actions.count else { return }
+        let targetItem = pickerState.actions[index]
+        pickerState.selectedActionID = targetItem.id
+        guard let action = pickerState.actionCache[targetItem.id] else { return }
 
         let requiredParams = action.parameters.filter(\.isRequired)
         if requiredParams.isEmpty {
@@ -317,14 +339,10 @@ final class PickerCoordinator {
                 case .dynamicSelection:
                     fetchParameterOptions(for: param, actionID: actionID, query: query)
                 case let .selection(options):
-                    // Filter static options client-side
                     if query.isEmpty {
                         pickerState.parameterOptions = options
                     } else {
-                        let lowered = query.lowercased()
-                        pickerState.parameterOptions = options.filter {
-                            $0.label.lowercased().contains(lowered)
-                        }
+                        pickerState.parameterOptions = fuzzyFilterOptions(options, query: query)
                     }
                     pickerState.selectedParameterOptionID = pickerState.parameterOptions.first?.id
                 default:
@@ -345,11 +363,24 @@ final class PickerCoordinator {
             if case let .parameterInput(currentActionID, _) = pickerState.mode,
                currentActionID == actionID,
                pickerState.currentParameter?.id == param.id {
-                pickerState.parameterOptions = options
-                pickerState.selectedParameterOptionID = options.first?.id
+                let filtered = query.isEmpty ? options : fuzzyFilterOptions(options, query: query)
+                pickerState.parameterOptions = filtered
+                pickerState.selectedParameterOptionID = filtered.first?.id
                 pickerState.isLoadingOptions = false
             }
         }
+    }
+
+    private func fuzzyFilterOptions(_ options: [ParameterOption], query: String) -> [ParameterOption] {
+        var scored: [(option: ParameterOption, score: Double)] = []
+        for option in options {
+            guard let result = FuzzyMatcher.match(query: query, against: option.label) else { continue }
+            var opt = option
+            opt.labelHighlightRanges = result.matchedRanges.isEmpty ? nil : result.matchedRanges
+            scored.append((option: opt, score: result.score))
+        }
+        scored.sort { $0.score > $1.score }
+        return scored.map(\.option)
     }
 
     // MARK: - Dynamic action refresh

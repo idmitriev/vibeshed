@@ -87,14 +87,7 @@ actor WindowModule: ModuleConfigurable {
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        let allActions = buildActions()
-        guard !query.isEmpty else { return allActions }
-        let lowered = query.lowercased()
-        return allActions.filter { action in
-            action.title.lowercased().contains(lowered)
-                || action.subtitle.lowercased().contains(lowered)
-                || action.keywords.contains { $0.contains(lowered) }
-        }
+        return buildActions()
     }
 
     func provideParameterOptions(
@@ -118,9 +111,7 @@ actor WindowModule: ModuleConfigurable {
                 iconURL: appURL
             )
         }
-        guard !query.isEmpty else { return options }
-        let lowered = query.lowercased()
-        return options.filter { $0.label.lowercased().contains(lowered) }
+        return options
     }
 
     // MARK: - Build Actions

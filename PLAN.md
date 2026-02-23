@@ -233,6 +233,7 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [ ] Implement navigation in the picker to allow users to easily go back from action parameter selection to the main action list, show selected action as a pill in the query that can be removed to go back, etc
 - [ ] Support paging in the action list when there are many actions available
+- [ ] Support activating list items with cmd+number hotkeys for the first 9 items in the list
 
 ### Phase 36: Jetbrains module
 
@@ -258,6 +259,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase 40: Browser bookmark actions
 - [ ] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.
 - [ ] Implement bookmark actions for Safari and Chrome at least, showing bookmark titles and favicons in the picker previews
+
+### Phase 41: Set the vibes actions
+
+- [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings based on user-defined vibes. This can allow users to quickly change the overall vibe of their system to match their mood or the task they are working on. 
 
 ### Phase _: Testing
 

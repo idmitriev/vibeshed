@@ -98,13 +98,7 @@ actor ClipboardModule: ModuleConfigurable {
             }
         }
 
-        guard !query.isEmpty else { return actions }
-        let lowered = query.lowercased()
-        return actions.filter { action in
-            action.title.lowercased().contains(lowered)
-                || action.subtitle.lowercased().contains(lowered)
-                || action.keywords.contains { $0.contains(lowered) }
-        }
+        return actions
     }
 
     // MARK: - Monitoring

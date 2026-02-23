@@ -46,9 +46,14 @@ struct ParameterInputView: View {
             )
         } else {
             ScrollViewReader { proxy in
-                List(state.parameterOptions, selection: $state.selectedParameterOptionID) { option in
-                    ParameterOptionRow(option: option)
+                List(selection: $state.selectedParameterOptionID) {
+                    ForEach(Array(state.parameterOptions.enumerated()), id: \.element.id) { index, option in
+                        ParameterOptionRow(
+                            option: option,
+                            hotkeyNumber: index < 9 ? index + 1 : nil
+                        )
                         .tag(option.id)
+                    }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
@@ -127,6 +132,8 @@ struct ParameterInputView: View {
 
 struct ParameterOptionRow: View {
     let option: ParameterOption
+    var hotkeyNumber: Int?
+    @Environment(\.vibeTheme) private var theme
 
     var body: some View {
         HStack(spacing: 10) {
@@ -144,7 +151,7 @@ struct ParameterOptionRow: View {
             .frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(option.label)
+                highlightedLabel
                     .font(.body)
                     .lineLimit(1)
 
@@ -157,8 +164,37 @@ struct ParameterOptionRow: View {
             }
 
             Spacer()
+
+            if let number = hotkeyNumber {
+                Text("\u{2318}\(number)")
+                    .font(.caption2)
+                    .foregroundStyle(.quaternary)
+                    .monospacedDigit()
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private var highlightedLabel: some View {
+        if let ranges = option.labelHighlightRanges, !ranges.isEmpty {
+            Text(highlightedAttributedString(option.label, ranges: ranges))
+        } else {
+            Text(option.label)
+        }
+    }
+
+    private func highlightedAttributedString(
+        _ string: String,
+        ranges: [Range<String.Index>]
+    ) -> AttributedString {
+        var attributed = AttributedString(string)
+        for range in ranges {
+            guard let attrRange = Range(range, in: attributed) else { continue }
+            attributed[attrRange].foregroundColor = theme.searchHighlight
+            attributed[attrRange].underlineStyle = .single
+        }
+        return attributed
     }
 }

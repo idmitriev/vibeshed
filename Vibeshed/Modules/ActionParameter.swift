@@ -31,12 +31,13 @@ enum ParameterType: Sendable {
     case path(allowsDirectories: Bool)
 }
 
-struct ParameterOption: Sendable, Identifiable, Hashable {
+struct ParameterOption: Sendable, Identifiable {
     let id: String
     let label: String
     let subtitle: String?
     let iconName: String?
     let iconURL: URL?
+    var labelHighlightRanges: [Range<String.Index>]?
 
     init(id: String, label: String, subtitle: String? = nil, iconName: String? = nil, iconURL: URL? = nil) {
         self.id = id
@@ -44,5 +45,23 @@ struct ParameterOption: Sendable, Identifiable, Hashable {
         self.subtitle = subtitle
         self.iconName = iconName
         self.iconURL = iconURL
+    }
+}
+
+// Exclude labelHighlightRanges from equality/hashing (display-only decoration)
+extension ParameterOption: Equatable {
+    static func == (lhs: ParameterOption, rhs: ParameterOption) -> Bool {
+        lhs.id == rhs.id && lhs.label == rhs.label && lhs.subtitle == rhs.subtitle
+            && lhs.iconName == rhs.iconName && lhs.iconURL == rhs.iconURL
+    }
+}
+
+extension ParameterOption: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(label)
+        hasher.combine(subtitle)
+        hasher.combine(iconName)
+        hasher.combine(iconURL)
     }
 }

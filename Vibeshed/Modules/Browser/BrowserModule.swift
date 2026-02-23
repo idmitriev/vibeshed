@@ -63,13 +63,7 @@ actor BrowserModule: ModuleConfigurable {
             actions.append(buildTabAction(for: tab, manager: mgr))
         }
 
-        guard !query.isEmpty else { return actions }
-        let lowered = query.lowercased()
-        return actions.filter { action in
-            action.title.lowercased().contains(lowered)
-                || action.subtitle.lowercased().contains(lowered)
-                || action.keywords.contains { $0.contains(lowered) }
-        }
+        return actions
     }
 
     func provideParameterOptions(
@@ -92,11 +86,7 @@ actor BrowserModule: ModuleConfigurable {
                     iconURL: appURL
                 )
             }
-            guard !query.isEmpty else { return options }
-            let lowered = query.lowercased()
-            return options.filter {
-                $0.label.lowercased().contains(lowered)
-            }
+            return options
 
         case "browser":
             let browsers = resolveBrowserList()
@@ -111,11 +101,7 @@ actor BrowserModule: ModuleConfigurable {
                     iconURL: appURL
                 )
             }
-            guard !query.isEmpty else { return options }
-            let lowered = query.lowercased()
-            return options.filter {
-                $0.label.lowercased().contains(lowered)
-            }
+            return options
 
         default:
             return []

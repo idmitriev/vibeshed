@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ActionListItemView: View {
     let item: ActionItem
+    var hotkeyNumber: Int?
     @Environment(\.vibeTheme) private var theme
 
     var body: some View {
@@ -31,6 +32,13 @@ struct ActionListItemView: View {
                     .font(.caption)
                     .foregroundStyle(.quaternary)
             }
+
+            if let number = hotkeyNumber {
+                Text("\u{2318}\(number)")
+                    .font(.caption2)
+                    .foregroundStyle(.quaternary)
+                    .monospacedDigit()
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
@@ -53,7 +61,7 @@ struct ActionListItemView: View {
         for range in ranges {
             guard let attrRange = Range(range, in: attributed) else { continue }
             attributed[attrRange].foregroundColor = theme.searchHighlight
-            attributed[attrRange].font = .body.bold()
+            attributed[attrRange].underlineStyle = .single
         }
         return attributed
     }

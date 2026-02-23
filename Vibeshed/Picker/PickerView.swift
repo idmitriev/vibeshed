@@ -34,21 +34,54 @@ struct PickerView: View {
         }
     }
 
+    private var searchFieldPills: [SearchFieldPill] {
+        switch state.mode {
+        case .search:
+            []
+        case .parameterInput:
+            if let action = state.activeAction {
+                [SearchFieldPill(
+                    id: action.id.rawValue,
+                    title: action.title,
+                    iconSystemName: action.iconName,
+                    detail: state.currentParameter?.label
+                )]
+            } else {
+                []
+            }
+        case .pushedActions:
+            if let action = state.activeAction {
+                [SearchFieldPill(
+                    id: action.id.rawValue,
+                    title: action.title,
+                    iconSystemName: action.iconName,
+                    detail: nil
+                )]
+            } else {
+                []
+            }
+        case .result:
+            []
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             if case .result = state.mode {
-                // No search field in result mode
-            } else {
-                PickerSearchField(text: searchBinding, placeholder: searchPlaceholder)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .id(state.mode)
-            }
-
-            if state.mode != .search {
                 BreadcrumbView(state: state) {
                     _ = state.popMode()
                 }
+            } else {
+                PickerSearchField(
+                    text: searchBinding,
+                    placeholder: searchPlaceholder,
+                    pills: searchFieldPills,
+                    onRemovePill: { _ in _ = state.popMode() },
+                    onBackspaceEmpty: { _ = state.popMode() }
+                )
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .id(state.mode)
             }
 
             Divider()
@@ -84,6 +117,15 @@ struct PickerView: View {
             coordinator?.handleTab()
             return .handled
         }
+        .onKeyPress(characters: .init(charactersIn: "123456789"), phases: .down) { keyPress in
+            guard keyPress.modifiers == .command,
+                  let digit = keyPress.characters.first?.wholeNumberValue
+            else { return .ignored }
+            coordinator?.handleCmdNumber(digit)
+            return .handled
+        }
+        .onKeyPress(.pageDown) { state.selectNextPage(); return .handled }
+        .onKeyPress(.pageUp) { state.selectPreviousPage(); return .handled }
     }
 
     @ViewBuilder

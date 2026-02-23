@@ -203,6 +203,56 @@ final class PickerState {
         return nil
     }
 
+    // MARK: - Page navigation
+
+    private let pageSize = 10
+
+    func selectNextPage() {
+        switch mode {
+        case .search, .pushedActions:
+            selectActionByOffset(pageSize)
+        case .parameterInput:
+            selectParameterOptionByOffset(pageSize)
+        case .result:
+            break
+        }
+    }
+
+    func selectPreviousPage() {
+        switch mode {
+        case .search, .pushedActions:
+            selectActionByOffset(-pageSize)
+        case .parameterInput:
+            selectParameterOptionByOffset(-pageSize)
+        case .result:
+            break
+        }
+    }
+
+    private func selectActionByOffset(_ offset: Int) {
+        guard !actions.isEmpty else { return }
+        guard let currentID = selectedActionID,
+              let idx = actions.firstIndex(where: { $0.id == currentID })
+        else {
+            selectedActionID = offset > 0 ? actions.first?.id : actions.last?.id
+            return
+        }
+        let targetIndex = max(0, min(actions.count - 1, idx + offset))
+        selectedActionID = actions[targetIndex].id
+    }
+
+    private func selectParameterOptionByOffset(_ offset: Int) {
+        guard !parameterOptions.isEmpty else { return }
+        guard let currentID = selectedParameterOptionID,
+              let idx = parameterOptions.firstIndex(where: { $0.id == currentID })
+        else {
+            selectedParameterOptionID = offset > 0 ? parameterOptions.first?.id : parameterOptions.last?.id
+            return
+        }
+        let targetIndex = max(0, min(parameterOptions.count - 1, idx + offset))
+        selectedParameterOptionID = parameterOptions[targetIndex].id
+    }
+
     // MARK: - Private selection helpers
 
     private func selectNextAction() {
