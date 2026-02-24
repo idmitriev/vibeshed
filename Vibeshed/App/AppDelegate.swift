@@ -168,6 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(ITermModule())
             await registerModule(AIModule())
             await registerModule(TelegramModule())
+            await registerModule(ZoomModule())
         }
     }
 

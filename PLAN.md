@@ -240,10 +240,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Create a Jetbrains IDEs module for searching and opening projects in Jetbrains IDEs
 - [x] Implement actions for searching Jetbrains IDE projects based on their name and path and opening
 
-### Phase 37: Zoom module
+### Phase 37: Zoom module (DONE)
 
-- [ ] Create a zoom module for searching and joining zoom meetings
-- [ ] Implement actions for searching zoom meetings based on their title and joining them in the zoom, action for starting meetings as well
+- [x] Create a zoom module for searching and joining zoom meetings
+- [x] Implement actions for searching zoom meetings based on their title and joining them in the zoom, action for starting meetings as well
 
 - ### Phase 38: Calendar module
 
