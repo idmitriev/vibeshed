@@ -229,31 +229,35 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] For spotify show album art and track info
 - [x] For github show repo avatars and issue/PR info, etc
 
-### Phase 35: Navigation in picker
+### Phase 35: Navigation in picker (DONE)
 
-- [ ] Implement navigation in the picker to allow users to easily go back from action parameter selection to the main action list, show selected action as a pill in the query that can be removed to go back, etc
-- [ ] Support paging in the action list when there are many actions available
-- [ ] Support activating list items with cmd+number hotkeys for the first 9 items in the list
+- [x] Implement navigation in the picker to allow users to easily go back from action parameter selection to the main action list, show selected action as a pill in the query that can be removed to go back, etc
+- [x] Support paging in the action list when there are many actions available
+- [x] Support activating list items with cmd+number hotkeys for the first 9 items in the list
 
-### Phase 36: Jetbrains module
+### Phase 36: Jetbrains module (DONE)
 
-- [ ] Create a Jetbrains IDEs module for searching and opening projects in Jetbrains IDEs
-- [ ] Implement actions for searching Jetbrains IDE projects based on their name and path and opening
+- [x] Create a Jetbrains IDEs module for searching and opening projects in Jetbrains IDEs
+- [x] Implement actions for searching Jetbrains IDE projects based on their name and path and opening
 
-### Phase 37: Calendar module
+### Phase 37: Zoom module
+
+- [ ] Create a zoom module for searching and joining zoom meetings
+- [ ] Implement actions for searching zoom meetings based on their title and joining them in the zoom, action for starting meetings as well
+
+- ### Phase 38: Calendar module
 
 - [ ] Create a calendar module for searching and opening calendar events in the browser or calendar apps
 - [ ] Implement actions for searching calendar events based on their title and opening them in browser, calendar.app, zoom or google meet in browser
 
-### Phase 38: Zoom module
 
-- [ ] Create a zoom module for searching and joining zoom meetings
-- [ ] Implement actions for searching zoom meetings based on their title and joining them in the zoom, action for starting meetings as well
 
 ### Phase 39: Prepare for meeting module
 
 - [ ] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
 - [ ] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
+
+
 
 
 ### Phase 40: Browser bookmark actions
@@ -262,7 +266,9 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 ### Phase 41: Set the vibes actions
 
-- [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings based on user-defined vibes. This can allow users to quickly change the overall vibe of their system to match their mood or the task they are working on. 
+- [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings
+- [ ] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome
+- [ ] Implement 3 themes
 
 ### Phase _: Testing
 
