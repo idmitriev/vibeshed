@@ -195,7 +195,7 @@ final class KeyComboManager {
         }
     }
 
-    // swiftlint:disable:next function_body_length
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     private func rebindAll() {
         let entryCount = currentEntries.count
         let remapGroupCount = currentRemaps.count
@@ -219,6 +219,7 @@ final class KeyComboManager {
         var standard: [ResolvedBinding] = []
         var capsLock: [ResolvedBinding] = []
         var space: [ResolvedBinding] = []
+        var tab: [ResolvedBinding] = []
         var mouse: [ResolvedBinding] = []
         var seenCombos: Set<String> = []
 
@@ -260,6 +261,11 @@ final class KeyComboManager {
                     Log.keybindings.debug(
                         "  Parsed '\(entry.combo, privacy: .public)': space keyCode=\(keyCode, privacy: .public)"
                     )
+                case .tabModifier(let keyCode):
+                    tab.append(binding)
+                    Log.keybindings.debug(
+                        "  Parsed '\(entry.combo, privacy: .public)': tab keyCode=\(keyCode, privacy: .public)"
+                    )
                 case .mouseButton(let button, let modifiers):
                     mouse.append(binding)
                     let fl = modifiers.rawValue
@@ -278,29 +284,33 @@ final class KeyComboManager {
 
         // Parse remap entries
         var resolvedRemaps: [ResolvedRemap] = []
+        var resolvedTabRemaps: [ResolvedRemap] = []
         for group in currentRemaps {
             for remap in group.remaps {
                 let errorKey = "remap:\(remap.from.lowercased())@\(group.app)"
                 do {
                     let fromType = try KeyComboParser.parse(remap.from)
-                    guard case .standard = fromType else {
-                        let err = KeyComboError.invalidRemap(
-                            from: remap.from, to: remap.to,
-                            reason: "source must be a standard key combo (not capslock/space/mouse)"
-                        )
-                        bindingErrors[errorKey] = err.localizedDescription
-                        continue
-                    }
                     let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap.to)
-
-                    resolvedRemaps.append(ResolvedRemap(
+                    let resolved = ResolvedRemap(
                         fromType: fromType,
                         toKeyCode: toKeyCode,
                         toModifiers: toModifiers,
                         app: group.app,
                         rawFrom: remap.from,
                         rawTo: remap.to
-                    ))
+                    )
+                    switch fromType {
+                    case .standard:
+                        resolvedRemaps.append(resolved)
+                    case .tabModifier:
+                        resolvedTabRemaps.append(resolved)
+                    default:
+                        let err = KeyComboError.invalidRemap(
+                            from: remap.from, to: remap.to,
+                            reason: "source must be a standard or tab key combo (not capslock/space/mouse)"
+                        )
+                        bindingErrors[errorKey] = err.localizedDescription
+                    }
                 } catch {
                     bindingErrors[errorKey] = error.localizedDescription
                     let msg = error.localizedDescription
@@ -348,14 +358,16 @@ final class KeyComboManager {
             standard: standard,
             capsLock: capsLock,
             space: space,
+            tab: tab,
             mouse: mouse,
             remaps: resolvedRemaps,
+            tabRemapList: resolvedTabRemaps,
             mouseRemapList: resolvedMouseRemaps
         )
 
         // Start event tap if we have any bindings or remaps
-        let totalBindings = standard.count + capsLock.count + space.count + mouse.count
-        let totalRemaps = resolvedRemaps.count + resolvedMouseRemaps.count
+        let totalBindings = standard.count + capsLock.count + space.count + tab.count + mouse.count
+        let totalRemaps = resolvedRemaps.count + resolvedTabRemaps.count + resolvedMouseRemaps.count
         guard totalBindings + totalRemaps > 0 else {
             Log.keybindings.info("No keybindings or remaps configured — skipping event tap")
             Log.stderr("  ⚠ keybindings: none configured")
@@ -365,8 +377,9 @@ final class KeyComboManager {
         let std = standard.count
         let caps = capsLock.count
         let spc = space.count
+        let tb = tab.count
         let mse = mouse.count
-        let summary = "\(std)/\(caps)/\(spc)/\(mse) std/caps/spc/mouse + \(totalRemaps) remaps"
+        let summary = "\(std)/\(caps)/\(spc)/\(tb)/\(mse) std/caps/spc/tab/mouse + \(totalRemaps) remaps"
         Log.keybindings.info(
             "Starting event tap: \(totalBindings + totalRemaps, privacy: .public) bindings+remaps (\(summary, privacy: .public))"
         )

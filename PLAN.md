@@ -264,8 +264,9 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase 41: Browser bookmark actions
 - [ ] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.
 - [ ] Implement bookmark actions for Safari and Chrome at least, showing bookmark titles and favicons in the picker previews
+- [ ] Implement actions for most visited URL in browser history as well, showing visit count and last visited date in the previews
 
-### Phase 42: Theme actions
+### Phase 42: Theming actions
 
 - [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings
 - [ ] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome

@@ -17,6 +17,7 @@ enum KeyComboType: Sendable, Equatable {
     case standard(carbonKeyCode: UInt16, modifiers: CGEventFlags)
     case capsLockModifier(carbonKeyCode: UInt16)
     case spaceModifier(carbonKeyCode: UInt16)
+    case tabModifier(carbonKeyCode: UInt16)
     case mouseButton(button: Int, modifiers: CGEventFlags)
 }
 

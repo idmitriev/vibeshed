@@ -403,6 +403,27 @@ final class PickerCoordinator {
         currentContext = nil
     }
 
+    /// Triggers an immediate (non-debounced) query to populate the action list.
+    /// Called when the panel opens so the user never sees an empty list.
+    func loadInitialActions() {
+        pickerState.isLoading = true
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            currentContext = SystemContext.capture()
+            if let ctx = currentContext {
+                Task { await self.themeEngine?.refresh(context: ctx) }
+            }
+            let ctx = currentContext
+            let scoring = usageTracker?.makeScoringContext(query: "", systemContext: ctx)
+                ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "", systemContext: ctx)
+            let results = await moduleRegistry.queryAll(query: "", scoring: scoring)
+            guard case .search = pickerState.mode else { return }
+            let (items, cache) = buildActionItems(from: results, query: "", scoring: scoring)
+            pickerState.updateActions(items, cache: cache)
+            pickerState.isLoading = false
+        }
+    }
+
     func refreshActions() async {
         let query = pickerState.query
         let ctx = currentContext

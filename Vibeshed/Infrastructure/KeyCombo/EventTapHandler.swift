@@ -18,6 +18,8 @@ final class EventTapHandler: @unchecked Sendable {
     private var standardBindings: [StandardKey: BindingSlot] = [:]
     private var capsLockBindings: [UInt16: BindingSlot] = [:]
     private var spaceBindings: [UInt16: BindingSlot] = [:]
+    private var tabBindings: [UInt16: BindingSlot] = [:]
+    private var tabRemaps: [UInt16: [String: RemapTarget]] = [:]
     private var mouseBindings: [MouseKey: BindingSlot] = [:]
     private var mouseRemaps: [MouseKey: RemapTarget] = [:]
     private var standardRemaps: [StandardKey: [String: RemapTarget]] = [:]
@@ -25,6 +27,8 @@ final class EventTapHandler: @unchecked Sendable {
     // Modifier hold state — only accessed from tap callback thread
     private var spaceHeld = false
     private var spaceUsedAsModifier = false
+    private var tabHeld = false
+    private var tabUsedAsModifier = false
 
     init(
         focusedAppTracker: FocusedAppTracker,
@@ -36,22 +40,6 @@ final class EventTapHandler: @unchecked Sendable {
 
     deinit {
         stop()
-    }
-
-    // MARK: - Internal Types
-
-    private struct BindingSlot {
-        var global: ActionID?
-        var appSpecific: [String: ActionID] = [:]
-
-        func resolve(focusedApp: String) -> ActionID? {
-            appSpecific[focusedApp] ?? global
-        }
-    }
-
-    private struct RemapTarget {
-        let keyCode: UInt16
-        let modifiers: CGEventFlags
     }
 
     // MARK: - Public
@@ -138,8 +126,10 @@ final class EventTapHandler: @unchecked Sendable {
         standard: [ResolvedBinding],
         capsLock: [ResolvedBinding],
         space: [ResolvedBinding],
+        tab: [ResolvedBinding],
         mouse: [ResolvedBinding],
         remaps: [ResolvedRemap],
+        tabRemapList: [ResolvedRemap] = [],
         mouseRemapList: [ResolvedMouseRemap] = []
     ) {
         var newStandard: [StandardKey: BindingSlot] = [:]
@@ -198,6 +188,24 @@ final class EventTapHandler: @unchecked Sendable {
             }
         }
 
+        var newTab: [UInt16: BindingSlot] = [:]
+        for binding in tab {
+            if case .tabModifier(let keyCode) = binding.comboType {
+                var slot = newTab[keyCode] ?? BindingSlot()
+                if let app = binding.app {
+                    slot.appSpecific[app] = binding.actionID
+                } else {
+                    slot.global = binding.actionID
+                }
+                newTab[keyCode] = slot
+                let action = binding.actionID.rawValue
+                let combo = binding.rawCombo
+                Log.keybindings.debug(
+                    "  tab key=\(keyCode, privacy: .public) → \(action, privacy: .public) (\(combo, privacy: .public))"
+                )
+            }
+        }
+
         var newMouse: [MouseKey: BindingSlot] = [:]
         for binding in mouse {
             if case .mouseButton(let button, let modifiers) = binding.comboType {
@@ -231,6 +239,13 @@ final class EventTapHandler: @unchecked Sendable {
             }
         }
 
+        var newTabRemaps: [UInt16: [String: RemapTarget]] = [:]
+        for remap in tabRemapList {
+            guard case .tabModifier(let keyCode) = remap.fromType else { continue }
+            newTabRemaps[keyCode, default: [:]][remap.app] = RemapTarget(
+                keyCode: remap.toKeyCode, modifiers: remap.toModifiers)
+        }
+
         var newMouseRemaps: [MouseKey: RemapTarget] = [:]
         for mr in mouseRemapList {
             let key = MouseKey(button: mr.button, modifiers: mr.modifiers)
@@ -243,16 +258,20 @@ final class EventTapHandler: @unchecked Sendable {
         let std = newStandard.count
         let caps = newCapsLock.count
         let spc = newSpace.count
+        let tb = newTab.count
         let mse = newMouse.count
         let rmp = newRemaps.count
+        let trmp = newTabRemaps.count
         let mrmp = newMouseRemaps.count
-        let summary = "\(std)/\(caps)/\(spc)/\(mse)+\(rmp)rmp+\(mrmp)mrmp"
+        let summary = "\(std)/\(caps)/\(spc)/\(tb)/\(mse)+\(rmp)rmp+\(trmp)trmp+\(mrmp)mrmp"
         Log.keybindings.debug("Bindings: \(summary, privacy: .public)")
 
         os_unfair_lock_lock(&lock)
         standardBindings = newStandard
         capsLockBindings = newCapsLock
         spaceBindings = newSpace
+        tabBindings = newTab
+        tabRemaps = newTabRemaps
         mouseBindings = newMouse
         mouseRemaps = newMouseRemaps
         standardRemaps = newRemaps
@@ -260,35 +279,6 @@ final class EventTapHandler: @unchecked Sendable {
     }
 
     // MARK: - Lookup Helpers (called from tap callback thread)
-
-    private struct StandardKey: Hashable {
-        let keyCode: UInt16
-        let modifiers: CGEventFlags
-
-        // Only compare the modifier bits we care about
-        static func == (lhs: StandardKey, rhs: StandardKey) -> Bool {
-            lhs.keyCode == rhs.keyCode && lhs.modifiers == rhs.modifiers
-        }
-
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(keyCode)
-            hasher.combine(modifiers.rawValue)
-        }
-    }
-
-    private struct MouseKey: Hashable {
-        let button: Int
-        let modifiers: CGEventFlags
-
-        static func == (lhs: MouseKey, rhs: MouseKey) -> Bool {
-            lhs.button == rhs.button && lhs.modifiers == rhs.modifiers
-        }
-
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(button)
-            hasher.combine(modifiers.rawValue)
-        }
-    }
 
     private static let relevantModifiers: CGEventFlags = [
         .maskCommand, .maskAlternate, .maskControl, .maskShift,
@@ -370,6 +360,7 @@ final class EventTapHandler: @unchecked Sendable {
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let spaceKeyCode = UInt16(kVK_Space)
+        let tabKeyCode = UInt16(kVK_Tab)
 
         // Read focused app once for all lookups in this event
         let focusedApp = focusedAppTracker.focusedBundleID
@@ -394,6 +385,19 @@ final class EventTapHandler: @unchecked Sendable {
                 spaceHeld = true
                 spaceUsedAsModifier = false
                 return nil  // Suppress space character until we know if it's a modifier
+            }
+        }
+
+        // Tab-as-modifier: tab key pressed
+        if keyCode == tabKeyCode, !tabHeld {
+            os_unfair_lock_lock(&lock)
+            let hasTabUses = !tabBindings.isEmpty || !tabRemaps.isEmpty
+            os_unfair_lock_unlock(&lock)
+
+            if hasTabUses {
+                tabHeld = true
+                tabUsedAsModifier = false
+                return nil  // Suppress tab character until we know if it's a modifier
             }
         }
 
@@ -422,6 +426,27 @@ final class EventTapHandler: @unchecked Sendable {
                 spaceUsedAsModifier = true
                 Log.keybindings.info(
                     "Space+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)")
+                executor(actionID)
+                return nil
+            }
+        }
+
+        // Tab modifier combos — check remaps first, then bindings
+        if tabHeld, keyCode != tabKeyCode {
+            os_unfair_lock_lock(&lock)
+            let tabRemap = tabRemaps[keyCode]?[focusedApp]
+            let slot = tabBindings[keyCode]
+            os_unfair_lock_unlock(&lock)
+
+            if let remap = tabRemap {
+                tabUsedAsModifier = true
+                injectKeyPress(keyCode: remap.keyCode, modifiers: remap.modifiers)
+                return nil
+            }
+            if let actionID = slot?.resolve(focusedApp: focusedApp) {
+                tabUsedAsModifier = true
+                Log.keybindings.info(
+                    "Tab+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)")
                 executor(actionID)
                 return nil
             }
@@ -477,6 +502,7 @@ final class EventTapHandler: @unchecked Sendable {
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let spaceKeyCode = UInt16(kVK_Space)
+        let tabKeyCode = UInt16(kVK_Tab)
 
         // Strip alphaShift so held capslock doesn't uppercase letters
         os_unfair_lock_lock(&lock)
@@ -490,7 +516,16 @@ final class EventTapHandler: @unchecked Sendable {
             spaceHeld = false
             if !spaceUsedAsModifier {
                 // Space was tapped, not used as modifier — inject space keypress
-                injectSpacePress()
+                injectKeyPress(keyCode: spaceKeyCode, modifiers: [])
+            }
+            return nil
+        }
+
+        if keyCode == tabKeyCode, tabHeld {
+            tabHeld = false
+            if !tabUsedAsModifier {
+                // Tab was tapped, not used as modifier — inject tab keypress
+                injectKeyPress(keyCode: tabKeyCode, modifiers: [])
             }
             return nil
         }
@@ -554,15 +589,49 @@ final class EventTapHandler: @unchecked Sendable {
         }
     }
 
-    private func injectSpacePress() {
-        let source = CGEventSource(stateID: .combinedSessionState)
-        let spaceCode = UInt16(kVK_Space)
+}
 
-        if let down = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: true),
-            let up = CGEvent(keyboardEventSource: source, virtualKey: spaceCode, keyDown: false) {
-            down.post(tap: .cgSessionEventTap)
-            up.post(tap: .cgSessionEventTap)
-        }
+// MARK: - File-Private Types
+
+private struct BindingSlot {
+    var global: ActionID?
+    var appSpecific: [String: ActionID] = [:]
+
+    func resolve(focusedApp: String) -> ActionID? {
+        appSpecific[focusedApp] ?? global
+    }
+}
+
+private struct RemapTarget {
+    let keyCode: UInt16
+    let modifiers: CGEventFlags
+}
+
+private struct StandardKey: Hashable {
+    let keyCode: UInt16
+    let modifiers: CGEventFlags
+
+    static func == (lhs: StandardKey, rhs: StandardKey) -> Bool {
+        lhs.keyCode == rhs.keyCode && lhs.modifiers == rhs.modifiers
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(keyCode)
+        hasher.combine(modifiers.rawValue)
+    }
+}
+
+private struct MouseKey: Hashable {
+    let button: Int
+    let modifiers: CGEventFlags
+
+    static func == (lhs: MouseKey, rhs: MouseKey) -> Bool {
+        lhs.button == rhs.button && lhs.modifiers == rhs.modifiers
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(button)
+        hasher.combine(modifiers.rawValue)
     }
 }
 

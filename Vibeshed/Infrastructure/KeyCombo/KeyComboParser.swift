@@ -51,6 +51,15 @@ enum KeyComboParser {
             }
         }
 
+        // Tab as modifier: "tab" + another key
+        if components.contains("tab"), components.count == 2 {
+            let otherKey = components.first { $0 != "tab" }!
+            if modifierNames[otherKey] == nil {
+                let keyCode = try carbonKeyCode(for: otherKey)
+                return .tabModifier(carbonKeyCode: keyCode)
+            }
+        }
+
         // Standard combo: modifiers + key (last component is the key)
         guard components.count >= 1 else {
             throw KeyComboError.invalidCombo(combo, reason: "no key specified")

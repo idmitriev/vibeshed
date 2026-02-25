@@ -244,6 +244,19 @@ actor WindowModule: ModuleConfigurable {
                 try mgr.minimizeWindow(focused)
                 return .dismiss
             },
+            WindowAction(
+                id: ActionID(module: "window", name: "minimizeAll"),
+                title: "Minimize All Windows",
+                subtitle: "Minimize all visible windows to the Dock",
+                iconName: "minus.rectangle.on.rectangle",
+                keywords: ["minimize", "all", "hide", "dock", "desktop", "show desktop"]
+            ) { _ in
+                let count = await MainActor.run { mgr.minimizeAllWindows() }
+                if count == 0 {
+                    return .showResult(title: "No Windows", body: "No visible windows to minimize")
+                }
+                return .dismiss
+            },
             makeFocusWindowAction(mgr: mgr),
             makeToggleMaximizeAction(mgr: mgr, cfg: cfg),
         ]

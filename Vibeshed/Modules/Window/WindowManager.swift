@@ -111,4 +111,21 @@ struct WindowManager: Sendable {
             kCFBooleanTrue
         )
     }
+
+    @MainActor
+    func minimizeAllWindows() -> Int {
+        let windows = listWindows(includeMinimized: false)
+        var count = 0
+        for window in windows {
+            if let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) {
+                AXUIElementSetAttributeValue(
+                    axWindow,
+                    kAXMinimizedAttribute as CFString,
+                    kCFBooleanTrue
+                )
+                count += 1
+            }
+        }
+        return count
+    }
 }
