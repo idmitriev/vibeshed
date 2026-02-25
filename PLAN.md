@@ -251,22 +251,52 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Make icons in preview larger
 - [x] Add animations for picker opening/closing, action selection, execution and other interactions to make the app feel more responsive and enjoyable to use
 
-### Phase 39: Calendar module
+### Phase 39: Functional polish part 1
+
+- [ ] maximize/restore action should restore to window size/position before maximizing, not to configured size/position, remove config options for maximize size/position
+
+### Phase 40: Functional polish part 2
+
+- [ ] make sure we can remap key combos OS-wide not just in specific apps, rename appRemaps config section to keyRemaps
+
+### Phase 41: Functional polish part 3
+
+- [ ] remove number of items in picker list footer
+- [ ] dont show cover art in spotify picker items - just show player app/spotify icon, move cover art to the bottom of preview pane
+- [ ] show green open indicators for apps like for idea projects for launch or foucus app actions, also check if the same is possible for vscode projects
+
+### Phase 42: Functional polish part 4
+
+- [ ] make sure there is configuration for all module in config example yaml
+
+### Phase 43: Functional polish part 5
+
+- [ ] make sure browser profiles are supported in url routing rules
+
+### Phase 44: Functional polish part 6
+
+- [ ] add actions for adding to liked songs in spotify module for now playing track
+
+### Phase 45: Functional polish part 7
+
+- [ ] make sure aliases can open URLs in browsers, directories in finder
+ 
+### Phase 46: Calendar module
 
 - [ ] Create a calendar module for searching and opening calendar events in the browser or calendar apps
 - [ ] Implement actions for searching calendar events based on their title and opening them in browser, calendar.app, zoom or google meet in browser
 
-### Phase 40: Prepare for meeting module
+### Phase 47: Prepare for meeting module
 
 - [ ] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
 - [ ] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
 
-### Phase 41: Browser bookmark actions
+### Phase 48: Browser bookmark actions
 - [ ] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.
 - [ ] Implement bookmark actions for Safari and Chrome at least, showing bookmark titles and favicons in the picker previews
 - [ ] Implement actions for most visited URL in browser history as well, showing visit count and last visited date in the previews
 
-### Phase 42: Theming actions
+### Phase 49: Theming actions
 
 - [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings
 - [ ] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome

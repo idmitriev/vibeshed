@@ -80,9 +80,6 @@ actor WindowModule: ModuleConfigurable {
         if config.enlargeShrinkStep.value <= 0 {
             errors.append("enlargeShrinkStep.value must be positive")
         }
-        if config.toggleMaximizeRestoreSize.value <= 0 {
-            errors.append("toggleMaximizeRestoreSize.value must be positive")
-        }
         return errors.isEmpty ? .valid : .invalid(errors)
     }
 
@@ -308,11 +305,10 @@ actor WindowModule: ModuleConfigurable {
                 return .showResult(title: "No Window", body: "No focused window found")
             }
             let newFrame = WindowSizing.toggleMaximize(
+                windowID: focused.id,
                 currentFrame: focused.frame,
-                currentSize: focused.frame.size,
                 screenFrame: focused.screenFrame,
-                padding: cfg.padding,
-                restoreSize: cfg.toggleMaximizeRestoreSize
+                padding: cfg.padding
             )
             try mgr.setFrame(focused, frame: newFrame)
             return .dismiss

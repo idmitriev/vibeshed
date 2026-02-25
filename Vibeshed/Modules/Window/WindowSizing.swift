@@ -305,6 +305,8 @@ enum WindowSizing {
 
     // MARK: - Toggle Maximize/Restore
 
+    private static var savedFrames: [Int: CGRect] = [:]
+
     static func isMaximized(currentFrame: CGRect, screenFrame: CGRect, padding: PaddingConfig, tolerance: Double = 5.0) -> Bool {
         let area = usableArea(screenFrame: screenFrame, padding: padding)
         let widthMatch = abs(currentFrame.width - area.width) <= tolerance
@@ -315,25 +317,24 @@ enum WindowSizing {
     }
 
     static func toggleMaximize(
+        windowID: Int,
         currentFrame: CGRect,
-        currentSize: CGSize,
         screenFrame: CGRect,
-        padding: PaddingConfig,
-        restoreSize: SizeStop
+        padding: PaddingConfig
     ) -> CGRect {
         if isMaximized(currentFrame: currentFrame, screenFrame: screenFrame, padding: padding) {
+            if let saved = savedFrames.removeValue(forKey: windowID) {
+                return saved
+            }
+            // Fallback: center at 80% if no saved frame
             let area = usableArea(screenFrame: screenFrame, padding: padding)
-            let resolvedRestoreWidth = resolveStop(restoreSize, screenDimension: area.width)
-            let resolvedRestoreHeight = resolveStop(restoreSize, screenDimension: area.height)
-
-            let restoreWidth = min(resolvedRestoreWidth, area.width)
-            let restoreHeight = min(resolvedRestoreHeight, area.height)
-
+            let restoreWidth = area.width * 0.8
+            let restoreHeight = area.height * 0.8
             let x = area.origin.x + (area.width - restoreWidth) / 2.0
             let y = area.origin.y + (area.height - restoreHeight) / 2.0
-
             return CGRect(x: x, y: y, width: restoreWidth, height: restoreHeight)
         } else {
+            savedFrames[windowID] = currentFrame
             return maximize(screenFrame: screenFrame, padding: padding)
         }
     }

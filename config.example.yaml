@@ -243,11 +243,8 @@ modules:
       right: 0
       gap: 8
     includeMinimized: false
-    enlargeShrinkStep: 
+    enlargeShrinkStep:
       value: 10
-      unit: percent
-    toggleMaximizeRestoreSize: 
-      value : 80
       unit: percent
 
   # --- Application Launcher ---
