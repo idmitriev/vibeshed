@@ -253,7 +253,7 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 ### Phase 39: Functional polish part 1
 
-- [ ] maximize/restore action should restore to window size/position before maximizing, not to configured size/position, remove config options for maximize size/position
+- [x] maximize/restore action should restore to window size/position before maximizing, not to configured size/position, remove config options for maximize size/position
 
 ### Phase 40: Functional polish part 2
 
@@ -301,6 +301,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings
 - [ ] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome
 - [ ] Implement 3 themes
+
+### Phase 51: Wrong keyboard layout detection and switching
+
+- [ ] Implement a system for detecting when the user is typing in the wrong keyboard layout and automatically switching to the correct layout based on the user's input. This can help prevent frustration and improve typing efficiency for users who frequently switch between different keyboard layouts.
 
 ### Phase _: Testing
 

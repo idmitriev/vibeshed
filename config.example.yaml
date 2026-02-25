@@ -97,14 +97,20 @@ keybindings:
   #   app: "com.microsoft.VSCode"
 
 # ---------------------------------------------------------------------------
-# App Key Remaps
+# Key Remaps
 # ---------------------------------------------------------------------------
-# Remap key combos to different keys on a per-application basis.
-# Only standard modifier+key combos are supported (not capslock/space/mouse).
-# When the target app is focused, the remapped combo fires instead of the
-# original. When any other app is focused, the key passes through unchanged.
+# Remap key combos to different keys, globally or per-application.
+# Only standard modifier+key and tab+key combos are supported as source.
+# Omit `app` to remap OS-wide. With `app`, the remap only fires when that
+# app is focused; app-specific remaps take priority over global ones.
 # ---------------------------------------------------------------------------
-appRemaps:
+keyRemaps:
+  # Global remap (applies in all apps)
+  # - remaps:
+  #     - from: "ctrl+h"
+  #       to: "backspace"
+
+  # Per-app remap (only when Safari is focused)
   - app: "com.apple.Safari"
     remaps:
       - from: "cmd+,"
@@ -118,10 +124,6 @@ appRemaps:
   #       to: "cmd+backspace"
   #     - from: "ctrl+d"
   #       to: "forwarddelete"
-  # - app: "com.apple.Terminal"
-  #   remaps:
-  #     - from: "cmd+t"
-  #       to: "ctrl+shift+t"
 
 # ---------------------------------------------------------------------------
 # Mouse Remaps

@@ -28,10 +28,10 @@ struct ResolvedBinding: Sendable, Equatable {
     let app: String?
 }
 
-// MARK: - App Remaps
+// MARK: - Key Remaps
 
-struct AppRemapGroup: Codable, Sendable, Equatable {
-    let app: String
+struct KeyRemapGroup: Codable, Sendable, Equatable {
+    let app: String?
     let remaps: [RemapEntry]
 }
 
@@ -60,7 +60,7 @@ struct ResolvedRemap: Sendable, Equatable {
     let fromType: KeyComboType
     let toKeyCode: UInt16
     let toModifiers: CGEventFlags
-    let app: String
+    let app: String?
     let rawFrom: String
     let rawTo: String
 }

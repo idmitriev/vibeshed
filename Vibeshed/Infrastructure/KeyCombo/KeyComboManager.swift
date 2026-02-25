@@ -15,7 +15,7 @@ final class KeyComboManager {
     private let focusedAppTracker = FocusedAppTracker()
     private let eventTapHandler: EventTapHandler
     private var currentEntries: [KeyBindingEntry] = []
-    private var currentRemaps: [AppRemapGroup] = []
+    private var currentRemaps: [KeyRemapGroup] = []
     private var currentMouseRemaps: [MouseRemapEntry] = []
     private var eventTapRunning = false
     private var capsLockMonitorRunning = false
@@ -97,7 +97,7 @@ final class KeyComboManager {
             )
         }
         currentEntries = entries
-        currentRemaps = configManager.config.appRemaps
+        currentRemaps = configManager.config.keyRemaps
         currentMouseRemaps = configManager.config.mouseRemaps
         rebindAll()
     }
@@ -120,7 +120,7 @@ final class KeyComboManager {
 
     private func handleConfigReloaded() {
         let newEntries = configManager.config.keybindings
-        let newRemaps = configManager.config.appRemaps
+        let newRemaps = configManager.config.keyRemaps
         let newMouseRemaps = configManager.config.mouseRemaps
         guard newEntries != currentEntries || newRemaps != currentRemaps || newMouseRemaps != currentMouseRemaps else {
             Log.keybindings.debug("Config reloaded but keybindings/remaps unchanged")
@@ -287,7 +287,7 @@ final class KeyComboManager {
         var resolvedTabRemaps: [ResolvedRemap] = []
         for group in currentRemaps {
             for remap in group.remaps {
-                let errorKey = "remap:\(remap.from.lowercased())@\(group.app)"
+                let errorKey = "remap:\(remap.from.lowercased())@\(group.app ?? "global")"
                 do {
                     let fromType = try KeyComboParser.parse(remap.from)
                     let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap.to)

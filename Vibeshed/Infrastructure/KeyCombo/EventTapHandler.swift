@@ -230,11 +230,13 @@ final class EventTapHandler: @unchecked Sendable {
         for remap in remaps {
             if case .standard(let keyCode, let modifiers) = remap.fromType {
                 let key = StandardKey(keyCode: keyCode, modifiers: modifiers)
+                let appKey = remap.app ?? ""
                 var appMap = newRemaps[key] ?? [:]
-                appMap[remap.app] = RemapTarget(keyCode: remap.toKeyCode, modifiers: remap.toModifiers)
+                appMap[appKey] = RemapTarget(keyCode: remap.toKeyCode, modifiers: remap.toModifiers)
                 newRemaps[key] = appMap
+                let scope = remap.app ?? "global"
                 Log.keybindings.debug(
-                    "  remap \(remap.rawFrom, privacy: .public) → \(remap.rawTo, privacy: .public) [\(remap.app, privacy: .public)]"
+                    "  remap \(remap.rawFrom, privacy: .public) → \(remap.rawTo, privacy: .public) [\(scope, privacy: .public)]"
                 )
             }
         }
@@ -242,7 +244,7 @@ final class EventTapHandler: @unchecked Sendable {
         var newTabRemaps: [UInt16: [String: RemapTarget]] = [:]
         for remap in tabRemapList {
             guard case .tabModifier(let keyCode) = remap.fromType else { continue }
-            newTabRemaps[keyCode, default: [:]][remap.app] = RemapTarget(
+            newTabRemaps[keyCode, default: [:]][remap.app ?? ""] = RemapTarget(
                 keyCode: remap.toKeyCode, modifiers: remap.toModifiers)
         }
 
@@ -434,7 +436,7 @@ final class EventTapHandler: @unchecked Sendable {
         // Tab modifier combos — check remaps first, then bindings
         if tabHeld, keyCode != tabKeyCode {
             os_unfair_lock_lock(&lock)
-            let tabRemap = tabRemaps[keyCode]?[focusedApp]
+            let tabRemap = tabRemaps[keyCode]?[focusedApp] ?? tabRemaps[keyCode]?[""]
             let slot = tabBindings[keyCode]
             os_unfair_lock_unlock(&lock)
 
@@ -455,7 +457,7 @@ final class EventTapHandler: @unchecked Sendable {
         // Standard modifier+key combos — check remaps first, then bindings
         let key = StandardKey(keyCode: keyCode, modifiers: flags)
         os_unfair_lock_lock(&lock)
-        let remapTarget = standardRemaps[key]?[focusedApp]
+        let remapTarget = standardRemaps[key]?[focusedApp] ?? standardRemaps[key]?[""]
         let bindingSlot = standardBindings[key]
         let bindingCount = standardBindings.count
         os_unfair_lock_unlock(&lock)
