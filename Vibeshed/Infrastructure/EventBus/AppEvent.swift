@@ -16,5 +16,6 @@ enum AppEvent: Sendable {
     case uriRouted(url: String, destination: String)
     case uriError(url: String, message: String)
     case moduleActionsChanged(moduleID: String)
+    case openURL(URL)
     case custom(name: String, payload: [String: String])
 }

@@ -312,8 +312,10 @@ modules:
   github:
     token: null               # set to increase rate limit & enable notifications
     defaultOwner: null        # e.g. "myorg" — scopes searches to org by default
+    repoOwners: null          # fetch repos from multiple orgs/users: ["org1", "user1"]
     maxResults: 10
     searchTypes: [repo, issue, pr]
+    showRepos: true           # list your repos as searchable picker actions
     showNotifications: true
 
   # --- VSCode / Cursor / Windsurf ---

@@ -51,6 +51,8 @@ final class URIManager {
                 switch event {
                 case .configReloaded:
                     self.handleConfigReloaded()
+                case .openURL(let url):
+                    self.handleURL(url)
                 default:
                     break
                 }

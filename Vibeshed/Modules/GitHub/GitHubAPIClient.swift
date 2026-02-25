@@ -141,6 +141,37 @@ final class GitHubAPIClient: @unchecked Sendable {
         return parsePRs(json)
     }
 
+    func listRepos(owner: String?, limit: Int) async throws -> [GitHubRepo] {
+        if let owner, !owner.isEmpty {
+            // Try org endpoint first (returns private repos for authenticated org members),
+            // fall back to user endpoint on 404 (owner is a user, not an org).
+            do {
+                return try await fetchRepoList(
+                    path: "/orgs/\(owner)/repos", limit: limit
+                )
+            } catch GitHubError.apiError(statusCode: 404, _) {
+                return try await fetchRepoList(
+                    path: "/users/\(owner)/repos", limit: limit
+                )
+            }
+        } else if token != nil {
+            return try await fetchRepoList(path: "/user/repos", limit: limit)
+        } else {
+            throw GitHubError.invalidToken
+        }
+    }
+
+    private func fetchRepoList(
+        path: String, limit: Int
+    ) async throws -> [GitHubRepo] {
+        let request = try makeRequest(
+            path: path,
+            queryItems: [("per_page", "\(limit)"), ("sort", "pushed")]
+        )
+        let json = try await performRequest(request)
+        return parseRepoList(json)
+    }
+
     func listNotifications(limit: Int) async throws -> [GitHubNotification] {
         guard token != nil else {
             log.error("listNotifications called without a token")
@@ -277,6 +308,11 @@ final class GitHubAPIClient: @unchecked Sendable {
 
     private func parseRepos(_ json: Any) -> [GitHubRepo] {
         parseSearchItems(json).compactMap(parseRepo)
+    }
+
+    private func parseRepoList(_ json: Any) -> [GitHubRepo] {
+        guard let items = json as? [[String: Any]] else { return [] }
+        return items.compactMap(parseRepo)
     }
 
     private func parseRepo(_ item: [String: Any]) -> GitHubRepo? {

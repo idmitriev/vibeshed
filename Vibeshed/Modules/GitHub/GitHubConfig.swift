@@ -9,6 +9,10 @@ struct GitHubConfig: Codable, Sendable, Equatable {
     /// to search queries that don't already contain a qualifier.
     var defaultOwner: String?
 
+    /// Owners/orgs to fetch repos from. When nil or empty, falls back
+    /// to [defaultOwner] (if set) or the authenticated user's repos.
+    var repoOwners: [String]?
+
     /// Maximum results returned per search type (1–100).
     var maxResults: Int = 10
 
@@ -17,6 +21,9 @@ struct GitHubConfig: Codable, Sendable, Equatable {
 
     /// Set of action name suffixes to expose (nil = all).
     var enabledActions: Set<String>?
+
+    /// Show "My Repositories" listing action (requires token or defaultOwner).
+    var showRepos: Bool = true
 
     /// Show unread notifications action (requires token).
     var showNotifications: Bool = true
