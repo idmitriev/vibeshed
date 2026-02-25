@@ -36,7 +36,7 @@ struct ActionListView: View {
                 HStack {
                     Spacer()
                     Text("\(actions.count) items")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(.tertiary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)

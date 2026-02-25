@@ -136,7 +136,7 @@ struct ParameterOptionRow: View {
     @Environment(\.vibeTheme) private var theme
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Group {
                 if let iconURL = option.iconURL {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: iconURL.path))
@@ -148,7 +148,7 @@ struct ParameterOptionRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 28, height: 28)
+            .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 highlightedLabel
@@ -157,8 +157,8 @@ struct ParameterOptionRow: View {
 
                 if let subtitle = option.subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -167,12 +167,12 @@ struct ParameterOptionRow: View {
 
             if let number = hotkeyNumber {
                 Text("\u{2318}\(number)")
-                    .font(.caption2)
-                    .foregroundStyle(.quaternary)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
                     .monospacedDigit()
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 

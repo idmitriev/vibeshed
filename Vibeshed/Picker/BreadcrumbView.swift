@@ -14,15 +14,16 @@ struct BreadcrumbView: View {
             .buttonStyle(.plain)
 
             breadcrumbText
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
             Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
         .background(.ultraThinMaterial.opacity(0.5))
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 
     @ViewBuilder

@@ -4,9 +4,9 @@ struct SpotifyActionListItemView: View {
     let action: SpotifyAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             artworkOrIcon
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
                 .cornerRadius(4)
                 .clipped()
 
@@ -17,8 +17,8 @@ struct SpotifyActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -28,11 +28,11 @@ struct SpotifyActionListItemView: View {
             if let itemType = action.spotifyItemType,
                itemType != .control {
                 Text(itemType.rawValue.capitalized)
-                    .font(.caption2)
-                    .foregroundStyle(.quaternary)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 
@@ -103,7 +103,7 @@ struct SpotifyActionPreviewView: View {
                     previewFallbackIcon
                 }
             }
-            .frame(maxHeight: 200)
+            .frame(maxHeight: 220)
         } else {
             previewFallbackIcon
         }
@@ -111,9 +111,9 @@ struct SpotifyActionPreviewView: View {
 
     private var previewFallbackIcon: some View {
         Image(systemName: action.iconName ?? "music.note")
-            .font(.system(size: 48))
+            .font(.system(size: 56))
             .foregroundStyle(.secondary)
-            .frame(width: 64, height: 64)
+            .frame(width: 72, height: 72)
     }
 
     private func formatDuration(_ ms: Int) -> String {

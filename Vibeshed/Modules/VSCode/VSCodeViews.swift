@@ -4,9 +4,9 @@ struct VSCodeActionListItemView: View {
     let action: VSCodeAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             iconView
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -15,8 +15,8 @@ struct VSCodeActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -30,12 +30,12 @@ struct VSCodeActionListItemView: View {
                 if let variant = action.variant,
                    variant != "VS Code" {
                     Text(variant)
-                        .font(.caption2)
-                        .foregroundStyle(.quaternary)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 
@@ -69,7 +69,7 @@ struct VSCodeActionListItemView: View {
         case .file:
             Image(systemName: "doc")
                 .font(.caption)
-                .foregroundStyle(.quaternary)
+                .foregroundStyle(.tertiary)
         case .project:
             EmptyView()
         }

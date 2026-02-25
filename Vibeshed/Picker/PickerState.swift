@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import OSLog
+import SwiftUI
 
 @MainActor
 @Observable
@@ -58,14 +59,18 @@ final class PickerState {
 
     func pushMode(_ newMode: PickerMode) {
         modeStack.append(mode)
-        mode = newMode
+        withAnimation(.easeInOut(duration: 0.2)) {
+            mode = newMode
+        }
         Log.picker.debug("Mode pushed: \(String(describing: newMode), privacy: .public)")
     }
 
     /// Returns `true` if a mode was popped, `false` if already at root (search).
     func popMode() -> Bool {
         guard let previous = modeStack.popLast() else { return false }
-        mode = previous
+        withAnimation(.easeInOut(duration: 0.2)) {
+            mode = previous
+        }
 
         // Restore query state when returning to search
         if case .search = mode {

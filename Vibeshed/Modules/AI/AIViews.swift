@@ -4,11 +4,11 @@ struct AIActionListItemView: View {
     let action: AIAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: action.iconName ?? "brain")
                 .font(.title3)
                 .foregroundStyle(colorForProvider)
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -17,8 +17,8 @@ struct AIActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -28,17 +28,17 @@ struct AIActionListItemView: View {
             HStack(spacing: 4) {
                 if let provider = action.provider {
                     Text(providerShortLabel(provider))
-                        .font(.caption2)
-                        .foregroundStyle(.quaternary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
                 if let timestamp = action.sessionTimestamp {
                     Text(relativeTime(timestamp))
-                        .font(.caption2)
-                        .foregroundStyle(.quaternary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 

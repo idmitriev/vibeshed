@@ -4,11 +4,11 @@ struct JetBrainsActionListItemView: View {
     let action: JetBrainsAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: action.iconName ?? "hammer")
                 .font(.title3)
                 .foregroundStyle(colorForIDE)
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -17,8 +17,8 @@ struct JetBrainsActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -29,16 +29,16 @@ struct JetBrainsActionListItemView: View {
                 if action.isOpen {
                     Circle()
                         .fill(.green)
-                        .frame(width: 6, height: 6)
+                        .frame(width: 8, height: 8)
                 }
                 if let ideName = action.ideName {
                     Text(ideName)
-                        .font(.caption2)
-                        .foregroundStyle(.quaternary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 

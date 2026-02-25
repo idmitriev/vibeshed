@@ -27,6 +27,9 @@ struct ActionPreviewView: View {
                 )
             }
         }
+        .id(selectedID)
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.15), value: selectedID)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityIdentifier("actionPreview")
     }
@@ -36,15 +39,15 @@ struct ActionPreviewView: View {
         PreviewLayout(moduleName: item.moduleID) {
             PreviewHeader(title: item.title, subtitle: item.subtitle) {
                 Image(systemName: item.iconSystemName ?? "sparkle")
-                    .font(.system(size: 48))
+                    .font(.system(size: 56))
                     .foregroundStyle(.secondary)
-                    .frame(width: 64, height: 64)
+                    .frame(width: 72, height: 72)
             }
 
             if let action = actionCache[item.id], !action.parameters.isEmpty {
                 Divider()
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Parameters")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
@@ -57,7 +60,7 @@ struct ActionPreviewView: View {
                                 .foregroundStyle(.secondary)
                                 .frame(width: 16)
                             Text(param.label)
-                                .font(.caption)
+                                .font(.subheadline)
                             if param.isRequired {
                                 Text("required")
                                     .font(.caption2)

@@ -245,21 +245,27 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Create a zoom module for searching and joining zoom meetings
 - [x] Implement actions for searching zoom meetings based on their title and joining them in the zoom, action for starting meetings as well
 
-- ### Phase 38: Calendar module
+### Phase 38: UI Polish (DONE)
+
+- [x] Make UI more readable by increasing font size, improving contrast, and adding more spacing between elements
+- [x] Make icons in preview larger
+- [x] Add animations for picker opening/closing, action selection, execution and other interactions to make the app feel more responsive and enjoyable to use
+
+### Phase 39: Calendar module
 
 - [ ] Create a calendar module for searching and opening calendar events in the browser or calendar apps
 - [ ] Implement actions for searching calendar events based on their title and opening them in browser, calendar.app, zoom or google meet in browser
 
-### Phase 39: Prepare for meeting module
+### Phase 40: Prepare for meeting module
 
 - [ ] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
 - [ ] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
 
-### Phase 40: Browser bookmark actions
+### Phase 41: Browser bookmark actions
 - [ ] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.
 - [ ] Implement bookmark actions for Safari and Chrome at least, showing bookmark titles and favicons in the picker previews
 
-### Phase 41: Theme actions
+### Phase 42: Theme actions
 
 - [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings
 - [ ] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome

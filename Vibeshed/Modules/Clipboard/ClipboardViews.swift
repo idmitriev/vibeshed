@@ -4,11 +4,11 @@ struct ClipboardActionListItemView: View {
     let action: ClipboardAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: action.iconName ?? "doc.on.clipboard")
                 .font(.title3)
                 .foregroundStyle(.secondary)
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -17,8 +17,8 @@ struct ClipboardActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -27,11 +27,11 @@ struct ClipboardActionListItemView: View {
 
             if let timestamp = action.timestamp {
                 Text(relativeTimeString(from: timestamp))
-                    .font(.caption2)
-                    .foregroundStyle(.quaternary)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 }

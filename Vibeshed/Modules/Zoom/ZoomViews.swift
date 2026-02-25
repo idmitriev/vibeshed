@@ -4,11 +4,11 @@ struct ZoomActionListItemView: View {
     let action: ZoomAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: action.iconName ?? iconForType)
                 .font(.title3)
                 .foregroundStyle(colorForType)
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -17,8 +17,8 @@ struct ZoomActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -26,10 +26,10 @@ struct ZoomActionListItemView: View {
             Spacer()
 
             Text(typeLabel)
-                .font(.caption2)
-                .foregroundStyle(.quaternary)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 

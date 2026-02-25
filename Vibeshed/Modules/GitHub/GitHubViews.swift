@@ -4,9 +4,9 @@ struct GitHubActionListItemView: View {
     let action: GitHubAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             avatarOrIcon
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
                 .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 2) {
@@ -16,8 +16,8 @@ struct GitHubActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -33,12 +33,12 @@ struct GitHubActionListItemView: View {
                 }
                 if let itemType = action.githubItemType {
                     Text(itemType.rawValue.uppercased())
-                        .font(.caption2)
-                        .foregroundStyle(.quaternary)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 
@@ -105,7 +105,7 @@ struct GitHubActionPreviewView: View {
                     previewFallbackIcon
                 }
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 72, height: 72)
             .clipShape(action.githubItemType == .repo
                 ? AnyShape(RoundedRectangle(cornerRadius: 10))
                 : AnyShape(Circle()))
@@ -119,9 +119,9 @@ struct GitHubActionPreviewView: View {
             systemName: action.iconName
                 ?? "chevron.left.forwardslash.chevron.right"
         )
-        .font(.system(size: 48))
+        .font(.system(size: 56))
         .foregroundStyle(.secondary)
-        .frame(width: 64, height: 64)
+        .frame(width: 72, height: 72)
     }
 
     @ViewBuilder
@@ -151,7 +151,7 @@ struct GitHubActionPreviewView: View {
             GitHubFlowLayout(spacing: 4) {
                 ForEach(labels, id: \.self) { label in
                     Text(label)
-                        .font(.caption2)
+                        .font(.caption)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Color.accentColor.opacity(0.15))
@@ -187,7 +187,7 @@ struct GitHubActionPreviewView: View {
             }
             if let htmlURL = action.htmlURL {
                 Text(htmlURL)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
                     .textSelection(.enabled)

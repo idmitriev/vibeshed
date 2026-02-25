@@ -6,10 +6,10 @@ struct ActionListItemView: View {
     @Environment(\.vibeTheme) private var theme
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: item.iconSystemName ?? "sparkle")
                 .font(.title3)
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -19,8 +19,8 @@ struct ActionListItemView: View {
 
                 if !item.subtitle.isEmpty {
                     Text(item.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -30,17 +30,17 @@ struct ActionListItemView: View {
             if item.hasParameters {
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundStyle(.quaternary)
+                    .foregroundStyle(.tertiary)
             }
 
             if let number = hotkeyNumber {
                 Text("\u{2318}\(number)")
-                    .font(.caption2)
-                    .foregroundStyle(.quaternary)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
                     .monospacedDigit()
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 

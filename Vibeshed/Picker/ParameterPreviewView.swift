@@ -33,17 +33,17 @@ struct ParameterPreviewView: View {
                                     .aspectRatio(contentMode: .fit)
                             } else {
                                 Image(systemName: action.iconName ?? "sparkle")
-                                    .font(.system(size: 48))
+                                    .font(.system(size: 56))
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .frame(width: 64, height: 64)
+                        .frame(width: 72, height: 72)
                     }
 
                     Divider()
 
                     // Parameter progress
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 10) {
                         Text("Parameters")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
@@ -93,7 +93,7 @@ struct ParameterPreviewView: View {
 
                 if isFilled, let value = state.collectedValues[param.id] {
                     Text(displayValue(value, for: param))
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }

@@ -8,7 +8,7 @@ struct PreviewHeader<Hero: View>: View {
     @ViewBuilder let hero: () -> Hero
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             hero()
 
             Text(title)
@@ -38,9 +38,9 @@ extension PreviewHeader where Hero == AnyView {
         self.hero = {
             AnyView(
                 Image(systemName: systemIcon)
-                    .font(.system(size: 48))
+                    .font(.system(size: 56))
                     .foregroundStyle(iconColor)
-                    .frame(width: 64, height: 64)
+                    .frame(width: 72, height: 72)
             )
         }
     }
@@ -59,7 +59,7 @@ struct PreviewMetadataRow: View {
             Image(systemName: icon)
                 .font(.caption)
                 .foregroundStyle(.tertiary)
-                .frame(width: 16)
+                .frame(width: 18)
 
             Text(label)
                 .font(.caption)
@@ -68,7 +68,7 @@ struct PreviewMetadataRow: View {
             Spacer()
 
             Text(value)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(valueColor)
         }
     }
@@ -81,7 +81,7 @@ struct PreviewModuleBadge: View {
 
     var body: some View {
         Text("Module: \(moduleName)")
-            .font(.caption2)
+            .font(.caption)
             .foregroundStyle(.quaternary)
     }
 }
@@ -94,7 +94,7 @@ struct PreviewLayout<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 16) {
                 content()
 
                 Spacer(minLength: 8)
@@ -119,13 +119,13 @@ struct PreviewPill: View {
         HStack(spacing: 4) {
             if let icon {
                 Image(systemName: icon)
-                    .font(.caption2)
+                    .font(.caption)
             }
             Text(text)
-                .font(.caption2)
+                .font(.caption)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 3)
+        .padding(.vertical, 4)
         .background(color.opacity(0.15))
         .foregroundStyle(color)
         .clipShape(Capsule())

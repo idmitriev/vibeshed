@@ -4,7 +4,7 @@ struct BrowserActionListItemView: View {
     let action: BrowserAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Group {
                 if let icon = action.browserIcon {
                     Image(nsImage: icon)
@@ -16,7 +16,7 @@ struct BrowserActionListItemView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 28, height: 28)
+            .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -25,15 +25,15 @@ struct BrowserActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
 
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 }
@@ -105,11 +105,11 @@ struct BrowserActionPreviewView: View {
                         .aspectRatio(contentMode: .fit)
                 } else {
                     Image(systemName: action.iconName ?? "globe")
-                        .font(.system(size: 48))
+                        .font(.system(size: 56))
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 72, height: 72)
         }
     }
 
@@ -142,7 +142,7 @@ struct BrowserActionPreviewView: View {
             if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                     .resizable()
-                    .frame(width: 16, height: 16)
+                    .frame(width: 18, height: 18)
             }
             Text(BrowserRegistry.name(for: bundleID) ?? bundleID)
                 .font(.caption)

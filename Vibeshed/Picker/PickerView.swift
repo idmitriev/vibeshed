@@ -130,14 +130,20 @@ struct PickerView: View {
 
     @ViewBuilder
     private var content: some View {
-        switch state.mode {
-        case .search, .pushedActions:
-            actionListContent
-        case .parameterInput:
-            parameterContent
-        case let .result(title, body):
-            ResultView(title: title, message: body)
+        Group {
+            switch state.mode {
+            case .search, .pushedActions:
+                actionListContent
+                    .transition(.opacity)
+            case .parameterInput:
+                parameterContent
+                    .transition(.opacity)
+            case let .result(title, body):
+                ResultView(title: title, message: body)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: state.mode)
     }
 
     @ViewBuilder

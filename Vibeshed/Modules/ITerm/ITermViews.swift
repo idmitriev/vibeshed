@@ -4,9 +4,9 @@ struct ITermActionListItemView: View {
     let action: ITermAction
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             iconView
-                .frame(width: 28, height: 28)
+                .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -15,8 +15,8 @@ struct ITermActionListItemView: View {
 
                 if !action.subtitle.isEmpty {
                     Text(action.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -32,7 +32,7 @@ struct ITermActionListItemView: View {
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 
@@ -61,15 +61,15 @@ struct ITermActionListItemView: View {
     private func promptIndicator(_ atPrompt: Bool) -> some View {
         Circle()
             .fill(atPrompt ? .green : .orange)
-            .frame(width: 6, height: 6)
+            .frame(width: 8, height: 8)
     }
 
     @ViewBuilder
     private func typeLabel(_ type: ITermItemType) -> some View {
         if type == .session, let job = action.jobName {
             Text(job)
-                .font(.caption2)
-                .foregroundStyle(.quaternary)
+                .font(.caption)
+                .foregroundStyle(.tertiary)
         }
     }
 }
