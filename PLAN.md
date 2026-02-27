@@ -281,10 +281,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [x] make sure aliases can open URLs in browsers, directories in finder
  
-### Phase 46: Calendar module
+### Phase 46: Calendar module (DONE)
 
-- [ ] Create a calendar module for searching and opening calendar events in the browser or calendar apps
-- [ ] Implement actions for searching calendar events based on their title and opening them in browser, calendar.app, zoom or google meet in browser
+- [x] Create a calendar module for searching and opening calendar events in the browser or calendar apps
+- [x] Implement actions for searching calendar events based on their title and opening them in browser, calendar.app, zoom or google meet in browser
 
 ### Phase 47: Prepare for meeting module
 

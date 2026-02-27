@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import EventKit
 
 @MainActor
 @Observable
@@ -47,6 +48,18 @@ final class PermissionsManager {
             if let url = permission.systemSettingsURL {
                 NSWorkspace.shared.open(url)
             }
+        case .calendars:
+            let store = EKEventStore()
+            Task {
+                do {
+                    let granted = try await store.requestFullAccessToEvents()
+                    self.updateStatus(permission, granted: granted)
+                } catch {
+                    if let url = permission.systemSettingsURL {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            }
         }
     }
 
@@ -79,6 +92,8 @@ final class PermissionsManager {
             return checkInputMonitoring()
         case .fullDiskAccess:
             return checkFullDiskAccess()
+        case .calendars:
+            return checkCalendars()
         }
     }
 
@@ -150,6 +165,10 @@ final class PermissionsManager {
         // check here and let CapsLockMonitor.start() surface the
         // IOKit-specific failure at runtime.
         CGPreflightListenEventAccess()
+    }
+
+    private func checkCalendars() -> Bool {
+        EKEventStore.authorizationStatus(for: .event) == .fullAccess
     }
 
     private func checkFullDiskAccess() -> Bool {

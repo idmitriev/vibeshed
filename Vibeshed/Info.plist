@@ -31,5 +31,7 @@
 	<string>1</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Vibeshed needs access to your calendars to search and display upcoming events.</string>
 </dict>
 </plist>

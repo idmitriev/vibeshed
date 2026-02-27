@@ -6,6 +6,7 @@ enum Permission: String, Sendable, CaseIterable, Hashable, Codable {
     case automation
     case inputMonitoring
     case fullDiskAccess
+    case calendars
 
     var displayName: String {
         switch self {
@@ -14,6 +15,7 @@ enum Permission: String, Sendable, CaseIterable, Hashable, Codable {
         case .automation: "Automation"
         case .inputMonitoring: "Input Monitoring"
         case .fullDiskAccess: "Full Disk Access"
+        case .calendars: "Calendars"
         }
     }
 
@@ -29,6 +31,8 @@ enum Permission: String, Sendable, CaseIterable, Hashable, Codable {
             "Open System Settings > Privacy & Security > Input Monitoring, then enable Vibeshed."
         case .fullDiskAccess:
             "Open System Settings > Privacy & Security > Full Disk Access, then enable Vibeshed."
+        case .calendars:
+            "Open System Settings > Privacy & Security > Calendars, then enable Vibeshed."
         }
     }
 
@@ -44,6 +48,8 @@ enum Permission: String, Sendable, CaseIterable, Hashable, Codable {
             URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
         case .fullDiskAccess:
             URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
+        case .calendars:
+            URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")
         }
     }
 }

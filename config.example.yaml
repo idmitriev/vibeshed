@@ -396,6 +396,20 @@ modules:
     # IDE tags: idea, pycharm, webstorm, datagrip, goland,
     #           rustrover, clion, rider, phpstorm, rubymine, studio
 
+  # --- Calendar Events ---
+  calendar:
+    lookaheadHours: 24
+    lookbehindMinutes: 30
+    showAllDayEvents: false
+    showDeclinedEvents: false
+    showOpenCalendarAction: true
+    # excludedCalendars:
+    #   - "Birthdays"
+    #   - "US Holidays"
+    # includedCalendars:          # if set, only these calendars are shown
+    #   - "Work"
+    #   - "Personal"
+
   # --- Zoom Meetings ---
   zoom:
     showStartMeeting: true
