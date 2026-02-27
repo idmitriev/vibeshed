@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct AliasAction: Action {
@@ -11,6 +12,8 @@ struct AliasAction: Action {
 
     private let targetActionID: ActionID
     private let prefilledParameters: [String: String]
+    private let browser: String?
+    private let profile: String?
 
     init(
         id: ActionID,
@@ -21,7 +24,9 @@ struct AliasAction: Action {
         keywords: [String] = [],
         parameters: [ActionParameter] = [],
         targetActionID: ActionID,
-        prefilledParameters: [String: String] = [:]
+        prefilledParameters: [String: String] = [:],
+        browser: String? = nil,
+        profile: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -32,9 +37,39 @@ struct AliasAction: Action {
         self.parameters = parameters
         self.targetActionID = targetActionID
         self.prefilledParameters = prefilledParameters
+        self.browser = browser
+        self.profile = profile
     }
 
     func run(with values: [String: Any]) async throws -> ActionResult {
+        let target = targetActionID.rawValue
+
+        // URL aliases — open in browser
+        if target.hasPrefix("http://") || target.hasPrefix("https://") {
+            var urlString = target
+            if let query = values["query"] as? String {
+                let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+                urlString = urlString.replacingOccurrences(of: "{query}", with: encoded)
+            }
+            guard let url = URL(string: urlString) else {
+                return .showResult(title: "Error", body: "Invalid URL: \(urlString)")
+            }
+            if let browser {
+                try BrowserRegistry.open(url: url, browser: browser, profile: profile)
+            } else {
+                NSWorkspace.shared.open(url)
+            }
+            return .dismiss
+        }
+
+        // Directory / file path aliases — open in Finder
+        if target.hasPrefix("/") || target.hasPrefix("~/") {
+            let expanded = NSString(string: target).expandingTildeInPath
+            NSWorkspace.shared.open(URL(fileURLWithPath: expanded))
+            return .dismiss
+        }
+
+        // Standard action chaining
         var merged = prefilledParameters
         // Substitute {query} placeholders with the provided query parameter
         if let query = values["query"] as? String {

@@ -18,6 +18,7 @@ struct VSCodeAction: Action {
     let projectPath: String?
     let vscodeItemType: VSCodeItemType?
     let variant: String?
+    let isOpen: Bool
 
     private let runner: @Sendable ([String: Any]) async throws -> ActionResult
 
@@ -32,6 +33,7 @@ struct VSCodeAction: Action {
         projectPath: String? = nil,
         vscodeItemType: VSCodeItemType? = nil,
         variant: String? = nil,
+        isOpen: Bool = false,
         runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
     ) {
         self.id = id
@@ -44,6 +46,7 @@ struct VSCodeAction: Action {
         self.projectPath = projectPath
         self.vscodeItemType = vscodeItemType
         self.variant = variant
+        self.isOpen = isOpen
         self.runner = runner
     }
 

@@ -13,6 +13,7 @@ struct VSCodeProject: Sendable {
     let isRemote: Bool
     let remoteLabel: String?
     let variant: String
+    let isOpen: Bool
 }
 
 // MARK: - Manager
@@ -42,6 +43,8 @@ enum VSCodeManager {
             }
         }
 
+        let openTitles = collectOpenWindowTitles()
+
         var projects: [VSCodeProject] = []
         for variant in allVariants {
             let entries = readRecentEntries(
@@ -57,7 +60,50 @@ enum VSCodeManager {
         var seen = Set<String>()
         projects = projects.filter { seen.insert($0.path).inserted }
 
+        // Mark projects as open if their name appears in any VSCode window title
+        projects = projects.map { project in
+            let isOpen = openTitles.contains { $0.contains(project.name) }
+            guard isOpen else { return project }
+            return VSCodeProject(
+                name: project.name,
+                path: project.path,
+                isRemote: project.isRemote,
+                remoteLabel: project.remoteLabel,
+                variant: project.variant,
+                isOpen: true
+            )
+        }
+
         return Array(projects.prefix(maxResults))
+    }
+
+    /// Collect window titles from all running VSCode-like apps.
+    /// Window titles typically follow "ProjectName — VS Code" format.
+    private static func collectOpenWindowTitles() -> Set<String> {
+        guard let windowList = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
+        ) as? [[CFString: Any]] else {
+            return []
+        }
+
+        let variantAppNames: Set<String> = [
+            "Code", "Electron",  // VS Code
+            "Code - Insiders",   // VS Code Insiders
+            "VSCodium",
+            "Cursor",
+            "Windsurf",
+        ]
+
+        var titles = Set<String>()
+        for window in windowList {
+            guard let ownerName = window[kCGWindowOwnerName] as? String,
+                  variantAppNames.contains(ownerName),
+                  let title = window[kCGWindowName] as? String,
+                  !title.isEmpty
+            else { continue }
+            titles.insert(title)
+        }
+        return titles
     }
 
     static func resolveCodeCLI(customPath: String?) -> String? {
@@ -257,7 +303,8 @@ enum VSCodeManager {
             path: path,
             isRemote: isRemote,
             remoteLabel: label,
-            variant: variant
+            variant: variant,
+            isOpen: false
         )
     }
 
@@ -277,7 +324,8 @@ enum VSCodeManager {
             path: path,
             isRemote: false,
             remoteLabel: nil,
-            variant: variant
+            variant: variant,
+            isOpen: false
         )
     }
 

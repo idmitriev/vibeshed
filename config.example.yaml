@@ -223,6 +223,33 @@ aliases:
     parameters:
       query: "{query}"
 
+  # URL aliases — open URLs directly in a browser
+  - alias: "Google"
+    action: "https://www.google.com/search?q={query}"
+    icon: "magnifyingglass"
+    subtitle: "Search Google..."
+    browser: "chrome"
+    parameters:
+      query: "{query}"
+
+  - alias: "Linear"
+    action: "https://linear.app"
+    icon: "checkmark.circle"
+    subtitle: "Open Linear"
+    browser: "chrome"
+    profile: "Work"
+
+  # Directory aliases — open folders in Finder
+  - alias: "Downloads"
+    action: "~/Downloads"
+    icon: "arrow.down.circle"
+    subtitle: "Open Downloads folder"
+
+  - alias: "Projects"
+    action: "~/Projects"
+    icon: "folder"
+    subtitle: "Open Projects folder"
+
 # ---------------------------------------------------------------------------
 # Modules
 # ---------------------------------------------------------------------------
@@ -357,6 +384,33 @@ modules:
         type: chat
         icon: "bookmark"
 
+  # --- JetBrains IDEs ---
+  jetbrains:
+    maxResults: 20
+    # enabledIDEs:             # nil = all detected IDEs
+    #   - idea
+    #   - pycharm
+    #   - webstorm
+    #   - goland
+    #   - rustrover
+    # IDE tags: idea, pycharm, webstorm, datagrip, goland,
+    #           rustrover, clion, rider, phpstorm, rubymine, studio
+
+  # --- Zoom Meetings ---
+  zoom:
+    showStartMeeting: true
+    showJoinAction: true
+    showLaunchAction: true
+    # personalMeetingId: "123 456 7890"   # for "Start My Meeting" action
+    meetings:
+      - name: "Weekly Standup"
+        meetingId: "123 456 7890"
+        password: "abc123"
+        keywords: ["standup", "daily"]
+      # - name: "Team Retro"
+      #   link: "https://zoom.us/j/1234567890?pwd=xyz"
+      #   keywords: ["retro", "sprint"]
+
   # --- Self (Vibeshed meta-actions) ---
   self:
     enabledActions:
@@ -384,12 +438,15 @@ modules:
 urlRouting:
   registerAsDefaultBrowser: true
   defaultBrowser: "safari"    # Pre-selected in the browser chooser picker
+  # defaultProfile: "Default"  # Optional: default Chromium profile for rules without explicit profile
   rules:
     # URLs matching rules open directly without showing the chooser
     - pattern: "*.github.com/*"
       browser: "chrome"
+      profile: "Work"          # Open in Chrome's "Work" profile (Chromium only)
     - pattern: "*.linear.app/*"
       browser: "chrome"
+      profile: "Work"
     - pattern: "*.notion.so/*"
       browser: "chrome"
     - pattern: "*.slack.com/*"
@@ -402,5 +459,10 @@ urlRouting:
       browser: "chrome"
     - pattern: "*.googleapis.com/*"
       browser: "chrome"
+
+    # Profile names are the directory names from Chromium's Local State file,
+    # e.g. "Default", "Profile 1", "Profile 2", or custom names.
+    # Only Chromium browsers (Chrome, Brave, Edge, Vivaldi, Opera) support profiles.
+    # Non-Chromium browsers ignore the profile field.
 
     # Everything else shows the browser chooser picker

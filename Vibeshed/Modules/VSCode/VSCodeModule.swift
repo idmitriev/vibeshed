@@ -122,7 +122,8 @@ actor VSCodeModule: ModuleConfigurable {
                 ],
                 projectPath: project.path,
                 vscodeItemType: itemType,
-                variant: project.variant
+                variant: project.variant,
+                isOpen: project.isOpen
             ) { [codePath] _ in
                 VSCodeManager.openProject(
                     path: project.path, codePath: codePath

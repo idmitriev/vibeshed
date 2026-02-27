@@ -5,10 +5,10 @@ struct SpotifyActionListItemView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            artworkOrIcon
+            Image(systemName: action.iconName ?? "music.note")
+                .font(.title3)
+                .foregroundStyle(.green)
                 .frame(width: 32, height: 32)
-                .cornerRadius(4)
-                .clipped()
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)
@@ -35,29 +35,6 @@ struct SpotifyActionListItemView: View {
         .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
-
-    @ViewBuilder
-    private var artworkOrIcon: some View {
-        if let artworkURL = action.artworkURL,
-           let url = URL(string: artworkURL) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable().aspectRatio(contentMode: .fill)
-                default:
-                    fallbackIcon
-                }
-            }
-        } else {
-            fallbackIcon
-        }
-    }
-
-    private var fallbackIcon: some View {
-        Image(systemName: action.iconName ?? "music.note")
-            .font(.title3)
-            .foregroundStyle(.secondary)
-    }
 }
 
 struct SpotifyActionPreviewView: View {
@@ -65,9 +42,12 @@ struct SpotifyActionPreviewView: View {
 
     var body: some View {
         PreviewLayout(moduleName: "spotify") {
-            PreviewHeader(title: action.title, subtitle: action.subtitle) {
-                artworkHero
-            }
+            PreviewHeader(
+                title: action.title,
+                subtitle: action.subtitle,
+                systemIcon: action.iconName ?? "music.note",
+                iconColor: .green
+            )
 
             HStack(spacing: 8) {
                 if let itemType = action.spotifyItemType {
@@ -85,11 +65,13 @@ struct SpotifyActionPreviewView: View {
                     )
                 }
             }
+
+            artworkSection
         }
     }
 
     @ViewBuilder
-    private var artworkHero: some View {
+    private var artworkSection: some View {
         if let artworkURL = action.artworkURL,
            let url = URL(string: artworkURL) {
             AsyncImage(url: url) { phase in
@@ -100,20 +82,11 @@ struct SpotifyActionPreviewView: View {
                         .aspectRatio(contentMode: .fit)
                         .cornerRadius(8)
                 default:
-                    previewFallbackIcon
+                    EmptyView()
                 }
             }
             .frame(maxHeight: 220)
-        } else {
-            previewFallbackIcon
         }
-    }
-
-    private var previewFallbackIcon: some View {
-        Image(systemName: action.iconName ?? "music.note")
-            .font(.system(size: 56))
-            .foregroundStyle(.secondary)
-            .frame(width: 72, height: 72)
     }
 
     private func formatDuration(_ ms: Int) -> String {

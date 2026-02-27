@@ -209,7 +209,8 @@ actor ApplicationModule: ModuleConfigurable {
                 subtitle: subtitle,
                 relevanceScore: 0.75,
                 keywords: ["app", "application", app.name.lowercased()],
-                appBundleURL: bundleURL
+                appBundleURL: bundleURL,
+                isRunning: true
             ) { _ in
                 let apps = await MainActor.run { mgr.listRunningApplications() }
                 guard let current = apps.first(where: { $0.id == app.id }) else {

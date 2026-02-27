@@ -32,6 +32,12 @@ struct ApplicationActionListItemView: View {
             }
 
             Spacer()
+
+            if action.isRunning {
+                Circle()
+                    .fill(.green)
+                    .frame(width: 8, height: 8)
+            }
         }
         .padding(.vertical, 6)
         .contentShape(Rectangle())
@@ -56,6 +62,16 @@ struct ApplicationActionPreviewView: View {
                     }
                 }
                 .frame(width: 72, height: 72)
+            }
+
+            if action.isRunning {
+                HStack(spacing: 8) {
+                    PreviewPill(
+                        text: "Running",
+                        icon: "circle.fill",
+                        color: .green
+                    )
+                }
             }
         }
     }

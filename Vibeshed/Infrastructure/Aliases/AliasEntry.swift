@@ -7,4 +7,6 @@ struct AliasEntry: Codable, Sendable, Equatable {
     var keywords: [String]?
     var icon: String?
     var subtitle: String?
+    var browser: String?
+    var profile: String?
 }

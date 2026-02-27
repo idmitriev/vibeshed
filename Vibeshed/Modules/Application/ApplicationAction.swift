@@ -9,6 +9,8 @@ struct ApplicationAction: Action {
     let keywords: [String]
     let parameters: [ActionParameter]
 
+    let isRunning: Bool
+
     private let runner: @Sendable ([String: Any]) async throws -> ActionResult
     private let appBundleURL: URL?
 
@@ -21,6 +23,7 @@ struct ApplicationAction: Action {
         keywords: [String] = [],
         parameters: [ActionParameter] = [],
         appBundleURL: URL? = nil,
+        isRunning: Bool = false,
         runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
     ) {
         self.id = id
@@ -31,6 +34,7 @@ struct ApplicationAction: Action {
         self.keywords = keywords
         self.parameters = parameters
         self.appBundleURL = appBundleURL
+        self.isRunning = isRunning
         self.runner = runner
     }
 

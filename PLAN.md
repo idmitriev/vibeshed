@@ -257,29 +257,29 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 ### Phase 40: Functional polish part 2
 
-- [ ] make sure we can remap key combos OS-wide not just in specific apps, rename appRemaps config section to keyRemaps
+- [x] make sure we can remap key combos OS-wide not just in specific apps, rename appRemaps config section to keyRemaps
 
 ### Phase 41: Functional polish part 3
 
-- [ ] remove number of items in picker list footer
-- [ ] dont show cover art in spotify picker items - just show player app/spotify icon, move cover art to the bottom of preview pane
-- [ ] show green open indicators for apps like for idea projects for launch or foucus app actions, also check if the same is possible for vscode projects
+- [x] remove number of items in picker list footer
+- [x] dont show cover art in spotify picker items - just show player app/spotify icon, move cover art to the bottom of preview pane
+- [x] show green open indicators for apps like for idea projects for launch or foucus app actions, also check if the same is possible for vscode projects
 
 ### Phase 42: Functional polish part 4
 
-- [ ] make sure there is configuration for all module in config example yaml
+- [x] make sure there is configuration for all module in config example yaml
 
 ### Phase 43: Functional polish part 5
 
-- [ ] make sure browser profiles are supported in url routing rules
+- [x] make sure browser profiles are supported in url routing rules
 
 ### Phase 44: Functional polish part 6
 
-- [ ] add actions for adding to liked songs in spotify module for now playing track
+- [x] add actions for adding to liked songs in spotify module for now playing track
 
 ### Phase 45: Functional polish part 7
 
-- [ ] make sure aliases can open URLs in browsers, directories in finder
+- [x] make sure aliases can open URLs in browsers, directories in finder
  
 ### Phase 46: Calendar module
 
@@ -305,6 +305,15 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase 51: Wrong keyboard layout detection and switching
 
 - [ ] Implement a system for detecting when the user is typing in the wrong keyboard layout and automatically switching to the correct layout based on the user's input. This can help prevent frustration and improve typing efficiency for users who frequently switch between different keyboard layouts.
+
+### Phase 52: Timers/reminders module
+
+- [ ] Create a timers and reminders module that can help users set and manage timers and reminders directly from the picker. This can include actions for setting timers, creating reminders, and showing upcoming timers and reminders in the picker preview.
+- [ ] Implement actions for setting timers with specific durations, creating reminders for specific dates and times, and showing a list of upcoming timers and reminders in the picker preview to help users stay organized and on top of their tasks.
+
+### Phase 53: Remove redundant actions
+
+- [ ] Review all existing actions and remove any that are redundant, not useful, or can be easily replaced by other actions. This will help streamline the app and make it easier for users to find and use the most relevant actions.
 
 ### Phase _: Testing
 

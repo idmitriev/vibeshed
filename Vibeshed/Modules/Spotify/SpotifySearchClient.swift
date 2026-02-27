@@ -126,6 +126,66 @@ final class SpotifySearchClient: @unchecked Sendable {
         return try parseSearchResults(data, types: types)
     }
 
+    // MARK: - Library
+
+    func isTrackSaved(_ trackId: String) async throws -> Bool {
+        try await ensureAuthenticated()
+        let token = lockedToken()
+        guard !token.isEmpty else { throw SearchError.notAuthenticated }
+
+        let url = URL(string: "https://api.spotify.com/v1/me/tracks/contains?ids=\(trackId)")!
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+            try await refreshAccessToken()
+            return try await isTrackSaved(trackId)
+        }
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
+            throw SearchError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0)
+        }
+        guard let results = try JSONSerialization.jsonObject(with: data) as? [Bool],
+              let isSaved = results.first
+        else { return false }
+        return isSaved
+    }
+
+    func saveTrack(_ trackId: String) async throws {
+        try await modifyLibrary(trackId: trackId, method: "PUT")
+    }
+
+    func removeSavedTrack(_ trackId: String) async throws {
+        try await modifyLibrary(trackId: trackId, method: "DELETE")
+    }
+
+    private func modifyLibrary(trackId: String, method: String) async throws {
+        try await ensureAuthenticated()
+        let token = lockedToken()
+        guard !token.isEmpty else { throw SearchError.notAuthenticated }
+
+        let url = URL(string: "https://api.spotify.com/v1/me/tracks?ids=\(trackId)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+            try await refreshAccessToken()
+            try await modifyLibrary(trackId: trackId, method: method)
+            return
+        }
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
+            throw SearchError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0)
+        }
+    }
+
+    private func lockedToken() -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        return accessToken ?? ""
+    }
+
     // MARK: - Authentication
 
     func ensureAuthenticated() async throws {
@@ -164,7 +224,7 @@ final class SpotifySearchClient: @unchecked Sendable {
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "redirect_uri", value: redirectURI),
-            URLQueryItem(name: "scope", value: "user-read-playback-state user-modify-playback-state"),
+            URLQueryItem(name: "scope", value: "user-read-playback-state user-modify-playback-state user-library-read user-library-modify"),
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "code_challenge", value: challenge),
         ]

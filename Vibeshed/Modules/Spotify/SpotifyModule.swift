@@ -79,6 +79,9 @@ actor SpotifyModule: ModuleConfigurable {
         }
 
         if SpotifyManager.isRunning() {
+            if let action = buildLikeAction() {
+                actions.append(action)
+            }
             actions.append(contentsOf: buildPlaybackActions())
         }
 
@@ -121,6 +124,43 @@ actor SpotifyModule: ModuleConfigurable {
             try await SpotifyManager.playPause()
             return .dismiss
         }
+    }
+
+    // MARK: - Like / Unlike
+
+    private func buildLikeAction() -> SpotifyAction? {
+        guard let client = searchClient else { return nil }
+
+        return SpotifyAction(
+            id: ActionID(module: "spotify", name: "likeTrack"),
+            title: "Like / Unlike Current Track",
+            subtitle: "Toggle current track in Liked Songs",
+            iconName: "heart",
+            relevanceScore: 0.8,
+            keywords: ["spotify", "like", "unlike", "save", "heart", "favourite", "favorite", "liked"],
+            spotifyItemType: .control
+        ) { [client] _ in
+            guard let np = try? await SpotifyManager.nowPlaying(),
+                  let trackId = Self.extractTrackId(np.trackID)
+            else {
+                return .showResult(title: "No Track", body: "No track is currently playing")
+            }
+
+            let isSaved = try await client.isTrackSaved(trackId)
+            if isSaved {
+                try await client.removeSavedTrack(trackId)
+                return .showResult(title: "Removed", body: "\(np.trackName) removed from Liked Songs")
+            } else {
+                try await client.saveTrack(trackId)
+                return .showResult(title: "Liked", body: "\(np.trackName) added to Liked Songs")
+            }
+        }
+    }
+
+    private static func extractTrackId(_ spotifyId: String) -> String? {
+        let parts = spotifyId.split(separator: ":")
+        guard parts.count >= 3, parts[1] == "track" else { return nil }
+        return String(parts[2])
     }
 
     // MARK: - Playback Actions

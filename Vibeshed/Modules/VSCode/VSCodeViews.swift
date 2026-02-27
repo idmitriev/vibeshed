@@ -24,6 +24,11 @@ struct VSCodeActionListItemView: View {
             Spacer()
 
             HStack(spacing: 4) {
+                if action.isOpen {
+                    Circle()
+                        .fill(.green)
+                        .frame(width: 8, height: 8)
+                }
                 if let itemType = action.vscodeItemType {
                     typeIndicator(itemType)
                 }
@@ -108,6 +113,13 @@ struct VSCodeActionPreviewView: View {
                 }
                 if let variant = action.variant {
                     PreviewPill(text: variant, color: .secondary)
+                }
+                if action.isOpen {
+                    PreviewPill(
+                        text: "Open",
+                        icon: "circle.fill",
+                        color: .green
+                    )
                 }
             }
         }

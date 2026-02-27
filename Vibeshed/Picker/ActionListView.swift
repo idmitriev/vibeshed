@@ -31,18 +31,6 @@ struct ActionListView: View {
                     }
                 }
             }
-
-            if actions.count > 20 {
-                HStack {
-                    Spacer()
-                    Text("\(actions.count) items")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                }
-                .background(.ultraThinMaterial.opacity(0.5))
-            }
         }
     }
 }

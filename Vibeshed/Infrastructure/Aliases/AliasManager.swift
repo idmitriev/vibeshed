@@ -41,6 +41,7 @@ final class AliasManager {
         let targetActionID = ActionID(entry.action)
         let prefilled = entry.parameters ?? [:]
         let hasQueryPlaceholder = prefilled.values.contains { $0.contains("{query}") }
+            || entry.action.contains("{query}")
 
         var parameters: [ActionParameter] = []
         if hasQueryPlaceholder {
@@ -53,19 +54,32 @@ final class AliasManager {
         }
 
         let subtitle = entry.subtitle ?? entry.action
+        let defaultIcon = Self.defaultIcon(for: entry.action)
         let keywords = (entry.keywords ?? []) + ["alias", entry.alias.lowercased()]
 
         return AliasAction(
             id: ActionID(module: "alias", name: entry.alias),
             title: entry.alias,
             subtitle: subtitle,
-            iconName: entry.icon ?? "star.fill",
+            iconName: entry.icon ?? defaultIcon,
             relevanceScore: 0.9,
             keywords: keywords,
             parameters: parameters,
             targetActionID: targetActionID,
-            prefilledParameters: prefilled
+            prefilledParameters: prefilled,
+            browser: entry.browser,
+            profile: entry.profile
         )
+    }
+
+    private static func defaultIcon(for action: String) -> String {
+        if action.hasPrefix("http://") || action.hasPrefix("https://") {
+            return "link"
+        }
+        if action.hasPrefix("/") || action.hasPrefix("~/") {
+            return "folder"
+        }
+        return "star.fill"
     }
 
     func applyAliases(to actions: [any Action]) -> AliasResult {
@@ -78,8 +92,13 @@ final class AliasManager {
             let targetID = ActionID(entry.action)
             let prefilled = entry.parameters ?? [:]
             let hasQueryPlaceholder = prefilled.values.contains { $0.contains("{query}") }
+                || entry.action.contains("{query}")
+            let isDirectOpen = entry.action.hasPrefix("http://")
+                || entry.action.hasPrefix("https://")
+                || entry.action.hasPrefix("/")
+                || entry.action.hasPrefix("~/")
 
-            if !hasQueryPlaceholder, actionIDs.contains(targetID) {
+            if !hasQueryPlaceholder, !isDirectOpen, actionIDs.contains(targetID) {
                 // Target action exists and no dynamic input needed: enrich keywords
                 let extra = [entry.alias, entry.alias.lowercased()]
                     + (entry.keywords ?? [])
