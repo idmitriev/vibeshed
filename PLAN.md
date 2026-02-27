@@ -286,10 +286,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Create a calendar module for searching and opening calendar events in the browser or calendar apps
 - [x] Implement actions for searching calendar events based on their title and opening them in browser, calendar.app, zoom or google meet in browser
 
-### Phase 47: Prepare for meeting module
+### Phase 47: Prepare for meeting module (DONE)
 
-- [ ] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
-- [ ] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
+- [x] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
+- [x] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
 
 ### Phase 48: Browser bookmark actions
 - [ ] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.

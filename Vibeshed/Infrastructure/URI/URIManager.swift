@@ -1,5 +1,4 @@
 import AppKit
-import CoreServices
 import Foundation
 
 @MainActor
@@ -401,27 +400,21 @@ final class URIManager {
             return
         }
 
-        let httpResult = LSSetDefaultHandlerForURLScheme(
-            "http" as CFString, bundleID as CFString
-        )
-        let httpsResult = LSSetDefaultHandlerForURLScheme(
-            "https" as CFString, bundleID as CFString
-        )
-
-        if httpResult == noErr, httpsResult == noErr {
-            Log.uri.info("Registered as default browser")
-        } else {
-            Log.uri.warning(
-                "Default browser registration returned: http=\(httpResult, privacy: .public), https=\(httpsResult, privacy: .public)"
-            )
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            Log.uri.error("Cannot find own application URL for default browser registration")
+            return
         }
 
-        // On macOS 12+ the system may not show a dialog from LSSetDefaultHandler.
-        // Open System Settings so the user can confirm.
-        if BrowserRegistry.systemDefaultBundleID() != bundleID {
-            Log.uri.info("Opening System Settings for default browser selection")
-            if let url = URL(string: "x-apple.systempreferences:com.apple.Desktop-Settings.extension") {
-                NSWorkspace.shared.open(url)
+        NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: "http") { error in
+            if let error {
+                Log.uri.warning("Default browser registration (http) failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: "https") { error in
+            if let error {
+                Log.uri.warning("Default browser registration (https) failed: \(error.localizedDescription, privacy: .public)")
+            } else {
+                Log.uri.info("Registered as default browser")
             }
         }
     }

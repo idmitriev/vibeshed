@@ -396,6 +396,18 @@ modules:
     # IDE tags: idea, pycharm, webstorm, datagrip, goland,
     #           rustrover, clion, rider, phpstorm, rubymine, studio
 
+  # --- Meeting Prep ---
+  meetingPrep:
+    prepWindowMinutes: 15       # Show prep actions N minutes before meeting
+    autoJoinVideo: false        # Auto-join video call when preparing
+    # hideApps:                 # Bundle IDs of apps to minimize (if set, only these are hidden)
+    #   - "com.tinyspeck.slackmacgap"
+    #   - "com.hnc.Discord"
+    #   - "com.apple.mail"
+    # keepApps:                 # Bundle IDs to keep visible (if set, everything else is hidden)
+    #   - "us.zoom.xos"
+    #   - "com.google.Chrome"
+
   # --- Calendar Events ---
   calendar:
     lookaheadHours: 24
