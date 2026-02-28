@@ -114,6 +114,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // registered in System Settings and the user can grant them.
         permissionsManager.request(.accessibility)
         permissionsManager.request(.inputMonitoring)
+        // Request Full Disk Access for the bookmark module (Safari bookmarks/history).
+        // Unlike accessibility, FDA cannot be prompted — this opens System Settings.
+        if !permissionsManager.isGranted(.fullDiskAccess) {
+            permissionsManager.request(.fullDiskAccess)
+        }
         themeEngine.start(
             intensity: configManager.config.appearance.themeIntensity
         )
@@ -171,6 +176,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(ZoomModule())
             await registerModule(CalendarModule())
             await registerModule(MeetingPrepModule())
+            await registerModule(BookmarkModule())
         }
     }
 

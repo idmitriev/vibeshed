@@ -437,6 +437,17 @@ modules:
       #   link: "https://zoom.us/j/1234567890?pwd=xyz"
       #   keywords: ["retro", "sprint"]
 
+  # --- Bookmarks & History ---
+  # Requires Full Disk Access permission for reading Safari bookmarks/history.
+  # Chromium bookmarks/history are read from Application Support (no FDA needed).
+  bookmark:
+    browsers: []               # empty = all installed Safari + Chromium browsers
+    maxBookmarks: 100          # max bookmark actions (0 = unlimited)
+    maxVisited: 30             # max most-visited history entries
+    showMostVisited: true      # show most-visited URL actions
+    minVisitCount: 3           # minimum visits to include a history entry
+    cacheTTLSeconds: 300       # re-read bookmarks/history every 5 minutes
+
   # --- Self (Vibeshed meta-actions) ---
   self:
     enabledActions:

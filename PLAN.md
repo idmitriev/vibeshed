@@ -291,10 +291,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Create a prepare for meeting module that can help users quickly prepare for meetings by showing relevant information and actions based on calendar events, meeting titles, and other metadata
 - [x] Implement action that hides all windows except the one relevant for the meeting, open relevant documents, show meeting agenda and participants, and other relevant information in the picker preview to help users quickly get ready for meetings
 
-### Phase 48: Browser bookmark actions
-- [ ] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.
-- [ ] Implement bookmark actions for Safari and Chrome at least, showing bookmark titles and favicons in the picker previews
-- [ ] Implement actions for most visited URL in browser history as well, showing visit count and last visited date in the previews
+### Phase 48: Browser bookmark actions (DONE)
+- [x] Implement a system for browser bookmark actions that can show bookmarks from browsers and open them directly from the picker. This can include showing bookmark folders and allowing users to navigate through them in the picker to find the bookmark they want to open.
+- [x] Implement bookmark actions for Safari and Chrome at least, showing bookmark titles and favicons in the picker previews
+- [x] Implement actions for most visited URL in browser history as well, showing visit count and last visited date in the previews, limit number of these actions to some configurable number to prevent overwhelming the picker with too many options
 
 ### Phase 49: Theming actions
 
