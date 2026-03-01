@@ -161,6 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(WindowModule())
             await registerModule(ApplicationModule())
             await registerModule(SystemModule())
+            await registerModule(ThemeModule())
             await registerModule(buildSelfModule())
             await registerModule(AudioModule())
             await registerModule(ClipboardModule())

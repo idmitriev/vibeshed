@@ -3,10 +3,10 @@
 # Copy this file to ~/.config/vibeshed/config.yaml and customize.
 
 appearance:
-  panelWidth: 680
-  panelHeight: 460
+  panelWidth: 720
+  panelHeight: 480
   cornerRadius: 12
-  themeIntensity: 0.85       # 0 = off, 0.3+ bg tint, 0.6+ icon tint, 0.8+ glow
+  themeIntensity: 0.8       # 0 = off, 0.3+ bg tint, 0.6+ icon tint, 0.8+ glow
 
 # ---------------------------------------------------------------------------
 # Keybindings
@@ -232,13 +232,6 @@ aliases:
     parameters:
       query: "{query}"
 
-  - alias: "Linear"
-    action: "https://linear.app"
-    icon: "checkmark.circle"
-    subtitle: "Open Linear"
-    browser: "chrome"
-    profile: "Work"
-
   # Directory aliases — open folders in Finder
   - alias: "Downloads"
     action: "~/Downloads"
@@ -308,6 +301,81 @@ modules:
       - screenshotInteractive
       - flushDNS
       - purgeMemory
+
+  # --- Theme / Appearance ---
+  theme:
+    # Uncomment to restrict which actions appear:
+    # enabledActions:
+    #   - setDark
+    #   - setLight
+    #   - setAccentColor
+    #   - setWallpaper
+    #   - vscodeTheme
+    #   - jetbrainsTheme
+    #   - itermPreset
+
+    # VSCode variants to manage (nil = Code, Code - Insiders, Cursor, Windsurf)
+    # vscodeVariants:
+    #   "VS Code": "Code"
+    #   "Cursor": "Cursor"
+    #   "Windsurf": "Windsurf"
+
+    # JetBrains IDEs to manage (nil = all detected)
+    # jetbrainsIDEs:
+    #   - idea
+    #   - webstorm
+    #   - goland
+
+    # Custom VSCode theme names for the picker
+    # vscodeThemes:
+    #   - "One Dark Pro"
+    #   - "Dracula"
+    #   - "Solarized Dark"
+    #   - "Solarized Light"
+    #   - "GitHub Dark"
+    #   - "Monokai"
+
+    # Custom iTerm color presets
+    # itermPresets:
+    #   - "Solarized Dark"
+    #   - "Tango Dark"
+    #   - "Light Background"
+
+    # Theme presets (nil = 3 defaults: Dark Focus, Light Clean, Warm Night)
+    # Each preset can set any combination of: appearance, accentColor, wallpaper,
+    # vscodeTheme, jetbrainsTheme, itermPreset, githubTheme.
+    # githubTheme options: "auto" (follows system), "light", "dark", "dark_dimmed"
+    # Requires a github.com tab open in a browser for GitHub theme to apply.
+    # presets:
+    #   - name: "Dark Focus"
+    #     icon: "moon.stars"
+    #     subtitle: "Dark mode with muted accent"
+    #     appearance: "dark"
+    #     accentColor: "Graphite"
+    #     vscodeTheme: "Default Dark Modern"
+    #     jetbrainsTheme: "Darcula"
+    #     itermPreset: "Solarized Dark"
+    #     githubTheme: "auto"
+    #
+    #   - name: "Light Clean"
+    #     icon: "sun.max"
+    #     subtitle: "Light mode with blue accent"
+    #     appearance: "light"
+    #     accentColor: "Blue"
+    #     vscodeTheme: "Default Light Modern"
+    #     jetbrainsTheme: "IntelliJ Light"
+    #     itermPreset: "Light Background"
+    #     githubTheme: "auto"
+    #
+    #   - name: "Warm Night"
+    #     icon: "flame"
+    #     subtitle: "Warm dark theme for night coding"
+    #     appearance: "dark"
+    #     accentColor: "Orange"
+    #     vscodeTheme: "Monokai"
+    #     jetbrainsTheme: "Darcula"
+    #     itermPreset: "Tango Dark"
+    #     githubTheme: "auto"
 
   # --- Audio Control ---
   audio:
@@ -481,13 +549,6 @@ urlRouting:
     - pattern: "*.github.com/*"
       browser: "chrome"
       profile: "Work"          # Open in Chrome's "Work" profile (Chromium only)
-    - pattern: "*.linear.app/*"
-      browser: "chrome"
-      profile: "Work"
-    - pattern: "*.notion.so/*"
-      browser: "chrome"
-    - pattern: "*.slack.com/*"
-      browser: "chrome"
     - pattern: "*.figma.com/*"
       browser: "chrome"
 

@@ -298,9 +298,9 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 ### Phase 49: Theming actions
 
-- [ ] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings
-- [ ] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome
-- [ ] Implement 3 themes
+- [x] Implement actions that can set system apperance like wallpaper/accent colors, light/dark mode, cursor color, and other settings
+- [x] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome
+- [x] Implement 3 themes
 
 ### Phase 51: Wrong keyboard layout detection and switching
 
@@ -314,6 +314,13 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase 53: Remove redundant actions
 
 - [ ] Review all existing actions and remove any that are redundant, not useful, or can be easily replaced by other actions. This will help streamline the app and make it easier for users to find and use the most relevant actions.
+- [ ] Merge some action, like now playing with cover preview should be add to liked songs
+
+### Phase 54: Merge similar modules
+
+- [ ] Review existing modules and merge any that have overlapping functionality or can be logically grouped together. For example, the Spotify module and the audio module could potentially be merged into a single "Media" module that handles all media-related actions and information.
+- [ ] Merge bookmarks and broser modules
+- [ ] Mode app related code like theme changing to corresponding app modules
 
 ### Phase _: Testing
 

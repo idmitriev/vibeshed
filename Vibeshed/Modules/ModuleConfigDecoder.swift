@@ -52,6 +52,12 @@ struct ModuleConfigDecoder: Sendable {
             do {
                 return try YAMLDecoder().decode(M.Config.self, from: yamlData)
             } catch {
+                // Empty/null YAML sections (e.g. `theme:` with no keys) produce
+                // non-nil Data that fails to decode. Fall back to defaultConfig
+                // when available; otherwise surface the decode error.
+                if let defaultConfig = M.defaultConfig {
+                    return defaultConfig
+                }
                 throw ModuleConfigError.decodingFailed(
                     moduleID: moduleID,
                     underlying: error
