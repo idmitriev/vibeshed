@@ -29,6 +29,9 @@ struct ApplicationManager: Sendable {
             uniquingKeysWith: { first, _ in first }
         )
 
+        // Single CGWindowList call for all window counts
+        let windowCounts = WindowListHelper.countWindowsByPID()
+
         for dir in appDirs {
             guard let contents = try? fileManager.contentsOfDirectory(atPath: dir) else {
                 continue
@@ -48,7 +51,7 @@ struct ApplicationManager: Sendable {
                     .replacingOccurrences(of: ".app", with: "")
                 let running = runningByBundleID[bundleID]
                 let windowCount = running
-                    .map { WindowListHelper.countWindows(for: $0.processIdentifier) } ?? 0
+                    .map { windowCounts[$0.processIdentifier] ?? 0 } ?? 0
 
                 apps.append(AppInfo(
                     id: bundleID,
@@ -71,7 +74,7 @@ struct ApplicationManager: Sendable {
                 continue
             }
             seen.insert(bundleID)
-            let windowCount = WindowListHelper.countWindows(for: app.processIdentifier)
+            let windowCount = windowCounts[app.processIdentifier] ?? 0
             apps.append(AppInfo(
                 id: bundleID,
                 name: app.localizedName ?? bundleID,
@@ -90,6 +93,7 @@ struct ApplicationManager: Sendable {
     @MainActor
     func listRunningApplications() -> [AppInfo] {
         let runningApps = NSWorkspace.shared.runningApplications
+        let windowCounts = WindowListHelper.countWindowsByPID()
         var apps: [AppInfo] = []
 
         for app in runningApps {
@@ -99,7 +103,7 @@ struct ApplicationManager: Sendable {
             else {
                 continue
             }
-            let windowCount = WindowListHelper.countWindows(for: app.processIdentifier)
+            let windowCount = windowCounts[app.processIdentifier] ?? 0
             apps.append(AppInfo(
                 id: bundleID,
                 name: app.localizedName ?? bundleID,

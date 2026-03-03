@@ -15,6 +15,8 @@ actor ApplicationModule: ModuleConfigurable {
     private let appManager = ApplicationManager()
     private var context: ModuleContext?
     private let log = Log.module("application")
+    private var appCache: [AppInfo] = []
+    private var cacheTimestamp: Date = .distantPast
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
@@ -23,7 +25,8 @@ actor ApplicationModule: ModuleConfigurable {
 
     func configDidUpdate(_ config: ApplicationConfig) async {
         self.config = config
-        log.debug("Config updated")
+        invalidateCache()
+        log.debug("Config updated, cache invalidated")
     }
 
     static func validate(_ config: ApplicationConfig) -> ConfigValidationResult {
@@ -36,13 +39,7 @@ actor ApplicationModule: ModuleConfigurable {
 
         var actions: [any Action] = buildActions()
 
-        // Add per-app top-level actions
-        let apps: [AppInfo]
-        if cfg.showRunningOnly {
-            apps = await MainActor.run { appManager.listRunningApplications() }
-        } else {
-            apps = await MainActor.run { appManager.listInstalledApplications() }
-        }
+        let apps = await getCachedOrFreshApps()
 
         let mgr = appManager
         for app in apps where !excluded.contains(app.id) {
@@ -68,7 +65,7 @@ actor ApplicationModule: ModuleConfigurable {
 
         let apps: [AppInfo]
         if showAll {
-            apps = await MainActor.run { appManager.listInstalledApplications() }
+            apps = await getCachedOrFreshApps()
         } else {
             apps = await MainActor.run { appManager.listRunningApplications() }
         }
@@ -192,6 +189,29 @@ actor ApplicationModule: ModuleConfigurable {
             }
             return .dismiss
         }
+    }
+
+    // MARK: - Cache
+
+    private func getCachedOrFreshApps() async -> [AppInfo] {
+        let now = Date()
+        if now.timeIntervalSince(cacheTimestamp) < config.cacheTTLSeconds, !appCache.isEmpty {
+            return appCache
+        }
+        let apps: [AppInfo]
+        if config.showRunningOnly {
+            apps = await MainActor.run { appManager.listRunningApplications() }
+        } else {
+            apps = await MainActor.run { appManager.listInstalledApplications() }
+        }
+        appCache = apps
+        cacheTimestamp = now
+        return apps
+    }
+
+    private func invalidateCache() {
+        appCache = []
+        cacheTimestamp = .distantPast
     }
 
     // MARK: - Per-App Top-Level Action

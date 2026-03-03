@@ -1,3 +1,4 @@
+import CoreFoundation
 import Foundation
 
 @MainActor
@@ -111,17 +112,41 @@ final class ModuleRegistry {
         await eventBus.publish(.moduleUnregistered(id))
     }
 
+    private let moduleQueryTimeout: TimeInterval = 2.0
+
     func queryAll(
         query: String,
         scoring: ScoringContext
     ) async -> [any Action] {
-        let allModules = Array(modules.values)
+        let signpostState = Log.signposter.beginInterval("ModuleQueryAll")
+        defer { Log.signposter.endInterval("ModuleQueryAll", signpostState) }
 
-        let allActions = await withTaskGroup(of: [any Action].self) { group in
+        let allModules = Array(modules.values)
+        let timeout = moduleQueryTimeout
+
+        return await withTaskGroup(of: [any Action].self) { group in
             for module in allModules {
                 group.addTask {
                     guard await module.isEnabled else { return [] }
-                    return await module.provideActions(query: query, scoring: scoring)
+                    let moduleID = await module.id
+                    let start = CFAbsoluteTimeGetCurrent()
+                    do {
+                        let actions = try await withThrowingTimeout(seconds: timeout) {
+                            await module.provideActions(query: query, scoring: scoring)
+                        }
+                        let ms = (CFAbsoluteTimeGetCurrent() - start) * 1000
+                        let count = actions.count
+                        Log.perf.debug(
+                            "\(moduleID, privacy: .public): \(ms, format: .fixed(precision: 1))ms (\(count) actions)"
+                        )
+                        return actions
+                    } catch {
+                        let ms = (CFAbsoluteTimeGetCurrent() - start) * 1000
+                        Log.perf.warning(
+                            "\(moduleID, privacy: .public): timed out after \(ms, format: .fixed(precision: 1))ms"
+                        )
+                        return []
+                    }
                 }
             }
             var results: [any Action] = []
@@ -129,12 +154,6 @@ final class ModuleRegistry {
                 results.append(contentsOf: batch)
             }
             return results
-        }
-
-        return allActions.sorted { a, b in
-            let scoreA = a.relevanceScore * 0.7 + scoring.usageBoost(for: a.id) * 0.3
-            let scoreB = b.relevanceScore * 0.7 + scoring.usageBoost(for: b.id) * 0.3
-            return scoreA > scoreB
         }
     }
 
@@ -256,5 +275,23 @@ final class ModuleRegistry {
                 }
             }
         }
+    }
+}
+
+// MARK: - Timeout Utility
+
+private func withThrowingTimeout<T: Sendable>(
+    seconds: TimeInterval,
+    operation: @escaping @Sendable () async -> T
+) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask { await operation() }
+        group.addTask {
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            throw CancellationError()
+        }
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
     }
 }

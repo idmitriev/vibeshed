@@ -18,6 +18,10 @@ enum Log {
     static let keybindings = Logger(subsystem: subsystem, category: "keybindings")
     static let uri = Logger(subsystem: subsystem, category: "uri")
     static let layout = Logger(subsystem: subsystem, category: "layout")
+    static let perf = Logger(subsystem: subsystem, category: "perf")
+
+    /// Signposter for Instruments profiling. Zero-cost when not actively profiling.
+    static let signposter = OSSignposter(subsystem: subsystem, category: "perf")
 
     static func module(_ name: String) -> Logger {
         Logger(subsystem: subsystem, category: "module.\(name)")

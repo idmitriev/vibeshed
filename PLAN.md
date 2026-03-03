@@ -304,44 +304,46 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 ### Phase 50: Wrong keyboard layout detection and switching
 
-- [ ] Implement a system for detecting when the user is typing in the wrong keyboard layout and automatically switching to the correct layout based on the user's input. This can help prevent frustration and improve typing efficiency for users who frequently switch between different keyboard layouts.
+- [x] Implement a system for detecting when the user is typing in the wrong keyboard layout and automatically switching to the correct layout based on the user's input. This can help prevent frustration and improve typing efficiency for users who frequently switch between different keyboard layouts.
 
-### Phase 51: Timers/reminders module
+### Phase 51: Performance optimizations (DONE)
 
-- [ ] Create a timers and reminders module that can help users set and manage timers and reminders directly from the picker. This can include actions for setting timers, creating reminders, and showing upcoming timers and reminders in the picker preview.
+- [x] Profile the app's performance and identify any bottlenecks or areas for improvement. Implement optimizations to ensure that the app runs smoothly and efficiently, even with a large number of actions
+- [x] Add performance logging for profiling actions and rendering
+- [x] Introduce in- or inter- module caching
+j
+### Phase 52: Timers/reminders module
+
+- [] Create a timers and reminders module that can help users set and manage timers and reminders directly from the picker. This can include actions for setting timers, creating reminders, and showing upcoming timers and reminders in the picker preview.
 - [ ] Implement actions for setting timers with specific durations, creating reminders for specific dates and times, and showing a list of upcoming timers and reminders in the picker preview to help users stay organized and on top of their tasks.
 
-### Phase 52: Math/conversion module
+### Phase 53: Math/conversion module
 
 - [ ] Create a math and conversion module that can perform various mathematical calculations and unit conversions directly from the picker
 - [ ] Parse query and provide actions for copying results into clipboard
 - [ ] Implement parsers for arithmetic expressions, currency conversions, unit conversions, and other common calculations to make it easy for users to perform quick calculations without leaving the picker
 - [ ] Boost actions provided by this module since if query is parsed as math expression or conversion it is very likely that user wants to execute these actions
 
-### Phase 53: Remove redundant actions
+### Phase 54: Remove redundant actions
 
 - [ ] Review all existing actions and remove any that are redundant, not useful, or can be easily replaced by other actions. This will help streamline the app and make it easier for users to find and use the most relevant actions.
-- [ ] Merge some action, like now playing with cover preview should be add to liked songs
+- [ ] Merge some actions, like now playing with cover preview should be add to liked songs
 
-### Phase 54: Merge similar modules
+### Phase 55: Merge similar modules
 
-- [ ] Review existing modules and merge any that have overlapping functionality or can be logically grouped together. For example, the Spotify module and the audio module could potentially be merged into a single "Media" module that handles all media-related actions and information.
-- [ ] Merge bookmarks and broser modules
-- [ ] Mode app related code like theme changing to corresponding app modules
+- [ ] Review existing modules and merge any that have overlapping functionality or can be logically grouped together
+- [ ] Merge bookmarks and browser modules
+- [ ] Move app related code like app theme changing to corresponding app modules or helpers
 
 ### Phase _: Testing
 
 - [ ] Write checklist file for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.
+- [ ] Add some XCUI tests for critical user flows like showing the picker, searching for actions, executing actions, and handling permissions to catch any regressions in these areas during development.
 
 ### Phase _: Bugfixing and polishing
 
 - [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
 
-### Phase _: Performance optimizations
-
-- [ ] Profile the app's performance and identify any bottlenecks or areas for improvement. Implement optimizations to ensure that the app runs smoothly and efficiently, even with a large number of actions and modules.
-- [ ] Add performance logging for providing actions and rendering
-- [ ] Introduce in or inter module caching
 
 ### Phase _: Releases and distribution 
 

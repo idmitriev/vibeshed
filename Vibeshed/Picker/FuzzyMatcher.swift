@@ -89,9 +89,10 @@ enum FuzzyMatcher {
             return (score: score, titleRanges: [])
         }
 
+        let queryLower = query.lowercased()
         let titleMatch = match(query: query, against: title)
         let subtitleMatch = match(query: query, against: subtitle)
-        let keywordMatch = keywords.contains { $0.lowercased().hasPrefix(query.lowercased()) }
+        let keywordMatch = keywords.contains { $0.lowercased().hasPrefix(queryLower) }
 
         // Must match at least title, subtitle, or keyword
         guard titleMatch != nil || subtitleMatch != nil || keywordMatch else {
@@ -118,28 +119,38 @@ enum FuzzyMatcher {
 
     private static func buildRanges(from indices: [Int], in string: String) -> [Range<String.Index>] {
         guard !indices.isEmpty else { return [] }
+        guard indices.last! < string.count else { return [] }
 
         var ranges: [Range<String.Index>] = []
-        let stringIndex = Array(string.indices) + [string.endIndex]
-        guard stringIndex.count > indices.last! else { return [] }
+        var currentIdx = string.startIndex
+        var currentInt = 0
 
-        var rangeStart = indices[0]
-        var rangeEnd = indices[0]
+        // Advance currentIdx to the given int position
+        func advance(to target: Int) -> String.Index {
+            while currentInt < target {
+                currentIdx = string.index(after: currentIdx)
+                currentInt += 1
+            }
+            return currentIdx
+        }
+
+        var rangeStartInt = indices[0]
+        var rangeEndInt = indices[0]
 
         for i in 1 ..< indices.count {
-            if indices[i] == rangeEnd + 1 {
-                rangeEnd = indices[i]
+            if indices[i] == rangeEndInt + 1 {
+                rangeEndInt = indices[i]
             } else {
-                let start = stringIndex[rangeStart]
-                let end = stringIndex[rangeEnd + 1]
+                let start = advance(to: rangeStartInt)
+                let end = advance(to: rangeEndInt + 1)
                 ranges.append(start ..< end)
-                rangeStart = indices[i]
-                rangeEnd = indices[i]
+                rangeStartInt = indices[i]
+                rangeEndInt = indices[i]
             }
         }
 
-        let start = stringIndex[rangeStart]
-        let end = stringIndex[rangeEnd + 1]
+        let start = advance(to: rangeStartInt)
+        let end = advance(to: rangeEndInt + 1)
         ranges.append(start ..< end)
 
         return ranges

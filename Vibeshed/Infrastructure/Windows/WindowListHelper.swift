@@ -89,6 +89,26 @@ enum WindowListHelper {
         }.count
     }
 
+    /// Count visible windows grouped by PID in a single CGWindowList call.
+    static func countWindowsByPID() -> [pid_t: Int] {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        guard let windowList = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
+        ) as? [[CFString: Any]] else {
+            return [:]
+        }
+        var counts: [pid_t: Int] = [:]
+        for entry in windowList {
+            guard let ownerPID = entry[kCGWindowOwnerPID] as? pid_t,
+                  let layer = entry[kCGWindowLayer] as? Int,
+                  layer == 0,
+                  ownerPID != ownPID
+            else { continue }
+            counts[ownerPID, default: 0] += 1
+        }
+        return counts
+    }
+
     /// Determine which screen contains the center of a CG-coordinate frame.
     @MainActor
     static func screenForFrame(_ frame: CGRect) -> CGRect {

@@ -1,4 +1,5 @@
 import Combine
+import CoreFoundation
 import Foundation
 
 @MainActor
@@ -246,6 +247,8 @@ final class PickerCoordinator {
                 pickerState.isLoading = true
                 Task { @MainActor [weak self] in
                     guard let self else { return }
+                    let pipelineState = Log.signposter.beginInterval("QueryPipeline")
+                    defer { Log.signposter.endInterval("QueryPipeline", pipelineState) }
                     if currentContext == nil {
                         currentContext = SystemContext.capture()
                         if let ctx = currentContext {
@@ -299,6 +302,9 @@ final class PickerCoordinator {
         query: String,
         scoring: ScoringContext
     ) -> ([ActionItem], [ActionID: any Action]) {
+        let buildState = Log.signposter.beginInterval("BuildActionItems")
+        defer { Log.signposter.endInterval("BuildActionItems", buildState) }
+
         // Apply aliases: enrich keywords for parameterless aliases,
         // create synthetic actions for parameterized ones
         let aliasResult = aliasManager?.applyAliases(to: actions)
