@@ -11,6 +11,7 @@ final class PickerCoordinator {
     var usageTracker: UsageTracker?
     var themeEngine: ThemeEngine?
     var aliasManager: AliasManager?
+    var layoutTransliterator: LayoutTransliterator?
 
     private var currentContext: SystemContext?
     private var parameterQuerySubscription: AnyCancellable?
@@ -258,6 +259,35 @@ final class PickerCoordinator {
                     guard case .search = pickerState.mode else { return }
 
                     let (items, cache) = buildActionItems(from: results, query: query, scoring: scoring)
+
+                    // Layout correction fallback: if no results and query is non-empty,
+                    // try transliterating from the current keyboard layout.
+                    if !query.isEmpty, items.isEmpty,
+                       let correction = layoutTransliterator?.transliterate(query) {
+                        let correctedScoring = usageTracker?.makeScoringContext(
+                            query: correction.correctedQuery, systemContext: ctx
+                        ) ?? ScoringContext(
+                            usageCounts: [:], lastUsedDates: [:],
+                            query: correction.correctedQuery, systemContext: ctx
+                        )
+                        let correctedResults = await moduleRegistry.queryAll(
+                            query: correction.correctedQuery, scoring: correctedScoring
+                        )
+                        guard case .search = pickerState.mode else { return }
+                        let (correctedItems, correctedCache) = buildActionItems(
+                            from: correctedResults,
+                            query: correction.correctedQuery,
+                            scoring: correctedScoring
+                        )
+                        if !correctedItems.isEmpty {
+                            pickerState.layoutCorrectionHint = correction
+                            pickerState.updateActions(correctedItems, cache: correctedCache)
+                            pickerState.isLoading = false
+                            return
+                        }
+                    }
+
+                    pickerState.layoutCorrectionHint = nil
                     pickerState.updateActions(items, cache: cache)
                     pickerState.isLoading = false
                 }
@@ -433,6 +463,32 @@ final class PickerCoordinator {
         guard case .search = pickerState.mode else { return }
 
         let (items, cache) = buildActionItems(from: results, query: query, scoring: scoring)
+
+        if !query.isEmpty, items.isEmpty,
+           let correction = layoutTransliterator?.transliterate(query) {
+            let correctedScoring = usageTracker?.makeScoringContext(
+                query: correction.correctedQuery, systemContext: ctx
+            ) ?? ScoringContext(
+                usageCounts: [:], lastUsedDates: [:],
+                query: correction.correctedQuery, systemContext: ctx
+            )
+            let correctedResults = await moduleRegistry.queryAll(
+                query: correction.correctedQuery, scoring: correctedScoring
+            )
+            guard case .search = pickerState.mode else { return }
+            let (correctedItems, correctedCache) = buildActionItems(
+                from: correctedResults,
+                query: correction.correctedQuery,
+                scoring: correctedScoring
+            )
+            if !correctedItems.isEmpty {
+                pickerState.layoutCorrectionHint = correction
+                pickerState.updateActions(correctedItems, cache: correctedCache, preservingSelection: true)
+                return
+            }
+        }
+
+        pickerState.layoutCorrectionHint = nil
         pickerState.updateActions(items, cache: cache, preservingSelection: true)
     }
 }

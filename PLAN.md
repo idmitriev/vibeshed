@@ -302,14 +302,21 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement actions to set theme in apps: VSCode, Jetbrains IDEs, iTerm, Telegram, Codex desktop, Claude desktop, ChatGPT desktop, Chrome
 - [x] Implement 3 themes
 
-### Phase 51: Wrong keyboard layout detection and switching
+### Phase 50: Wrong keyboard layout detection and switching
 
 - [ ] Implement a system for detecting when the user is typing in the wrong keyboard layout and automatically switching to the correct layout based on the user's input. This can help prevent frustration and improve typing efficiency for users who frequently switch between different keyboard layouts.
 
-### Phase 52: Timers/reminders module
+### Phase 51: Timers/reminders module
 
 - [ ] Create a timers and reminders module that can help users set and manage timers and reminders directly from the picker. This can include actions for setting timers, creating reminders, and showing upcoming timers and reminders in the picker preview.
 - [ ] Implement actions for setting timers with specific durations, creating reminders for specific dates and times, and showing a list of upcoming timers and reminders in the picker preview to help users stay organized and on top of their tasks.
+
+### Phase 52: Math/conversion module
+
+- [ ] Create a math and conversion module that can perform various mathematical calculations and unit conversions directly from the picker
+- [ ] Parse query and provide actions for copying results into clipboard
+- [ ] Implement parsers for arithmetic expressions, currency conversions, unit conversions, and other common calculations to make it easy for users to perform quick calculations without leaving the picker
+- [ ] Boost actions provided by this module since if query is parsed as math expression or conversion it is very likely that user wants to execute these actions
 
 ### Phase 53: Remove redundant actions
 
@@ -329,6 +336,12 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 ### Phase _: Bugfixing and polishing
 
 - [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
+
+### Phase _: Performance optimizations
+
+- [ ] Profile the app's performance and identify any bottlenecks or areas for improvement. Implement optimizations to ensure that the app runs smoothly and efficiently, even with a large number of actions and modules.
+- [ ] Add performance logging for providing actions and rendering
+- [ ] Introduce in or inter module caching
 
 ### Phase _: Releases and distribution 
 

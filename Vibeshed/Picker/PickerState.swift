@@ -27,6 +27,7 @@ final class PickerState {
     var parameterOptions: [ParameterOption] = []
     var selectedParameterOptionID: String?
     var isLoadingOptions: Bool = false
+    var layoutCorrectionHint: LayoutCorrectionHint?
 
     var parameterQuery: String = "" {
         didSet { parameterQuerySubject.send(parameterQuery) }
@@ -99,6 +100,7 @@ final class PickerState {
         parameterOptions = []
         selectedParameterOptionID = nil
         isLoadingOptions = false
+        layoutCorrectionHint = nil
         actionCache = [:]
     }
 

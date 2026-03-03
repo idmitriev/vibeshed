@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let themeEngine: ThemeEngine
     let autostartManager: AutostartManager
     let aliasManager: AliasManager
+    let layoutTransliterator: LayoutTransliterator
 
     override init() {
         self.eventBus = EventBus()
@@ -38,9 +39,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             eventBus: eventBus
         )
         self.aliasManager = AliasManager(configManager: configManager, eventBus: eventBus)
+        self.layoutTransliterator = LayoutTransliterator(configManager: configManager, eventBus: eventBus)
         pickerCoordinator.usageTracker = usageTracker
         pickerCoordinator.themeEngine = themeEngine
         pickerCoordinator.aliasManager = aliasManager
+        pickerCoordinator.layoutTransliterator = layoutTransliterator
         moduleRegistry.aliasManager = aliasManager
         panelController.coordinator = pickerCoordinator
         panelController.themeEngine = themeEngine
@@ -122,6 +125,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         themeEngine.start(
             intensity: configManager.config.appearance.themeIntensity
         )
+        layoutTransliterator.start()
         pickerCoordinator.start()
         keyComboManager.startListening()
         keyComboManager.applyBindings(configManager.config.keybindings)

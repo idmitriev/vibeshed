@@ -84,6 +84,10 @@ struct PickerView: View {
                 .id(state.mode)
             }
 
+            if let hint = state.layoutCorrectionHint, case .search = state.mode {
+                LayoutCorrectionBanner(hint: hint)
+            }
+
             Divider()
 
             content

@@ -121,6 +121,14 @@ final class ConfigManager {
             )
         }
 
+        if let layoutCorrectionNode = rootMapping[Node("layoutCorrection")] {
+            let layoutCorrectionYAML = try Yams.serialize(node: layoutCorrectionNode)
+            config.layoutCorrection = try decoder.decode(
+                AppConfig.LayoutCorrectionConfig.self,
+                from: layoutCorrectionYAML
+            )
+        }
+
         if let aliasesNode = rootMapping[Node("aliases")] {
             let aliasesYAML = try Yams.serialize(node: aliasesNode)
             config.aliases = try decoder.decode(
