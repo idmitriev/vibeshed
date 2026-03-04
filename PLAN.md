@@ -311,26 +311,29 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Profile the app's performance and identify any bottlenecks or areas for improvement. Implement optimizations to ensure that the app runs smoothly and efficiently, even with a large number of actions
 - [x] Add performance logging for profiling actions and rendering
 - [x] Introduce in- or inter- module caching
-j
-### Phase 52: Timers/reminders module
 
-- [] Create a timers and reminders module that can help users set and manage timers and reminders directly from the picker. This can include actions for setting timers, creating reminders, and showing upcoming timers and reminders in the picker preview.
-- [ ] Implement actions for setting timers with specific durations, creating reminders for specific dates and times, and showing a list of upcoming timers and reminders in the picker preview to help users stay organized and on top of their tasks.
+### Phase 52: Timers/reminders module (DONE)
+
+- [x] Create a timers and reminders module that can help users set and manage timers and reminders directly from the picker. This can include actions for setting timers, creating reminders, and showing upcoming timers and reminders in the picker preview.
+- [x] Implement actions for setting timers with specific durations, creating reminders for specific dates and times, and showing a list of upcoming timers and reminders in the picker preview to help users stay organized and on top of their tasks.
 
 ### Phase 53: Math/conversion module
 
-- [ ] Create a math and conversion module that can perform various mathematical calculations and unit conversions directly from the picker
-- [ ] Parse query and provide actions for copying results into clipboard
-- [ ] Implement parsers for arithmetic expressions, currency conversions, unit conversions, and other common calculations to make it easy for users to perform quick calculations without leaving the picker
-- [ ] Boost actions provided by this module since if query is parsed as math expression or conversion it is very likely that user wants to execute these actions
+- [x] Create a math and conversion module that can perform various mathematical calculations and unit conversions directly from the picker
+- [x] Parse query and provide actions for copying results into clipboard
+- [x] Implement parsers for arithmetic expressions, currency conversions, unit conversions, and other common calculations to make it easy for users to perform quick calculations without leaving the picker
+- [x] Boost actions provided by this module since if query is parsed as math expression or conversion it is very likely that user wants to execute these actions
 
-### Phase 54: Remove redundant actions
+### Phase 55: Faster picker toggle
+
+- [ ] Implement a faster picker toggle mechanism that can show the picker more quickly and responsively when the user triggers it with a key-combo
+- [ ] Retain picker state (query, selected action) when toggling it off and on to allow users to quickly hide and show the picker without losing their place
+- [ ] Optimize action list loading, maybe introduce caching when query is empty to show at least some actions immediately on picker open and then update them when modules provide results
+
+### Phase 54: Remove redundant actions and Merge similar modules
 
 - [ ] Review all existing actions and remove any that are redundant, not useful, or can be easily replaced by other actions. This will help streamline the app and make it easier for users to find and use the most relevant actions.
 - [ ] Merge some actions, like now playing with cover preview should be add to liked songs
-
-### Phase 55: Merge similar modules
-
 - [ ] Review existing modules and merge any that have overlapping functionality or can be logically grouped together
 - [ ] Merge bookmarks and browser modules
 - [ ] Move app related code like app theme changing to corresponding app modules or helpers
@@ -351,7 +354,7 @@ j
 - [ ] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
 - [ ] Make sure it follows apple UX guidelines and unix principles at least to some extent
 - [ ] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems
-- [ ] Make gitingnore file is configured to not include any sensitive information, build artifacts, or other unnecessary files in the repository
+- [ ] Make sure gitingnore file is configured to not include any sensitive information, build artifacts, or other unnecessary files in the repository
 - [ ] Publish the app on github with proper license, readme, and some documentation
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
 - [ ] Create a website on github pages for the app with documentation, screenshots, and download links

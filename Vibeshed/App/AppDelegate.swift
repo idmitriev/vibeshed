@@ -182,6 +182,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(CalendarModule())
             await registerModule(MeetingPrepModule())
             await registerModule(BookmarkModule())
+            await registerModule(TimerModule())
+            await registerModule(MathModule())
         }
     }
 

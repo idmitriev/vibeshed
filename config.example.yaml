@@ -516,6 +516,31 @@ modules:
     minVisitCount: 3           # minimum visits to include a history entry
     cacheTTLSeconds: 300       # re-read bookmarks/history every 5 minutes
 
+  # --- Timers & Reminders ---
+  timer:
+    defaultSound: "Glass"                # macOS system sound name
+    presetDurations: [1, 5, 10, 15, 30, 60]  # preset timer durations in minutes
+    maxActiveTimers: 20
+    # enabledActions:
+    #   - setTimer
+    #   - setReminder
+    #   - cancelAll
+    #   - clearCompleted
+
+  # --- Math & Conversions ---
+  math:
+    decimalPlaces: 6            # Max decimal places (trailing zeros stripped)
+    enableCurrency: true        # Fetch live exchange rates
+    currencyRateTTL: 3600       # Rate cache TTL in seconds
+    copyOnSelect: true          # Copy result to clipboard on Enter
+    showBaseConversions: true   # Show hex/bin/oct for integer results
+    # enabledActions:           # nil = all enabled
+    #   - expression
+    #   - unitConversion
+    #   - currencyConversion
+    #   - percentage
+    #   - baseConversion
+
   # --- Self (Vibeshed meta-actions) ---
   self:
     enabledActions:
