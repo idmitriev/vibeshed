@@ -324,19 +324,19 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Implement parsers for arithmetic expressions, currency conversions, unit conversions, and other common calculations to make it easy for users to perform quick calculations without leaving the picker
 - [x] Boost actions provided by this module since if query is parsed as math expression or conversion it is very likely that user wants to execute these actions
 
-### Phase 55: Faster picker toggle
+### Phase 55: Faster picker toggle (DONE)
 
-- [ ] Implement a faster picker toggle mechanism that can show the picker more quickly and responsively when the user triggers it with a key-combo
-- [ ] Retain picker state (query, selected action) when toggling it off and on to allow users to quickly hide and show the picker without losing their place
-- [ ] Optimize action list loading, maybe introduce caching when query is empty to show at least some actions immediately on picker open and then update them when modules provide results
+- [x] Implement a faster picker toggle mechanism that can show the picker more quickly and responsively when the user triggers it with a key-combo
+- [x] Retain picker state (query, selected action) when toggling it off and on to allow users to quickly hide and show the picker without losing their place
+- [x] Optimize action list loading, maybe introduce caching when query is empty to show at least some actions immediately on picker open and then update them when modules provide results
 
 ### Phase 54: Remove redundant actions and Merge similar modules
 
-- [ ] Review all existing actions and remove any that are redundant, not useful, or can be easily replaced by other actions. This will help streamline the app and make it easier for users to find and use the most relevant actions.
-- [ ] Merge some actions, like now playing with cover preview should be add to liked songs
-- [ ] Review existing modules and merge any that have overlapping functionality or can be logically grouped together
-- [ ] Merge bookmarks and browser modules
-- [ ] Move app related code like app theme changing to corresponding app modules or helpers
+- [x] Review all existing actions and remove any that are redundant, not useful, or can be easily replaced by other actions. This will help streamline the app and make it easier for users to find and use the most relevant actions.
+- [x] Merge some actions, like now playing with cover preview should be add to liked songs
+- [x] Review existing modules and merge any that have overlapping functionality or can be logically grouped together
+- [x] Merge bookmarks and browser modules
+- [x] Move app related code like app theme changing to corresponding app modules or helpers
 
 ### Phase _: Testing
 

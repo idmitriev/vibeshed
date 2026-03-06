@@ -97,8 +97,8 @@ private struct BackspaceTextField: NSViewRepresentable {
         cell.customFieldEditor.isRichText = false
         cell.customFieldEditor.font = cell.font
 
-        // Focus on next run loop
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        // Focus after show animation completes (~300ms) to avoid layout during animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
             field.window?.makeFirstResponder(field)
         }
 

@@ -6,11 +6,17 @@ final class FloatingPanel: NSPanel {
     /// Called on Escape. Return `true` if handled (e.g. mode popped), `false` to close the panel.
     var onEscape: (() -> Bool)?
 
-    /// Called before animated dismiss begins. Used so PanelController can update state.
-    var onWillClose: (() -> Void)?
+    /// Called before animated hide/dismiss begins. Used so PanelController can update state.
+    var onWillHide: (() -> Void)?
 
-    /// Whether we're currently running a dismiss animation (prevents re-entrancy).
-    private var isDismissing = false
+    /// Called when the show animation finishes. Used to defer heavy work.
+    var onShowAnimationComplete: (() -> Void)?
+
+    /// Whether we're currently running a hide/dismiss animation (prevents re-entrancy).
+    private var isHiding = false
+
+    /// Whether the show animation is currently in flight.
+    private(set) var isAnimatingShow = false
 
     init(contentRect: NSRect) {
         super.init(
@@ -42,6 +48,8 @@ final class FloatingPanel: NSPanel {
 
         isReleasedWhenClosed = false
         hidesOnDeactivate = false
+
+        contentView?.wantsLayer = true
     }
 
     override var canBecomeKey: Bool {
@@ -54,117 +62,184 @@ final class FloatingPanel: NSPanel {
 
     override func resignKey() {
         super.resignKey()
-        animateDismiss()
+        animateHide()
     }
 
     override func cancelOperation(_ sender: Any?) {
         if let onEscape, onEscape() {
             return
         }
-        animateDismiss()
+        animateHide()
     }
 
     func setSwiftUIContent(_ view: some View) {
         contentView = NSHostingView(rootView: view.ignoresSafeArea())
+        contentView?.wantsLayer = true
     }
 
     // MARK: - Show animation (called by PanelController)
 
     func animateShow() {
-        isDismissing = false
+        isHiding = false
+        isAnimatingShow = true
+
         guard let layer = contentView?.layer else {
             alphaValue = 1
+            isAnimatingShow = false
+            onShowAnimationComplete?()
             return
         }
 
-        // Ensure the content view is layer-backed
-        contentView?.wantsLayer = true
+        // Suppress implicit animations from any pending property changes
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
 
-        // Start state: scaled down, transparent, slightly lower
-        alphaValue = 0
+        // Window surface fully visible — layer opacity handles the visual fade
+        alphaValue = 1
         layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         repositionLayerAnchor(layer)
         layer.transform = CATransform3DMakeScale(0.94, 0.94, 1)
+        layer.opacity = 0
+
+        CATransaction.commit()
 
         makeKeyAndOrderFront(nil)
         orderFrontRegardless()
 
-        // Spring-style show animation
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(0.35)
-        CATransaction.setAnimationTimingFunction(
-            CAMediaTimingFunction(controlPoints: 0.175, 0.885, 0.32, 1.1)
-        )
+        // Unified animation group: scale + opacity in one CA commit
+        let timing = CAMediaTimingFunction(controlPoints: 0.175, 0.885, 0.32, 1.1)
 
         let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
         scaleAnim.fromValue = 0.94
         scaleAnim.toValue = 1.0
-        scaleAnim.duration = 0.35
-        scaleAnim.timingFunction = CAMediaTimingFunction(controlPoints: 0.175, 0.885, 0.32, 1.1)
-        scaleAnim.isRemovedOnCompletion = false
-        scaleAnim.fillMode = .forwards
-        layer.add(scaleAnim, forKey: "showScale")
+
+        let fadeAnim = CABasicAnimation(keyPath: "opacity")
+        fadeAnim.fromValue = 0.0
+        fadeAnim.toValue = 1.0
+
+        let group = CAAnimationGroup()
+        group.animations = [scaleAnim, fadeAnim]
+        group.duration = 0.3
+        group.timingFunction = timing
+        group.isRemovedOnCompletion = false
+        group.fillMode = .forwards
+
+        CATransaction.begin()
+        CATransaction.setCompletionBlock { [weak self] in
+            guard let self else { return }
+            self.isAnimatingShow = false
+            self.onShowAnimationComplete?()
+        }
+
+        layer.add(group, forKey: "showGroup")
 
         CATransaction.commit()
 
+        // Set model values to final state
         layer.transform = CATransform3DIdentity
-
-        // Fade in with slightly faster timing
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            self.animator().alphaValue = 1
-        }
+        layer.opacity = 1
     }
 
-    // MARK: - Dismiss animation
+    // MARK: - Hide animation (orderOut – keeps panel in memory)
 
-    func animateDismiss() {
-        guard !isDismissing else { return }
-        isDismissing = true
+    func animateHide() {
+        guard !isHiding else { return }
+        isHiding = true
+        isAnimatingShow = false
 
-        onWillClose?()
+        onWillHide?()
 
         guard let layer = contentView?.layer else {
-            close()
+            orderOut(nil)
+            isHiding = false
             return
         }
 
-        contentView?.wantsLayer = true
         layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         repositionLayerAnchor(layer)
 
-        // Scale-down + fade-out dismiss
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(0.15)
-        CATransaction.setAnimationTimingFunction(
-            CAMediaTimingFunction(controlPoints: 0.4, 0.0, 1.0, 1.0)
-        )
-        CATransaction.setCompletionBlock { [weak self] in
-            guard let self else { return }
-            self.close()
-            // Reset for next show
-            layer.transform = CATransform3DIdentity
-            self.alphaValue = 0
-            self.isDismissing = false
-        }
+        let timing = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 1.0, 1.0)
 
         let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
         scaleAnim.fromValue = 1.0
         scaleAnim.toValue = 0.96
-        scaleAnim.duration = 0.15
-        scaleAnim.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 1.0, 1.0)
-        scaleAnim.isRemovedOnCompletion = false
-        scaleAnim.fillMode = .forwards
-        layer.add(scaleAnim, forKey: "hideScale")
+
+        let fadeAnim = CABasicAnimation(keyPath: "opacity")
+        fadeAnim.fromValue = 1.0
+        fadeAnim.toValue = 0.0
+
+        let group = CAAnimationGroup()
+        group.animations = [scaleAnim, fadeAnim]
+        group.duration = 0.15
+        group.timingFunction = timing
+        group.isRemovedOnCompletion = false
+        group.fillMode = .forwards
+
+        CATransaction.begin()
+        CATransaction.setCompletionBlock { [weak self] in
+            guard let self else { return }
+            self.orderOut(nil)
+            layer.removeAllAnimations()
+            layer.transform = CATransform3DIdentity
+            layer.opacity = 0
+            self.alphaValue = 0
+            self.isHiding = false
+        }
+
+        layer.add(group, forKey: "hideGroup")
 
         CATransaction.commit()
+    }
 
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.12
-            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 1.0, 1.0)
-            self.animator().alphaValue = 0
+    // MARK: - Dismiss (close – destroys panel, used for app quit)
+
+    func animateDismiss() {
+        guard !isHiding else { return }
+        isHiding = true
+        isAnimatingShow = false
+
+        onWillHide?()
+
+        guard let layer = contentView?.layer else {
+            close()
+            isHiding = false
+            return
         }
+
+        layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        repositionLayerAnchor(layer)
+
+        let timing = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 1.0, 1.0)
+
+        let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
+        scaleAnim.fromValue = 1.0
+        scaleAnim.toValue = 0.96
+
+        let fadeAnim = CABasicAnimation(keyPath: "opacity")
+        fadeAnim.fromValue = 1.0
+        fadeAnim.toValue = 0.0
+
+        let group = CAAnimationGroup()
+        group.animations = [scaleAnim, fadeAnim]
+        group.duration = 0.15
+        group.timingFunction = timing
+        group.isRemovedOnCompletion = false
+        group.fillMode = .forwards
+
+        CATransaction.begin()
+        CATransaction.setCompletionBlock { [weak self] in
+            guard let self else { return }
+            self.close()
+            layer.removeAllAnimations()
+            layer.transform = CATransform3DIdentity
+            layer.opacity = 0
+            self.alphaValue = 0
+            self.isHiding = false
+        }
+
+        layer.add(group, forKey: "hideGroup")
+
+        CATransaction.commit()
     }
 
     // MARK: - Helpers

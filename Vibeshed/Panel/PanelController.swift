@@ -12,6 +12,21 @@ final class PanelController {
 
     private(set) var isVisible: Bool = false
 
+    /// Tracks whether panel was hidden (orderOut) vs never created.
+    /// When true, state is retained and we can skip reset on next show.
+    private var isHiddenWithState: Bool = false
+
+    /// Cached shadow color to avoid reapplying unchanged shadow properties.
+    private var appliedShadowColor: CGColor?
+
+    /// What kind of load to perform after the show animation completes.
+    private enum DeferredLoad {
+        case initial
+        case refresh
+    }
+
+    private var deferredLoad: DeferredLoad?
+
     init(pickerState: PickerState) {
         self.pickerState = pickerState
     }
@@ -22,10 +37,20 @@ final class PanelController {
 
     func show() {
         let panel = getOrCreatePanel()
-        pickerState.reset()
-        coordinator?.clearContext()
-        coordinator?.loadInitialActions()
 
+        // Determine load strategy but defer actual heavy work until animation finishes
+        if isHiddenWithState {
+            deferredLoad = .refresh
+        } else {
+            pickerState.reset()
+            coordinator?.clearContext()
+            // Show cached results synchronously (fast — just array copy, no async)
+            coordinator?.showCachedActionsIfAvailable()
+            deferredLoad = .initial
+        }
+        isHiddenWithState = false
+
+        // Layout + shadow before animation (unavoidable sync work)
         if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
             let x = screenFrame.midX - panel.frame.width / 2
@@ -33,16 +58,9 @@ final class PanelController {
             panel.setFrameOrigin(NSPoint(x: x, y: y))
         }
 
-        if let shadowColor = themeEngine?.theme.shadowColor {
-            panel.contentView?.wantsLayer = true
-            panel.contentView?.layer?.shadowColor = NSColor(shadowColor).cgColor
-            panel.contentView?.layer?.shadowOpacity = 1
-            panel.contentView?.layer?.shadowRadius = 20
-            panel.contentView?.layer?.shadowOffset = .zero
-        } else {
-            panel.contentView?.layer?.shadowOpacity = 0
-        }
+        applyShadow(to: panel)
 
+        // Start animation — heavy work fires in onShowAnimationDidComplete
         panel.animateShow()
         isVisible = true
         Log.picker.debug("Panel shown")
@@ -50,9 +68,54 @@ final class PanelController {
 
     func hide() {
         guard let panel, isVisible else { return }
-        panel.animateDismiss()
+        isHiddenWithState = true
+        deferredLoad = nil
+        panel.animateHide()
+        isVisible = false
         Log.picker.debug("Panel hidden")
-        // isVisible is set to false by the onWillClose callback
+    }
+
+    /// Called after action execution — resets state so next show is fresh.
+    func hideAndReset() {
+        guard let panel, isVisible else { return }
+        isHiddenWithState = false
+        deferredLoad = nil
+        pickerState.reset()
+        coordinator?.clearContext()
+        panel.animateHide()
+        isVisible = false
+        Log.picker.debug("Panel hidden (state reset)")
+    }
+
+    // MARK: - Private
+
+    private func onShowAnimationDidComplete() {
+        guard let load = deferredLoad else { return }
+        deferredLoad = nil
+
+        switch load {
+        case .initial:
+            coordinator?.loadInitialActions()
+        case .refresh:
+            coordinator?.refreshInPlace()
+        }
+    }
+
+    private func applyShadow(to panel: FloatingPanel) {
+        guard let layer = panel.contentView?.layer else { return }
+        if let shadowColor = themeEngine?.theme.shadowColor {
+            let cgColor = NSColor(shadowColor).cgColor
+            if appliedShadowColor != cgColor {
+                layer.shadowColor = cgColor
+                layer.shadowOpacity = 1
+                layer.shadowRadius = 20
+                layer.shadowOffset = .zero
+                appliedShadowColor = cgColor
+            }
+        } else if appliedShadowColor != nil {
+            layer.shadowOpacity = 0
+            appliedShadowColor = nil
+        }
     }
 
     private func getOrCreatePanel() -> FloatingPanel {
@@ -66,9 +129,15 @@ final class PanelController {
             return self.pickerState.popMode()
         }
 
-        newPanel.onWillClose = { [weak self] in
+        newPanel.onWillHide = { [weak self] in
             MainActor.assumeIsolated {
                 self?.isVisible = false
+            }
+        }
+
+        newPanel.onShowAnimationComplete = { [weak self] in
+            MainActor.assumeIsolated {
+                self?.onShowAnimationDidComplete()
             }
         }
 
@@ -93,6 +162,7 @@ final class PanelController {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.isVisible = false
+                self?.isHiddenWithState = false
             }
         }
 

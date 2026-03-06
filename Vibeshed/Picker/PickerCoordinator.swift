@@ -19,6 +19,11 @@ final class PickerCoordinator {
     private var querySubscription: AnyCancellable?
     private var actionRefreshSubscription: Any?
 
+    // MARK: - Empty-query cache (instant display on re-open)
+
+    @ObservationIgnored private var cachedEmptyQueryItems: [ActionItem]?
+    @ObservationIgnored private var cachedEmptyQueryActionCache: [ActionID: any Action]?
+
     init(
         pickerState: PickerState,
         moduleRegistry: ModuleRegistry,
@@ -62,7 +67,7 @@ final class PickerCoordinator {
         case .parameterInput:
             handleReturnInParameterMode()
         case .result:
-            panelController.hide()
+            panelController.hideAndReset()
         }
     }
 
@@ -186,7 +191,7 @@ final class PickerCoordinator {
     private func handleActionResult(_ result: ActionResult) {
         switch result {
         case .dismiss:
-            panelController.hide()
+            panelController.hideAndReset()
 
         case .keepOpen:
             break
@@ -426,10 +431,16 @@ final class PickerCoordinator {
             guard let self else { return }
             let (_, stream) = await eventBus.subscribe()
             for await event in stream {
-                if case .moduleActionsChanged = event,
-                   panelController.isVisible,
-                   case .search = pickerState.mode {
-                    await refreshActions()
+                switch event {
+                case .moduleActionsChanged:
+                    invalidateEmptyQueryCache()
+                    if panelController.isVisible, case .search = pickerState.mode {
+                        await refreshActions()
+                    }
+                case .configReloaded, .moduleRegistered, .moduleUnregistered:
+                    invalidateEmptyQueryCache()
+                default:
+                    break
                 }
             }
         }
@@ -439,10 +450,26 @@ final class PickerCoordinator {
         currentContext = nil
     }
 
+    /// Shows cached empty-query results synchronously without triggering any async work.
+    /// Called before the show animation so the user sees content immediately.
+    func showCachedActionsIfAvailable() {
+        if let cachedItems = cachedEmptyQueryItems,
+           let cachedCache = cachedEmptyQueryActionCache {
+            pickerState.updateActions(cachedItems, cache: cachedCache)
+            pickerState.isLoading = false
+        } else {
+            pickerState.isLoading = true
+        }
+    }
+
     /// Triggers an immediate (non-debounced) query to populate the action list.
-    /// Called when the panel opens so the user never sees an empty list.
+    /// Called after the show animation completes so re-renders don't contend with animation.
     func loadInitialActions() {
-        pickerState.isLoading = true
+        // If no cache was shown before animation, show loading state
+        if cachedEmptyQueryItems == nil {
+            pickerState.isLoading = true
+        }
+
         Task { @MainActor [weak self] in
             guard let self else { return }
             currentContext = SystemContext.capture()
@@ -457,7 +484,43 @@ final class PickerCoordinator {
             let (items, cache) = buildActionItems(from: results, query: "", scoring: scoring)
             pickerState.updateActions(items, cache: cache)
             pickerState.isLoading = false
+
+            // Update cache for next open
+            cachedEmptyQueryItems = items
+            cachedEmptyQueryActionCache = cache
         }
+    }
+
+    /// Re-shows the picker with retained state. Refreshes context and re-scores
+    /// existing actions in the background without clearing the list.
+    func refreshInPlace() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            currentContext = SystemContext.capture()
+            if let ctx = currentContext {
+                Task { await self.themeEngine?.refresh(context: ctx) }
+            }
+            let query = pickerState.query
+            let ctx = currentContext
+            let scoring = usageTracker?.makeScoringContext(query: query, systemContext: ctx)
+                ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: ctx)
+            let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
+            guard case .search = pickerState.mode else { return }
+            let (items, cache) = buildActionItems(from: results, query: query, scoring: scoring)
+            pickerState.updateActions(items, cache: cache, preservingSelection: true)
+
+            // Update empty-query cache if applicable
+            if query.isEmpty {
+                cachedEmptyQueryItems = items
+                cachedEmptyQueryActionCache = cache
+            }
+        }
+    }
+
+    /// Invalidates the empty-query cache so the next fresh open re-queries modules.
+    private func invalidateEmptyQueryCache() {
+        cachedEmptyQueryItems = nil
+        cachedEmptyQueryActionCache = nil
     }
 
     func refreshActions() async {
