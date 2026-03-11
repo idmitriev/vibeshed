@@ -52,11 +52,10 @@ enum BaseConverter {
         else { return nil }
 
         guard let valueRange = Range(match.range(at: 1), in: input),
-              let targetRange = Range(match.range(at: 2), in: input)
+              Range(match.range(at: 2), in: input) != nil
         else { return nil }
 
         let valueStr = String(input[valueRange])
-        let targetBase = normalizeBase(String(input[targetRange]))
 
         guard let intValue = parseIntValue(valueStr) else { return nil }
         let fromBase = detectBase(valueStr)

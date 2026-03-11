@@ -58,8 +58,8 @@ enum FuzzyMatcher {
         guard qIdx == queryChars.count else { return nil }
 
         // Penalty for gaps between matches
-        if matchedIndices.count >= 2 {
-            let totalGap = matchedIndices.last! - matchedIndices.first! - (matchedIndices.count - 1)
+        if let first = matchedIndices.first, let last = matchedIndices.last, matchedIndices.count >= 2 {
+            let totalGap = last - first - (matchedIndices.count - 1)
             totalScore -= Double(totalGap) * 0.02
         }
 
@@ -118,8 +118,8 @@ enum FuzzyMatcher {
     // MARK: - Private
 
     private static func buildRanges(from indices: [Int], in string: String) -> [Range<String.Index>] {
-        guard !indices.isEmpty else { return [] }
-        guard indices.last! < string.count else { return [] }
+        guard let lastIndex = indices.last, !indices.isEmpty else { return [] }
+        guard lastIndex < string.count else { return [] }
 
         var ranges: [Range<String.Index>] = []
         var currentIdx = string.startIndex

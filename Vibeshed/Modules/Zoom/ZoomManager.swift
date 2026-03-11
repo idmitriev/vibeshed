@@ -7,7 +7,7 @@ enum ZoomManager {
 
     // MARK: - URL Building
 
-    static func joinURL(meetingId: String, password: String?) -> URL {
+    static func joinURL(meetingId: String, password: String?) -> URL? {
         var components = URLComponents()
         components.scheme = "zoommtg"
         components.host = "zoom.us"
@@ -17,16 +17,16 @@ enum ZoomManager {
             items.append(URLQueryItem(name: "pwd", value: password))
         }
         components.queryItems = items
-        return components.url!
+        return components.url
     }
 
-    static func startPersonalMeetingURL(meetingId: String) -> URL {
+    static func startPersonalMeetingURL(meetingId: String) -> URL? {
         var components = URLComponents()
         components.scheme = "zoommtg"
         components.host = "zoom.us"
         components.path = "/start"
         components.queryItems = [URLQueryItem(name: "confno", value: meetingId)]
-        return components.url!
+        return components.url
     }
 
     // MARK: - Link Parsing

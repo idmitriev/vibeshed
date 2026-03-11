@@ -330,9 +330,9 @@ final class SpotifySearchClient: @unchecked Sendable {
         else {
             log.warning("Spotify token refresh failed, clearing tokens and re-authenticating")
             lock.lock()
+            defer { lock.unlock() }
             self.accessToken = nil
             self.refreshToken = nil
-            lock.unlock()
             saveTokens()
             try await authenticate()
             return
@@ -353,12 +353,12 @@ final class SpotifySearchClient: @unchecked Sendable {
         }
 
         lock.lock()
+        defer { lock.unlock() }
         self.accessToken = accessToken
         if let newRefresh = json["refresh_token"] as? String {
             self.refreshToken = newRefresh
         }
         self.tokenExpiry = Date().addingTimeInterval(TimeInterval(expiresIn - 60))
-        lock.unlock()
 
         saveTokens()
     }
@@ -373,22 +373,24 @@ final class SpotifySearchClient: @unchecked Sendable {
         log.debug("Loaded Spotify tokens from disk")
 
         lock.lock()
+        defer { lock.unlock() }
         accessToken = json["accessToken"] as? String
         refreshToken = json["refreshToken"] as? String
         if let expiry = json["expiresAt"] as? TimeInterval {
             tokenExpiry = Date(timeIntervalSince1970: expiry)
         }
-        lock.unlock()
     }
 
     private func saveTokens() {
-        lock.lock()
-        let json: [String: Any] = [
-            "accessToken": accessToken as Any,
-            "refreshToken": refreshToken as Any,
-            "expiresAt": tokenExpiry.timeIntervalSince1970,
-        ]
-        lock.unlock()
+        let json: [String: Any] = {
+            lock.lock()
+            defer { lock.unlock() }
+            return [
+                "accessToken": accessToken as Any,
+                "refreshToken": refreshToken as Any,
+                "expiresAt": tokenExpiry.timeIntervalSince1970,
+            ]
+        }()
 
         guard let data = try? JSONSerialization.data(withJSONObject: json) else {
             log.warning("Failed to serialize Spotify tokens for saving")

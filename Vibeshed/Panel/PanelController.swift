@@ -9,6 +9,7 @@ final class PanelController {
     private let pickerState: PickerState
     var coordinator: PickerCoordinator?
     var themeEngine: ThemeEngine?
+    @ObservationIgnored nonisolated(unsafe) private var windowCloseObserver: NSObjectProtocol?
 
     private(set) var isVisible: Bool = false
 
@@ -29,6 +30,12 @@ final class PanelController {
 
     init(pickerState: PickerState) {
         self.pickerState = pickerState
+    }
+
+    deinit {
+        if let observer = windowCloseObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     func toggle() {
@@ -155,7 +162,7 @@ final class PanelController {
             )
         }
 
-        NotificationCenter.default.addObserver(
+        windowCloseObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: newPanel,
             queue: .main

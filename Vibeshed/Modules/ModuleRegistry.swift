@@ -206,16 +206,11 @@ final class ModuleRegistry {
                 usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil)
         )
 
-        // Log.modules.debug(
-        //     "Looking for action '\(id, privacy: .public)' in module '\(moduleID, privacy: .public)' among \(actions.count) actions"
-        // )
-
         guard let action = actions.first(where: { $0.id == id }) else {
-            let availableActions = actions.map { $0.id }
             Log.modules.warning(
                 "Action '\(id, privacy: .public)' not found in module '\(moduleID, privacy: .public)'"
             )
-            Log.modules.debug("Available actions: \(availableActions, privacy: .public)")
+            Log.modules.debug("Available actions: \(actions.map(\.id), privacy: .public)")
             return nil
         }
 
@@ -290,7 +285,9 @@ private func withThrowingTimeout<T: Sendable>(
             try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw CancellationError()
         }
-        let result = try await group.next()!
+        guard let result = try await group.next() else {
+            throw CancellationError()
+        }
         group.cancelAll()
         return result
     }

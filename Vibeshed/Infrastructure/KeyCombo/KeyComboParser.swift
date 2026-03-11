@@ -42,8 +42,8 @@ enum KeyComboParser {
         }
 
         // Space as modifier: "space" + another key
-        if components.contains("space"), components.count == 2 {
-            let otherKey = components.first { $0 != "space" }!
+        if components.contains("space"), components.count == 2,
+           let otherKey = components.first(where: { $0 != "space" }) {
             // Check if the other component is a regular key (not a modifier name)
             if modifierNames[otherKey] == nil {
                 let keyCode = try carbonKeyCode(for: otherKey)
@@ -52,8 +52,8 @@ enum KeyComboParser {
         }
 
         // Tab as modifier: "tab" + another key
-        if components.contains("tab"), components.count == 2 {
-            let otherKey = components.first { $0 != "tab" }!
+        if components.contains("tab"), components.count == 2,
+           let otherKey = components.first(where: { $0 != "tab" }) {
             if modifierNames[otherKey] == nil {
                 let keyCode = try carbonKeyCode(for: otherKey)
                 return .tabModifier(carbonKeyCode: keyCode)
@@ -61,11 +61,9 @@ enum KeyComboParser {
         }
 
         // Standard combo: modifiers + key (last component is the key)
-        guard components.count >= 1 else {
+        guard let keyName = components.last else {
             throw KeyComboError.invalidCombo(combo, reason: "no key specified")
         }
-
-        let keyName = components.last!
         let keyCode = try carbonKeyCode(for: keyName)
         var modifiers = CGEventFlags()
         for comp in components.dropLast() {

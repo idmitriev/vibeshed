@@ -122,10 +122,12 @@ actor ZoomModule: ModuleConfigurable {
                 zoomItemType: .meeting,
                 meetingId: resolved.meetingId
             ) { _ in
-                let url = ZoomManager.joinURL(
+                guard let url = ZoomManager.joinURL(
                     meetingId: resolved.meetingId,
                     password: resolved.password
-                )
+                ) else {
+                    return .showResult(title: "Error", body: "Failed to build Zoom URL")
+                }
                 DispatchQueue.main.async {
                     NSWorkspace.shared.open(url)
                 }
@@ -162,10 +164,12 @@ actor ZoomModule: ModuleConfigurable {
                     body: "Could not parse meeting ID or link."
                 )
             }
-            let url = ZoomManager.joinURL(
+            guard let url = ZoomManager.joinURL(
                 meetingId: parsed.meetingId,
                 password: parsed.password
-            )
+            ) else {
+                return .showResult(title: "Error", body: "Failed to build Zoom URL")
+            }
             DispatchQueue.main.async {
                 NSWorkspace.shared.open(url)
             }
@@ -188,7 +192,9 @@ actor ZoomModule: ModuleConfigurable {
             zoomItemType: .utility,
             meetingId: personalId
         ) { _ in
-            let url = ZoomManager.startPersonalMeetingURL(meetingId: personalId)
+            guard let url = ZoomManager.startPersonalMeetingURL(meetingId: personalId) else {
+                return .showResult(title: "Error", body: "Failed to build Zoom URL")
+            }
             DispatchQueue.main.async {
                 NSWorkspace.shared.open(url)
             }

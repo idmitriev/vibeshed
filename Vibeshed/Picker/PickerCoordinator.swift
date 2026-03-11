@@ -257,7 +257,7 @@ final class PickerCoordinator {
                     if currentContext == nil {
                         currentContext = SystemContext.capture()
                         if let ctx = currentContext {
-                            Task { await self.themeEngine?.refresh(context: ctx) }
+                            await self.themeEngine?.refresh(context: ctx)
                         }
                     }
                     let ctx = currentContext
@@ -474,7 +474,7 @@ final class PickerCoordinator {
             guard let self else { return }
             currentContext = SystemContext.capture()
             if let ctx = currentContext {
-                Task { await self.themeEngine?.refresh(context: ctx) }
+                await self.themeEngine?.refresh(context: ctx)
             }
             let ctx = currentContext
             let scoring = usageTracker?.makeScoringContext(query: "", systemContext: ctx)
@@ -498,7 +498,7 @@ final class PickerCoordinator {
             guard let self else { return }
             currentContext = SystemContext.capture()
             if let ctx = currentContext {
-                Task { await self.themeEngine?.refresh(context: ctx) }
+                await self.themeEngine?.refresh(context: ctx)
             }
             let query = pickerState.query
             let ctx = currentContext

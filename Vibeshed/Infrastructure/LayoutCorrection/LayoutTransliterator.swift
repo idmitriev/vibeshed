@@ -9,6 +9,7 @@ final class LayoutTransliterator {
     /// Localized name per source ID for the correction hint.
     private var sourceNames: [String: String] = [:]
     private var isEnabled: Bool = true
+    private var inputSourceObserver: NSObjectProtocol?
 
     private let configManager: ConfigManager
     private let eventBus: EventBus
@@ -23,7 +24,7 @@ final class LayoutTransliterator {
         buildMappingTables()
 
         // Rebuild tables when the set of installed input sources changes.
-        DistributedNotificationCenter.default().addObserver(
+        inputSourceObserver = DistributedNotificationCenter.default().addObserver(
             forName: NSNotification.Name(kTISNotifyEnabledKeyboardInputSourcesChanged as String),
             object: nil,
             queue: .main
