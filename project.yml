@@ -62,3 +62,4 @@ targets:
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         TEST_TARGET_NAME: Vibeshed
+        GENERATE_INFOPLIST_FILE: YES

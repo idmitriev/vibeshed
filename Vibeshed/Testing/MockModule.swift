@@ -56,6 +56,16 @@ actor MockModule: Module {
                 relevanceScore: 0.6,
                 keywords: ["activity", "monitor", "cpu", "memory"]
             ),
+            // Action that shows a result view on execution
+            MockAction(
+                id: ActionID(module: "mock", name: "showResult"),
+                title: "Show Result",
+                subtitle: "Displays a result view",
+                iconName: "checkmark.seal",
+                relevanceScore: 0.55,
+                keywords: ["result", "test"],
+                result: .showResult(title: "Done", body: "Action completed successfully")
+            ),
             // Action with a static selection parameter
             MockAction(
                 id: ActionID(module: "mock", name: "theme"),
@@ -127,8 +137,9 @@ struct MockAction: Action {
     let relevanceScore: Double
     let keywords: [String]
     var parameters: [ActionParameter] = []
+    var result: ActionResult = .dismiss
 
     func run(with values: [String: Any]) async throws -> ActionResult {
-        .dismiss
+        result
     }
 }

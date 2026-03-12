@@ -338,10 +338,10 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Merge bookmarks and browser modules
 - [x] Move app related code like app theme changing to corresponding app modules or helpers
 
-### Phase 57: Testing
+### Phase 57: Testing (DONE)
 
-- [ ] Write checklist file for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.
-- [ ] Add some XCUI tests for critical user flows like showing the picker, searching for actions, executing actions, and handling permissions to catch any regressions in these areas during development.
+- [x] Write checklist file for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.
+- [x] Add some XCUI tests for critical user flows like showing the picker, searching for actions, executing actions, and handling permissions to catch any regressions in these areas during development.
 
 ### Phase 58: Bugfixing and polishing
 
