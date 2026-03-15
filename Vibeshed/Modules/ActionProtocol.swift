@@ -10,7 +10,7 @@ struct ActionID: Hashable, Sendable, Codable, CustomStringConvertible {
     }
 
     init(module: String, name: String) {
-        self.rawValue = "\(module).\(name)"
+        self.rawValue = "\(module)/\(name)"
     }
 
     var description: String {
@@ -18,7 +18,18 @@ struct ActionID: Hashable, Sendable, Codable, CustomStringConvertible {
     }
 
     var moduleID: String {
-        String(rawValue.prefix(while: { $0 != "." }))
+        if let idx = rawValue.firstIndex(of: "/") {
+            return String(rawValue[..<idx])
+        }
+        return rawValue
+    }
+
+    /// The action name part after the module separator (e.g. "cycleLeft" from "window/cycleLeft").
+    var actionName: String {
+        if let idx = rawValue.firstIndex(of: "/") {
+            return String(rawValue[rawValue.index(after: idx)...])
+        }
+        return rawValue
     }
 }
 

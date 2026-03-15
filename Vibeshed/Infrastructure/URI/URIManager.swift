@@ -433,7 +433,7 @@ final class URIManager {
             return
         }
 
-        let moduleID = String(actionID.rawValue.prefix(while: { $0 != "." }))
+        let moduleID = actionID.moduleID
         do {
             _ = try await action.run(with: values)
             await eventBus.publish(.actionExecuted(actionID, moduleID: moduleID))

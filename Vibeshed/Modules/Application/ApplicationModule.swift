@@ -60,7 +60,7 @@ actor ApplicationModule: ModuleConfigurable {
         let actionName = actionID.rawValue
 
         // launch/launchOrFocus show all apps; focus/quit show only running
-        let showAll = (actionName.hasSuffix(".launch") || actionName.hasSuffix(".launchOrFocus"))
+        let showAll = (actionName.hasSuffix("/launch") || actionName.hasSuffix("/launchOrFocus"))
             && !cfg.showRunningOnly
 
         let apps: [AppInfo]

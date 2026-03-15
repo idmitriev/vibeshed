@@ -90,12 +90,7 @@ actor ClipboardModule: ModuleConfigurable {
         }
 
         if let enabled = cfg.enabledActions {
-            actions = actions.filter { action in
-                let raw = action.id.rawValue
-                guard let dotIndex = raw.firstIndex(of: ".") else { return true }
-                let name = String(raw[raw.index(after: dotIndex)...])
-                return enabled.contains(name)
-            }
+            actions = actions.filter { enabled.contains($0.id.actionName) }
         }
 
         return actions

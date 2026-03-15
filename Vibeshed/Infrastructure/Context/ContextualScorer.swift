@@ -56,8 +56,8 @@ enum ContextualScorer {
         // Demote the focused app's own application action (user likely wants something else)
         if moduleID == "application" {
             let actionRaw = actionID.rawValue
-            if actionRaw.hasPrefix("application.app.") {
-                let appID = String(actionRaw.dropFirst("application.app.".count))
+            if actionRaw.hasPrefix("application/app.") {
+                let appID = String(actionRaw.dropFirst("application/app.".count))
                 if appID == bundleID {
                     return -0.05
                 }
@@ -74,10 +74,10 @@ enum ContextualScorer {
     // MARK: - Running State
 
     private static let spotifyPlaybackActions: Set<String> = [
-        "spotify.playPause",
-        "spotify.next",
-        "spotify.previous",
-        "spotify.nowPlaying",
+        "spotify/playPause",
+        "spotify/next",
+        "spotify/previous",
+        "spotify/nowPlaying",
     ]
 
     private static func runningStateBoost(
@@ -100,8 +100,8 @@ enum ContextualScorer {
     // MARK: - Time of Day
 
     private static let lateNightActions: Set<String> = [
-        "system.lock",
-        "system.sleep",
+        "system/lock",
+        "system/sleep",
     ]
 
     private static func timeBoost(
@@ -135,9 +135,9 @@ enum ContextualScorer {
         context: SystemContext
     ) -> Double {
         let raw = actionID.rawValue
-        guard raw.hasPrefix("audio.") else { return 0 }
+        guard raw.hasPrefix("audio/") else { return 0 }
 
-        let name = String(raw.dropFirst("audio.".count))
+        let name = String(raw.dropFirst("audio/".count))
 
         if context.isOutputMuted {
             // When muted, boost unmute and volume-up actions
@@ -162,15 +162,15 @@ enum ContextualScorer {
     // MARK: - Window Count
 
     private static let tilingActions: Set<String> = [
-        "window.tileLeft",
-        "window.tileRight",
-        "window.tileTop",
-        "window.tileBottom",
+        "window/tileLeft",
+        "window/tileRight",
+        "window/tileTop",
+        "window/tileBottom",
     ]
 
     private static let singleWindowActions: Set<String> = [
-        "window.maximize",
-        "window.center",
+        "window/maximize",
+        "window/center",
     ]
 
     private static func windowCountBoost(

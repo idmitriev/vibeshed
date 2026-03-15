@@ -94,9 +94,7 @@ actor SpotifyModule: ModuleConfigurable {
     }
 
     private func actionName(_ id: ActionID) -> String {
-        let raw = id.rawValue
-        guard let dotIndex = raw.firstIndex(of: ".") else { return raw }
-        return String(raw[raw.index(after: dotIndex)...])
+        id.actionName
     }
 
     // MARK: - Now Playing

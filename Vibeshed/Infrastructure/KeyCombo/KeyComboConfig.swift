@@ -3,12 +3,14 @@ import Foundation
 
 struct KeyBindingEntry: Codable, Sendable, Equatable {
     let combo: String
-    let action: String
+    let action: String?
+    let remap: String?
     let app: String?
 
-    init(combo: String, action: String, app: String? = nil) {
+    init(combo: String, action: String? = nil, remap: String? = nil, app: String? = nil) {
         self.combo = combo
         self.action = action
+        self.remap = remap
         self.app = app
     }
 }
@@ -28,24 +30,7 @@ struct ResolvedBinding: Sendable, Equatable {
     let app: String?
 }
 
-// MARK: - Key Remaps
-
-struct KeyRemapGroup: Codable, Sendable, Equatable {
-    let app: String?
-    let remaps: [RemapEntry]
-}
-
-struct RemapEntry: Codable, Sendable, Equatable {
-    let from: String
-    let to: String
-}
-
-// MARK: - Mouse Remaps
-
-struct MouseRemapEntry: Codable, Sendable, Equatable {
-    let from: String
-    let to: String
-}
+// MARK: - Resolved Remaps
 
 struct ResolvedMouseRemap: Sendable, Equatable {
     let button: Int

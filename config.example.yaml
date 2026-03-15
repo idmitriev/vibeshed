@@ -6,137 +6,124 @@ appearance:
   panelWidth: 720
   panelHeight: 480
   cornerRadius: 12
-  themeIntensity: 0.8       # 0 = off, 0.3+ bg tint, 0.6+ icon tint, 0.8+ glow
 
 # ---------------------------------------------------------------------------
-# Keybindings
+# Keybindings & Remaps
 # ---------------------------------------------------------------------------
+# Each entry has `combo` + either `action` (triggers a vibeshed action) or
+# `remap` (remaps to another key combo). Optional `app` scopes to a bundle ID.
+#
 # Modifiers: cmd, ctrl, option/alt, shift, capslock (hyper), space
 # Keys: a-z, 0-9, f1-f20, arrows, return, tab, space, escape, delete,
 #        minus/-,  equal/=, leftbracket/[, rightbracket/], semicolon/;,
 #        quote/', comma/,, period/., slash//, backslash/\, backtick/`
 # Mouse: mouse1-mouse5, with optional modifier (ctrl+mouse4)
+# Action format: module/action (e.g. "window/cycleLeft", "alias/Safari")
 # ---------------------------------------------------------------------------
 keybindings:
   # --- picker ---
   - combo: "capslock+space"
-    action: "app.togglePicker"
+    action: "app/togglePicker"
 
   # --- app focus (hyper + number row) ---
   - combo: "capslock+1"
-    action: "alias.Safari"
+    action: "alias/Safari"
   - combo: "capslock+2"
-    action: "alias.Chrome"
+    action: "alias/Chrome"
   - combo: "capslock+3"
-    action: "alias.Zen"
+    action: "alias/Zen"
   - combo: "capslock+4"
-    action: "alias.IntelliJ"
+    action: "alias/IntelliJ"
   - combo: "capslock+5"
-    action: "alias.VSCode"
+    action: "alias/VSCode"
   - combo: "capslock+6"
-    action: "alias.Spotify"
+    action: "alias/Spotify"
   - combo: "capslock+7"
-    action: "alias.Notes"
+    action: "alias/Notes"
   - combo: "capslock+8"
-    action: "alias.Zoom"
+    action: "alias/Zoom"
   - combo: "capslock+9"
-    action: "alias.Telegram"
+    action: "alias/Telegram"
   - combo: "capslock+0"
-    action: "alias.iTerm"
+    action: "alias/iTerm"
 
   # --- window management (hyper + letters) ---
   - combo: "capslock+a"
-    action: "window.cycleLeft"
+    action: "window/cycleLeft"
   - combo: "capslock+h"
-    action: "window.cycleLeft"
+    action: "window/cycleLeft"
   - combo: "capslock+d"
-    action: "window.cycleRight"
+    action: "window/cycleRight"
   - combo: "capslock+l"
-    action: "window.cycleRight"
+    action: "window/cycleRight"
   - combo: "capslock+w"
-    action: "window.cycleTop"
+    action: "window/cycleTop"
   - combo: "capslock+s"
-    action: "window.cycleBottom"
+    action: "window/cycleBottom"
   - combo: "capslock+m"
-    action: "window.toggleMaximize"
+    action: "window/toggleMaximize"
   - combo: "capslock+r"
-    action: "window.center"
+    action: "window/center"
   - combo: "capslock+p"
-    action: "window.focusWindow"       # show focus window picker
+    action: "window/focusWindow"       # show focus window picker
   - combo: "capslock+g"
-    action: "system.missionControl"    # show all windows and desktops
+    action: "system/missionControl"    # show all windows and desktops
   - combo: "capslock+backslash"
-    action: "window.tileRight"         # tile window to right half
+    action: "window/tileRight"         # tile window to right half
   - combo: "capslock+n"
-    action: "window.focusWindow"       # move window to next screen
+    action: "window/focusWindow"       # move window to next screen
   - combo: "capslock+minus"
-    action: "window.shrinkWidth"       # make window narrower
+    action: "window/shrinkWidth"       # make window narrower
   - combo: "capslock+equal"
-    action: "window.enlargeWidth"      # make window wider
+    action: "window/enlargeWidth"      # make window wider
 
   # --- window focus ---
   - combo: "capslock+leftbracket"
-    action: "window.focusWindow"
+    action: "window/focusWindow"
   - combo: "capslock+comma"
-    action: "window.focusWindow"
+    action: "window/focusWindow"
   - combo: "capslock+rightbracket"
-    action: "window.focusWindow"
+    action: "window/focusWindow"
   - combo: "capslock+period"
-    action: "window.focusWindow"
+    action: "window/focusWindow"
 
   # --- system ---
   - combo: "capslock+q"
-    action: "system.lock"
+    action: "system/lock"
 
   # --- app-scoped bindings (only fire when that app is focused) ---
   # - combo: "cmd+k"
-  #   action: "app.togglePicker"
+  #   action: "app/togglePicker"
   #   app: "com.googlecode.iterm2"
   # - combo: "cmd+shift+p"
-  #   action: "app.togglePicker"
+  #   action: "app/togglePicker"
   #   app: "com.microsoft.VSCode"
 
-# ---------------------------------------------------------------------------
-# Key Remaps
-# ---------------------------------------------------------------------------
-# Remap key combos to different keys, globally or per-application.
-# Only standard modifier+key and tab+key combos are supported as source.
-# Omit `app` to remap OS-wide. With `app`, the remap only fires when that
-# app is focused; app-specific remaps take priority over global ones.
-# ---------------------------------------------------------------------------
-keyRemaps:
+  # --- key remaps (use `remap` instead of `action`) ---
   # Global remap (applies in all apps)
-  # - remaps:
-  #     - from: "ctrl+h"
-  #       to: "backspace"
+  # - combo: "ctrl+h"
+  #   remap: "backspace"
 
   # Per-app remap (only when Safari is focused)
-  - app: "com.apple.Safari"
-    remaps:
-      - from: "cmd+,"
-        to: "ctrl+shift+tab"    # previous tab
-      - from: "cmd+."
-        to: "ctrl+tab"          # next tab
+  - combo: "cmd+,"
+    remap: "ctrl+shift+tab"       # previous tab
+    app: "com.apple.Safari"
+  - combo: "cmd+."
+    remap: "ctrl+tab"             # next tab
+    app: "com.apple.Safari"
 
-  # - app: "com.microsoft.VSCode"
-  #   remaps:
-  #     - from: "ctrl+h"
-  #       to: "cmd+backspace"
-  #     - from: "ctrl+d"
-  #       to: "forwarddelete"
+  # - combo: "ctrl+h"
+  #   remap: "cmd+backspace"
+  #   app: "com.microsoft.VSCode"
+  # - combo: "ctrl+d"
+  #   remap: "forwarddelete"
+  #   app: "com.microsoft.VSCode"
 
-# ---------------------------------------------------------------------------
-# Mouse Remaps
-# ---------------------------------------------------------------------------
-# Remap mouse buttons to keyboard combos globally.
-# Uses the same mouse button syntax as keybindings (mouse1-mouse5).
-# Target must be a standard modifier+key combo.
-# ---------------------------------------------------------------------------
-mouseRemaps:
-  - from: "mouse4"
-    to: "cmd+["                    # browser back
-  - from: "mouse5"
-    to: "cmd+]"                    # browser forward
+  # --- mouse remaps ---
+  - combo: "mouse4"
+    remap: "cmd+["                 # browser back
+  - combo: "mouse5"
+    remap: "cmd+]"                 # browser forward
 
 # ---------------------------------------------------------------------------
 # Aliases (action shortcuts with optional pre-filled parameters)
@@ -144,80 +131,80 @@ mouseRemaps:
 # Aliases create searchable shortcuts for actions. Two types:
 #   - With parameters: creates a new picker entry (e.g. "Safari" launches Safari)
 #   - Without parameters: enriches the original action with alias keywords
-#     (e.g. "Lock Screen" alias makes system.lock findable by "lock screen")
-# Alias actions have IDs like "alias.Safari" for use in keybindings.
+#     (e.g. "Lock Screen" alias makes system/lock findable by "lock screen")
+# Alias actions have IDs like "alias/Safari" for use in keybindings.
 # ---------------------------------------------------------------------------
 aliases:
   # App-focus shortcuts (bound to hyper + 1-0 above)
   # Use exact per-app action IDs so the alias enriches the existing action
   # (no duplicate entry in picker). The action ID format is:
-  # application.app.{bundleID}
+  # application/app.{bundleID}
   - alias: "Safari"
-    action: "application.app.com.apple.Safari"
+    action: "application/app.com.apple.Safari"
     icon: "safari"
     keywords: ["browser"]
 
   - alias: "Chrome"
-    action: "application.app.com.google.Chrome"
+    action: "application/app.com.google.Chrome"
     icon: "globe"
     keywords: ["browser"]
 
   - alias: "IntelliJ"
-    action: "application.app.com.jetbrains.intellij"
+    action: "application/app.com.jetbrains.intellij"
     icon: "hammer"
     keywords: ["editor", "ide", "java"]
 
   - alias: "VSCode"
-    action: "application.app.com.microsoft.VSCode"
+    action: "application/app.com.microsoft.VSCode"
     icon: "chevron.left.forwardslash.chevron.right"
     keywords: ["editor", "code"]
 
   - alias: "Spotify"
-    action: "application.app.com.spotify.client"
+    action: "application/app.com.spotify.client"
     icon: "music.note"
     keywords: ["music"]
 
   - alias: "Notes"
-    action: "application.app.com.apple.Notes"
+    action: "application/app.com.apple.Notes"
     icon: "note.text"
     keywords: ["notes"]
 
   - alias: "Zoom"
-    action: "application.app.us.zoom.xos"
+    action: "application/app.us.zoom.xos"
     icon: "video"
     keywords: ["video", "calls"]
 
   - alias: "Telegram"
-    action: "application.app.ru.keepcoder.Telegram"
+    action: "application/app.ru.keepcoder.Telegram"
     icon: "paperplane"
     keywords: ["messaging", "chat"]
 
   - alias: "iTerm"
-    action: "application.app.com.googlecode.iterm2"
+    action: "application/app.com.googlecode.iterm2"
     icon: "terminal"
     keywords: ["terminal", "shell"]
 
   # Parameterless aliases — enrich original actions with extra keywords
   - alias: "Lock Screen"
-    action: "system.lock"
+    action: "system/lock"
     icon: "lock"
     keywords: ["security", "away"]
 
   - alias: "Toggle Dark Mode"
-    action: "system.toggleAppearance"
+    action: "system/toggleAppearance"
     icon: "circle.lefthalf.filled"
     keywords: ["theme", "light", "dark"]
 
   # Parameterized aliases with query placeholder (creates separate picker entries)
   - alias: "Search GitHub"
-    action: "github.searchRepos"
+    action: "github/searchRepos"
     icon: "magnifyingglass"
     subtitle: "Search GitHub repos..."
     parameters:
       query: "{query}"
 
   - alias: "Search Spotify"
-    action: "spotify.search"
+    action: "spotify/search"
     icon: "music.note"
     subtitle: "Search tracks, albums, artists..."
     parameters:

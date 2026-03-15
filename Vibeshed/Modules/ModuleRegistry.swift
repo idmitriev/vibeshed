@@ -41,6 +41,13 @@ final class ModuleRegistry {
     func register(_ module: any Module) async throws {
         let id = await module.id
 
+        // 0. Skip modules whose config section is not present in YAML
+        if module is any ModuleConfigurable,
+           !configManager.config.moduleConfigs.keys.contains(id) {
+            Log.modules.debug("Module '\(id, privacy: .public)' skipped: no config section")
+            return
+        }
+
         // 1. Check permissions before config and init
         let required = type(of: module).requiredPermissions
         if !required.isEmpty {
@@ -173,11 +180,11 @@ final class ModuleRegistry {
     }
 
     func findAction(id: ActionID) async -> (any Action)? {
-        let moduleID = String(id.rawValue.prefix(while: { $0 != "." }))
+        let moduleID = id.moduleID
 
         // Check if this is an alias action
         if moduleID == "alias", let aliasManager {
-            let aliasName = String(id.rawValue.dropFirst("alias.".count))
+            let aliasName = String(id.rawValue.dropFirst("alias/".count))
             if let entry = aliasManager.findEntry(named: aliasName) {
                 return aliasManager.buildAction(from: entry)
             }

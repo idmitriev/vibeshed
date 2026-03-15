@@ -7,36 +7,20 @@ final class ThemeEngine {
     private(set) var theme: VibeTheme = .default
 
     private let eventBus: EventBus
-    private var intensity: Double = 0
     private var lastArtworkURL: String?
     private var artworkColors: (dominant: NSColor, vibrant: NSColor)?
     private var screenColors: (dominant: NSColor, vibrant: NSColor)?
-    private var eventSubscriptionID: UUID?
 
     init(eventBus: EventBus) {
         self.eventBus = eventBus
     }
 
-    func start(intensity: Double) {
-        self.intensity = max(0, min(1, intensity))
-        listenForConfigReloads()
-        recompute()
-    }
-
-    func updateIntensity(_ newIntensity: Double) {
-        let clamped = max(0, min(1, newIntensity))
-        guard clamped != intensity else { return }
-        intensity = clamped
+    func start() {
         recompute()
     }
 
     /// Called when the picker opens. Gathers signals and recomputes theme.
     func refresh(context: SystemContext) async {
-        guard intensity > 0 else {
-            theme = .default
-            return
-        }
-
         if context.isSpotifyRunning {
             await refreshMusicColors()
         } else {
@@ -105,11 +89,6 @@ final class ThemeEngine {
     // MARK: - Theme Computation
 
     private func recompute(context: SystemContext? = nil) {
-        guard intensity > 0 else {
-            setTheme(.default)
-            return
-        }
-
         let source = resolveSourceColor(context: context)
         let adjusted = applyTimeOfDay(source, hour: context?.hour)
         setTheme(buildTheme(from: adjusted))
@@ -128,31 +107,13 @@ final class ThemeEngine {
     private func buildTheme(from source: NSColor) -> VibeTheme {
         let color = Color(nsColor: source)
 
-        let bgTintFactor = intensity > 0.3
-            ? lerp(0, 0.06, t: (intensity - 0.3) / 0.7)
-            : 0.0
-
-        let glowFactor = intensity > 0.8
-            ? lerp(0, 0.4, t: (intensity - 0.8) / 0.2)
-            : 0.0
-
-        let shadowFactor = intensity > 0.8
-            ? lerp(0, 0.3, t: (intensity - 0.8) / 0.2)
-            : 0.0
-
         return VibeTheme(
             accent: color,
-            backgroundTint: bgTintFactor > 0
-                ? color.opacity(bgTintFactor) : nil,
-            selectionHighlight: color.opacity(0.08 + intensity * 0.04),
+            backgroundTint: color.opacity(0.06),
+            selectionHighlight: color.opacity(0.12),
             searchHighlight: color,
-            iconTint: intensity > 0.6
-                ? color.opacity(0.7) : nil,
-            borderGlow: glowFactor > 0
-                ? color.opacity(glowFactor) : nil,
-            shadowColor: shadowFactor > 0
-                ? color.opacity(shadowFactor) : nil,
-            intensity: intensity
+            iconTint: color.opacity(0.7),
+            shadowColor: color.opacity(0.3)
         )
     }
 
@@ -203,30 +164,5 @@ final class ThemeEngine {
 
     private func currentHour() -> Int {
         Calendar.current.component(.hour, from: Date())
-    }
-
-    // MARK: - Config Reload Listener
-
-    private func listenForConfigReloads() {
-        Task { [weak self] in
-            guard let self else { return }
-            let (id, stream) = await eventBus.subscribe()
-            eventSubscriptionID = id
-            for await event in stream {
-                if case .configReloaded = event {
-                    // Intensity may have changed — caller should
-                    // call updateIntensity with new config value.
-                    break
-                }
-            }
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func lerp(
-        _ from: Double, _ to: Double, t factor: Double
-    ) -> Double {
-        from + (to - from) * max(0, min(1, factor))
     }
 }

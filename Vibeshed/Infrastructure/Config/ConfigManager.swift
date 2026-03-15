@@ -105,22 +105,6 @@ final class ConfigManager {
             )
         }
 
-        if let keyRemapsNode = rootMapping[Node("keyRemaps")] ?? rootMapping[Node("appRemaps")] {
-            let keyRemapsYAML = try Yams.serialize(node: keyRemapsNode)
-            config.keyRemaps = try decoder.decode(
-                [KeyRemapGroup].self,
-                from: keyRemapsYAML
-            )
-        }
-
-        if let mouseRemapsNode = rootMapping[Node("mouseRemaps")] {
-            let mouseRemapsYAML = try Yams.serialize(node: mouseRemapsNode)
-            config.mouseRemaps = try decoder.decode(
-                [MouseRemapEntry].self,
-                from: mouseRemapsYAML
-            )
-        }
-
         if let layoutCorrectionNode = rootMapping[Node("layoutCorrection")] {
             let layoutCorrectionYAML = try Yams.serialize(node: layoutCorrectionNode)
             config.layoutCorrection = try decoder.decode(

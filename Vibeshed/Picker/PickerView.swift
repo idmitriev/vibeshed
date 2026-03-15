@@ -104,12 +104,15 @@ struct PickerView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay {
-            if let glow = theme.borderGlow {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(glow, lineWidth: 1)
-            }
-        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+        )
+        .shadow(
+            color: theme.shadowColor ?? .black.opacity(0.3),
+            radius: 5
+        )
+        .padding(16)
         .accessibilityIdentifier("pickerView")
         .onKeyPress(.downArrow) { state.selectNext(); return .handled }
         .onKeyPress(.upArrow) { state.selectPrevious(); return .handled }

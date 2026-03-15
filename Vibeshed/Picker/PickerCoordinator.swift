@@ -179,7 +179,7 @@ final class PickerCoordinator {
         do {
             let result = try await action.run(with: values)
             usageTracker?.recordUsage(actionID: action.id)
-            await eventBus.publish(.actionExecuted(action.id, moduleID: String(action.id.rawValue.prefix(while: { $0 != "." }))))
+            await eventBus.publish(.actionExecuted(action.id, moduleID: action.id.moduleID))
             handleActionResult(result)
         } catch {
             Log.picker.error("Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)")
@@ -212,7 +212,7 @@ final class PickerCoordinator {
                     subtitle: action.subtitle,
                     iconSystemName: action.iconName,
                     score: action.relevanceScore,
-                    moduleID: String(action.id.rawValue.prefix(while: { $0 != "." })),
+                    moduleID: action.id.moduleID,
                     hasParameters: !action.parameters.filter(\.isRequired).isEmpty,
                     keywords: action.keywords
                 )
@@ -336,7 +336,7 @@ final class PickerCoordinator {
             // If query is non-empty and fuzzy matcher rejects, skip
             guard let result else { continue }
 
-            let moduleID = String(action.id.rawValue.prefix(while: { $0 != "." }))
+            let moduleID = action.id.moduleID
             let contextBoost: Double
             if let ctx = scoring.systemContext {
                 contextBoost = ContextualScorer.boost(
@@ -393,7 +393,7 @@ final class PickerCoordinator {
     }
 
     private func fetchParameterOptions(for param: ActionParameter, actionID: ActionID, query: String) {
-        let moduleID = String(actionID.rawValue.prefix(while: { $0 != "." }))
+        let moduleID = actionID.moduleID
         guard let module = moduleRegistry.module(id: moduleID) else { return }
         pickerState.isLoadingOptions = true
         Task { @MainActor in

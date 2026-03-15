@@ -122,9 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !permissionsManager.isGranted(.fullDiskAccess) {
             permissionsManager.request(.fullDiskAccess)
         }
-        themeEngine.start(
-            intensity: configManager.config.appearance.themeIntensity
-        )
+        themeEngine.start()
         layoutTransliterator.start()
         pickerCoordinator.start()
         keyComboManager.startListening()

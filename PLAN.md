@@ -343,19 +343,32 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 - [x] Write checklist file for manual testing of the app, covering all features and edge cases. This will help ensure that the app is stable and works as expected before release.
 - [x] Add some XCUI tests for critical user flows like showing the picker, searching for actions, executing actions, and handling permissions to catch any regressions in these areas during development.
 
-### Phase 58: Bugfixing and polishing
+### Phase 58: Simplify config
+
+- [x] make all module configuration optional with sane defaults, keep loading modules only if their section is present in config
+- [x] unify keybindings and key/mouse remaps in a single config section
+- [x] unify action strings in keybindings/aliases: module/action?param=value&param2=value2, handle these actions via vibeshed:// URI scheme internally to reuse the same parsing and execution logic for all actions in the app
+
+### Phase 59: Simplify theme engine (DONE)
+
+- [x] simplify theme engine by removing intensity parameter and just making vibe-based theme changes noticeable by default
+
+### Phase 59: Branding and website
+
+- [ ] Come up with a kickass name and icon for the app that reflects its functionality and vibe
+- [ ] Create a website on github pages for the app with documentation, screenshots, and download links to make it easy for users to learn about the app and get it installed on their systems
+- [ ] Set up github donations for the project to allow users to support development if they find the app useful and want to contribute financially to its ongoing maintenance and improvement
+
+### Phase 60: Bugfixing and polishing
 
 - [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
 
 
-### Phase 59: Releases and distribution 
+### Phase 61: Releases and distribution 
 
-- [ ] Make sure app has a kickass name and icon
 - [ ] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
 - [ ] Make sure it follows apple UX guidelines and unix principles at least to some extent
 - [ ] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems
 - [ ] Make sure gitingnore file is configured to not include any sensitive information, build artifacts, or other unnecessary files in the repository
 - [ ] Publish the app on github with proper license, readme, and some documentation
 - [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
-- [ ] Create a website on github pages for the app with documentation, screenshots, and download links
-- [ ] Setup github donations for the project to allow users to support development if they find the app useful

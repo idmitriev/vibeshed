@@ -17,9 +17,6 @@ final class PanelController {
     /// When true, state is retained and we can skip reset on next show.
     private var isHiddenWithState: Bool = false
 
-    /// Cached shadow color to avoid reapplying unchanged shadow properties.
-    private var appliedShadowColor: CGColor?
-
     /// What kind of load to perform after the show animation completes.
     private enum DeferredLoad {
         case initial
@@ -65,8 +62,6 @@ final class PanelController {
             panel.setFrameOrigin(NSPoint(x: x, y: y))
         }
 
-        applyShadow(to: panel)
-
         // Start animation — heavy work fires in onShowAnimationDidComplete
         panel.animateShow()
         isVisible = true
@@ -108,27 +103,11 @@ final class PanelController {
         }
     }
 
-    private func applyShadow(to panel: FloatingPanel) {
-        guard let layer = panel.contentView?.layer else { return }
-        if let shadowColor = themeEngine?.theme.shadowColor {
-            let cgColor = NSColor(shadowColor).cgColor
-            if appliedShadowColor != cgColor {
-                layer.shadowColor = cgColor
-                layer.shadowOpacity = 1
-                layer.shadowRadius = 20
-                layer.shadowOffset = .zero
-                appliedShadowColor = cgColor
-            }
-        } else if appliedShadowColor != nil {
-            layer.shadowOpacity = 0
-            appliedShadowColor = nil
-        }
-    }
-
     private func getOrCreatePanel() -> FloatingPanel {
         if let existing = panel { return existing }
 
-        let frame = NSRect(x: 0, y: 0, width: 680, height: 460)
+        // 680×460 content + 16pt padding on each side for shadow
+        let frame = NSRect(x: 0, y: 0, width: 712, height: 492)
         let newPanel = FloatingPanel(contentRect: frame)
 
         newPanel.onEscape = { [weak self] in

@@ -6,9 +6,7 @@ struct VibeTheme: Equatable, Sendable {
     let selectionHighlight: Color
     let searchHighlight: Color
     let iconTint: Color?
-    let borderGlow: Color?
     let shadowColor: Color?
-    let intensity: Double
 
     static let `default` = VibeTheme(
         accent: .accentColor,
@@ -16,9 +14,7 @@ struct VibeTheme: Equatable, Sendable {
         selectionHighlight: Color.accentColor.opacity(0.08),
         searchHighlight: .accentColor,
         iconTint: nil,
-        borderGlow: nil,
-        shadowColor: nil,
-        intensity: 0
+        shadowColor: nil
     )
 }
 
