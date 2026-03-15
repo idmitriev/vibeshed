@@ -6,8 +6,7 @@ enum PermissionError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .denied(let id, let permissions):
-            let names = permissions.map(\.displayName).sorted().joined(separator: ", ")
-            return "Module '\(id)' requires permissions: \(names)"
+            "Module '\(id)' requires permissions: \(permissions.map(\.displayName).sorted().joined(separator: ", "))"
         }
     }
 

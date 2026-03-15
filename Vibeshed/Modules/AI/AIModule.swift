@@ -332,7 +332,7 @@ actor AIModule: ModuleConfigurable {
         terminalApp: String?
     ) {
         let terminal = terminalApp ?? detectTerminal()
-        let escapedCmd = escapeForAppleScript(command)
+        let escapedCmd = command.escapedForAppleScript
         let script = buildTerminalScript(
             terminal: terminal,
             command: escapedCmd,
@@ -370,7 +370,7 @@ actor AIModule: ModuleConfigurable {
     ) -> String {
         let cdPart: String
         if let cwd {
-            let escaped = escapeForAppleScript(cwd)
+            let escaped = cwd.escapedForAppleScript
             cdPart = """
                         tell current session of current window
                             write text "cd \(escaped)"
@@ -403,7 +403,7 @@ actor AIModule: ModuleConfigurable {
     ) -> String {
         let cdClause: String
         if let cwd {
-            let escaped = escapeForAppleScript(cwd)
+            let escaped = cwd.escapedForAppleScript
             cdClause = "cd \(escaped) && "
         } else {
             cdClause = ""
@@ -414,12 +414,6 @@ actor AIModule: ModuleConfigurable {
                 activate
             end tell
             """
-    }
-
-    private static func escapeForAppleScript(_ text: String) -> String {
-        text
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
     }
 
     private static func detectTerminal() -> String {

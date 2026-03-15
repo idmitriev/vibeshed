@@ -7,7 +7,7 @@ final class UsageTracker {
     private(set) var lastUsedDates: [String: Date] = [:]
 
     private let storageURL: URL
-    private var saveWorkItem: DispatchWorkItem?
+    private var saveTask: Task<Void, Never>?
 
     init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -48,14 +48,12 @@ final class UsageTracker {
     }
 
     private func scheduleSave() {
-        saveWorkItem?.cancel()
-        let workItem = DispatchWorkItem { [weak self] in
-            MainActor.assumeIsolated {
-                self?.save()
-            }
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            self?.save()
         }
-        saveWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: workItem)
     }
 
     private func save() {

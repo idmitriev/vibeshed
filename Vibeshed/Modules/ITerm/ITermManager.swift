@@ -18,45 +18,6 @@ struct ITermSession: Sendable {
     let tabIndex: Int
 }
 
-// MARK: - Errors
-
-enum ITermError: Error, LocalizedError {
-    case scriptFailed(String)
-    case scriptTimeout
-    case notRunning
-
-    var errorDescription: String? {
-        switch self {
-        case .scriptFailed(let stderr):
-            return "AppleScript error: \(stderr)"
-        case .scriptTimeout:
-            return "AppleScript execution timed out"
-        case .notRunning:
-            return "iTerm2 is not running"
-        }
-    }
-}
-
-// MARK: - ResumeGate
-
-private final class ResumeGate<T: Sendable>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var resumed = false
-    private let continuation: CheckedContinuation<T, Error>
-
-    init(continuation: CheckedContinuation<T, Error>) {
-        self.continuation = continuation
-    }
-
-    func resume(with result: Result<T, Error>) {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !resumed else { return }
-        resumed = true
-        continuation.resume(with: result)
-    }
-}
-
 // MARK: - Manager
 
 enum ITermManager {
@@ -90,7 +51,7 @@ enum ITermManager {
         text: String,
         newline: Bool = true
     ) async throws {
-        let escaped = escapeForAppleScript(text)
+        let escaped = text.escapedForAppleScript
         let nl = newline ? "" : " newline no"
         let script = """
             tell application "iTerm2"
@@ -253,14 +214,14 @@ enum ITermManager {
 
     private static func profilePart(_ profile: String?) -> String {
         if let profile, !profile.isEmpty {
-            return "profile \"\(escapeForAppleScript(profile))\""
+            return "profile \"\(profile.escapedForAppleScript)\""
         }
         return "default profile"
     }
 
     private static func commandPart(_ command: String?) -> String {
         if let command, !command.isEmpty {
-            return " command \"\(escapeForAppleScript(command))\""
+            return " command \"\(command.escapedForAppleScript)\""
         }
         return ""
     }
@@ -275,84 +236,14 @@ enum ITermManager {
         return trimmed
     }
 
-    private static func escapeForAppleScript(
-        _ str: String
-    ) -> String {
-        str.replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-    }
-
     // MARK: - Script Runner
 
     @discardableResult
-    private static func runScript(
-        _ script: String
-    ) async throws -> String {
+    private static func runScript(_ script: String) async throws -> String {
         guard isRunning() else {
             log.debug("iTerm not running, skipping script")
-            throw ITermError.notRunning
+            throw AppleScriptError.appNotRunning("iTerm2")
         }
-
-        return try await withCheckedThrowingContinuation { cont in
-            let process = Process()
-            process.executableURL = URL(
-                fileURLWithPath: "/usr/bin/osascript"
-            )
-
-            let inputPipe = Pipe()
-            let stdoutPipe = Pipe()
-            let stderrPipe = Pipe()
-            process.standardInput = inputPipe
-            process.standardOutput = stdoutPipe
-            process.standardError = stderrPipe
-
-            let gate = ResumeGate(continuation: cont)
-
-            let timeout = DispatchWorkItem {
-                log.warning("iTerm AppleScript timed out after 5s")
-                gate.resume(
-                    with: .failure(ITermError.scriptTimeout)
-                )
-                process.terminate()
-            }
-            DispatchQueue.global().asyncAfter(
-                deadline: .now() + 5, execute: timeout
-            )
-
-            process.terminationHandler = { _ in
-                timeout.cancel()
-                let outData = stdoutPipe
-                    .fileHandleForReading.readDataToEndOfFile()
-                let errData = stderrPipe
-                    .fileHandleForReading.readDataToEndOfFile()
-
-                if process.terminationStatus != 0 {
-                    let msg = String(data: errData, encoding: .utf8)?
-                        .trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ) ?? "Unknown error"
-                    log.error("iTerm AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(msg, privacy: .public)")
-                    gate.resume(
-                        with: .failure(ITermError.scriptFailed(msg))
-                    )
-                } else {
-                    let out = String(
-                        data: outData, encoding: .utf8
-                    ) ?? ""
-                    gate.resume(with: .success(out))
-                }
-            }
-
-            do {
-                try process.run()
-                let data = script.data(using: .utf8) ?? Data()
-                inputPipe.fileHandleForWriting.write(data)
-                inputPipe.fileHandleForWriting.closeFile()
-            } catch {
-                timeout.cancel()
-                log.error("Failed to launch osascript for iTerm: \(error.localizedDescription, privacy: .public)")
-                gate.resume(with: .failure(error))
-            }
-        }
+        return try await AppleScriptRunner.run(script)
     }
 }

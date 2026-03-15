@@ -9,25 +9,11 @@ enum SystemManager {
     // MARK: - Power
 
     static func lockScreen() {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
-        task.arguments = ["displaysleepnow"]
-        do {
-            try task.run()
-        } catch {
-            log.warning("lockScreen: pmset failed: \(error.localizedDescription, privacy: .public)")
-        }
+        runProcessIgnoringErrors("/usr/bin/pmset", "displaysleepnow")
     }
 
     static func sleep() {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
-        task.arguments = ["sleepnow"]
-        do {
-            try task.run()
-        } catch {
-            log.warning("sleep: pmset failed: \(error.localizedDescription, privacy: .public)")
-        }
+        runProcessIgnoringErrors("/usr/bin/pmset", "sleepnow")
     }
 
     static func restart() throws {
@@ -60,37 +46,18 @@ enum SystemManager {
 
     static func setAutoAppearance() throws {
         // Remove explicit dark/light override so the system follows its schedule
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
-        task.arguments = ["delete", "NSGlobalDomain", "AppleInterfaceStyle"]
-        do {
-            try task.run()
-        } catch {
-            log.warning("setAutoAppearance: defaults delete failed: \(error.localizedDescription, privacy: .public)")
-        }
-        task.waitUntilExit()
+        runProcessIgnoringErrors("/usr/bin/defaults", "delete", "NSGlobalDomain", "AppleInterfaceStyle")
 
-        let killTask = Process()
-        killTask.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
-        killTask.arguments = ["write", "NSGlobalDomain", "AppleInterfaceStyleSwitchesAutomatically", "-bool", "true"]
-        try killTask.run()
-        killTask.waitUntilExit()
+        try runProcess("/usr/bin/defaults", "write", "NSGlobalDomain", "AppleInterfaceStyleSwitchesAutomatically", "-bool", "true")
 
         // Notify the system of the change
-        let notify = Process()
-        notify.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        notify.arguments = ["-e", """
+        try? AppleScriptRunner.runSync("""
             tell application "System Events"
                 tell appearance preferences
                     set dark mode to dark mode
                 end tell
             end tell
-        """]
-        do {
-            try notify.run()
-        } catch {
-            log.warning("setAutoAppearance: notify script failed: \(error.localizedDescription, privacy: .public)")
-        }
+        """)
     }
 
     // MARK: - Trash
@@ -107,28 +74,24 @@ enum SystemManager {
     // MARK: - Screenshots
 
     static func takeScreenshot(toClipboard: Bool, path: String) throws {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         if toClipboard {
-            task.arguments = ["-c"]
+            try runProcess("/usr/sbin/screencapture", "-c")
         } else {
             let expanded = NSString(string: path).expandingTildeInPath
             let timestamp = ISO8601DateFormatter().string(from: Date())
                 .replacingOccurrences(of: ":", with: "-")
-            let filePath = "\(expanded)/Screenshot \(timestamp).png"
-            task.arguments = [filePath]
+            try runProcess("/usr/sbin/screencapture", "\(expanded)/Screenshot \(timestamp).png")
         }
-        try task.run()
-        task.waitUntilExit()
     }
 
     static func takeScreenshotInteractive(path: String) throws {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         let expanded = NSString(string: path).expandingTildeInPath
         let timestamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
         let filePath = "\(expanded)/Screenshot \(timestamp).png"
+        // Don't wait — interactive capture runs until user finishes selection
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         task.arguments = ["-i", filePath]
         try task.run()
     }
@@ -136,50 +99,43 @@ enum SystemManager {
     // MARK: - Mission Control
 
     static func missionControl() {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = ["-a", "Mission Control"]
-        do {
-            try task.run()
-        } catch {
-            log.warning("missionControl: open failed: \(error.localizedDescription, privacy: .public)")
-        }
+        runProcessIgnoringErrors("/usr/bin/open", "-a", "Mission Control")
     }
 
     // MARK: - System Maintenance
 
     static func flushDNS() throws {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/dscacheutil")
-        task.arguments = ["-flushcache"]
-        try task.run()
-        task.waitUntilExit()
-
-        let killTask = Process()
-        killTask.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
-        killTask.arguments = ["killall", "-HUP", "mDNSResponder"]
-        try killTask.run()
-        killTask.waitUntilExit()
+        try runProcess("/usr/bin/dscacheutil", "-flushcache")
+        try runProcess("/usr/bin/sudo", "killall", "-HUP", "mDNSResponder")
     }
 
     static func purgeMemory() throws {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
-        task.arguments = ["purge"]
-        try task.run()
-        task.waitUntilExit()
+        try runProcess("/usr/bin/sudo", "purge")
     }
 
     // MARK: - Private
 
     private static func runAppleScript(_ source: String) throws {
+        try AppleScriptRunner.runSync(source)
+    }
+
+    private static func runProcess(_ path: String, _ args: String...) throws {
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        task.arguments = ["-e", source]
+        task.executableURL = URL(fileURLWithPath: path)
+        task.arguments = args
         try task.run()
         task.waitUntilExit()
-        if task.terminationStatus != 0 {
-            log.error("AppleScript exited with status \(task.terminationStatus, privacy: .public)")
+    }
+
+    private static func runProcessIgnoringErrors(_ path: String, _ args: String...) {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: path)
+        task.arguments = args
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch {
+            log.warning("\(path) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

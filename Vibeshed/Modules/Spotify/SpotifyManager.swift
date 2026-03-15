@@ -4,20 +4,6 @@ import OSLog
 
 private let log = Log.module("spotify")
 
-enum SpotifyError: Error, LocalizedError {
-    case scriptFailed(String)
-    case scriptTimeout
-    case notRunning
-
-    var errorDescription: String? {
-        switch self {
-        case .scriptFailed(let stderr): "AppleScript error: \(stderr)"
-        case .scriptTimeout: "AppleScript execution timed out"
-        case .notRunning: "Spotify is not running"
-        }
-    }
-}
-
 struct SpotifyNowPlaying: Sendable {
     let trackName: String
     let artistName: String
@@ -27,24 +13,6 @@ struct SpotifyNowPlaying: Sendable {
     let positionSeconds: Double
     let trackID: String
     let isPlaying: Bool
-}
-
-private final class ResumeGate<T: Sendable>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var resumed = false
-    private let continuation: CheckedContinuation<T, Error>
-
-    init(continuation: CheckedContinuation<T, Error>) {
-        self.continuation = continuation
-    }
-
-    func resume(with result: Result<T, Error>) {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !resumed else { return }
-        resumed = true
-        continuation.resume(with: result)
-    }
 }
 
 enum SpotifyManager {
@@ -144,9 +112,7 @@ enum SpotifyManager {
     // MARK: - Open URI
 
     static func openURI(_ uri: String) async throws {
-        let escaped = uri
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
+        let escaped = uri.escapedForAppleScript
         try await runScript("""
             tell application "Spotify"
                 open location "\(escaped)"
@@ -161,55 +127,8 @@ enum SpotifyManager {
     private static func runScript(_ script: String) async throws -> String {
         guard isRunning() else {
             log.debug("Spotify not running, skipping script")
-            throw SpotifyError.notRunning
+            throw AppleScriptError.appNotRunning("Spotify")
         }
-
-        return try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-
-            let inputPipe = Pipe()
-            let stdoutPipe = Pipe()
-            let stderrPipe = Pipe()
-            process.standardInput = inputPipe
-            process.standardOutput = stdoutPipe
-            process.standardError = stderrPipe
-
-            let gate = ResumeGate(continuation: continuation)
-
-            let timeoutWorkItem = DispatchWorkItem {
-                log.warning("Spotify AppleScript timed out after 5s")
-                gate.resume(with: .failure(SpotifyError.scriptTimeout))
-                process.terminate()
-            }
-            DispatchQueue.global().asyncAfter(deadline: .now() + 5, execute: timeoutWorkItem)
-
-            process.terminationHandler = { _ in
-                timeoutWorkItem.cancel()
-
-                let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-
-                if process.terminationStatus != 0 {
-                    let errorMsg = String(data: errorData, encoding: .utf8)?
-                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
-                    log.error("Spotify AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(errorMsg, privacy: .public)")
-                    gate.resume(with: .failure(SpotifyError.scriptFailed(errorMsg)))
-                } else {
-                    let output = String(data: outputData, encoding: .utf8) ?? ""
-                    gate.resume(with: .success(output))
-                }
-            }
-
-            do {
-                try process.run()
-                inputPipe.fileHandleForWriting.write(script.data(using: .utf8) ?? Data())
-                inputPipe.fileHandleForWriting.closeFile()
-            } catch {
-                timeoutWorkItem.cancel()
-                log.error("Failed to launch osascript for Spotify: \(error.localizedDescription, privacy: .public)")
-                gate.resume(with: .failure(error))
-            }
-        }
+        return try await AppleScriptRunner.run(script)
     }
 }

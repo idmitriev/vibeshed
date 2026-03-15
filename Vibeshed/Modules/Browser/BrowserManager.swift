@@ -5,37 +5,12 @@ import OSLog
 private let log = Log.module("browser")
 
 enum BrowserError: Error, LocalizedError {
-    case scriptFailed(String)
-    case browserNotRunning(String)
     case tabNotFound(String)
-    case scriptTimeout
 
     var errorDescription: String? {
         switch self {
-        case .scriptFailed(let stderr): "AppleScript error: \(stderr)"
-        case .browserNotRunning(let name): "Browser '\(name)' is not running"
         case .tabNotFound(let id): "Tab not found: \(id)"
-        case .scriptTimeout: "AppleScript execution timed out"
         }
-    }
-}
-
-/// Thread-safe one-shot gate for resuming a continuation exactly once.
-private final class ResumeGate<T: Sendable>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var resumed = false
-    private let continuation: CheckedContinuation<T, Error>
-
-    init(continuation: CheckedContinuation<T, Error>) {
-        self.continuation = continuation
-    }
-
-    func resume(with result: Result<T, Error>) {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !resumed else { return }
-        resumed = true
-        continuation.resume(with: result)
     }
 }
 
@@ -47,7 +22,7 @@ struct BrowserManager: Sendable {
         let script = bundleID == "com.apple.Safari"
             ? safariListScript()
             : chromiumListScript(bundleID: bundleID)
-        let output = try await runAppleScript(script)
+        let output = try await AppleScriptRunner.run(script)
         let tabs = parseTabOutput(output, bundleID: bundleID, browserName: browserName)
         log.debug("Found \(tabs.count, privacy: .public) tabs in \(browserName, privacy: .public)")
         return tabs
@@ -79,7 +54,7 @@ struct BrowserManager: Sendable {
     func focusTab(_ tab: TabInfo) async throws {
         guard BrowserRegistry.isRunning( tab.browserBundleID) else {
             log.error("focusTab: browser not running \(tab.browserName, privacy: .public)")
-            throw BrowserError.browserNotRunning(tab.browserName)
+            throw AppleScriptError.appNotRunning(tab.browserName)
         }
 
         // Re-query to get current indices
@@ -98,7 +73,7 @@ struct BrowserManager: Sendable {
                 windowIndex: current.windowIndex,
                 tabIndex: current.tabIndex
             )
-        try await runAppleScript(script)
+        try await AppleScriptRunner.run(script)
         await activateBrowser(bundleID: tab.browserBundleID)
     }
 
@@ -107,7 +82,7 @@ struct BrowserManager: Sendable {
     func closeTab(_ tab: TabInfo) async throws {
         guard BrowserRegistry.isRunning( tab.browserBundleID) else {
             log.error("closeTab: browser not running \(tab.browserName, privacy: .public)")
-            throw BrowserError.browserNotRunning(tab.browserName)
+            throw AppleScriptError.appNotRunning(tab.browserName)
         }
 
         let currentTabs = try await listTabs(for: tab.browserBundleID, browserName: tab.browserName)
@@ -125,13 +100,13 @@ struct BrowserManager: Sendable {
                 windowIndex: current.windowIndex,
                 tabIndex: current.tabIndex
             )
-        try await runAppleScript(script)
+        try await AppleScriptRunner.run(script)
     }
 
     // MARK: - Open URL
 
     func openURL(_ urlString: String, in bundleID: String) async throws {
-        let escaped = escapeForAppleScript(urlString)
+        let escaped = urlString.escapedForAppleScript
         let script: String
         if bundleID == "com.apple.Safari" {
             script = """
@@ -161,7 +136,7 @@ struct BrowserManager: Sendable {
                 end tell
                 """
         }
-        try await runAppleScript(script)
+        try await AppleScriptRunner.run(script)
         await activateBrowser(bundleID: bundleID)
     }
 
@@ -245,59 +220,6 @@ struct BrowserManager: Sendable {
         """
     }
 
-    // MARK: - Private: AppleScript Execution
-
-    @discardableResult
-    private func runAppleScript(_ script: String) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-
-            let inputPipe = Pipe()
-            let stdoutPipe = Pipe()
-            let stderrPipe = Pipe()
-            process.standardInput = inputPipe
-            process.standardOutput = stdoutPipe
-            process.standardError = stderrPipe
-
-            let gate = ResumeGate(continuation: continuation)
-
-            let timeoutWorkItem = DispatchWorkItem {
-                log.warning("AppleScript timed out after 5s")
-                gate.resume(with: .failure(BrowserError.scriptTimeout))
-                process.terminate()
-            }
-            DispatchQueue.global().asyncAfter(deadline: .now() + 5, execute: timeoutWorkItem)
-
-            process.terminationHandler = { _ in
-                timeoutWorkItem.cancel()
-
-                let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-
-                if process.terminationStatus != 0 {
-                    let errorMsg = String(data: errorData, encoding: .utf8)?
-                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
-                    log.error("AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(errorMsg, privacy: .public)")
-                    gate.resume(with: .failure(BrowserError.scriptFailed(errorMsg)))
-                } else {
-                    let output = String(data: outputData, encoding: .utf8) ?? ""
-                    gate.resume(with: .success(output))
-                }
-            }
-
-            do {
-                try process.run()
-                inputPipe.fileHandleForWriting.write(script.data(using: .utf8) ?? Data())
-                inputPipe.fileHandleForWriting.closeFile()
-            } catch {
-                timeoutWorkItem.cancel()
-                log.error("Failed to launch osascript: \(error.localizedDescription, privacy: .public)")
-                gate.resume(with: .failure(error))
-            }
-        }
-    }
-
     // MARK: - Private: Parsing
 
     private func parseTabOutput(_ output: String, bundleID: String, browserName: String) -> [TabInfo] {
@@ -324,12 +246,6 @@ struct BrowserManager: Sendable {
     }
 
     // MARK: - Private: Helpers
-
-    private func escapeForAppleScript(_ value: String) -> String {
-        value
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-    }
 
     @MainActor
     private func activateBrowser(bundleID: String) {

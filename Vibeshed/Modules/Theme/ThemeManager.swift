@@ -187,9 +187,7 @@ enum ThemeManager {
     // MARK: - iTerm Color Preset
 
     static func setITermColorPreset(_ presetName: String) throws {
-        let escaped = presetName
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
+        let escaped = presetName.escapedForAppleScript
         let script = """
         tell application "iTerm2"
             repeat with w in windows
@@ -213,9 +211,7 @@ enum ThemeManager {
     static func setGitHubTheme(_ theme: String) throws -> String {
         let body = buildGitHubBody(theme)
         let js = buildGitHubJS(body: body)
-        let escapedJS = js
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
+        let escapedJS = js.escapedForAppleScript
 
         // Try running browsers with AppleScript tab support
         let browsers = BrowserRegistry.appleScriptCapable.filter {
@@ -226,7 +222,7 @@ enum ThemeManager {
             let script = browser.bundleID == "com.apple.Safari"
                 ? safariGitHubScript(js: escapedJS)
                 : chromiumGitHubScript(bundleID: browser.bundleID, js: escapedJS)
-            let result = runAppleScriptWithOutput(script)
+            let result = AppleScriptRunner.runSyncWithOutput(script)
             if let result, !result.isEmpty, result != "missing value" {
                 let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
                 if trimmed == "ok" || trimmed.hasPrefix("err:") || trimmed == "no_token" {
@@ -295,27 +291,6 @@ enum ThemeManager {
         """
     }
 
-    private static func runAppleScriptWithOutput(_ source: String) -> String? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        task.arguments = ["-e", source]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = FileHandle.nullDevice
-
-        do {
-            try task.run()
-            task.waitUntilExit()
-        } catch {
-            log.warning("osascript launch failed: \(error.localizedDescription, privacy: .public)")
-            return nil
-        }
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        return String(data: data, encoding: .utf8)
-    }
-
     // MARK: - Apply Preset
 
     static func applyPreset(
@@ -376,14 +351,7 @@ enum ThemeManager {
     // MARK: - Private Helpers
 
     private static func runAppleScript(_ source: String) throws {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        task.arguments = ["-e", source]
-        try task.run()
-        task.waitUntilExit()
-        if task.terminationStatus != 0 {
-            log.error("AppleScript exited with status \(task.terminationStatus, privacy: .public)")
-        }
+        try AppleScriptRunner.runSync(source)
     }
 
     private static func runDefaults(_ args: [String]) throws {
@@ -432,8 +400,7 @@ enum ThemeError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .fileNotFound(let path):
-            return "File not found: \(path)"
+        case .fileNotFound(let path): "File not found: \(path)"
         }
     }
 }

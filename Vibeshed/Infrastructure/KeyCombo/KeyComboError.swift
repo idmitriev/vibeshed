@@ -12,20 +12,19 @@ enum KeyComboError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case let .invalidCombo(combo, reason):
-            return "Invalid combo '\(combo)': \(reason)"
+            "Invalid combo '\(combo)': \(reason)"
         case let .unknownKey(key):
-            return "Unknown key '\(key)'"
+            "Unknown key '\(key)'"
         case let .unknownModifier(modifier):
-            return "Unknown modifier '\(modifier)'"
+            "Unknown modifier '\(modifier)'"
         case let .actionNotFound(actionID):
-            return "Action not found: \(actionID)"
+            "Action not found: \(actionID)"
         case let .permissionRequired(permissions):
-            let names = permissions.map(\.rawValue).sorted().joined(separator: ", ")
-            return "Permissions required: \(names)"
+            "Permissions required: \(permissions.map(\.rawValue).sorted().joined(separator: ", "))"
         case let .duplicateBinding(combo):
-            return "Duplicate binding for '\(combo)'"
+            "Duplicate binding for '\(combo)'"
         case let .invalidRemap(from, to, reason):
-            return "Invalid remap '\(from)' → '\(to)': \(reason)"
+            "Invalid remap '\(from)' → '\(to)': \(reason)"
         }
     }
 }

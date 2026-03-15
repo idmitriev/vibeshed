@@ -8,8 +8,8 @@ final class PermissionsManager {
     private(set) var statuses: [Permission: Bool] = [:]
 
     private let eventBus: EventBus
-    private var recheckTimer: DispatchSourceTimer?
-    private let recheckInterval: TimeInterval = 10
+    private var recheckTask: Task<Void, Never>?
+    private let recheckInterval: Duration = .seconds(10)
 
     init(eventBus: EventBus) {
         self.eventBus = eventBus
@@ -64,18 +64,18 @@ final class PermissionsManager {
     }
 
     func startPeriodicRecheck() {
-        let timer = DispatchSource.makeTimerSource(queue: .main)
-        timer.schedule(deadline: .now() + recheckInterval, repeating: recheckInterval)
-        timer.setEventHandler { [weak self] in
-            self?.checkAll()
+        recheckTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: self?.recheckInterval ?? .seconds(10))
+                guard !Task.isCancelled else { break }
+                self?.checkAll()
+            }
         }
-        timer.resume()
-        recheckTimer = timer
     }
 
     func stopPeriodicRecheck() {
-        recheckTimer?.cancel()
-        recheckTimer = nil
+        recheckTask?.cancel()
+        recheckTask = nil
     }
 
     // MARK: - Per-Permission Checks
