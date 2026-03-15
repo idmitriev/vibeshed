@@ -92,7 +92,7 @@ struct PickerView: View {
 
             content
         }
-        .frame(width: 680, height: 460)
+        .frame(width: 760, height: 520)
         .background {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ParameterInputView: View {
     @Bindable var state: PickerState
+    @Environment(\.vibeTheme) private var theme
 
     var body: some View {
         Group {
@@ -57,6 +58,7 @@ struct ParameterInputView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .tint(theme.accent)
                 .accessibilityIdentifier("parameterOptionList")
                 .onChange(of: state.selectedParameterOptionID) { _, newID in
                     if let newID {

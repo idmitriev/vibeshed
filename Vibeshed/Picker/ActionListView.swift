@@ -4,6 +4,7 @@ struct ActionListView: View {
     let actions: [ActionItem]
     @Binding var selectedID: ActionID?
     var actionCache: [ActionID: any Action] = [:]
+    @Environment(\.vibeTheme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +25,7 @@ struct ActionListView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .tint(theme.accent)
                 .accessibilityIdentifier("actionList")
                 .onChange(of: selectedID) { _, newID in
                     if let newID {

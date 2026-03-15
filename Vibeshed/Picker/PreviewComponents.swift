@@ -14,13 +14,15 @@ struct PreviewHeader<Hero: View>: View {
             Text(title)
                 .font(.title3)
                 .fontWeight(.medium)
-                .lineLimit(2)
+                .lineLimit(1)
+                .truncationMode(.tail)
 
             if !subtitle.isEmpty {
                 Text(subtitle)
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
             }
         }
     }
@@ -70,6 +72,8 @@ struct PreviewMetadataRow: View {
             Text(value)
                 .font(.subheadline)
                 .foregroundStyle(valueColor)
+                .lineLimit(1)
+                .truncationMode(.tail)
         }
     }
 }
@@ -93,18 +97,17 @@ struct PreviewLayout<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                content()
+        VStack(alignment: .leading, spacing: 16) {
+            content()
 
-                Spacer(minLength: 8)
+            Spacer(minLength: 0)
 
-                PreviewModuleBadge(moduleName: moduleName)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
-            .padding()
+            PreviewModuleBadge(moduleName: moduleName)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
+        .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .clipped()
     }
 }
 

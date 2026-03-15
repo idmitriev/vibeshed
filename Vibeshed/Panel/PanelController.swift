@@ -58,7 +58,7 @@ final class PanelController {
         if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
             let x = screenFrame.midX - panel.frame.width / 2
-            let y = screenFrame.maxY - panel.frame.height - screenFrame.height * 0.2
+            let y = screenFrame.midY - panel.frame.height / 2
             panel.setFrameOrigin(NSPoint(x: x, y: y))
         }
 
@@ -106,8 +106,8 @@ final class PanelController {
     private func getOrCreatePanel() -> FloatingPanel {
         if let existing = panel { return existing }
 
-        // 680×460 content + 16pt padding on each side for shadow
-        let frame = NSRect(x: 0, y: 0, width: 712, height: 492)
+        // 760×520 content + 16pt padding on each side for shadow
+        let frame = NSRect(x: 0, y: 0, width: 792, height: 552)
         let newPanel = FloatingPanel(contentRect: frame)
 
         newPanel.onEscape = { [weak self] in

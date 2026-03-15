@@ -126,10 +126,6 @@
 
 ## 13. Dynamic Theme
 
-- [ ] Theme intensity 0 = no theming
-- [ ] Theme intensity > 0.3 = background tint
-- [ ] Theme intensity > 0.6 = icon tint
-- [ ] Theme intensity > 0.8 = glow effect
 - [ ] Theme responds to system appearance changes
 - [ ] Theme updates based on running apps / music
 
