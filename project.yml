@@ -36,6 +36,7 @@ targets:
       path: Vibeshed/Info.plist
       properties:
         LSUIElement: true
+        CFBundleIconFile: AppIcon
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - vibeshed
@@ -49,6 +50,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ivandmitriev.Vibeshed
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_APP_SANDBOX: NO
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
 
   VibeshedUITests:
     type: bundle.ui-testing

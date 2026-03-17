@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibeshed — Keyboard-driven macOS Launcher</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="icon.png">
+</head>
+<body>
+  <header class="hero">
+    <img src="icon.png" alt="Vibeshed icon" class="hero-icon" width="128" height="128">
+    <h1>Vibeshed</h1>
+    <p class="tagline">A keyboard-driven macOS launcher built with SwiftUI</p>
+    <p class="subtitle">Control your Mac with keystrokes. Manage windows, switch apps, search browser tabs, control Spotify, and more from a single floating picker.</p>
+    <div class="cta">
+      <a href="https://github.com/idmitriev/vibeshed" class="btn btn-primary">View on GitHub</a>
+      <a href="https://github.com/idmitriev/vibeshed#installation" class="btn btn-secondary">Install</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="features">
+      <h2>Features</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">&#x2728;</div>
+          <h3>Smart Launcher</h3>
+          <p>Fuzzy search with usage-aware sorting and context-sensitive action boosting. Adapts to how you work.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x25A3;</div>
+          <h3>Window Management</h3>
+          <p>Tile, resize, cycle sizes, maximize/restore. Anchor to edges, split halves, focus by title.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F310;</div>
+          <h3>Browser Control</h3>
+          <p>Search and switch tabs across Safari and Chrome. Bookmarks, history, per-URL routing to browser profiles.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F4CB;</div>
+          <h3>Clipboard History</h3>
+          <p>Persistent clipboard history with search, paste, and regex-based exclusion patterns.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F3B5;</div>
+          <h3>Spotify &amp; Audio</h3>
+          <p>Search and play music. Control volume, mute, select audio devices, media keys.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F6E0;</div>
+          <h3>Developer Tools</h3>
+          <p>VSCode, JetBrains, iTerm, GitHub, and AI session search. Open projects, run commands, browse PRs.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x2328;</div>
+          <h3>Key Remapping</h3>
+          <p>Global and per-app key combos. Remap keys, bind mouse buttons, use Caps Lock as hyper key.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F3A8;</div>
+          <h3>Dynamic Theming</h3>
+          <p>Theme shifts with your system appearance and the vibe of what you're doing.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="install">
+      <h2>Get Started</h2>
+      <p>Requires macOS 14 (Sonoma) or later and Swift 5.9+.</p>
+      <pre><code>git clone https://github.com/idmitriev/vibeshed.git
+cd vibeshed
+make build
+make run</code></pre>
+      <p>The app lives in your menu bar. Configure it at <code>~/.config/vibeshed/config.yaml</code>. See <a href="https://github.com/idmitriev/vibeshed/blob/main/config.example.yaml">config.example.yaml</a> for all options.</p>
+    </section>
+
+    <section class="modules">
+      <h2>21 Modules</h2>
+      <p>Window, Application, Browser, Bookmark, Clipboard, Audio, System, Spotify, GitHub, VSCode, JetBrains, iTerm, AI, Telegram, Calendar, Meeting Prep, Timer, Math, Theme, Zoom, and Self. Each module loads only when configured and declares its own permissions.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built with SwiftUI &middot; <a href="https://github.com/idmitriev/vibeshed">GitHub</a> &middot; <a href="https://github.com/idmitriev/vibeshed/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+</body>
+</html>
