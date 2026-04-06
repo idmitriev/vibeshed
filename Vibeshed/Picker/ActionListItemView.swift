@@ -1,9 +1,13 @@
 import SwiftUI
 
-struct ActionListItemView: View {
+struct ActionListItemView: View, Equatable {
     let item: ActionItem
     var hotkeyNumber: Int?
     @Environment(\.vibeTheme) private var theme
+
+    static func == (lhs: ActionListItemView, rhs: ActionListItemView) -> Bool {
+        lhs.item == rhs.item && lhs.hotkeyNumber == rhs.hotkeyNumber
+    }
 
     var body: some View {
         HStack(spacing: 12) {

@@ -365,9 +365,9 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [x] UI overal more contrasty and readable, but also follow Apple's design principles and guidelines to make sure the app feels native and intuitive to use. This can include using appropriate font sizes, colors, and spacing to create a visually appealing and easy-to-use interface
 
-### Phase 61: Scrolling performance improvements
+### Phase 61: Scrolling performance improvements (DONE)
 
-- [ ] Optimize the performance of the picker when displaying long lists of actions, for example by implementing lazy loading or pagination to ensure that the app remains responsive and smooth even with a large number of actions available.
+- [x] Optimize the performance of the picker when displaying long lists of actions, for example by implementing lazy loading or pagination to ensure that the app remains responsive and smooth even with a large number of actions available.
 
 ### Phase 62: Bugfixing and polishing
 

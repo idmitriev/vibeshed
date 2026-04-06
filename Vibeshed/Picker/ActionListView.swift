@@ -6,33 +6,44 @@ struct ActionListView: View {
     var actionCache: [ActionID: any Action] = [:]
     @Environment(\.vibeTheme) private var theme
 
+    /// Map first 9 action IDs → hotkey number (1-9) for O(1) lookup per row.
+    private var hotkeyMap: [ActionID: Int] {
+        var map = [ActionID: Int]()
+        map.reserveCapacity(min(actions.count, 9))
+        for i in 0 ..< min(actions.count, 9) {
+            map[actions[i].id] = i + 1
+        }
+        return map
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                List(selection: $selectedID) {
-                    ForEach(Array(actions.enumerated()), id: \.element.id) { index, item in
-                        if let action = actionCache[item.id],
-                           let customView = action.makeListItemView() {
-                            customView.tag(item.id)
-                        } else {
-                            ActionListItemView(
-                                item: item,
-                                hotkeyNumber: index < 9 ? index + 1 : nil
-                            )
-                            .tag(item.id)
-                        }
-                    }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .tint(theme.accent)
-                .accessibilityIdentifier("actionList")
-                .onChange(of: selectedID) { _, newID in
-                    if let newID {
-                        proxy.scrollTo(newID, anchor: nil)
-                    }
+        let hotkeys = hotkeyMap
+        ScrollViewReader { proxy in
+            List(selection: $selectedID) {
+                ForEach(actions) { item in
+                    actionRow(for: item, hotkeyNumber: hotkeys[item.id])
+                        .tag(item.id)
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .tint(theme.accent)
+            .accessibilityIdentifier("actionList")
+            .onChange(of: selectedID) { _, newID in
+                if let newID {
+                    proxy.scrollTo(newID, anchor: nil)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func actionRow(for item: ActionItem, hotkeyNumber: Int?) -> some View {
+        if let action = actionCache[item.id],
+           let customView = action.makeListItemView() {
+            customView
+        } else {
+            ActionListItemView(item: item, hotkeyNumber: hotkeyNumber)
         }
     }
 }

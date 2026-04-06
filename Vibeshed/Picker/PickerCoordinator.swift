@@ -363,6 +363,17 @@ final class PickerCoordinator {
         }
 
         scored.sort { $0.score > $1.score }
+
+        // Cap results to avoid rendering huge lists — nobody scrolls past 200 in a launcher.
+        let maxResults = 200
+        if scored.count > maxResults {
+            let dropped = scored[maxResults...]
+            for entry in dropped {
+                cache.removeValue(forKey: entry.action.id)
+            }
+            scored = Array(scored.prefix(maxResults))
+        }
+
         return (scored.map(\.item), cache)
     }
 

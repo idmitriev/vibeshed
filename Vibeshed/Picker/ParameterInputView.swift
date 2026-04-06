@@ -47,11 +47,18 @@ struct ParameterInputView: View {
             )
         } else {
             ScrollViewReader { proxy in
+                let hotkeys: [String: Int] = {
+                    var map = [String: Int]()
+                    for i in 0 ..< min(state.parameterOptions.count, 9) {
+                        map[state.parameterOptions[i].id] = i + 1
+                    }
+                    return map
+                }()
                 List(selection: $state.selectedParameterOptionID) {
-                    ForEach(Array(state.parameterOptions.enumerated()), id: \.element.id) { index, option in
+                    ForEach(state.parameterOptions) { option in
                         ParameterOptionRow(
                             option: option,
-                            hotkeyNumber: index < 9 ? index + 1 : nil
+                            hotkeyNumber: hotkeys[option.id]
                         )
                         .tag(option.id)
                     }
@@ -132,10 +139,14 @@ struct ParameterInputView: View {
     }
 }
 
-struct ParameterOptionRow: View {
+struct ParameterOptionRow: View, Equatable {
     let option: ParameterOption
     var hotkeyNumber: Int?
     @Environment(\.vibeTheme) private var theme
+
+    static func == (lhs: ParameterOptionRow, rhs: ParameterOptionRow) -> Bool {
+        lhs.option == rhs.option && lhs.hotkeyNumber == rhs.hotkeyNumber
+    }
 
     var body: some View {
         HStack(spacing: 12) {

@@ -2,12 +2,12 @@ import SwiftUI
 
 struct ActionPreviewView: View {
     let selectedID: ActionID?
-    let actions: [ActionItem]
+    let actionIndex: [ActionID: ActionItem]
     var actionCache: [ActionID: any Action] = [:]
 
     private var selectedItem: ActionItem? {
         guard let id = selectedID else { return nil }
-        return actions.first { $0.id == id }
+        return actionIndex[id]
     }
 
     var body: some View {

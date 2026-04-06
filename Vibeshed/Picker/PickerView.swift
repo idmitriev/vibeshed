@@ -175,7 +175,7 @@ struct PickerView: View {
 
                 ActionPreviewView(
                     selectedID: state.selectedActionID,
-                    actions: state.actions,
+                    actionIndex: Dictionary(uniqueKeysWithValues: state.actions.map { ($0.id, $0) }),
                     actionCache: state.actionCache
                 )
                 .frame(minWidth: 240, idealWidth: 340)
