@@ -28,7 +28,7 @@ struct ResultView: View {
 
             Text("Press Return to dismiss")
                 .font(.subheadline)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
                 .padding(.top, 8)
                 .opacity(appeared ? 1 : 0)
 

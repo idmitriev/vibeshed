@@ -33,7 +33,7 @@ extension PreviewHeader where Hero == AnyView {
         title: String,
         subtitle: String,
         systemIcon: String,
-        iconColor: Color = .secondary
+        iconColor: Color = Color.primary.opacity(0.5)
     ) {
         self.title = title
         self.subtitle = subtitle
@@ -60,12 +60,12 @@ struct PreviewMetadataRow: View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
                 .frame(width: 18)
 
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
@@ -86,7 +86,7 @@ struct PreviewModuleBadge: View {
     var body: some View {
         Text("Module: \(moduleName)")
             .font(.caption)
-            .foregroundStyle(.quaternary)
+            .foregroundStyle(.tertiary)
     }
 }
 
@@ -129,7 +129,7 @@ struct PreviewPill: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(color.opacity(0.15))
+        .background(color.opacity(0.2))
         .foregroundStyle(color)
         .clipShape(Capsule())
     }

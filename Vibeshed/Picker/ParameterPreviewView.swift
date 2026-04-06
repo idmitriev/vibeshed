@@ -34,7 +34,7 @@ struct ParameterPreviewView: View {
                             } else {
                                 Image(systemName: action.iconName ?? "sparkle")
                                     .font(.system(size: 56))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(.primary.opacity(0.5))
                             }
                         }
                         .frame(width: 72, height: 72)
@@ -46,7 +46,7 @@ struct ParameterPreviewView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Parameters")
                             .font(.caption)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                             .textCase(.uppercase)
 
                         ForEach(action.parameters) { param in
@@ -84,10 +84,10 @@ struct ParameterPreviewView: View {
                     if !param.isRequired {
                         Text("optional")
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
-                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 3))
+                            .background(.tertiary.opacity(0.5), in: RoundedRectangle(cornerRadius: 3))
                     }
                 }
 

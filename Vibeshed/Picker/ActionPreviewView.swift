@@ -40,7 +40,7 @@ struct ActionPreviewView: View {
             PreviewHeader(title: item.title, subtitle: item.subtitle) {
                 Image(systemName: item.iconSystemName ?? "sparkle")
                     .font(.system(size: 56))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.5))
                     .frame(width: 72, height: 72)
             }
 
@@ -50,14 +50,14 @@ struct ActionPreviewView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Parameters")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                         .textCase(.uppercase)
 
                     ForEach(action.parameters) { param in
                         HStack(spacing: 6) {
                             Image(systemName: parameterIcon(for: param.type))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.primary.opacity(0.55))
                                 .frame(width: 16)
                             Text(param.label)
                                 .font(.subheadline)

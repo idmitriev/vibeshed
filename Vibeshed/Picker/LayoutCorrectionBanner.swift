@@ -23,7 +23,7 @@ struct LayoutCorrectionBanner: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
-        .background(theme.selectionHighlight.opacity(0.5))
+        .background(theme.selectionHighlight)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 }

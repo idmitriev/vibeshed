@@ -353,19 +353,27 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [x] simplify theme engine by removing intensity parameter and just making vibe-based theme changes noticeable by default
 
-### Phase 59: Branding and website
+### Phase 59: Branding and website (DONE)
 
-- [ ] Come up with a kickass name and icon for the app that reflects its functionality and vibe
- - [ ] Make sure it follows apple UX guidelines and unix principles at least to some extent
-- [ ] Create a website on github pages for the app with documentation, screenshots, and download links to make it easy for users to learn about the app and get it installed on their systems
-- [ ] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems
+- [x] Come up with a kickass name and icon for the app that reflects its functionality and vibe
+- [x] Make sure it follows apple UX guidelines and unix principles at least to some extent
+- [x] Create a website on github pages for the app with documentation, screenshots, and download links to make it easy for users to learn about the app and get it installed on their systems
+- [x] Set propper bundle identifier, versioning and code signing for the app to ensure it can be distributed and installed properly on user systems
 
-### Phase 60: Bugfixing and polishing
+
+### Phase 60: More contrast, readability and accessibility improvements (DONE)
+
+- [x] UI overal more contrasty and readable, but also follow Apple's design principles and guidelines to make sure the app feels native and intuitive to use. This can include using appropriate font sizes, colors, and spacing to create a visually appealing and easy-to-use interface
+
+### Phase 61: Scrolling performance improvements
+
+- [ ] Optimize the performance of the picker when displaying long lists of actions, for example by implementing lazy loading or pagination to ensure that the app remains responsive and smooth even with a large number of actions available.
+
+### Phase 62: Bugfixing and polishing
 
 - [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
 
-
-### Phase 61: Releases and distribution 
+### Phase 63: Releases and distribution 
 
 - [ ] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
 - [ ] Make sure gitingnore file is configured to not include any sensitive information, build artifacts, or other unnecessary files in the repository

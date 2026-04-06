@@ -11,7 +11,7 @@ struct VibeTheme: Equatable, Sendable {
     static let `default` = VibeTheme(
         accent: .accentColor,
         backgroundTint: nil,
-        selectionHighlight: Color.accentColor.opacity(0.08),
+        selectionHighlight: Color.accentColor.opacity(0.14),
         searchHighlight: .accentColor,
         iconTint: nil,
         shadowColor: nil

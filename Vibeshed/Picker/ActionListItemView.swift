@@ -10,7 +10,7 @@ struct ActionListItemView: View {
             Image(systemName: item.iconSystemName ?? "sparkle")
                 .font(.title3)
                 .frame(width: 32, height: 32)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary.opacity(0.65))
 
             VStack(alignment: .leading, spacing: 2) {
                 highlightedTitle
@@ -30,13 +30,13 @@ struct ActionListItemView: View {
             if item.hasParameters {
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
 
             if let number = hotkeyNumber {
                 Text("\u{2318}\(number)")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
         }

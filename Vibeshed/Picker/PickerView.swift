@@ -106,11 +106,12 @@ struct PickerView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
         )
         .shadow(
-            color: theme.shadowColor ?? .black.opacity(0.3),
-            radius: 5
+            color: theme.shadowColor ?? .black.opacity(0.35),
+            radius: 8,
+            y: 2
         )
         .padding(16)
         .accessibilityIdentifier("pickerView")

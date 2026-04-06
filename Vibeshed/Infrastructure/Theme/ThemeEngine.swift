@@ -110,10 +110,10 @@ final class ThemeEngine {
         return VibeTheme(
             accent: color,
             backgroundTint: color.opacity(0.06),
-            selectionHighlight: color.opacity(0.12),
+            selectionHighlight: color.opacity(0.18),
             searchHighlight: color,
-            iconTint: color.opacity(0.7),
-            shadowColor: color.opacity(0.3)
+            iconTint: color.opacity(0.75),
+            shadowColor: color.opacity(0.35)
         )
     }
 

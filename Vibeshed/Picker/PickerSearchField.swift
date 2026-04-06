@@ -154,10 +154,10 @@ private struct PillView: View {
             if let detail = pill.detail {
                 Image(systemName: "chevron.right")
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                 Text(detail)
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.7))
                     .lineLimit(1)
             }
 

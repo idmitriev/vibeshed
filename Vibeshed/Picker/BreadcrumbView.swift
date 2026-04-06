@@ -22,7 +22,7 @@ struct BreadcrumbView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial.opacity(0.5))
+        .background(.ultraThinMaterial)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 

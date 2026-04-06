@@ -74,25 +74,25 @@ struct ParameterInputView: View {
         VStack(spacing: 16) {
             Image(systemName: iconForParameterType(param.type))
                 .font(.largeTitle)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary.opacity(0.5))
 
             Text("Type a value and press Return")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary.opacity(0.7))
 
             if case let .number(min, max) = param.type {
                 if let min, let max {
                     Text("Range: \(min, specifier: "%.0f") – \(max, specifier: "%.0f")")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 } else if let min {
                     Text("Minimum: \(min, specifier: "%.0f")")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 } else if let max {
                     Text("Maximum: \(max, specifier: "%.0f")")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -147,7 +147,7 @@ struct ParameterOptionRow: View {
                 } else {
                     Image(systemName: option.iconName ?? "sparkle")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary.opacity(0.65))
                 }
             }
             .frame(width: 32, height: 32)
@@ -170,7 +170,7 @@ struct ParameterOptionRow: View {
             if let number = hotkeyNumber {
                 Text("\u{2318}\(number)")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
         }
