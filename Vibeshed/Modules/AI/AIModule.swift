@@ -208,19 +208,6 @@ actor AIModule: ModuleConfigurable {
         var actions: [AIAction] = []
 
         actions.append(AIAction(
-            id: ActionID(module: "ai", name: "openClaudeDesktop"),
-            title: "Open Claude Desktop",
-            subtitle: "Launch the Claude desktop app",
-            iconName: "brain",
-            relevanceScore: 0.7,
-            keywords: ["ai", "claude", "desktop", "open", "launch"],
-            aiItemType: .launcher
-        ) { _ in
-            Self.openApp(bundleID: "com.anthropic.claudefordesktop")
-            return .dismiss
-        })
-
-        actions.append(AIAction(
             id: ActionID(module: "ai", name: "openChatGPT"),
             title: "Open ChatGPT",
             subtitle: "Open chatgpt.com in browser",
@@ -232,23 +219,6 @@ actor AIModule: ModuleConfigurable {
             Self.openURL("https://chatgpt.com")
             return .dismiss
         })
-
-        if Self.isAppInstalled(bundleID: "com.openai.codex") {
-            actions.append(AIAction(
-                id: ActionID(module: "ai", name: "openCodexDesktop"),
-                title: "Open Codex Desktop",
-                subtitle: "Launch the Codex desktop app",
-                iconName: "terminal.fill",
-                relevanceScore: 0.65,
-                keywords: [
-                    "ai", "codex", "openai", "open", "launch",
-                ],
-                aiItemType: .launcher
-            ) { _ in
-                Self.openApp(bundleID: "com.openai.codex")
-                return .dismiss
-            })
-        }
 
         return actions
     }
@@ -448,13 +418,7 @@ actor AIModule: ModuleConfigurable {
         }
     }
 
-    private static func isAppInstalled(bundleID: String) -> Bool {
-        NSWorkspace.shared.urlForApplication(
-            withBundleIdentifier: bundleID
-        ) != nil
-    }
-
-    private static func stableID(_ input: String) -> String {
+private static func stableID(_ input: String) -> String {
         let data = Data(input.utf8)
         var hash: UInt64 = 5381
         for byte in data {
