@@ -74,7 +74,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             togglePicker: { panel.toggle() },
             showURLChooser: { _, actions in
+                NSApp.activate(ignoringOtherApps: true)
                 panel.show()
+                panel.setStaysOpenOnResignKey(true)
                 picker.query = ""
                 let items = actions.map { action in
                     ActionItem(

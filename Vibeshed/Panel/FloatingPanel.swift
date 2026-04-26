@@ -18,6 +18,11 @@ final class FloatingPanel: NSPanel {
     /// Whether the show animation is currently in flight.
     private(set) var isAnimatingShow = false
 
+    /// When true, losing key focus does not auto-hide the panel.
+    /// Used for externally-triggered shows (e.g. browser chooser on URL open)
+    /// where focus may briefly bounce back to the source app.
+    var staysOpenOnResignKey: Bool = false
+
     init(contentRect: NSRect) {
         super.init(
             contentRect: contentRect,
@@ -62,6 +67,7 @@ final class FloatingPanel: NSPanel {
 
     override func resignKey() {
         super.resignKey()
+        if staysOpenOnResignKey { return }
         animateHide()
     }
 
@@ -146,6 +152,7 @@ final class FloatingPanel: NSPanel {
         guard !isHiding else { return }
         isHiding = true
         isAnimatingShow = false
+        staysOpenOnResignKey = false
 
         onWillHide?()
 

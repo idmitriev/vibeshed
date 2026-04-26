@@ -39,6 +39,12 @@ final class PanelController {
         isVisible ? hide() : show()
     }
 
+    /// When true, the panel will not auto-hide on resignKey.
+    /// Reset automatically when the panel hides.
+    func setStaysOpenOnResignKey(_ value: Bool) {
+        panel?.staysOpenOnResignKey = value
+    }
+
     func show() {
         let panel = getOrCreatePanel()
 

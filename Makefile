@@ -4,13 +4,15 @@ BUNDLE_ID = com.ivandmitriev.Vibeshed
 APP_NAME = Vibeshed
 APP_BUNDLE = .build/$(APP_NAME).app
 APP_BINARY = $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
+INSTALL_DIR = /Applications
+INSTALLED_APP = $(INSTALL_DIR)/$(APP_NAME).app
 SWIFTLINT = .build/artifacts/swiftlintplugins/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint
 
 # Version from git tags: "v0.1.0" → "0.1.0"; fallback "0.1.0-dev"
 VERSION := $(shell V=$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//'); echo "$${V:-0.1.0-dev}")
 BUILD_NUMBER := $(shell git rev-list --count HEAD 2>/dev/null || echo "1")
 
-.PHONY: build run run-debug clean log lint lint-fix
+.PHONY: build run run-debug install clean log lint lint-fix
 
 build:
 	swift build
@@ -44,6 +46,14 @@ run: build
 run-debug: build
 	@-pkill -x $(APP_NAME) 2>/dev/null && sleep 0.5 || true
 	"$(APP_BINARY)"
+
+# Build and install the .app bundle to /Applications, replacing any existing copy.
+install: build
+	@-pkill -x $(APP_NAME) 2>/dev/null && sleep 0.5 || true
+	@rm -rf "$(INSTALLED_APP)"
+	@cp -R "$(APP_BUNDLE)" "$(INSTALLED_APP)"
+	@echo "Installed $(APP_NAME) to $(INSTALLED_APP)"
+	@open "$(INSTALLED_APP)"
 
 # Stream all Vibeshed OSLog messages (run in a separate terminal alongside `make run`)
 log:
