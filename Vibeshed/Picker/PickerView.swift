@@ -169,7 +169,8 @@ struct PickerView: View {
                 ActionListView(
                     actions: state.actions,
                     selectedID: $state.selectedActionID,
-                    actionCache: state.actionCache
+                    actionCache: state.actionCache,
+                    onActivate: { id in coordinator?.activateAction(id: id) }
                 )
                 .frame(minWidth: 280, idealWidth: 340)
 
@@ -186,7 +187,7 @@ struct PickerView: View {
     @ViewBuilder
     private var parameterContent: some View {
         HSplitView {
-            ParameterInputView(state: state)
+            ParameterInputView(state: state, onConfirm: { coordinator?.handleReturn() })
                 .frame(minWidth: 280, idealWidth: 340)
 
             ParameterPreviewView(state: state)

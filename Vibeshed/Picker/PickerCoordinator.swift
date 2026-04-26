@@ -103,6 +103,18 @@ final class PickerCoordinator {
         activateAction(at: idx)
     }
 
+    /// Activate an action by ID — used by mouse-click handlers in the list view.
+    func activateAction(id: ActionID) {
+        switch pickerState.mode {
+        case .search, .pushedActions:
+            break
+        case .parameterInput, .result:
+            return
+        }
+        guard let idx = pickerState.actions.firstIndex(where: { $0.id == id }) else { return }
+        activateAction(at: idx)
+    }
+
     private func activateAction(at index: Int) {
         guard index >= 0, index < pickerState.actions.count else { return }
         let targetItem = pickerState.actions[index]

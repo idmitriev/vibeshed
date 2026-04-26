@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ParameterInputView: View {
     @Bindable var state: PickerState
+    var onConfirm: (() -> Void)?
     @Environment(\.vibeTheme) private var theme
 
     var body: some View {
@@ -61,6 +62,14 @@ struct ParameterInputView: View {
                             hotkeyNumber: hotkeys[option.id]
                         )
                         .tag(option.id)
+                        .contentShape(Rectangle())
+                        .onTapGesture(count: 2) {
+                            state.selectedParameterOptionID = option.id
+                            onConfirm?()
+                        }
+                        .onTapGesture(count: 1) {
+                            state.selectedParameterOptionID = option.id
+                        }
                     }
                 }
                 .listStyle(.plain)

@@ -41,6 +41,8 @@ struct BrowserAction: Action {
         try await runner(values)
     }
 
+    var activatesOnSingleClick: Bool { true }
+
     @MainActor
     func makeListItemView() -> AnyView? {
         AnyView(BrowserActionListItemView(action: self))

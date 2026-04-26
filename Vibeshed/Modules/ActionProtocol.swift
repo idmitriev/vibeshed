@@ -46,6 +46,10 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
 
     func run(with values: [String: Any]) async throws -> ActionResult
 
+    /// When true, the picker activates this action on a single mouse click.
+    /// Default is false (double-click required) to avoid accidental activation.
+    var activatesOnSingleClick: Bool { get }
+
     @MainActor
     func makeListItemView() -> AnyView?
     @MainActor
@@ -63,6 +67,10 @@ extension Action {
 
     var parameters: [ActionParameter] {
         []
+    }
+
+    var activatesOnSingleClick: Bool {
+        false
     }
 
     @MainActor

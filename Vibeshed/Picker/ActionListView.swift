@@ -4,6 +4,7 @@ struct ActionListView: View {
     let actions: [ActionItem]
     @Binding var selectedID: ActionID?
     var actionCache: [ActionID: any Action] = [:]
+    var onActivate: ((ActionID) -> Void)?
     @Environment(\.vibeTheme) private var theme
 
     /// Map first 9 action IDs → hotkey number (1-9) for O(1) lookup per row.
@@ -21,8 +22,22 @@ struct ActionListView: View {
         ScrollViewReader { proxy in
             List(selection: $selectedID) {
                 ForEach(actions) { item in
+                    let singleClick = actionCache[item.id]?.activatesOnSingleClick ?? false
                     actionRow(for: item, hotkeyNumber: hotkeys[item.id])
                         .tag(item.id)
+                        .contentShape(Rectangle())
+                        .onTapGesture(count: 2) {
+                            selectedID = item.id
+                            if !singleClick {
+                                onActivate?(item.id)
+                            }
+                        }
+                        .onTapGesture(count: 1) {
+                            selectedID = item.id
+                            if singleClick {
+                                onActivate?(item.id)
+                            }
+                        }
                 }
             }
             .listStyle(.plain)
