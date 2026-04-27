@@ -80,10 +80,7 @@ actor ClipboardModule: ModuleConfigurable {
         let cfg = config
         let hist = history
         let historyItems = await MainActor.run { hist?.items ?? [] }
-        var actions: [any Action] = buildHistoryActions(
-            items: historyItems,
-            config: cfg
-        )
+        var actions: [any Action] = [buildPasteAction(itemCount: historyItems.count)]
 
         if cfg.showClearAction, !historyItems.isEmpty {
             actions.append(buildClearAction())
@@ -96,19 +93,33 @@ actor ClipboardModule: ModuleConfigurable {
         return actions
     }
 
+    func provideParameterOptions(
+        for parameterID: String,
+        in actionID: ActionID,
+        query: String
+    ) async -> [ParameterOption] {
+        guard parameterID == "item" else { return [] }
+        let hist = history
+        let items = await MainActor.run { hist?.items ?? [] }
+        return items.map { item in
+            ParameterOption(
+                id: item.id,
+                label: truncate(item.content, maxLength: 80),
+                subtitle: "\(relativeTime(from: item.timestamp)) \u{2022} \(item.contentType.rawValue)",
+                iconName: iconForContentType(item.contentType)
+            )
+        }
+    }
+
     // MARK: - Monitoring
 
     private func startMonitoring() async {
-        let eventBus = context?.eventBus
         let hist = history
         let interval = config.pollingInterval
 
         let token = await MainActor.run {
             ClipboardManager.startMonitoring(interval: interval) { content, sourceApp in
                 hist?.addItem(content: content, sourceApp: sourceApp)
-                Task {
-                    await eventBus?.publish(.moduleActionsChanged(moduleID: "clipboard"))
-                }
             }
         }
         self.monitorToken = token
@@ -116,48 +127,49 @@ actor ClipboardModule: ModuleConfigurable {
 
     // MARK: - Build Actions
 
-    private func buildHistoryActions(
-        items: [ClipboardItem],
-        config: ClipboardConfig
-    ) -> [ClipboardAction] {
+    private func buildPasteAction(itemCount: Int) -> ClipboardAction {
+        let hist = history
         let pasteOnSelect = config.pasteOnSelect
-        return items.enumerated().map { index, item in
-            let truncatedTitle = truncate(item.content, maxLength: 80)
-            let subtitle = "\(relativeTime(from: item.timestamp)) \u{2022} \(item.contentType.rawValue)"
-            let iconName = iconForContentType(item.contentType)
-            let relevance = max(0.3, 0.95 - Double(index) * 0.005)
-            let contentWords = item.content
-                .components(separatedBy: .whitespacesAndNewlines)
-                .filter { !$0.isEmpty }
-                .prefix(10)
-                .map { $0.lowercased() }
-
-            let itemContent = item.content
-            return ClipboardAction(
-                id: ActionID(module: "clipboard", name: "item.\(item.id)"),
-                title: truncatedTitle,
-                subtitle: subtitle,
-                iconName: iconName,
-                relevanceScore: relevance,
-                keywords: ["clipboard", "paste", "copy", "history"] + contentWords,
-                contentPreview: itemContent,
-                contentType: item.contentType,
-                timestamp: item.timestamp
-            ) { _ in
-                await MainActor.run {
-                    ClipboardManager.writeToPasteboard(itemContent)
-                    if pasteOnSelect {
-                        ClipboardManager.pasteFromPasteboard()
-                    }
-                }
-                return .dismiss
+        let subtitle = itemCount == 0
+            ? "No items in history"
+            : "Choose from \(itemCount) item\(itemCount == 1 ? "" : "s")"
+        return ClipboardAction(
+            id: ActionID(module: "clipboard", name: "paste"),
+            title: "Paste from Clipboard History",
+            subtitle: subtitle,
+            iconName: "doc.on.clipboard",
+            relevanceScore: 0.9,
+            keywords: ["clipboard", "paste", "copy", "history"],
+            parameters: [
+                ActionParameter(
+                    id: "item",
+                    label: "Clipboard Item",
+                    type: .dynamicSelection(hint: "item"),
+                    isRequired: true
+                ),
+            ]
+        ) { values in
+            guard let itemID = values["item"] as? String else {
+                return .showResult(title: "Error", body: "No clipboard item selected")
             }
+            let content: String? = await MainActor.run {
+                hist?.items.first { $0.id == itemID }?.content
+            }
+            guard let content else {
+                return .showResult(title: "Error", body: "Clipboard item not found")
+            }
+            await MainActor.run {
+                ClipboardManager.writeToPasteboard(content)
+                if pasteOnSelect {
+                    ClipboardManager.pasteFromPasteboard()
+                }
+            }
+            return .dismiss
         }
     }
 
     private func buildClearAction() -> ClipboardAction {
         let hist = history
-        let eventBus = context?.eventBus
         return ClipboardAction(
             id: ActionID(module: "clipboard", name: "clear"),
             title: "Clear Clipboard History",
@@ -167,7 +179,6 @@ actor ClipboardModule: ModuleConfigurable {
             keywords: ["clear", "clipboard", "history", "delete", "remove"]
         ) { _ in
             await MainActor.run { hist?.clear() }
-            Task { await eventBus?.publish(.moduleActionsChanged(moduleID: "clipboard")) }
             return .showResult(
                 title: "Clipboard Cleared",
                 body: "All clipboard history items have been removed"
