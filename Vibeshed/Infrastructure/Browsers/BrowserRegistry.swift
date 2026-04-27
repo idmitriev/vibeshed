@@ -74,11 +74,28 @@ enum BrowserRegistry {
             throw URIError.browserNotFound(browser)
         }
 
-        let config = NSWorkspace.OpenConfiguration()
-        if let profile, entry(for: bundleID)?.isChromium == true {
-            config.arguments = ["--profile-directory=\(profile)"]
+        if let profile, !profile.isEmpty, entry(for: bundleID)?.isChromium == true {
+            try launchChromiumWithProfile(appURL: appURL, url: url, profile: profile)
+            return
         }
 
+        let config = NSWorkspace.OpenConfiguration()
         NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config)
+    }
+
+    /// Invoke the Chromium executable directly so `--profile-directory` is honored even when the
+    /// browser is already running. `NSWorkspace.open` only passes `arguments` on fresh launch, so
+    /// it silently drops the profile flag for running instances and opens the URL in whichever
+    /// profile window happens to be active.
+    private static func launchChromiumWithProfile(appURL: URL, url: URL, profile: String) throws {
+        let bundle = Bundle(url: appURL)
+        guard let executableURL = bundle?.executableURL else {
+            throw URIError.browserNotFound(appURL.lastPathComponent)
+        }
+
+        let process = Process()
+        process.executableURL = executableURL
+        process.arguments = ["--profile-directory=\(profile)", url.absoluteString]
+        try process.run()
     }
 }
