@@ -23,7 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.configManager = ConfigManager(eventBus: eventBus)
         self.permissionsManager = PermissionsManager(eventBus: eventBus)
         self.pickerState = PickerState()
-        self.panelController = PanelController(pickerState: pickerState)
+        self.panelController = PanelController(pickerState: pickerState, configManager: configManager)
         self.moduleRegistry = ModuleRegistry(
             eventBus: eventBus,
             configManager: configManager,

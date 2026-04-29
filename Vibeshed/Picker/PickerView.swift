@@ -4,6 +4,7 @@ import SwiftUI
 struct PickerView: View {
     @Bindable var state: PickerState
     let panelController: PanelController
+    var appearance: AppConfig.AppearanceConfig = .init()
     @Environment(\.vibeTheme) private var theme
 
     @State private var previewVisible = false
@@ -85,7 +86,7 @@ struct PickerView: View {
                     onBackspaceEmpty: { _ = state.popMode() }
                 )
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .frame(height: appearance.searchBarHeight)
                 .id(state.mode)
             }
 
@@ -95,20 +96,20 @@ struct PickerView: View {
 
             content
         }
-        .frame(width: 760, height: 520)
+        .frame(width: appearance.panelWidth, height: appearance.panelHeight)
         .background {
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: appearance.cornerRadius)
                     .fill(.ultraThinMaterial)
                 if let tint = theme.backgroundTint {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: appearance.cornerRadius)
                         .fill(tint)
                 }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: appearance.cornerRadius))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: appearance.cornerRadius)
                 .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
         )
         .shadow(
@@ -199,6 +200,7 @@ struct PickerView: View {
                     actions: state.actions,
                     selectedID: $state.selectedActionID,
                     actionCache: state.actionCache,
+                    rowHeight: appearance.rowHeight,
                     onActivate: { id in coordinator?.activateAction(id: id) }
                 )
                 .frame(maxWidth: .infinity)

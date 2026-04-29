@@ -13,8 +13,11 @@ struct AppConfig: Sendable, Equatable {
     }
 
     struct AppearanceConfig: Codable, Sendable, Equatable {
-        var panelWidth: Double = 680
-        var panelHeight: Double = 460
+        var panelWidth: Double = 760
+        // Default fits exactly 8 list rows: 56 (search bar) + 8 × 52 (row).
+        var panelHeight: Double = 472
         var cornerRadius: Double = 12
+        var rowHeight: Double = 52
+        var searchBarHeight: Double = 56
     }
 }

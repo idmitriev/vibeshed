@@ -3,10 +3,13 @@ import SwiftUI
 struct ActionListItemView: View, Equatable {
     let item: ActionItem
     var hotkeyNumber: Int?
+    var rowHeight: CGFloat = 52
     @Environment(\.vibeTheme) private var theme
 
     static func == (lhs: ActionListItemView, rhs: ActionListItemView) -> Bool {
-        lhs.item == rhs.item && lhs.hotkeyNumber == rhs.hotkeyNumber
+        lhs.item == rhs.item
+            && lhs.hotkeyNumber == rhs.hotkeyNumber
+            && lhs.rowHeight == rhs.rowHeight
     }
 
     var body: some View {
@@ -44,7 +47,7 @@ struct ActionListItemView: View, Equatable {
                     .monospacedDigit()
             }
         }
-        .padding(.vertical, 6)
+        .frame(height: rowHeight)
         .contentShape(Rectangle())
     }
 

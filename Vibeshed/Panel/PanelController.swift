@@ -7,6 +7,7 @@ import SwiftUI
 final class PanelController {
     private var panel: FloatingPanel?
     private let pickerState: PickerState
+    private let configManager: ConfigManager
     var coordinator: PickerCoordinator?
     var themeEngine: ThemeEngine?
     @ObservationIgnored nonisolated(unsafe) private var windowCloseObserver: NSObjectProtocol?
@@ -25,8 +26,9 @@ final class PanelController {
 
     private var deferredLoad: DeferredLoad?
 
-    init(pickerState: PickerState) {
+    init(pickerState: PickerState, configManager: ConfigManager) {
         self.pickerState = pickerState
+        self.configManager = configManager
     }
 
     deinit {
@@ -112,8 +114,14 @@ final class PanelController {
     private func getOrCreatePanel() -> FloatingPanel {
         if let existing = panel { return existing }
 
-        // 760×520 content + 16pt padding on each side for shadow
-        let frame = NSRect(x: 0, y: 0, width: 792, height: 552)
+        let appearance = configManager.config.appearance
+        // Outer 16pt padding on each side accommodates the panel shadow.
+        let frame = NSRect(
+            x: 0,
+            y: 0,
+            width: appearance.panelWidth + 32,
+            height: appearance.panelHeight + 32
+        )
         let newPanel = FloatingPanel(contentRect: frame)
 
         newPanel.onEscape = { [weak self] in
@@ -138,12 +146,13 @@ final class PanelController {
                 ThemedPickerWrapper(
                     state: pickerState,
                     panelController: self,
+                    appearance: appearance,
                     themeEngine: engine
                 )
             )
         } else {
             newPanel.setSwiftUIContent(
-                PickerView(state: pickerState, panelController: self)
+                PickerView(state: pickerState, panelController: self, appearance: appearance)
             )
         }
 
@@ -171,10 +180,11 @@ final class PanelController {
 private struct ThemedPickerWrapper: View {
     @Bindable var state: PickerState
     let panelController: PanelController
+    let appearance: AppConfig.AppearanceConfig
     let themeEngine: ThemeEngine
 
     var body: some View {
-        PickerView(state: state, panelController: panelController)
+        PickerView(state: state, panelController: panelController, appearance: appearance)
             .environment(\.vibeTheme, themeEngine.theme)
     }
 }

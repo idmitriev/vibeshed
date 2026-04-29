@@ -4,6 +4,7 @@ struct ActionListView: View {
     let actions: [ActionItem]
     @Binding var selectedID: ActionID?
     var actionCache: [ActionID: any Action] = [:]
+    var rowHeight: CGFloat = 52
     var onActivate: ((ActionID) -> Void)?
     @Environment(\.vibeTheme) private var theme
 
@@ -26,6 +27,8 @@ struct ActionListView: View {
                     actionRow(for: item, hotkeyNumber: hotkeys[item.id])
                         .tag(item.id)
                         .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets())
+                        .frame(height: rowHeight)
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             selectedID = item.id
@@ -60,7 +63,7 @@ struct ActionListView: View {
            let customView = action.makeListItemView() {
             customView
         } else {
-            ActionListItemView(item: item, hotkeyNumber: hotkeyNumber)
+            ActionListItemView(item: item, hotkeyNumber: hotkeyNumber, rowHeight: rowHeight)
         }
     }
 }
