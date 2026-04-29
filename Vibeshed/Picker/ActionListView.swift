@@ -25,6 +25,7 @@ struct ActionListView: View {
                     let singleClick = actionCache[item.id]?.activatesOnSingleClick ?? false
                     actionRow(for: item, hotkeyNumber: hotkeys[item.id])
                         .tag(item.id)
+                        .listRowSeparator(.hidden)
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             selectedID = item.id
@@ -42,6 +43,7 @@ struct ActionListView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .subtleScrollers()
             .tint(theme.accent)
             .accessibilityIdentifier("actionList")
             .onChange(of: selectedID) { _, newID in

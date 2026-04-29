@@ -40,8 +40,6 @@ struct ParameterPreviewView: View {
                         .frame(width: 72, height: 72)
                     }
 
-                    Divider()
-
                     // Parameter progress
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Parameters")

@@ -45,8 +45,6 @@ struct ActionPreviewView: View {
             }
 
             if let action = actionCache[item.id], !action.parameters.isEmpty {
-                Divider()
-
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Parameters")
                         .font(.caption)

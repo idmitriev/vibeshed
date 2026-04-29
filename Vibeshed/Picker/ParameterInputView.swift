@@ -62,6 +62,7 @@ struct ParameterInputView: View {
                             hotkeyNumber: hotkeys[option.id]
                         )
                         .tag(option.id)
+                        .listRowSeparator(.hidden)
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             state.selectedParameterOptionID = option.id
@@ -74,6 +75,7 @@ struct ParameterInputView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .subtleScrollers()
                 .tint(theme.accent)
                 .accessibilityIdentifier("parameterOptionList")
                 .onChange(of: state.selectedParameterOptionID) { _, newID in

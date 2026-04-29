@@ -6,6 +6,11 @@ struct PickerView: View {
     let panelController: PanelController
     @Environment(\.vibeTheme) private var theme
 
+    @State private var previewVisible = false
+    @State private var previewIdleTask: Task<Void, Never>?
+
+    private static let previewIdleDelay: Duration = .milliseconds(1200)
+
     private var coordinator: PickerCoordinator? {
         panelController.coordinator
     }
@@ -88,8 +93,6 @@ struct PickerView: View {
                 LayoutCorrectionBanner(hint: hint)
             }
 
-            Divider()
-
             content
         }
         .frame(width: 760, height: 520)
@@ -134,6 +137,32 @@ struct PickerView: View {
         }
         .onKeyPress(.pageDown) { state.selectNextPage(); return .handled }
         .onKeyPress(.pageUp) { state.selectPreviousPage(); return .handled }
+        .onAppear { schedulePreviewReveal() }
+        .onDisappear {
+            previewIdleTask?.cancel()
+            previewVisible = false
+        }
+        .onChange(of: state.query) { _, _ in schedulePreviewReveal() }
+        .onChange(of: state.parameterQuery) { _, _ in schedulePreviewReveal() }
+        .onChange(of: state.selectedActionID) { _, _ in schedulePreviewReveal() }
+        .onChange(of: state.selectedParameterOptionID) { _, _ in schedulePreviewReveal() }
+        .onChange(of: state.mode) { _, _ in schedulePreviewReveal() }
+    }
+
+    private func schedulePreviewReveal() {
+        previewIdleTask?.cancel()
+        if previewVisible {
+            withAnimation(.easeOut(duration: 0.18)) {
+                previewVisible = false
+            }
+        }
+        previewIdleTask = Task { @MainActor in
+            try? await Task.sleep(for: Self.previewIdleDelay)
+            guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                previewVisible = true
+            }
+        }
     }
 
     @ViewBuilder
@@ -165,33 +194,51 @@ struct PickerView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("pickerNoResults")
         } else {
-            HSplitView {
+            HStack(spacing: 0) {
                 ActionListView(
                     actions: state.actions,
                     selectedID: $state.selectedActionID,
                     actionCache: state.actionCache,
                     onActivate: { id in coordinator?.activateAction(id: id) }
                 )
-                .frame(minWidth: 280, idealWidth: 340)
+                .frame(maxWidth: .infinity)
 
-                ActionPreviewView(
-                    selectedID: state.selectedActionID,
-                    actionIndex: Dictionary(uniqueKeysWithValues: state.actions.map { ($0.id, $0) }),
-                    actionCache: state.actionCache
-                )
-                .frame(minWidth: 240, idealWidth: 340)
+                if previewVisible {
+                    ActionPreviewView(
+                        selectedID: state.selectedActionID,
+                        actionIndex: Dictionary(uniqueKeysWithValues: state.actions.map { ($0.id, $0) }),
+                        actionCache: state.actionCache
+                    )
+                    .frame(width: 340)
+                    .transition(previewTransition)
+                }
             }
+            .clipped()
         }
     }
 
     @ViewBuilder
     private var parameterContent: some View {
-        HSplitView {
+        HStack(spacing: 0) {
             ParameterInputView(state: state, onConfirm: { coordinator?.handleReturn() })
-                .frame(minWidth: 280, idealWidth: 340)
+                .frame(maxWidth: .infinity)
 
-            ParameterPreviewView(state: state)
-                .frame(minWidth: 240, idealWidth: 340)
+            if previewVisible {
+                ParameterPreviewView(state: state)
+                    .frame(width: 340)
+                    .transition(previewTransition)
+            }
         }
+        .clipped()
+    }
+
+    private var previewTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: .trailing)
+                .combined(with: .opacity)
+                .combined(with: .scale(scale: 0.96, anchor: .trailing)),
+            removal: .move(edge: .trailing)
+                .combined(with: .opacity)
+        )
     }
 }
