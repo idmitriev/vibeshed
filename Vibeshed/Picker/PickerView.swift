@@ -201,6 +201,7 @@ struct PickerView: View {
                     actions: state.actions,
                     selectedID: $state.selectedActionID,
                     actionCache: state.actionCache,
+                    activationCounters: state.activationCounters,
                     rowHeight: appearance.rowHeight,
                     onActivate: { id in coordinator?.activateAction(id: id) }
                 )

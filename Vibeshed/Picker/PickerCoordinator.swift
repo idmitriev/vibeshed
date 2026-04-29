@@ -119,6 +119,7 @@ final class PickerCoordinator {
         guard index >= 0, index < pickerState.actions.count else { return }
         let targetItem = pickerState.actions[index]
         pickerState.selectedActionID = targetItem.id
+        pickerState.bumpActivation(for: targetItem.id)
         guard let action = pickerState.actionCache[targetItem.id] else { return }
 
         let requiredParams = action.parameters.filter(\.isRequired)

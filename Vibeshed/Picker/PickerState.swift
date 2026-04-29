@@ -37,6 +37,16 @@ final class PickerState {
 
     @ObservationIgnored var actionCache: [ActionID: any Action] = [:]
 
+    // MARK: - Activation animation triggers
+
+    /// Per-row activation counter. Each row reads its own counter; bumping the value
+    /// retriggers the row's keyframe pulse animation.
+    var activationCounters: [ActionID: Int] = [:]
+
+    func bumpActivation(for id: ActionID) {
+        activationCounters[id, default: 0] += 1
+    }
+
     // MARK: - Publishers
 
     private let querySubject = PassthroughSubject<String, Never>()
@@ -102,6 +112,7 @@ final class PickerState {
         isLoadingOptions = false
         layoutCorrectionHint = nil
         actionCache = [:]
+        activationCounters = [:]
     }
 
     // MARK: - Selection navigation

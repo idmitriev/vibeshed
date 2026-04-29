@@ -4,6 +4,7 @@ struct ActionListView: View {
     let actions: [ActionItem]
     @Binding var selectedID: ActionID?
     var actionCache: [ActionID: any Action] = [:]
+    var activationCounters: [ActionID: Int] = [:]
     var rowHeight: CGFloat = 52
     var onActivate: ((ActionID) -> Void)?
     @Environment(\.vibeTheme) private var theme
@@ -49,6 +50,7 @@ struct ActionListView: View {
     private func row(for item: ActionItem, hotkeyNumber: Int?) -> some View {
         let isSelected = selectedID == item.id
         let singleClick = actionCache[item.id]?.activatesOnSingleClick ?? false
+        let trigger = activationCounters[item.id] ?? 0
 
         actionRow(for: item, hotkeyNumber: hotkeyNumber, isSelected: isSelected)
             .padding(.horizontal, Self.rowContentInset)
@@ -59,6 +61,7 @@ struct ActionListView: View {
                     .fill(isSelected ? theme.accent : Color.clear)
             )
             .padding(.horizontal, Self.selectionInset)
+            .activationPulse(trigger: trigger, cornerRadius: Self.selectionCornerRadius, inset: Self.selectionInset)
             .contentShape(Rectangle())
             .onTapGesture(count: 2) {
                 selectedID = item.id
@@ -88,6 +91,54 @@ struct ActionListView: View {
                 isSelected: isSelected
             )
         }
+    }
+}
+
+// MARK: - Activation pulse
+
+private struct ActivationPulseValues: Equatable {
+    var scale: CGFloat = 1.0
+    var glow: CGFloat = 0.0
+}
+
+private struct ActivationPulseModifier: ViewModifier {
+    let trigger: Int
+    let cornerRadius: CGFloat
+    let inset: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .keyframeAnimator(
+                initialValue: ActivationPulseValues(),
+                trigger: trigger
+            ) { view, value in
+                view
+                    .scaleEffect(value.scale)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(Color.white.opacity(0.45 * value.glow))
+                            .blendMode(.plusLighter)
+                            .padding(.horizontal, inset)
+                            .allowsHitTesting(false)
+                    )
+            } keyframes: { _ in
+                KeyframeTrack(\.scale) {
+                    SpringKeyframe(0.94, duration: 0.08, spring: .snappy)
+                    SpringKeyframe(1.05, duration: 0.18, spring: .bouncy)
+                    SpringKeyframe(1.0, duration: 0.18, spring: .smooth)
+                }
+                KeyframeTrack(\.glow) {
+                    LinearKeyframe(1.0, duration: 0.06)
+                    LinearKeyframe(0.7, duration: 0.12)
+                    LinearKeyframe(0.0, duration: 0.22)
+                }
+            }
+    }
+}
+
+private extension View {
+    func activationPulse(trigger: Int, cornerRadius: CGFloat, inset: CGFloat) -> some View {
+        modifier(ActivationPulseModifier(trigger: trigger, cornerRadius: cornerRadius, inset: inset))
     }
 }
 
