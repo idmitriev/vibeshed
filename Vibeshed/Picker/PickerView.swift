@@ -95,6 +95,7 @@ struct PickerView: View {
             }
 
             content
+                .padding(.bottom, 8)
         }
         .frame(width: appearance.panelWidth, height: appearance.panelHeight)
         .background {
@@ -222,7 +223,11 @@ struct PickerView: View {
     @ViewBuilder
     private var parameterContent: some View {
         HStack(spacing: 0) {
-            ParameterInputView(state: state, onConfirm: { coordinator?.handleReturn() })
+            ParameterInputView(
+                state: state,
+                rowHeight: appearance.rowHeight,
+                onConfirm: { coordinator?.handleReturn() }
+            )
                 .frame(maxWidth: .infinity)
 
             if previewVisible {

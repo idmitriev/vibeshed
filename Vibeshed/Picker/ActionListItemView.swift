@@ -4,12 +4,14 @@ struct ActionListItemView: View, Equatable {
     let item: ActionItem
     var hotkeyNumber: Int?
     var rowHeight: CGFloat = 52
+    var isSelected: Bool = false
     @Environment(\.vibeTheme) private var theme
 
     static func == (lhs: ActionListItemView, rhs: ActionListItemView) -> Bool {
         lhs.item == rhs.item
             && lhs.hotkeyNumber == rhs.hotkeyNumber
             && lhs.rowHeight == rhs.rowHeight
+            && lhs.isSelected == rhs.isSelected
     }
 
     var body: some View {
@@ -17,17 +19,18 @@ struct ActionListItemView: View, Equatable {
             Image(systemName: item.iconSystemName ?? "sparkle")
                 .font(.title3)
                 .frame(width: 32, height: 32)
-                .foregroundStyle(.primary.opacity(0.65))
+                .foregroundStyle(iconColor)
 
             VStack(alignment: .leading, spacing: 2) {
                 highlightedTitle
                     .font(.body)
+                    .foregroundStyle(primaryTextColor)
                     .lineLimit(1)
 
                 if !item.subtitle.isEmpty {
                     Text(item.subtitle)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(secondaryTextColor)
                         .lineLimit(1)
                 }
             }
@@ -37,18 +40,30 @@ struct ActionListItemView: View, Equatable {
             if item.hasParameters {
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondaryTextColor)
             }
 
             if let number = hotkeyNumber {
                 Text("\u{2318}\(number)")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondaryTextColor)
                     .monospacedDigit()
             }
         }
         .frame(height: rowHeight)
         .contentShape(Rectangle())
+    }
+
+    private var iconColor: Color {
+        isSelected ? .white : .primary.opacity(0.65)
+    }
+
+    private var primaryTextColor: Color {
+        isSelected ? .white : .primary
+    }
+
+    private var secondaryTextColor: Color {
+        isSelected ? Color.white.opacity(0.85) : .secondary
     }
 
     @ViewBuilder
@@ -67,7 +82,7 @@ struct ActionListItemView: View, Equatable {
         var attributed = AttributedString(string)
         for range in ranges {
             guard let attrRange = Range(range, in: attributed) else { continue }
-            attributed[attrRange].foregroundColor = theme.searchHighlight
+            attributed[attrRange].foregroundColor = isSelected ? .white : theme.searchHighlight
             attributed[attrRange].underlineStyle = .single
         }
         return attributed

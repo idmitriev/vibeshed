@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ParameterInputView: View {
     @Bindable var state: PickerState
+    var rowHeight: CGFloat = 52
     var onConfirm: (() -> Void)?
     @Environment(\.vibeTheme) private var theme
 
@@ -55,28 +56,38 @@ struct ParameterInputView: View {
                     }
                     return map
                 }()
-                List(selection: $state.selectedParameterOptionID) {
-                    ForEach(state.parameterOptions) { option in
-                        ParameterOptionRow(
-                            option: option,
-                            hotkeyNumber: hotkeys[option.id]
-                        )
-                        .tag(option.id)
-                        .listRowSeparator(.hidden)
-                        .contentShape(Rectangle())
-                        .onTapGesture(count: 2) {
-                            state.selectedParameterOptionID = option.id
-                            onConfirm?()
-                        }
-                        .onTapGesture(count: 1) {
-                            state.selectedParameterOptionID = option.id
+                ScrollView {
+                    LazyVStack(spacing: 2) {
+                        ForEach(state.parameterOptions) { option in
+                            let isSelected = state.selectedParameterOptionID == option.id
+                            ParameterOptionRow(
+                                option: option,
+                                hotkeyNumber: hotkeys[option.id],
+                                rowHeight: rowHeight,
+                                isSelected: isSelected
+                            )
+                            .padding(.horizontal, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(isSelected ? theme.accent : Color.clear)
+                            )
+                            .padding(.horizontal, 8)
+                            .contentShape(Rectangle())
+                            .onTapGesture(count: 2) {
+                                state.selectedParameterOptionID = option.id
+                                onConfirm?()
+                            }
+                            .onTapGesture(count: 1) {
+                                state.selectedParameterOptionID = option.id
+                            }
+                            .id(option.id)
                         }
                     }
+                    .padding(.vertical, 4)
                 }
-                .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .subtleScrollers()
-                .tint(theme.accent)
                 .accessibilityIdentifier("parameterOptionList")
                 .onChange(of: state.selectedParameterOptionID) { _, newID in
                     if let newID {
@@ -153,10 +164,15 @@ struct ParameterInputView: View {
 struct ParameterOptionRow: View, Equatable {
     let option: ParameterOption
     var hotkeyNumber: Int?
+    var rowHeight: CGFloat = 52
+    var isSelected: Bool = false
     @Environment(\.vibeTheme) private var theme
 
     static func == (lhs: ParameterOptionRow, rhs: ParameterOptionRow) -> Bool {
-        lhs.option == rhs.option && lhs.hotkeyNumber == rhs.hotkeyNumber
+        lhs.option == rhs.option
+            && lhs.hotkeyNumber == rhs.hotkeyNumber
+            && lhs.rowHeight == rhs.rowHeight
+            && lhs.isSelected == rhs.isSelected
     }
 
     var body: some View {
@@ -169,7 +185,7 @@ struct ParameterOptionRow: View, Equatable {
                 } else {
                     Image(systemName: option.iconName ?? "sparkle")
                         .font(.title3)
-                        .foregroundStyle(.primary.opacity(0.65))
+                        .foregroundStyle(iconColor)
                 }
             }
             .frame(width: 32, height: 32)
@@ -177,12 +193,13 @@ struct ParameterOptionRow: View, Equatable {
             VStack(alignment: .leading, spacing: 2) {
                 highlightedLabel
                     .font(.body)
+                    .foregroundStyle(primaryTextColor)
                     .lineLimit(1)
 
                 if let subtitle = option.subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(secondaryTextColor)
                         .lineLimit(1)
                 }
             }
@@ -192,12 +209,24 @@ struct ParameterOptionRow: View, Equatable {
             if let number = hotkeyNumber {
                 Text("\u{2318}\(number)")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondaryTextColor)
                     .monospacedDigit()
             }
         }
-        .padding(.vertical, 6)
+        .frame(height: rowHeight)
         .contentShape(Rectangle())
+    }
+
+    private var iconColor: Color {
+        isSelected ? .white : .primary.opacity(0.65)
+    }
+
+    private var primaryTextColor: Color {
+        isSelected ? .white : .primary
+    }
+
+    private var secondaryTextColor: Color {
+        isSelected ? Color.white.opacity(0.85) : .secondary
     }
 
     @ViewBuilder
@@ -216,7 +245,7 @@ struct ParameterOptionRow: View, Equatable {
         var attributed = AttributedString(string)
         for range in ranges {
             guard let attrRange = Range(range, in: attributed) else { continue }
-            attributed[attrRange].foregroundColor = theme.searchHighlight
+            attributed[attrRange].foregroundColor = isSelected ? .white : theme.searchHighlight
             attributed[attrRange].underlineStyle = .single
         }
         return attributed
