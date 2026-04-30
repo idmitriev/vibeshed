@@ -59,9 +59,8 @@ actor ApplicationModule: ModuleConfigurable {
         let cfg = config
         let actionName = actionID.rawValue
 
-        // launch/launchOrFocus show all apps; focus/quit show only running
-        let showAll = (actionName.hasSuffix("/launch") || actionName.hasSuffix("/launchOrFocus"))
-            && !cfg.showRunningOnly
+        // launchOrFocus shows all apps; quit shows only running
+        let showAll = actionName.hasSuffix("/launchOrFocus") && !cfg.showRunningOnly
 
         let apps: [AppInfo]
         if showAll {
@@ -88,37 +87,7 @@ actor ApplicationModule: ModuleConfigurable {
     // MARK: - Build Actions
 
     private func buildActions() -> [ApplicationAction] {
-        [buildLaunchAction(), buildLaunchOrFocusAction(), buildQuitAction()]
-    }
-
-    private func buildLaunchAction() -> ApplicationAction {
-        let mgr = appManager
-        return ApplicationAction(
-            id: ActionID(module: "application", name: "launch"),
-            title: "Launch Application",
-            subtitle: "Launch or activate an application",
-            iconName: "arrow.up.forward.app",
-            relevanceScore: 0.85,
-            keywords: ["launch", "open", "start", "run", "application", "app"],
-            parameters: [
-                ActionParameter(
-                    id: "app",
-                    label: "Application",
-                    type: .dynamicSelection(hint: "app"),
-                    isRequired: true
-                ),
-            ]
-        ) { values in
-            guard let bundleID = values["app"] as? String else {
-                return .showResult(title: "Error", body: "No application selected")
-            }
-            let apps = await MainActor.run { mgr.listInstalledApplications() }
-            guard let app = apps.first(where: { $0.id == bundleID }) else {
-                return .showResult(title: "Error", body: "Application not found")
-            }
-            try await mgr.launchApplication(app)
-            return .dismiss
-        }
+        [buildLaunchOrFocusAction(), buildQuitAction()]
     }
 
     private func buildLaunchOrFocusAction() -> ApplicationAction {

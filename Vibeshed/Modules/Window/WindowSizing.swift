@@ -6,6 +6,7 @@ enum Anchor: String, Codable, Sendable {
     case right
     case top
     case bottom
+    case center
 }
 
 enum WindowSizing {
@@ -183,20 +184,32 @@ enum WindowSizing {
 
     // MARK: - Enlarge/Shrink
 
-    /// Determines the horizontal anchor of a window based on its position relative to screen center
-    static func detectHorizontalAnchor(currentFrame: CGRect, screenFrame: CGRect, padding: PaddingConfig) -> Anchor {
+    /// Determines the horizontal anchor of a window based on its position relative to screen center.
+    /// Windows whose midX is within `tolerance` of the area midX are treated as centered.
+    static func detectHorizontalAnchor(
+        currentFrame: CGRect,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        tolerance: Double = 5.0
+    ) -> Anchor {
         let area = usableArea(screenFrame: screenFrame, padding: padding)
-        let centerX = area.midX
-        let windowCenterX = currentFrame.midX
-        return windowCenterX < centerX ? .left : .right
+        let delta = currentFrame.midX - area.midX
+        if abs(delta) <= tolerance { return .center }
+        return delta < 0 ? .left : .right
     }
 
-    /// Determines the vertical anchor of a window based on its position relative to screen center
-    static func detectVerticalAnchor(currentFrame: CGRect, screenFrame: CGRect, padding: PaddingConfig) -> Anchor {
+    /// Determines the vertical anchor of a window based on its position relative to screen center.
+    /// Windows whose midY is within `tolerance` of the area midY are treated as centered.
+    static func detectVerticalAnchor(
+        currentFrame: CGRect,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        tolerance: Double = 5.0
+    ) -> Anchor {
         let area = usableArea(screenFrame: screenFrame, padding: padding)
-        let centerY = area.midY
-        let windowCenterY = currentFrame.midY
-        return windowCenterY < centerY ? .top : .bottom
+        let delta = currentFrame.midY - area.midY
+        if abs(delta) <= tolerance { return .center }
+        return delta < 0 ? .top : .bottom
     }
 
     static func enlargeHorizontal(
@@ -218,6 +231,8 @@ enum WindowSizing {
             newX = area.origin.x
         case .right:
             newX = area.maxX - newWidth
+        case .center:
+            newX = area.midX - newWidth / 2.0
         default:
             newX = currentFrame.origin.x
         }
@@ -244,6 +259,8 @@ enum WindowSizing {
             newX = area.origin.x
         case .right:
             newX = area.maxX - newWidth
+        case .center:
+            newX = area.midX - newWidth / 2.0
         default:
             newX = currentFrame.origin.x
         }
@@ -270,6 +287,8 @@ enum WindowSizing {
             newY = area.origin.y
         case .bottom:
             newY = area.maxY - newHeight
+        case .center:
+            newY = area.midY - newHeight / 2.0
         default:
             newY = currentFrame.origin.y
         }
@@ -296,6 +315,8 @@ enum WindowSizing {
             newY = area.origin.y
         case .bottom:
             newY = area.maxY - newHeight
+        case .center:
+            newY = area.midY - newHeight / 2.0
         default:
             newY = currentFrame.origin.y
         }
