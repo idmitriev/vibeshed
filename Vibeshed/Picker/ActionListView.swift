@@ -83,6 +83,7 @@ struct ActionListView: View {
            let customView = action.makeListItemView() {
             customView
                 .environment(\.isPickerRowSelected, isSelected)
+                .foregroundStyle(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
         } else {
             ActionListItemView(
                 item: item,
