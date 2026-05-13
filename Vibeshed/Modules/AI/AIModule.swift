@@ -205,22 +205,7 @@ actor AIModule: ModuleConfigurable {
 
     private func buildLauncherActions() -> [AIAction] {
         guard config.showLaunchers else { return [] }
-        var actions: [AIAction] = []
-
-        actions.append(AIAction(
-            id: ActionID(module: "ai", name: "openChatGPT"),
-            title: "Open ChatGPT",
-            subtitle: "Open chatgpt.com in browser",
-            iconName: "globe",
-            relevanceScore: 0.65,
-            keywords: ["ai", "chatgpt", "openai", "open", "web"],
-            aiItemType: .launcher
-        ) { _ in
-            Self.openURL("https://chatgpt.com")
-            return .dismiss
-        })
-
-        return actions
+        return AILaunchers.makeActions(config: config)
     }
 
     // MARK: - Search Results
@@ -280,7 +265,7 @@ actor AIModule: ModuleConfigurable {
         }
     }
 
-    private static func resolveClaudeCLI(
+    static func resolveClaudeCLI(
         customPath: String?
     ) -> String {
         if let custom = customPath,
@@ -296,7 +281,7 @@ actor AIModule: ModuleConfigurable {
         } ?? "claude"
     }
 
-    private static func launchInTerminal(
+    static func launchInTerminal(
         command: String,
         cwd: String?,
         terminalApp: String?
