@@ -185,7 +185,26 @@ enum CalendarManager {
     }
 
     static func openVideoLink(_ url: URL) {
+        if let zoomURL = rewriteAsZoomAppURL(url) {
+            NSWorkspace.shared.open(zoomURL)
+            return
+        }
         NSWorkspace.shared.open(url)
+    }
+
+    /// Rewrites an https://zoom.us/j/... link to a zoommtg:// URL so it
+    /// launches the Zoom app directly instead of routing through the browser.
+    private static func rewriteAsZoomAppURL(_ url: URL) -> URL? {
+        guard let host = url.host?.lowercased(), host.hasSuffix("zoom.us") else {
+            return nil
+        }
+        guard let parsed = ZoomManager.parseMeetingInput(url.absoluteString) else {
+            return nil
+        }
+        return ZoomManager.joinURL(
+            meetingId: parsed.meetingId,
+            password: parsed.password
+        )
     }
 
     static func openCalendarApp() {
