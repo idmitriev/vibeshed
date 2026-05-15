@@ -53,7 +53,6 @@ Every module is an actor conforming to `Module` / `ModuleConfigurable`. Actions 
 
 - One change per PR. Keep diffs reviewable.
 - Match the existing commit style: lowercase, prefix with `feat:` / `fix:` / `chore:` / `refactor:`.
-- Update `PLAN.md` if your work completes a phase item.
 - Don't bump version numbers — releases are tagged manually.
 
 ## Reporting issues
