@@ -8,10 +8,34 @@ build/
 # SPM
 .build/
 .swiftpm/
+Package.resolved.user
 
 # macOS
 .DS_Store
+._*
 
-# IDE
+# IDE / editor (workspace launch.json is committed; ignore user-level state)
+.idea/
+.vscode/*.local.json
 *.swp
+*.swo
 *~
+
+# Claude Code local config & worktrees
+.claude/
+
+# Secrets / credentials
+.env
+.env.*
+*.p12
+*.pem
+*.key
+*.cer
+*.mobileprovision
+secrets.yaml
+credentials.json
+
+# Release artifacts
+release/
+*.zip
+*.dmg

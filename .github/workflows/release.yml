@@ -1,0 +1,151 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    env:
+      APP_NAME: Vibeshed
+      BUNDLE_ID: com.ivandmitriev.Vibeshed
+      VERSION: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Import signing certificate
+        env:
+          CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          echo -n "$CERT_P12_BASE64" | base64 --decode -o "$CERT_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT_PATH" -P "$CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          rm "$CERT_PATH"
+
+      - name: Build and sign .app
+        env:
+          SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          APP_BUNDLE=".build/${APP_NAME}.app"
+
+          swift build -c release
+
+          mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
+          cp ".build/release/${APP_NAME}" "$APP_BUNDLE/Contents/MacOS/${APP_NAME}"
+          cp Resources/AppIcon.icns "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+
+          sed \
+            -e "s/\$(EXECUTABLE_NAME)/${APP_NAME}/g" \
+            -e "s/\$(PRODUCT_BUNDLE_IDENTIFIER)/${BUNDLE_ID}/g" \
+            -e "s/\$(PRODUCT_NAME)/${APP_NAME}/g" \
+            -e "s/\$(DEVELOPMENT_LANGUAGE)/en/g" \
+            -e "s/\$(MARKETING_VERSION)/${VERSION}/g" \
+            -e "s/\$(BUILD_VERSION)/${BUILD_NUMBER}/g" \
+            Vibeshed/Info.plist > "$APP_BUNDLE/Contents/Info.plist"
+
+          codesign --force --sign "$SIGN_IDENTITY" \
+            --entitlements Vibeshed/Vibeshed.entitlements \
+            --identifier "$BUNDLE_ID" \
+            --options runtime \
+            --timestamp \
+            "$APP_BUNDLE"
+
+          codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE"
+
+      - name: Notarize
+        env:
+          NOTARY_API_KEY_BASE64: ${{ secrets.MACOS_NOTARY_API_KEY_BASE64 }}
+          NOTARY_API_KEY_ID: ${{ secrets.MACOS_NOTARY_API_KEY_ID }}
+          NOTARY_API_KEY_ISSUER: ${{ secrets.MACOS_NOTARY_API_KEY_ISSUER }}
+        run: |
+          KEY_PATH="$RUNNER_TEMP/notary_key.p8"
+          echo -n "$NOTARY_API_KEY_BASE64" | base64 --decode -o "$KEY_PATH"
+
+          APP_BUNDLE=".build/${APP_NAME}.app"
+          ZIP_PATH="$RUNNER_TEMP/${APP_NAME}-notarize.zip"
+          /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_PATH"
+
+          xcrun notarytool submit "$ZIP_PATH" \
+            --key "$KEY_PATH" \
+            --key-id "$NOTARY_API_KEY_ID" \
+            --issuer "$NOTARY_API_KEY_ISSUER" \
+            --wait
+
+          xcrun stapler staple "$APP_BUNDLE"
+          xcrun stapler validate "$APP_BUNDLE"
+          rm "$KEY_PATH"
+
+      - name: Package release artifact
+        id: package
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          APP_BUNDLE=".build/${APP_NAME}.app"
+          ZIP_NAME="${APP_NAME}-${VERSION}.zip"
+          ZIP_PATH="${RUNNER_TEMP}/${ZIP_NAME}"
+          /usr/bin/ditto -c -k --keepParent "$APP_BUNDLE" "$ZIP_PATH"
+          SHA256=$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')
+          echo "zip_path=$ZIP_PATH" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "$SHA256  $ZIP_NAME" > "${RUNNER_TEMP}/${ZIP_NAME}.sha256"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            Download `${{ steps.package.outputs.zip_name }}`, unzip, and drag `Vibeshed.app` to `/Applications`.
+
+            **Homebrew:**
+            ```
+            brew install --cask idmitriev/tap/vibeshed
+            ```
+
+            **SHA-256:** `${{ steps.package.outputs.sha256 }}`
+          files: |
+            ${{ steps.package.outputs.zip_path }}
+            ${{ steps.package.outputs.zip_path }}.sha256
+
+      - name: Clean keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true

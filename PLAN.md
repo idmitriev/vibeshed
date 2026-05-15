@@ -373,10 +373,11 @@ Sorting and rating actions is done by modules AND picker since it knows about us
 
 - [ ] Based on testing and user feedback, fix any bugs and polish the app's UI and UX to make it as smooth and enjoyable to use as possible. This can include improving animations, optimizing performance, and refining the design.
 
-### Phase 63: Releases and distribution 
+### Phase 63: Releases and distribution
 
-- [ ] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
-- [ ] Make sure gitingnore file is configured to not include any sensitive information, build artifacts, or other unnecessary files in the repository
-- [ ] Publish the app on github with proper license, readme, and some documentation
-- [ ] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
-- [ ] Set up github donations for the project to allow users to support development if they find the app useful and want to contribute financially to its ongoing maintenance and improvement
+- [x] State project goals and non-goals clearly in the readme to set the right expectations for users and contributors
+- [x] Make sure gitingnore file is configured to not include any sensitive information, build artifacts, or other unnecessary files in the repository
+- [x] Cleanup any sensitive information from the git history if it was accidentally committed at any point during development to ensure that it is not accessible to the public
+- [x] Publish the app on github with proper license, readme, and some documentation
+- [x] Set up a release process for the app, including building, signing, and distributing the app through github releases and homebrew
+- [x] Set up github donations for the project to allow users to support development if they find the app useful and want to contribute financially to its ongoing maintenance and improvement

@@ -6,6 +6,23 @@
 
 A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keystrokes — manage windows, switch apps, search browser tabs, control Spotify, and more from a single floating picker.
 
+## Goals
+
+- **Keyboard-first.** Every action reachable in a few keystrokes; mouse optional.
+- **Native and unobtrusive.** Pure SwiftUI, menu-bar only, no Dock icon, no Electron.
+- **Modular by default.** Each integration is a separate module; load only what you configure.
+- **Hackable config.** One YAML file at `~/.config/vibeshed/config.yaml` with hot-reload.
+- **Composable actions.** Anything triggerable from the picker is also reachable via `vibeshed://` URLs and key combos.
+- **Local-first.** No telemetry. State and history stay on disk.
+
+## Non-goals
+
+- **Not a cross-platform tool.** macOS only. No plans for Linux/Windows.
+- **Not a Raycast/Alfred replacement.** No store, no plugin marketplace, no paid tier — modules ship in-tree.
+- **Not a scripting platform.** Workflows belong in shell/AppleScript; Vibeshed dispatches, it does not orchestrate.
+- **No mobile companion, no cloud sync, no AI chat surface inside the picker.**
+- **No GUI configuration.** Config is YAML; if that's a dealbreaker, this is the wrong tool.
+
 ## Features
 
 **Launcher**
@@ -130,6 +147,18 @@ Modifiers: `cmd`, `ctrl`, `option`/`alt`, `shift`, `capslock` (hyper), `space`. 
 - **Combine** for debounced search input
 - **NSPanel** subclass for the floating picker window
 - **YAML config** with typed per-module schemas, validation, and hot-reload
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup and house style.
+
+## Releases
+
+Built, signed, and notarized by GitHub Actions on tag push. See [RELEASING.md](RELEASING.md) for the workflow.
+
+## Support
+
+If Vibeshed saves you keystrokes, [sponsor the project](https://github.com/sponsors/idmitriev).
 
 ## License
 
