@@ -1,82 +1,83 @@
 import AppKit
 
-/// Generates a template NSImage for the menu bar: a house silhouette with a wave motif.
+/// Generates a template NSImage for the menu bar: an angled wand with concentric waves
+/// emanating from its bulb head — a monochrome echo of the app icon.
 enum MenuBarIcon {
     static func make(size: CGFloat = 18) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
             let w = rect.width
             let h = rect.height
 
-            let path = NSBezierPath()
+            // Wand geometry: bulb head slightly left-of-center so waves fit inside the bbox.
+            let headCenter = CGPoint(x: w * 0.44, y: h * 0.54)
+            let headRadius = min(w, h) * 0.16
+            let tipCenter = CGPoint(x: w * 0.18, y: h * 0.18)
+            let bodyHalfWidth = min(w, h) * 0.085
 
-            // --- House outline ---
-            // Roof peak
-            let peak = CGPoint(x: w * 0.5, y: h * 0.95)
-            // Roof left
-            let roofLeft = CGPoint(x: w * 0.02, y: h * 0.52)
-            // Roof right
-            let roofRight = CGPoint(x: w * 0.98, y: h * 0.52)
-            // Walls
-            let wallTopLeft = CGPoint(x: w * 0.12, y: h * 0.52)
-            let wallTopRight = CGPoint(x: w * 0.88, y: h * 0.52)
-            let wallBottomLeft = CGPoint(x: w * 0.12, y: h * 0.05)
-            let wallBottomRight = CGPoint(x: w * 0.88, y: h * 0.05)
+            // Draw the wand as an angled capsule using a transform on a horizontal stadium.
+            let dx = tipCenter.x - headCenter.x
+            let dy = tipCenter.y - headCenter.y
+            let bodyLength = sqrt(dx * dx + dy * dy)
+            let angle = atan2(dy, dx)
 
-            // Draw the full house shape (roof + walls)
-            path.move(to: wallBottomLeft)
-            path.line(to: wallTopLeft)
-            path.line(to: roofLeft)
-            path.line(to: peak)
-            path.line(to: roofRight)
-            path.line(to: wallTopRight)
-            path.line(to: wallBottomRight)
-            path.close()
-
-            // Clip to house shape
-            path.setClip()
-
-            // Fill house body
             NSColor.black.setFill()
-            path.fill()
 
-            // --- Wave cutout (creates the wave motif by erasing a band) ---
-            let wavePath = NSBezierPath()
-            let waveY: CGFloat = h * 0.45
-            let amplitude: CGFloat = h * 0.12
-            let bandWidth: CGFloat = h * 0.13
+            // Body: horizontal rounded rect from headCenter to tipCenter, then rotated.
+            let bodyRect = CGRect(
+                x: 0,
+                y: -bodyHalfWidth,
+                width: bodyLength,
+                height: bodyHalfWidth * 2
+            )
+            let bodyPath = NSBezierPath(
+                roundedRect: bodyRect,
+                xRadius: bodyHalfWidth,
+                yRadius: bodyHalfWidth
+            )
+            let transform = NSAffineTransform()
+            transform.translateX(by: headCenter.x, yBy: headCenter.y)
+            transform.rotate(byRadians: angle)
+            bodyPath.transform(using: transform as AffineTransform)
+            bodyPath.fill()
 
-            // Upper wave edge
-            wavePath.move(to: CGPoint(x: 0, y: waveY))
-            wavePath.curve(
-                to: CGPoint(x: w * 0.5, y: waveY + amplitude),
-                controlPoint1: CGPoint(x: w * 0.15, y: waveY - amplitude),
-                controlPoint2: CGPoint(x: w * 0.35, y: waveY + amplitude)
-            )
-            wavePath.curve(
-                to: CGPoint(x: w, y: waveY),
-                controlPoint1: CGPoint(x: w * 0.65, y: waveY + amplitude),
-                controlPoint2: CGPoint(x: w * 0.85, y: waveY - amplitude)
-            )
+            // Bulb head — drawn last so it sits on top of the body neck.
+            let head = NSBezierPath(ovalIn: CGRect(
+                x: headCenter.x - headRadius,
+                y: headCenter.y - headRadius,
+                width: headRadius * 2,
+                height: headRadius * 2
+            ))
+            head.fill()
 
-            // Lower wave edge (offset down by bandWidth)
-            let lowerY = waveY - bandWidth
-            wavePath.line(to: CGPoint(x: w, y: lowerY))
-            wavePath.curve(
-                to: CGPoint(x: w * 0.5, y: lowerY + amplitude),
-                controlPoint1: CGPoint(x: w * 0.85, y: lowerY - amplitude),
-                controlPoint2: CGPoint(x: w * 0.65, y: lowerY + amplitude)
-            )
-            wavePath.curve(
-                to: CGPoint(x: 0, y: lowerY),
-                controlPoint1: CGPoint(x: w * 0.35, y: lowerY + amplitude),
-                controlPoint2: CGPoint(x: w * 0.15, y: lowerY - amplitude)
-            )
-            wavePath.close()
+            // --- Concentric waves on the upper-right of the head ---
+            guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
+            ctx.saveGState()
+            ctx.setStrokeColor(NSColor.black.cgColor)
+            ctx.setLineCap(.round)
 
-            // Erase the wave band from the filled house
-            guard let cgContext = NSGraphicsContext.current?.cgContext else { return false }
-            cgContext.setBlendMode(.clear)
-            wavePath.fill()
+            let strokeWidth = max(1.0, min(w, h) * 0.055)
+            ctx.setLineWidth(strokeWidth)
+
+            // Three arcs sweeping the upper-right quadrant, sized to stay inside the bbox.
+            let waveStart = CGFloat(-Double.pi / 10)   // -18°
+            let waveEnd = CGFloat(Double.pi / 2.6)     // ~69°
+            let baseRadius = headRadius + strokeWidth * 1.5
+            let step = strokeWidth * 1.9
+
+            for index in 0..<3 {
+                let radius = baseRadius + step * CGFloat(index)
+                ctx.beginPath()
+                ctx.addArc(
+                    center: headCenter,
+                    radius: radius,
+                    startAngle: waveStart,
+                    endAngle: waveEnd,
+                    clockwise: false
+                )
+                ctx.strokePath()
+            }
+
+            ctx.restoreGState()
 
             return true
         }

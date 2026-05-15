@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/icon.png" alt="Vibeshed icon" width="128" height="128">
+</p>
+
 # Vibeshed
 
 A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keystrokes — manage windows, switch apps, search browser tabs, control Spotify, and more from a single floating picker.
