@@ -14,15 +14,13 @@ struct PreviewHeader<Hero: View>: View {
             Text(title)
                 .font(.title3)
                 .fontWeight(.medium)
-                .lineLimit(1)
-                .truncationMode(.tail)
+                .lineLimit(3)
 
             if !subtitle.isEmpty {
                 Text(subtitle)
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .truncationMode(.tail)
+                    .lineLimit(4)
             }
         }
     }
@@ -72,8 +70,7 @@ struct PreviewMetadataRow: View {
             Text(value)
                 .font(.subheadline)
                 .foregroundStyle(valueColor)
-                .lineLimit(1)
-                .truncationMode(.tail)
+                .lineLimit(2)
         }
     }
 }

@@ -93,6 +93,7 @@ struct ParameterPreviewView: View {
                     Text(displayValue(value, for: param))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .lineLimit(2)
                 }
             }
 
