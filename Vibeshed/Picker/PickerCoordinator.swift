@@ -377,6 +377,23 @@ final class PickerCoordinator {
 
         scored.sort { $0.score > $1.score }
 
+        // Deduplicate browser tabs vs bookmark/history entries by URL.
+        // Tabs rank higher (relevance 0.8 vs 0.6), so after sorting they naturally win.
+        var seenURLs: Set<String> = []
+        scored.removeAll { entry in
+            let url: String?
+            if let ba = entry.action as? BrowserAction {
+                url = ba.tabURL
+            } else if let bk = entry.action as? BookmarkAction {
+                url = bk.url
+            } else {
+                url = nil
+            }
+            guard let url, !url.isEmpty else { return false }
+            let normalized = Self.normalizeURL(url)
+            return !seenURLs.insert(normalized).inserted
+        }
+
         // Cap results to avoid rendering huge lists — nobody scrolls past 200 in a launcher.
         let maxResults = 200
         if scored.count > maxResults {
@@ -388,6 +405,13 @@ final class PickerCoordinator {
         }
 
         return (scored.map(\.item), cache)
+    }
+
+    private static func normalizeURL(_ url: String) -> String {
+        var s = url.lowercased()
+        if let i = s.firstIndex(of: "#") { s = String(s[..<i]) }
+        while s.hasSuffix("/") { s.removeLast() }
+        return s
     }
 
     // MARK: - Parameter option fetching
