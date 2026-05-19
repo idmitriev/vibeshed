@@ -127,7 +127,85 @@ enum JetBrainsManager {
         fallbackOpen(project)
     }
 
+    static func applyOpenInNewWindow(
+        enabledIDEs: Set<String>?
+    ) {
+        let jbBase = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(
+                "Library/Application Support/JetBrains"
+            )
+
+        guard let contents = try? FileManager.default
+            .contentsOfDirectory(atPath: jbBase.path)
+        else {
+            return
+        }
+
+        for dir in contents {
+            guard let ideInfo = matchIDE(dir) else { continue }
+            if let enabled = enabledIDEs,
+               !enabled.contains(ideInfo.tag) {
+                continue
+            }
+
+            let xmlPath = jbBase
+                .appendingPathComponent(dir)
+                .appendingPathComponent("options/ide.general.xml")
+                .path
+
+            patchOpenNewProject(at: xmlPath)
+        }
+    }
+
     // MARK: - Private
+
+    private static func patchOpenNewProject(at path: String) {
+        guard var content = try? String(
+            contentsOfFile: path, encoding: .utf8
+        ) else {
+            return
+        }
+
+        let pattern =
+            #"(<option\s+name="confirmOpenNewProject2"\s+value=")([^"]*)(")"#
+
+        guard let regex = try? NSRegularExpression(
+            pattern: pattern
+        ) else {
+            return
+        }
+
+        let nsRange = NSRange(
+            content.startIndex..., in: content
+        )
+
+        if let match = regex.firstMatch(
+            in: content, range: nsRange
+        ) {
+            guard let valueRange = Range(
+                match.range(at: 2), in: content
+            ) else { return }
+            if content[valueRange] == "1" { return }
+            content.replaceSubrange(valueRange, with: "1")
+        } else if let range = content.range(
+            of: #"<component name="GeneralSettings">"#
+        ) {
+            let line = "\n    <option name=" +
+                "\"confirmOpenNewProject2\" value=\"1\" />"
+            content.insert(
+                contentsOf: line, at: range.upperBound
+            )
+        } else {
+            return
+        }
+
+        try? content.write(
+            toFile: path, atomically: true, encoding: .utf8
+        )
+        log.debug(
+            "Set confirmOpenNewProject2=1 in \(path, privacy: .public)"
+        )
+    }
 
     private static func fallbackOpen(_ project: JetBrainsProject) {
         let url = URL(fileURLWithPath: project.path)

@@ -21,6 +21,11 @@ actor JetBrainsModule: ModuleConfigurable {
     func initialize(context: ModuleContext) async throws {
         self.context = context
         refreshCache()
+        if config.openInNewWindow {
+            JetBrainsManager.applyOpenInNewWindow(
+                enabledIDEs: config.enabledIDEs
+            )
+        }
         log.info(
             "JetBrains module initialized (\(self.cachedProjects.count, privacy: .public) projects found)"
         )
@@ -33,6 +38,11 @@ actor JetBrainsModule: ModuleConfigurable {
     func configDidUpdate(_ config: JetBrainsConfig) async {
         self.config = config
         refreshCache()
+        if config.openInNewWindow {
+            JetBrainsManager.applyOpenInNewWindow(
+                enabledIDEs: config.enabledIDEs
+            )
+        }
         log.debug(
             "Config updated, cache refreshed (\(self.cachedProjects.count, privacy: .public) projects)"
         )

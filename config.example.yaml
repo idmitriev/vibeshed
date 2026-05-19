@@ -446,6 +446,7 @@ modules:
   # --- JetBrains IDEs ---
   jetbrains:
     maxResults: 20
+    openInNewWindow: true      # patch IDE settings to always open in new window
     # enabledIDEs:             # nil = all detected IDEs
     #   - idea
     #   - pycharm
