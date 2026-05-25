@@ -11,6 +11,12 @@ struct PickerView: View {
     @State private var previewIdleTask: Task<Void, Never>?
 
     private static let previewIdleDelay: Duration = .milliseconds(1200)
+    private let glassInset: CGFloat = 6
+    private let glassCornerRadius: CGFloat = 10
+
+    private var searchBarTotalHeight: CGFloat {
+        appearance.searchBarHeight + glassInset
+    }
 
     private var coordinator: PickerCoordinator? {
         panelController.coordinator
@@ -75,15 +81,35 @@ struct PickerView: View {
         ZStack(alignment: .top) {
             content
 
+            // Glass preview panel — floats on the trailing edge over results
+            if previewVisible, showsPreview {
+                HStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    previewPanel
+                        .frame(width: 340)
+                        .frame(maxHeight: .infinity)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: glassCornerRadius, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: glassCornerRadius, style: .continuous)
+                                .stroke(Color(nsColor: .separatorColor).opacity(0.3), lineWidth: 0.5)
+                        )
+                        .padding(.trailing, glassInset)
+                        .padding(.top, searchBarTotalHeight + glassInset)
+                        .padding(.bottom, glassInset)
+                        .transition(previewTransition)
+                }
+            }
+
             // Glass search bar accessory — floats above scrolling content
-            VStack(spacing: 0) {
-                Group {
-                    if case .result = state.mode {
-                        BreadcrumbView(state: state) {
-                            _ = state.popMode()
-                        }
-                        .frame(height: appearance.searchBarHeight)
-                    } else {
+            Group {
+                if case .result = state.mode {
+                    BreadcrumbView(state: state) {
+                        _ = state.popMode()
+                    }
+                    .frame(height: appearance.searchBarHeight)
+                } else {
+                    HStack(spacing: 0) {
                         PickerSearchField(
                             text: searchBinding,
                             placeholder: searchPlaceholder,
@@ -91,23 +117,25 @@ struct PickerView: View {
                             onRemovePill: { _ in _ = state.popMode() },
                             onBackspaceEmpty: { _ = state.popMode() }
                         )
-                        .padding(.horizontal, 16)
-                        .frame(height: appearance.searchBarHeight)
-                        .id(state.mode)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .background(.thinMaterial)
-                .overlay(alignment: .bottom) {
-                    Rectangle()
-                        .fill(Color(nsColor: .separatorColor).opacity(0.4))
-                        .frame(height: 0.5)
-                }
 
-                if let hint = state.layoutCorrectionHint, case .search = state.mode {
-                    LayoutCorrectionBanner(hint: hint)
+                        if let hint = state.layoutCorrectionHint, case .search = state.mode {
+                            LayoutCorrectionBanner(hint: hint)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(height: appearance.searchBarHeight)
+                    .id(state.mode)
                 }
             }
+            .frame(maxWidth: .infinity)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: glassCornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: glassCornerRadius, style: .continuous)
+                    .stroke(Color(nsColor: .separatorColor).opacity(0.3), lineWidth: 0.5)
+            )
+            .padding(.horizontal, glassInset)
+            .padding(.top, glassInset)
         }
         .frame(width: appearance.panelWidth, height: appearance.panelHeight)
         .background {
@@ -191,7 +219,7 @@ struct PickerView: View {
                     .transition(.opacity)
             case let .result(title, body):
                 ResultView(title: title, message: body)
-                    .padding(.top, appearance.searchBarHeight)
+                    .padding(.top, searchBarTotalHeight)
                     .padding(.bottom, 8)
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
             }
@@ -203,61 +231,60 @@ struct PickerView: View {
     private var actionListContent: some View {
         if state.isLoading, state.actions.isEmpty {
             ProgressView()
-                .padding(.top, appearance.searchBarHeight)
+                .padding(.top, searchBarTotalHeight)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("pickerLoading")
         } else if state.actions.isEmpty, !state.query.isEmpty {
             ContentUnavailableView.search(text: state.query)
-                .padding(.top, appearance.searchBarHeight)
+                .padding(.top, searchBarTotalHeight)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("pickerNoResults")
         } else {
-            HStack(spacing: 0) {
-                ActionListView(
-                    actions: state.actions,
-                    selectedID: $state.selectedActionID,
-                    actionCache: state.actionCache,
-                    activationCounters: state.activationCounters,
-                    rowHeight: appearance.rowHeight,
-                    topInset: appearance.searchBarHeight,
-                    onActivate: { id in coordinator?.activateAction(id: id) }
-                )
-                .frame(maxWidth: .infinity)
-
-                if previewVisible {
-                    ActionPreviewView(
-                        selectedID: state.selectedActionID,
-                        actionIndex: Dictionary(uniqueKeysWithValues: state.actions.map { ($0.id, $0) }),
-                        actionCache: state.actionCache
-                    )
-                    .frame(width: 340)
-                    .padding(.top, appearance.searchBarHeight)
-                    .transition(previewTransition)
-                }
-            }
-            .clipped()
+            ActionListView(
+                actions: state.actions,
+                selectedID: $state.selectedActionID,
+                actionCache: state.actionCache,
+                activationCounters: state.activationCounters,
+                rowHeight: appearance.rowHeight,
+                topInset: searchBarTotalHeight,
+                onActivate: { id in coordinator?.activateAction(id: id) }
+            )
         }
     }
 
     @ViewBuilder
     private var parameterContent: some View {
-        HStack(spacing: 0) {
-            ParameterInputView(
-                state: state,
-                rowHeight: appearance.rowHeight,
-                topInset: appearance.searchBarHeight,
-                onConfirm: { coordinator?.handleReturn() }
-            )
-                .frame(maxWidth: .infinity)
+        ParameterInputView(
+            state: state,
+            rowHeight: appearance.rowHeight,
+            topInset: searchBarTotalHeight,
+            onConfirm: { coordinator?.handleReturn() }
+        )
+    }
 
-            if previewVisible {
-                ParameterPreviewView(state: state)
-                    .frame(width: 340)
-                    .padding(.top, appearance.searchBarHeight)
-                    .transition(previewTransition)
-            }
+    private var showsPreview: Bool {
+        switch state.mode {
+        case .search, .pushedActions, .parameterInput:
+            true
+        case .result:
+            false
         }
-        .clipped()
+    }
+
+    @ViewBuilder
+    private var previewPanel: some View {
+        switch state.mode {
+        case .search, .pushedActions:
+            ActionPreviewView(
+                selectedID: state.selectedActionID,
+                actionIndex: Dictionary(uniqueKeysWithValues: state.actions.map { ($0.id, $0) }),
+                actionCache: state.actionCache
+            )
+        case .parameterInput:
+            ParameterPreviewView(state: state)
+        case .result:
+            EmptyView()
+        }
     }
 
     private var previewTransition: AnyTransition {

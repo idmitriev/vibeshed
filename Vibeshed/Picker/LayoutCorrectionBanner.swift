@@ -5,25 +5,20 @@ struct LayoutCorrectionBanner: View {
     @Environment(\.vibeTheme) private var theme
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             Image(systemName: "keyboard")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text("Showing results for: ")
-                .font(.callout)
+                .font(.caption2)
                 .foregroundStyle(.secondary)
 
             Text(hint.correctedQuery)
-                .font(.callout)
+                .font(.caption)
                 .fontWeight(.medium)
                 .fontDesign(.monospaced)
-
-            Spacer()
+                .lineLimit(1)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 6)
-        .background(theme.selectionHighlight)
-        .transition(.move(edge: .top).combined(with: .opacity))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(theme.selectionHighlight))
+        .transition(.opacity)
     }
 }

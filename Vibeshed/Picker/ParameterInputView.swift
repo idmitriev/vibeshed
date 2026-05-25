@@ -88,15 +88,15 @@ struct ParameterInputView: View {
                             .id(option.id)
                         }
                     }
-                    .padding(.top, 8)
+                    .padding(.top, 4)
                     .padding(.bottom, 16)
                 }
                 .scrollContentBackground(.hidden)
                 .scrollIndicators(.hidden)
                 .safeAreaInset(edge: .top, spacing: 0) {
-                    Color.clear.frame(height: topInset)
+                    Color.clear.frame(height: topInset + 6)
                 }
-                .scrollEdgeFade(top: 0, bottom: 12)
+                .scrollEdgeFade(top: 8, bottom: 12)
                 .accessibilityIdentifier("parameterOptionList")
                 .onChange(of: state.selectedParameterOptionID) { _, newID in
                     if let newID {
