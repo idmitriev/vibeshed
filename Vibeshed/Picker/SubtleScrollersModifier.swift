@@ -5,6 +5,32 @@ extension View {
     func subtleScrollers() -> some View {
         background(SubtleScrollersConfigurator())
     }
+
+    func scrollEdgeFade(top: CGFloat = 6, bottom: CGFloat = 12) -> some View {
+        mask {
+            VStack(spacing: 0) {
+                if top > 0 {
+                    LinearGradient(
+                        colors: [.clear, .black],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: top)
+                }
+
+                Color.black
+
+                if bottom > 0 {
+                    LinearGradient(
+                        colors: [.black, .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: bottom)
+                }
+            }
+        }
+    }
 }
 
 private struct SubtleScrollersConfigurator: NSViewRepresentable {
@@ -29,7 +55,9 @@ private final class SubtleScrollersHostView: NSView {
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = false
         scrollView.backgroundColor = .clear
-        scrollView.verticalScroller?.alphaValue = 0.5
-        scrollView.horizontalScroller?.alphaValue = 0.5
+        scrollView.verticalScroller?.controlSize = .mini
+        scrollView.verticalScroller?.alphaValue = 0.25
+        scrollView.horizontalScroller?.controlSize = .mini
+        scrollView.horizontalScroller?.alphaValue = 0.25
     }
 }

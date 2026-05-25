@@ -21,8 +21,6 @@ struct BreadcrumbView: View {
             Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 

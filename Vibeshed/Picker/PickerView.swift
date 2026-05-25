@@ -72,30 +72,42 @@ struct PickerView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if case .result = state.mode {
-                BreadcrumbView(state: state) {
-                    _ = state.popMode()
-                }
-            } else {
-                PickerSearchField(
-                    text: searchBinding,
-                    placeholder: searchPlaceholder,
-                    pills: searchFieldPills,
-                    onRemovePill: { _ in _ = state.popMode() },
-                    onBackspaceEmpty: { _ = state.popMode() }
-                )
-                .padding(.horizontal, 16)
-                .frame(height: appearance.searchBarHeight)
-                .id(state.mode)
-            }
-
-            if let hint = state.layoutCorrectionHint, case .search = state.mode {
-                LayoutCorrectionBanner(hint: hint)
-            }
-
+        ZStack(alignment: .top) {
             content
-                .padding(.bottom, 8)
+
+            // Glass search bar accessory — floats above scrolling content
+            VStack(spacing: 0) {
+                Group {
+                    if case .result = state.mode {
+                        BreadcrumbView(state: state) {
+                            _ = state.popMode()
+                        }
+                        .frame(height: appearance.searchBarHeight)
+                    } else {
+                        PickerSearchField(
+                            text: searchBinding,
+                            placeholder: searchPlaceholder,
+                            pills: searchFieldPills,
+                            onRemovePill: { _ in _ = state.popMode() },
+                            onBackspaceEmpty: { _ = state.popMode() }
+                        )
+                        .padding(.horizontal, 16)
+                        .frame(height: appearance.searchBarHeight)
+                        .id(state.mode)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .background(.thinMaterial)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(Color(nsColor: .separatorColor).opacity(0.4))
+                        .frame(height: 0.5)
+                }
+
+                if let hint = state.layoutCorrectionHint, case .search = state.mode {
+                    LayoutCorrectionBanner(hint: hint)
+                }
+            }
         }
         .frame(width: appearance.panelWidth, height: appearance.panelHeight)
         .background {
@@ -111,7 +123,7 @@ struct PickerView: View {
         .clipShape(RoundedRectangle(cornerRadius: appearance.cornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: appearance.cornerRadius)
-                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
         )
         .shadow(
             color: theme.shadowColor ?? .black.opacity(0.35),
@@ -179,6 +191,8 @@ struct PickerView: View {
                     .transition(.opacity)
             case let .result(title, body):
                 ResultView(title: title, message: body)
+                    .padding(.top, appearance.searchBarHeight)
+                    .padding(.bottom, 8)
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
             }
         }
@@ -189,10 +203,12 @@ struct PickerView: View {
     private var actionListContent: some View {
         if state.isLoading, state.actions.isEmpty {
             ProgressView()
+                .padding(.top, appearance.searchBarHeight)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("pickerLoading")
         } else if state.actions.isEmpty, !state.query.isEmpty {
             ContentUnavailableView.search(text: state.query)
+                .padding(.top, appearance.searchBarHeight)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("pickerNoResults")
         } else {
@@ -203,6 +219,7 @@ struct PickerView: View {
                     actionCache: state.actionCache,
                     activationCounters: state.activationCounters,
                     rowHeight: appearance.rowHeight,
+                    topInset: appearance.searchBarHeight,
                     onActivate: { id in coordinator?.activateAction(id: id) }
                 )
                 .frame(maxWidth: .infinity)
@@ -214,6 +231,7 @@ struct PickerView: View {
                         actionCache: state.actionCache
                     )
                     .frame(width: 340)
+                    .padding(.top, appearance.searchBarHeight)
                     .transition(previewTransition)
                 }
             }
@@ -227,6 +245,7 @@ struct PickerView: View {
             ParameterInputView(
                 state: state,
                 rowHeight: appearance.rowHeight,
+                topInset: appearance.searchBarHeight,
                 onConfirm: { coordinator?.handleReturn() }
             )
                 .frame(maxWidth: .infinity)
@@ -234,6 +253,7 @@ struct PickerView: View {
             if previewVisible {
                 ParameterPreviewView(state: state)
                     .frame(width: 340)
+                    .padding(.top, appearance.searchBarHeight)
                     .transition(previewTransition)
             }
         }

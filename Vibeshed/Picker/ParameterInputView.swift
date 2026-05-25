@@ -4,6 +4,7 @@ import SwiftUI
 struct ParameterInputView: View {
     @Bindable var state: PickerState
     var rowHeight: CGFloat = 52
+    var topInset: CGFloat = 0
     var onConfirm: (() -> Void)?
     @Environment(\.vibeTheme) private var theme
 
@@ -17,6 +18,7 @@ struct ParameterInputView: View {
                     systemImage: "questionmark.circle",
                     description: Text("No parameter to configure")
                 )
+                .padding(.top, topInset)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -40,6 +42,7 @@ struct ParameterInputView: View {
     private func selectionList(for param: ActionParameter) -> some View {
         if state.isLoadingOptions, state.parameterOptions.isEmpty {
             ProgressView()
+                .padding(.top, topInset)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if state.parameterOptions.isEmpty {
             ContentUnavailableView(
@@ -47,6 +50,7 @@ struct ParameterInputView: View {
                 systemImage: "tray",
                 description: Text("No options available for \(param.label)")
             )
+            .padding(.top, topInset)
         } else {
             ScrollViewReader { proxy in
                 let hotkeys: [String: Int] = {
@@ -84,10 +88,15 @@ struct ParameterInputView: View {
                             .id(option.id)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
                 }
                 .scrollContentBackground(.hidden)
-                .subtleScrollers()
+                .scrollIndicators(.hidden)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    Color.clear.frame(height: topInset)
+                }
+                .scrollEdgeFade(top: 0, bottom: 12)
                 .accessibilityIdentifier("parameterOptionList")
                 .onChange(of: state.selectedParameterOptionID) { _, newID in
                     if let newID {
@@ -132,6 +141,7 @@ struct ParameterInputView: View {
                 .buttonStyle(.bordered)
             }
         }
+        .padding(.top, topInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 

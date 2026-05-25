@@ -6,6 +6,7 @@ struct ActionListView: View {
     var actionCache: [ActionID: any Action] = [:]
     var activationCounters: [ActionID: Int] = [:]
     var rowHeight: CGFloat = 52
+    var topInset: CGFloat = 0
     var onActivate: ((ActionID) -> Void)?
     @Environment(\.vibeTheme) private var theme
 
@@ -33,10 +34,15 @@ struct ActionListView: View {
                             .id(item.id)
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
             }
             .scrollContentBackground(.hidden)
-            .subtleScrollers()
+            .scrollIndicators(.hidden)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                Color.clear.frame(height: topInset)
+            }
+            .scrollEdgeFade(top: 0, bottom: 12)
             .accessibilityIdentifier("actionList")
             .onChange(of: selectedID) { _, newID in
                 if let newID {
