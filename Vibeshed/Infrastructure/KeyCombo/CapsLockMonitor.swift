@@ -7,6 +7,7 @@ import IOKit.hid
 /// at the system level; IOKit HID reads the raw hardware state directly.
 final class CapsLockMonitor: @unchecked Sendable {
     static let shared = CapsLockMonitor()
+    static let stateChanged = Notification.Name("CapsLockMonitorStateChanged")
 
     private var hidManager: IOHIDManager?
     private var _isPressed = false
@@ -135,6 +136,7 @@ final class CapsLockMonitor: @unchecked Sendable {
             Log.keybindings.info(
                 "CapsLock HID: \(pressed ? "DOWN" : "UP", privacy: .public)"
             )
+            NotificationCenter.default.post(name: Self.stateChanged, object: nil)
         }
     }
 }

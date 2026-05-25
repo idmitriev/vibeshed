@@ -13,7 +13,20 @@ struct VibeshedApp: App {
                 autostartManager: appDelegate.autostartManager
             )
         } label: {
-            Image(nsImage: MenuBarIcon.make())
+            MenuBarLabel()
         }
+    }
+}
+
+private struct MenuBarLabel: View {
+    @State private var capsLockActive = CapsLockMonitor.shared.isPressed
+
+    var body: some View {
+        Image(nsImage: MenuBarIcon.make(capsLockActive: capsLockActive))
+            .onReceive(
+                NotificationCenter.default.publisher(for: CapsLockMonitor.stateChanged)
+            ) { _ in
+                capsLockActive = CapsLockMonitor.shared.isPressed
+            }
     }
 }

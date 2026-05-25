@@ -1,9 +1,7 @@
 import AppKit
 
-/// Generates a template NSImage for the menu bar: an angled wand with concentric waves
-/// emanating from its bulb head — a monochrome echo of the app icon.
 enum MenuBarIcon {
-    static func make(size: CGFloat = 18) -> NSImage {
+    static func make(size: CGFloat = 18, capsLockActive: Bool = false) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
             let w = rect.width
             let h = rect.height
@@ -78,6 +76,18 @@ enum MenuBarIcon {
             }
 
             ctx.restoreGState()
+
+            if capsLockActive {
+                let dotRadius = min(w, h) * 0.1
+                let dotCenter = CGPoint(x: w * 0.85, y: h * 0.15)
+                ctx.setFillColor(NSColor.black.cgColor)
+                ctx.fillEllipse(in: CGRect(
+                    x: dotCenter.x - dotRadius,
+                    y: dotCenter.y - dotRadius,
+                    width: dotRadius * 2,
+                    height: dotRadius * 2
+                ))
+            }
 
             return true
         }
