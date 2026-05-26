@@ -32,11 +32,10 @@ struct VSCodeActionListItemView: View {
                 if let itemType = action.vscodeItemType {
                     typeIndicator(itemType)
                 }
-                if let variant = action.variant,
-                   variant != "VS Code" {
+                if let variant = action.variant {
                     Text(variant)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
             }
         }

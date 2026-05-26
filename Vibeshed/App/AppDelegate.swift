@@ -175,6 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(GitHubModule())
             await registerModule(VSCodeModule())
             await registerModule(JetBrainsModule())
+            await registerModule(ZedModule())
             await registerModule(ITermModule())
             await registerModule(AIModule())
             await registerModule(TelegramModule())

@@ -443,6 +443,12 @@ modules:
         type: chat
         icon: "bookmark"
 
+  # --- Zed ---
+  zed:
+    maxResults: 20
+    showRemote: false
+    # zedPath: "/opt/homebrew/bin/zed"  # custom CLI path (auto-detected by default)
+
   # --- JetBrains IDEs ---
   jetbrains:
     maxResults: 20
