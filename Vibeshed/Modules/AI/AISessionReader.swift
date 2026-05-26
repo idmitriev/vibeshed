@@ -13,6 +13,7 @@ enum AIProvider: String, Sendable {
 
 struct AISession: Sendable {
     let sessionID: String
+    let cliSessionID: String?
     let provider: AIProvider
     let title: String
     let lastPrompt: String?
@@ -141,6 +142,7 @@ enum AISessionReader {
 
             sessions.append(AISession(
                 sessionID: sessionId,
+                cliSessionID: nil,
                 provider: .claudeCode,
                 title: title,
                 lastPrompt: lastPrompt.isEmpty ? nil : lastPrompt,
@@ -284,6 +286,7 @@ enum AISessionReader {
                 ?? "Session \(meta.sessionId.prefix(8))"
             sessions.append(AISession(
                 sessionID: meta.sessionId,
+                cliSessionID: meta.cliSessionId,
                 provider: .claudeDesktop,
                 title: title,
                 lastPrompt: nil,
@@ -391,6 +394,7 @@ enum AISessionReader {
 
             sessions.append(AISession(
                 sessionID: sessionId,
+                cliSessionID: nil,
                 provider: .codex,
                 title: title,
                 lastPrompt: lastPrompt.isEmpty ? nil : lastPrompt,

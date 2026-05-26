@@ -259,9 +259,19 @@ actor AIModule: ModuleConfigurable {
                 terminalApp: config.terminalApp
             )
         case .claudeDesktop:
-            openApp(bundleID: "com.anthropic.claudefordesktop")
+            if let cliID = session.cliSessionID {
+                let cli = resolveClaudeCLI(customPath: config.claudePath)
+                let command = "\(cli) --resume \(cliID)"
+                launchInTerminal(
+                    command: command,
+                    cwd: session.project,
+                    terminalApp: config.terminalApp
+                )
+            } else {
+                openApp(bundleID: "com.anthropic.claudefordesktop")
+            }
         case .codex:
-            openApp(bundleID: "com.openai.codex")
+            openURL("codex://threads/\(session.sessionID)")
         }
     }
 
