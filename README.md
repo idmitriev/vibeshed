@@ -50,15 +50,17 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 - Meeting prep: hide distractions and surface relevant docs
 
 **Developer Tools**
-- VSCode and JetBrains IDE project search
+- VSCode, JetBrains, and Zed project/workspace search
 - iTerm session management and command execution
 - GitHub repo/issue/PR search and notifications
 - AI session search across Claude, ChatGPT, and Codex
+- Homebrew package search, install, upgrade, and cleanup
 
 **Media & Communication**
 - Spotify search and playback control with OAuth
 - System audio volume, mute, device selection, media keys
 - Telegram chat quick-open
+- Zoom meeting join, start, and configured meeting shortcuts
 
 **System**
 - Lock, sleep, restart, shutdown, toggle dark mode
@@ -112,6 +114,9 @@ The app watches the config file for changes and hot-reloads automatically.
 | **JetBrains** | Search and open IDE projects |
 | **ITerm** | Session listing, command execution, new tabs |
 | **AI** | Search Claude/ChatGPT/Codex sessions |
+| **Zed** | Search and open recent workspaces |
+| **Homebrew** | Search, install, uninstall, upgrade packages and casks |
+| **Zoom** | Join meetings, start personal meeting, configured shortcuts |
 | **Telegram** | Quick-open configured chats and groups |
 | **Calendar** | Upcoming events, join Zoom/Meet links |
 | **MeetingPrep** | Prepare workspace for meetings |
