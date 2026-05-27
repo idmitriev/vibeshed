@@ -185,6 +185,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(BookmarkModule())
             await registerModule(TimerModule())
             await registerModule(MathModule())
+            await registerModule(HomebrewModule())
         }
     }
 

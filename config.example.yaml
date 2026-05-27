@@ -539,6 +539,19 @@ modules:
     #   - percentage
     #   - baseConversion
 
+  # --- Homebrew ---
+  homebrew:
+    brewPath: "/opt/homebrew/bin/brew"
+    # enabledActions:
+    #   - installFormula
+    #   - installCask
+    #   - uninstallFormula
+    #   - uninstallCask
+    #   - update
+    #   - upgrade
+    #   - outdated
+    #   - cleanup
+
   # --- Self (Vibeshed meta-actions) ---
   self:
     enabledActions:
