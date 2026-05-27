@@ -56,15 +56,15 @@ actor MockModule: Module {
                 relevanceScore: 0.6,
                 keywords: ["activity", "monitor", "cpu", "memory"]
             ),
-            // Action that shows a result view on execution
+            // Action that dismisses on execution
             MockAction(
                 id: ActionID(module: "mock", name: "showResult"),
                 title: "Show Result",
-                subtitle: "Displays a result view",
+                subtitle: "Dismisses the picker",
                 iconName: "checkmark.seal",
                 relevanceScore: 0.55,
                 keywords: ["result", "test"],
-                result: .showResult(title: "Done", body: "Action completed successfully")
+                result: .dismiss
             ),
             // Action with a static selection parameter
             MockAction(

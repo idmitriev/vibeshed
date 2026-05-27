@@ -123,8 +123,6 @@ final class PickerState {
             selectNextAction()
         case .parameterInput:
             selectNextParameterOption()
-        case .result:
-            break
         }
     }
 
@@ -134,8 +132,6 @@ final class PickerState {
             selectPreviousAction()
         case .parameterInput:
             selectPreviousParameterOption()
-        case .result:
-            break
         }
     }
 
@@ -231,8 +227,6 @@ final class PickerState {
             selectActionByOffset(pageSize)
         case .parameterInput:
             selectParameterOptionByOffset(pageSize)
-        case .result:
-            break
         }
     }
 
@@ -242,8 +236,6 @@ final class PickerState {
             selectActionByOffset(-pageSize)
         case .parameterInput:
             selectParameterOptionByOffset(-pageSize)
-        case .result:
-            break
         }
     }
 

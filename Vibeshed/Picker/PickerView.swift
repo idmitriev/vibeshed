@@ -28,8 +28,6 @@ struct PickerView: View {
             $state.query
         case .parameterInput:
             $state.parameterQuery
-        case .result:
-            .constant("")
         }
     }
 
@@ -41,8 +39,6 @@ struct PickerView: View {
             state.currentParameter?.label ?? "Enter value..."
         case .pushedActions:
             "Filter..."
-        case .result:
-            ""
         }
     }
 
@@ -72,8 +68,6 @@ struct PickerView: View {
             } else {
                 []
             }
-        case .result:
-            []
         }
     }
 
@@ -82,7 +76,7 @@ struct PickerView: View {
             content
 
             // Glass preview panel — floats on the trailing edge over results
-            if previewVisible, showsPreview {
+            if previewVisible {
                 HStack(spacing: 0) {
                     Spacer(minLength: 0)
                     previewPanel
@@ -103,29 +97,22 @@ struct PickerView: View {
 
             // Glass search bar accessory — floats above scrolling content
             Group {
-                if case .result = state.mode {
-                    BreadcrumbView(state: state) {
-                        _ = state.popMode()
-                    }
-                    .frame(height: appearance.searchBarHeight)
-                } else {
-                    HStack(spacing: 0) {
-                        PickerSearchField(
-                            text: searchBinding,
-                            placeholder: searchPlaceholder,
-                            pills: searchFieldPills,
-                            onRemovePill: { _ in _ = state.popMode() },
-                            onBackspaceEmpty: { _ = state.popMode() }
-                        )
+                HStack(spacing: 0) {
+                    PickerSearchField(
+                        text: searchBinding,
+                        placeholder: searchPlaceholder,
+                        pills: searchFieldPills,
+                        onRemovePill: { _ in _ = state.popMode() },
+                        onBackspaceEmpty: { _ = state.popMode() }
+                    )
 
-                        if let hint = state.layoutCorrectionHint, case .search = state.mode {
-                            LayoutCorrectionBanner(hint: hint)
-                        }
+                    if let hint = state.layoutCorrectionHint, case .search = state.mode {
+                        LayoutCorrectionBanner(hint: hint)
                     }
-                    .padding(.horizontal, 16)
-                    .frame(height: appearance.searchBarHeight)
-                    .id(state.mode)
                 }
+                .padding(.horizontal, 16)
+                .frame(height: appearance.searchBarHeight)
+                .id(state.mode)
             }
             .frame(maxWidth: .infinity)
             .background(.ultraThinMaterial)
@@ -217,11 +204,6 @@ struct PickerView: View {
             case .parameterInput:
                 parameterContent
                     .transition(.opacity)
-            case let .result(title, body):
-                ResultView(title: title, message: body)
-                    .padding(.top, searchBarTotalHeight)
-                    .padding(.bottom, 8)
-                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
             }
         }
         .animation(.easeInOut(duration: 0.2), value: state.mode)
@@ -262,15 +244,6 @@ struct PickerView: View {
         )
     }
 
-    private var showsPreview: Bool {
-        switch state.mode {
-        case .search, .pushedActions, .parameterInput:
-            true
-        case .result:
-            false
-        }
-    }
-
     @ViewBuilder
     private var previewPanel: some View {
         switch state.mode {
@@ -282,8 +255,6 @@ struct PickerView: View {
             )
         case .parameterInput:
             ParameterPreviewView(state: state)
-        case .result:
-            EmptyView()
         }
     }
 

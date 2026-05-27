@@ -1,6 +1,7 @@
 import Combine
 import CoreFoundation
 import Foundation
+import UserNotifications
 
 @MainActor
 @Observable
@@ -66,8 +67,6 @@ final class PickerCoordinator {
             handleReturnInActionList()
         case .parameterInput:
             handleReturnInParameterMode()
-        case .result:
-            panelController.hideAndReset()
         }
     }
 
@@ -89,8 +88,6 @@ final class PickerCoordinator {
             guard index < pickerState.parameterOptions.count else { return }
             pickerState.selectedParameterOptionID = pickerState.parameterOptions[index].id
             handleReturnInParameterMode()
-        case .result:
-            break
         }
     }
 
@@ -108,7 +105,7 @@ final class PickerCoordinator {
         switch pickerState.mode {
         case .search, .pushedActions:
             break
-        case .parameterInput, .result:
+        case .parameterInput:
             return
         }
         guard let idx = pickerState.actions.firstIndex(where: { $0.id == id }) else { return }
@@ -197,7 +194,11 @@ final class PickerCoordinator {
         } catch {
             Log.picker.error("Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)")
             await eventBus.publish(.actionFailed(action.id, message: error.localizedDescription))
-            pickerState.pushMode(.result(title: "Error", body: error.localizedDescription))
+            panelController.hideAndReset()
+            postErrorNotification(
+                title: action.title,
+                body: error.localizedDescription
+            )
         }
     }
 
@@ -237,8 +238,8 @@ final class PickerCoordinator {
             pickerState.pushMode(.pushedActions)
             pickerState.updateActions(items, cache: cache)
 
-        case let .showResult(title, body):
-            pickerState.pushMode(.result(title: title, body: body))
+        case .showResult:
+            panelController.hideAndReset()
 
         case let .chain(actionID, stringValues):
             Task {
@@ -607,5 +608,25 @@ final class PickerCoordinator {
 
         pickerState.layoutCorrectionHint = nil
         pickerState.updateActions(items, cache: cache, preservingSelection: true)
+    }
+
+}
+
+// MARK: - Notifications
+
+private func postErrorNotification(title: String, body: String) {
+    let content = UNMutableNotificationContent()
+    content.title = title
+    content.body = body
+    content.sound = .default
+    let request = UNNotificationRequest(
+        identifier: "vibeshed.action.error.\(UUID().uuidString)",
+        content: content,
+        trigger: nil
+    )
+    UNUserNotificationCenter.current().add(request) { error in
+        if let error {
+            Log.picker.error("Failed to post notification: \(error.localizedDescription, privacy: .public)")
+        }
     }
 }
