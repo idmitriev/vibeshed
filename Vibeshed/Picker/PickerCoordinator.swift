@@ -186,6 +186,7 @@ final class PickerCoordinator {
 
     private func executeAction(_ action: any Action, values: [String: Any]) async {
         Log.picker.debug("Executing action '\(action.id, privacy: .public)'")
+        panelController.hideAndReset()
         do {
             let result = try await action.run(with: values)
             usageTracker?.recordUsage(actionID: action.id)
@@ -194,7 +195,6 @@ final class PickerCoordinator {
         } catch {
             Log.picker.error("Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)")
             await eventBus.publish(.actionFailed(action.id, message: error.localizedDescription))
-            panelController.hideAndReset()
             postErrorNotification(
                 title: action.title,
                 body: error.localizedDescription
@@ -204,19 +204,19 @@ final class PickerCoordinator {
 
     private func handleActionResult(_ result: ActionResult) {
         switch result {
-        case .dismiss:
-            panelController.hideAndReset()
-
-        case .keepOpen:
+        case .dismiss, .showResult:
             break
 
+        case .keepOpen:
+            panelController.showRetainingState()
+
         case let .setQuery(newQuery):
-            // Reset to search mode and set the query
             pickerState.mode = .search
             pickerState.activeAction = nil
             pickerState.collectedValues = [:]
             pickerState.currentParameter = nil
             pickerState.query = newQuery
+            panelController.showRetainingState()
 
         case let .pushActions(actions):
             let items = actions.map { action in
@@ -237,9 +237,7 @@ final class PickerCoordinator {
             }
             pickerState.pushMode(.pushedActions)
             pickerState.updateActions(items, cache: cache)
-
-        case .showResult:
-            panelController.hideAndReset()
+            panelController.showRetainingState()
 
         case let .chain(actionID, stringValues):
             Task {
@@ -406,13 +404,6 @@ final class PickerCoordinator {
         }
 
         return (scored.map(\.item), cache)
-    }
-
-    private static func normalizeURL(_ url: String) -> String {
-        var s = url.lowercased()
-        if let i = s.firstIndex(of: "#") { s = String(s[..<i]) }
-        while s.hasSuffix("/") { s.removeLast() }
-        return s
     }
 
     // MARK: - Parameter option fetching
@@ -610,6 +601,17 @@ final class PickerCoordinator {
         pickerState.updateActions(items, cache: cache, preservingSelection: true)
     }
 
+}
+
+// MARK: - Helpers
+
+private extension PickerCoordinator {
+    static func normalizeURL(_ url: String) -> String {
+        var s = url.lowercased()
+        if let i = s.firstIndex(of: "#") { s = String(s[..<i]) }
+        while s.hasSuffix("/") { s.removeLast() }
+        return s
+    }
 }
 
 // MARK: - Notifications

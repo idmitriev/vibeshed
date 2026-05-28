@@ -85,6 +85,24 @@ final class PanelController {
         Log.picker.debug("Panel hidden")
     }
 
+    /// Re-shows the panel without resetting state. Used when an action's result
+    /// needs the picker back (e.g. pushActions, setQuery).
+    func showRetainingState() {
+        let panel = getOrCreatePanel()
+        deferredLoad = nil
+
+        if let screen = NSScreen.main {
+            let screenFrame = screen.visibleFrame
+            let x = screenFrame.midX - panel.frame.width / 2
+            let y = screenFrame.midY - panel.frame.height / 2
+            panel.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+
+        panel.animateShow()
+        isVisible = true
+        isHiddenWithState = false
+    }
+
     /// Called after action execution — resets state so next show is fresh.
     func hideAndReset() {
         guard let panel, isVisible else { return }
