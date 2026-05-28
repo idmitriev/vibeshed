@@ -152,6 +152,7 @@ enum ITermManager {
                 repeat with t in tabs of w
                     repeat with s in sessions of t
                         if id of s is "\(id)" then
+                            if miniaturized of w then set miniaturized of w to false
                             select s
                         end if
                     end repeat

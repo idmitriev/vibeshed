@@ -138,9 +138,9 @@ struct ApplicationManager: Sendable {
         }
 
         if running == NSWorkspace.shared.frontmostApplication {
-            // Already frontmost — cycle to next window
             cycleWindows(for: running)
         } else {
+            restoreMinimizedWindows(for: running)
             running.activate(options: [])
         }
         return true
@@ -168,6 +168,9 @@ struct ApplicationManager: Sendable {
         let pid = app.processIdentifier
         let axWindows = AXWindowHelper.windows(for: pid)
         guard axWindows.count > 1 else {
+            if let only = axWindows.first, AXWindowHelper.isMinimized(only) {
+                AXWindowHelper.deminiaturize(only)
+            }
             app.activate(options: [])
             return
         }
@@ -177,16 +180,31 @@ struct ApplicationManager: Sendable {
             for (i, axWindow) in axWindows.enumerated() {
                 if let windowID = AXWindowHelper.windowID(for: axWindow), windowID == focusedID {
                     let nextIndex = (i + 1) % axWindows.count
-                    AXUIElementPerformAction(axWindows[nextIndex], kAXRaiseAction as CFString)
+                    let next = axWindows[nextIndex]
+                    if AXWindowHelper.isMinimized(next) {
+                        AXWindowHelper.deminiaturize(next)
+                    }
+                    AXUIElementPerformAction(next, kAXRaiseAction as CFString)
                     app.activate(options: [])
                     return
                 }
             }
         }
 
-        // Fallback: raise first window
-        AXUIElementPerformAction(axWindows[0], kAXRaiseAction as CFString)
+        let first = axWindows[0]
+        if AXWindowHelper.isMinimized(first) {
+            AXWindowHelper.deminiaturize(first)
+        }
+        AXUIElementPerformAction(first, kAXRaiseAction as CFString)
         app.activate(options: [])
+    }
+
+    private func restoreMinimizedWindows(for app: NSRunningApplication) {
+        let axWindows = AXWindowHelper.windows(for: app.processIdentifier)
+        let allMinimized = !axWindows.isEmpty && axWindows.allSatisfy { AXWindowHelper.isMinimized($0) }
+        if allMinimized, let first = axWindows.first {
+            AXWindowHelper.deminiaturize(first)
+        }
     }
 
     // MARK: - Private Helpers

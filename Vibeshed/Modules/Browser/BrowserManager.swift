@@ -189,8 +189,10 @@ struct BrowserManager: Sendable {
     private func safariFocusScript(windowIndex: Int, tabIndex: Int) -> String {
         """
         tell application "Safari"
-            set current tab of window \(windowIndex) to tab \(tabIndex) of window \(windowIndex)
-            set index of window \(windowIndex) to 1
+            set w to window \(windowIndex)
+            if miniaturized of w then set miniaturized of w to false
+            set current tab of w to tab \(tabIndex) of w
+            set index of w to 1
         end tell
         """
     }
@@ -198,8 +200,10 @@ struct BrowserManager: Sendable {
     private func chromiumFocusScript(bundleID: String, windowIndex: Int, tabIndex: Int) -> String {
         """
         tell application id "\(bundleID)"
-            set active tab index of window \(windowIndex) to \(tabIndex)
-            set index of window \(windowIndex) to 1
+            set w to window \(windowIndex)
+            if miniaturized of w then set miniaturized of w to false
+            set active tab index of w to \(tabIndex)
+            set index of w to 1
         end tell
         """
     }

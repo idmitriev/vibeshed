@@ -75,6 +75,21 @@ enum AXWindowHelper {
         return (window as! AXUIElement) // swiftlint:disable:this force_cast
     }
 
+    static func isMinimized(_ element: AXUIElement) -> Bool {
+        var ref: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(
+            element, kAXMinimizedAttribute as CFString, &ref
+        )
+        guard result == .success, let value = ref else { return false }
+        return CFBooleanGetValue((value as! CFBoolean)) // swiftlint:disable:this force_cast
+    }
+
+    static func deminiaturize(_ element: AXUIElement) {
+        AXUIElementSetAttributeValue(
+            element, kAXMinimizedAttribute as CFString, kCFBooleanFalse
+        )
+    }
+
     /// Resolve a window to its AXUIElement by matching CGWindowID first, then frame proximity.
     static func resolve(windowID: Int, pid: pid_t, frame: CGRect) -> AXUIElement? {
         let axWindows = windows(for: pid)

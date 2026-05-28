@@ -64,6 +64,9 @@ struct WindowManager: Sendable {
             log.error("focusWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)")
             throw WindowManagerError.windowNotFound
         }
+        if AXWindowHelper.isMinimized(axWindow) {
+            AXWindowHelper.deminiaturize(axWindow)
+        }
         AXUIElementPerformAction(axWindow, kAXRaiseAction as CFString)
         if let app = NSRunningApplication(processIdentifier: window.pid) {
             app.activate(options: [])
