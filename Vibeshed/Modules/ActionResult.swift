@@ -6,5 +6,5 @@ enum ActionResult: Sendable {
     case setQuery(String)
     case pushActions([any Action])
     case showResult(title: String, body: String)
-    case chain(ActionID, values: [String: String])
+    case chain(ActionID, values: ParameterValues)
 }

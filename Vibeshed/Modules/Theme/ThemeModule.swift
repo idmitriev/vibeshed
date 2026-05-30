@@ -150,7 +150,7 @@ actor ThemeModule: ModuleConfigurable {
                 ],
                 category: .system
             ) { values in
-                guard let color = values["color"] as? String else {
+                guard let color = values["color"] else {
                     return .keepOpen
                 }
                 try ThemeManager.setAccentColor(color)
@@ -180,7 +180,7 @@ actor ThemeModule: ModuleConfigurable {
                 ],
                 category: .system
             ) { values in
-                guard let path = values["path"] as? String else {
+                guard let path = values["path"] else {
                     return .keepOpen
                 }
                 try ThemeManager.setWallpaper(path: path)
@@ -210,7 +210,7 @@ actor ThemeModule: ModuleConfigurable {
                 ],
                 category: .vscode
             ) { [config] values in
-                guard let themeName = values["theme"] as? String else {
+                guard let themeName = values["theme"] else {
                     return .keepOpen
                 }
                 let variants = resolveVSCodeVariants(config.vscodeVariants)
@@ -241,7 +241,7 @@ actor ThemeModule: ModuleConfigurable {
                 ],
                 category: .jetbrains
             ) { [config] values in
-                guard let themeName = values["theme"] as? String else {
+                guard let themeName = values["theme"] else {
                     return .keepOpen
                 }
                 try ThemeManager.setJetBrainsTheme(themeName, enabledIDEs: config.jetbrainsIDEs)
@@ -271,7 +271,7 @@ actor ThemeModule: ModuleConfigurable {
                 ],
                 category: .iterm
             ) { values in
-                guard let presetName = values["preset"] as? String else {
+                guard let presetName = values["preset"] else {
                     return .keepOpen
                 }
                 try ThemeManager.setITermColorPreset(presetName)
@@ -301,7 +301,7 @@ actor ThemeModule: ModuleConfigurable {
                 ],
                 category: .github
             ) { values in
-                guard let mode = values["mode"] as? String else {
+                guard let mode = values["mode"] else {
                     return .keepOpen
                 }
                 let result = try ThemeManager.setGitHubTheme(mode)

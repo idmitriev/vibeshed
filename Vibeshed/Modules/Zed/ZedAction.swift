@@ -14,7 +14,7 @@ struct ZedAction: Action {
     let remoteHost: String?
     let isOpen: Bool
 
-    private let runner: @Sendable ([String: Any]) async throws -> ActionResult
+    private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
     init(
         id: ActionID,
@@ -28,7 +28,7 @@ struct ZedAction: Action {
         isRemote: Bool = false,
         remoteHost: String? = nil,
         isOpen: Bool = false,
-        runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
+        runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
         self.title = title
@@ -44,7 +44,7 @@ struct ZedAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

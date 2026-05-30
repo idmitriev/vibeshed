@@ -19,7 +19,7 @@ struct TelegramAction: Action {
     let chatType: TelegramChatType?
 
     private let runner: @Sendable (
-        [String: Any]
+        ParameterValues
     ) async throws -> ActionResult
 
     init(
@@ -33,7 +33,7 @@ struct TelegramAction: Action {
         telegramItemType: TelegramItemType? = nil,
         chatType: TelegramChatType? = nil,
         runner: @escaping @Sendable (
-            [String: Any]
+            ParameterValues
         ) async throws -> ActionResult
     ) {
         self.id = id
@@ -48,7 +48,7 @@ struct TelegramAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

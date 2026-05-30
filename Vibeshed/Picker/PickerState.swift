@@ -22,7 +22,7 @@ final class PickerState {
     // MARK: - Parameter binding state
 
     var activeAction: (any Action)?
-    var collectedValues: [String: Any] = [:]
+    var collectedValues: ParameterValues = [:]
     var currentParameter: ActionParameter?
     var parameterOptions: [ParameterOption] = []
     var selectedParameterOptionID: String?
@@ -195,7 +195,7 @@ final class PickerState {
         // The coordinator checks this and executes
     }
 
-    func confirmParameterValue(_ value: Any, forParameterID parameterID: String) {
+    func confirmParameterValue(_ value: String, forParameterID parameterID: String) {
         collectedValues[parameterID] = value
     }
 

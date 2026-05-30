@@ -215,7 +215,7 @@ actor TimerModule: ModuleConfigurable {
             ],
             timerItemType: .utility
         ) { values in
-            guard let durationStr = values["duration"] as? String,
+            guard let durationStr = values["duration"],
                   let seconds = TimerParser.parseDuration(durationStr)
             else {
                 return .showResult(
@@ -224,7 +224,7 @@ actor TimerModule: ModuleConfigurable {
                 )
             }
 
-            let label = (values["label"] as? String) ?? ""
+            let label = (values["label"]) ?? ""
 
             await MainActor.run {
                 currentScheduler?.ensureNotificationPermission()
@@ -333,7 +333,7 @@ actor TimerModule: ModuleConfigurable {
             ],
             timerItemType: .utility
         ) { values in
-            guard let timeStr = values["time"] as? String,
+            guard let timeStr = values["time"],
                   let fireDate = TimerParser.parseTime(timeStr)
             else {
                 return .showResult(
@@ -342,7 +342,7 @@ actor TimerModule: ModuleConfigurable {
                 )
             }
 
-            let label = (values["label"] as? String) ?? ""
+            let label = (values["label"]) ?? ""
 
             await MainActor.run {
                 currentScheduler?.ensureNotificationPermission()

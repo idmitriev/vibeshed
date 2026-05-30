@@ -276,7 +276,7 @@ actor WindowModule: ModuleConfigurable {
                 ),
             ]
         ) { values in
-            guard let windowIDString = values["window"] as? String,
+            guard let windowIDString = values["window"],
                   let windowID = Int(windowIDString)
             else {
                 return .showResult(title: "Error", body: "No window selected")

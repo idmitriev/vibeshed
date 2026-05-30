@@ -149,7 +149,7 @@ actor ClipboardModule: ModuleConfigurable {
                 ),
             ]
         ) { values in
-            guard let itemID = values["item"] as? String else {
+            guard let itemID = values["item"] else {
                 return .showResult(title: "Error", body: "No clipboard item selected")
             }
             let content: String? = await MainActor.run {

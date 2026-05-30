@@ -252,7 +252,7 @@ actor SpotifyModule: ModuleConfigurable {
                 ],
                 spotifyItemType: .control
             ) { [client, config] values in
-                guard let query = values["query"] as? String, !query.isEmpty else {
+                guard let query = values["query"], !query.isEmpty else {
                     return .showResult(title: "Search", body: "Please enter a search query")
                 }
                 let results = try await client.search(
@@ -285,7 +285,7 @@ actor SpotifyModule: ModuleConfigurable {
             ],
             spotifyItemType: .control
         ) { values in
-            let query = values["query"] as? String ?? ""
+            let query = values["query"] ?? ""
             let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
             try await SpotifyManager.openURI("spotify:search:\(encoded)")
             return .dismiss

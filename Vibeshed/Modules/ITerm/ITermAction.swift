@@ -23,7 +23,7 @@ struct ITermAction: Action {
     let isAtPrompt: Bool?
 
     private let runner: @Sendable (
-        [String: Any]
+        ParameterValues
     ) async throws -> ActionResult
 
     init(
@@ -40,7 +40,7 @@ struct ITermAction: Action {
         profileName: String? = nil,
         isAtPrompt: Bool? = nil,
         runner: @escaping @Sendable (
-            [String: Any]
+            ParameterValues
         ) async throws -> ActionResult
     ) {
         self.id = id
@@ -59,7 +59,7 @@ struct ITermAction: Action {
     }
 
     func run(
-        with values: [String: Any]
+        with values: ParameterValues
     ) async throws -> ActionResult {
         try await runner(values)
     }

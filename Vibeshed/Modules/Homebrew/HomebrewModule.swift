@@ -89,7 +89,7 @@ actor HomebrewModule: ModuleConfigurable {
                     ),
                 ]
             ) { values in
-                guard let name = values["package"] as? String, !name.isEmpty else {
+                guard let name = values["package"], !name.isEmpty else {
                     return .showResult(title: "Error", body: "No formula specified")
                 }
                 let output = try await HomebrewManager.installFormula(name, brewPath: brewPath)
@@ -111,7 +111,7 @@ actor HomebrewModule: ModuleConfigurable {
                     ),
                 ]
             ) { values in
-                guard let name = values["package"] as? String, !name.isEmpty else {
+                guard let name = values["package"], !name.isEmpty else {
                     return .showResult(title: "Error", body: "No cask specified")
                 }
                 let output = try await HomebrewManager.installCask(name, brewPath: brewPath)
@@ -138,7 +138,7 @@ actor HomebrewModule: ModuleConfigurable {
                     ),
                 ]
             ) { values in
-                guard let name = values["package"] as? String, !name.isEmpty else {
+                guard let name = values["package"], !name.isEmpty else {
                     return .showResult(title: "Error", body: "No formula specified")
                 }
                 let output = try await HomebrewManager.uninstallFormula(name, brewPath: brewPath)
@@ -160,7 +160,7 @@ actor HomebrewModule: ModuleConfigurable {
                     ),
                 ]
             ) { values in
-                guard let name = values["package"] as? String, !name.isEmpty else {
+                guard let name = values["package"], !name.isEmpty else {
                     return .showResult(title: "Error", body: "No cask specified")
                 }
                 let output = try await HomebrewManager.uninstallCask(name, brewPath: brewPath)

@@ -29,7 +29,7 @@ struct MeetingPrepAction: Action {
     let calendarColorHex: String?
 
     private let runner: @Sendable (
-        [String: Any]
+        ParameterValues
     ) async throws -> ActionResult
 
     init(
@@ -50,7 +50,7 @@ struct MeetingPrepAction: Action {
         calendarName: String? = nil,
         calendarColorHex: String? = nil,
         runner: @escaping @Sendable (
-            [String: Any]
+            ParameterValues
         ) async throws -> ActionResult
     ) {
         self.id = id
@@ -72,7 +72,7 @@ struct MeetingPrepAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

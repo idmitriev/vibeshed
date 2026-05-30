@@ -115,7 +115,7 @@ final class URIManager {
         }
 
         let actionID = ActionID(module: host, name: actionName)
-        var values: [String: Any] = [:]
+        var values: ParameterValues = [:]
         for item in queryItems {
             values[item.name] = item.value ?? ""
         }
@@ -423,7 +423,7 @@ final class URIManager {
 
     private static func executeAction(
         _ actionID: ActionID,
-        values: [String: Any],
+        values: ParameterValues,
         moduleRegistry: ModuleRegistry,
         eventBus: EventBus
     ) async {

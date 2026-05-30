@@ -407,7 +407,7 @@ final class KeyComboManager {
         showParameterInput: @escaping (any Action) -> Void
     ) async {
         var currentID = actionID
-        var currentValues: [String: Any] = [:]
+        var currentValues: ParameterValues = [:]
         let maxChainDepth = 5
 
         for depth in 0..<maxChainDepth {
@@ -450,10 +450,7 @@ final class KeyComboManager {
                 "Chaining \(currentID, privacy: .public) → \(nextID, privacy: .public) (depth \(depth, privacy: .public))"
             )
             currentID = nextID
-            currentValues = [:]
-            for (key, value) in stringValues {
-                currentValues[key] = value
-            }
+            currentValues = stringValues
         }
 
         Log.keybindings.error("Chain depth exceeded at \(currentID, privacy: .public)")

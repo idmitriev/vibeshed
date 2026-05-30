@@ -131,7 +131,7 @@ actor AIModule: ModuleConfigurable {
             ],
             aiItemType: .search
         ) { [config] values in
-            guard let query = values["query"] as? String,
+            guard let query = values["query"],
                   !query.isEmpty
             else {
                 return .showResult(

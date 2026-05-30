@@ -135,14 +135,14 @@ enum AILaunchers {
 
     // MARK: - Helpers
 
-    private static func trimmedString(_ value: Any?) -> String? {
-        let trimmed = (value as? String)?
+    private static func trimmedString(_ value: String?) -> String? {
+        let trimmed = value?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         if let trimmed, !trimmed.isEmpty { return trimmed }
         return nil
     }
 
-    private static func expandedCwd(_ value: Any?) -> String? {
+    private static func expandedCwd(_ value: String?) -> String? {
         guard let raw = trimmedString(value) else { return nil }
         return (raw as NSString).expandingTildeInPath
     }

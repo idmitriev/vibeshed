@@ -23,7 +23,7 @@ struct TimerAction: Action {
     let label: String?
     let isActive: Bool
 
-    private let runner: @Sendable ([String: Any]) async throws -> ActionResult
+    private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
     init(
         id: ActionID,
@@ -39,7 +39,7 @@ struct TimerAction: Action {
         originalDuration: TimeInterval? = nil,
         label: String? = nil,
         isActive: Bool = false,
-        runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
+        runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
         self.title = title
@@ -57,7 +57,7 @@ struct TimerAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

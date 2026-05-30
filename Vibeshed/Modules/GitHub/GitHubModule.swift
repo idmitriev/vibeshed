@@ -193,7 +193,7 @@ actor GitHubModule: ModuleConfigurable {
                 ),
             ]
         ) { [client, config, eventBus] values in
-            guard let query = values["query"] as? String,
+            guard let query = values["query"],
                   !query.isEmpty
             else {
                 return .showResult(
@@ -261,7 +261,7 @@ actor GitHubModule: ModuleConfigurable {
                 ),
             ]
         ) { [client, config, eventBus] values in
-            guard let query = values["query"] as? String,
+            guard let query = values["query"],
                   !query.isEmpty
             else {
                 return .showResult(
@@ -305,7 +305,7 @@ actor GitHubModule: ModuleConfigurable {
                 ),
             ]
         ) { [client, config, eventBus] values in
-            guard let query = values["query"] as? String,
+            guard let query = values["query"],
                   !query.isEmpty
             else {
                 return .showResult(
@@ -349,7 +349,7 @@ actor GitHubModule: ModuleConfigurable {
                 ),
             ]
         ) { [client, config, eventBus] values in
-            guard let query = values["query"] as? String,
+            guard let query = values["query"],
                   !query.isEmpty
             else {
                 return .showResult(

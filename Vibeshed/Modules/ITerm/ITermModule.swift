@@ -153,7 +153,7 @@ actor ITermModule: ModuleConfigurable {
             ],
             itermItemType: .command
         ) { [config] values in
-            guard let cmd = values["command"] as? String,
+            guard let cmd = values["command"],
                   !cmd.isEmpty
             else {
                 return .showResult(

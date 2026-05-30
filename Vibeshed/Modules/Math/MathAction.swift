@@ -21,7 +21,7 @@ struct MathAction: Action {
     let formattedResult: String
     let detailLines: [(label: String, value: String)]
 
-    private let runner: @Sendable ([String: Any]) async throws -> ActionResult
+    private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
     init(
         id: ActionID,
@@ -33,7 +33,7 @@ struct MathAction: Action {
         resultType: MathResultType = .expression,
         formattedResult: String,
         detailLines: [(label: String, value: String)] = [],
-        runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
+        runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
         self.title = title
@@ -48,7 +48,7 @@ struct MathAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

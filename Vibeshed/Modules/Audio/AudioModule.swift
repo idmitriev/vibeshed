@@ -254,7 +254,7 @@ actor AudioModule: ModuleConfigurable {
                     ),
                 ]
             ) { values in
-                guard let deviceStr = values["device"] as? String,
+                guard let deviceStr = values["device"],
                       let deviceID = UInt32(deviceStr)
                 else {
                     return .showResult(title: "Error", body: "No device selected")
@@ -279,7 +279,7 @@ actor AudioModule: ModuleConfigurable {
                     ),
                 ]
             ) { values in
-                guard let deviceStr = values["device"] as? String,
+                guard let deviceStr = values["device"],
                       let deviceID = UInt32(deviceStr)
                 else {
                     return .showResult(title: "Error", body: "No device selected")

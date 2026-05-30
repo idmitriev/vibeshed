@@ -156,7 +156,7 @@ actor ZoomModule: ModuleConfigurable {
             ],
             zoomItemType: .utility
         ) { values in
-            guard let input = values["meetingInput"] as? String,
+            guard let input = values["meetingInput"],
                   let parsed = ZoomManager.parseMeetingInput(input)
             else {
                 return .showResult(

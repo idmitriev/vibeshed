@@ -164,7 +164,7 @@ actor BrowserModule: ModuleConfigurable {
                 ActionParameter(id: "tab", label: "Tab", type: .dynamicSelection(hint: "tab"), isRequired: true),
             ]
         ) { [mgr] values in
-            guard let tabID = values["tab"] as? String else {
+            guard let tabID = values["tab"] else {
                 return .showResult(title: "Error", body: "No tab selected")
             }
             guard let tab = await Self.resolveTab(id: tabID, manager: mgr) else {
@@ -187,7 +187,7 @@ actor BrowserModule: ModuleConfigurable {
                 ActionParameter(id: "tab", label: "Tab", type: .dynamicSelection(hint: "tab"), isRequired: true),
             ]
         ) { [mgr] values in
-            guard let tabID = values["tab"] as? String else {
+            guard let tabID = values["tab"] else {
                 return .showResult(title: "Error", body: "No tab selected")
             }
             guard let tab = await Self.resolveTab(id: tabID, manager: mgr) else {
@@ -214,10 +214,10 @@ actor BrowserModule: ModuleConfigurable {
                 ),
             ]
         ) { [mgr] values in
-            guard let urlString = values["url"] as? String, !urlString.isEmpty else {
+            guard let urlString = values["url"], !urlString.isEmpty else {
                 return .showResult(title: "Error", body: "No URL provided")
             }
-            guard let bundleID = values["browser"] as? String else {
+            guard let bundleID = values["browser"] else {
                 return .showResult(title: "Error", body: "No browser selected")
             }
             try await mgr.openURL(urlString, in: bundleID)

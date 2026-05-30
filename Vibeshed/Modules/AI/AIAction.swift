@@ -23,7 +23,7 @@ struct AIAction: Action {
     let sessionTimestamp: Date?
 
     private let runner: @Sendable (
-        [String: Any]
+        ParameterValues
     ) async throws -> ActionResult
 
     init(
@@ -40,7 +40,7 @@ struct AIAction: Action {
         modelName: String? = nil,
         sessionTimestamp: Date? = nil,
         runner: @escaping @Sendable (
-            [String: Any]
+            ParameterValues
         ) async throws -> ActionResult
     ) {
         self.id = id
@@ -58,7 +58,7 @@ struct AIAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

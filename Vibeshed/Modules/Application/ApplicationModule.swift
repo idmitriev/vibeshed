@@ -108,7 +108,7 @@ actor ApplicationModule: ModuleConfigurable {
                 ),
             ]
         ) { values in
-            guard let bundleID = values["app"] as? String else {
+            guard let bundleID = values["app"] else {
                 return .showResult(title: "Error", body: "No application selected")
             }
             let apps = await MainActor.run { mgr.listInstalledApplications() }
@@ -145,7 +145,7 @@ actor ApplicationModule: ModuleConfigurable {
                 ),
             ]
         ) { values in
-            guard let bundleID = values["app"] as? String else {
+            guard let bundleID = values["app"] else {
                 return .showResult(title: "Error", body: "No application selected")
             }
             let apps = await MainActor.run { mgr.listRunningApplications() }

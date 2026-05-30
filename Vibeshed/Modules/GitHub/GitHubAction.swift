@@ -27,7 +27,7 @@ struct GitHubAction: Action {
     let repoStars: Int?
     let repoLanguage: String?
 
-    private let runner: @Sendable ([String: Any]) async throws -> ActionResult
+    private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
     init(
         id: ActionID,
@@ -47,7 +47,7 @@ struct GitHubAction: Action {
         createdAt: String? = nil,
         repoStars: Int? = nil,
         repoLanguage: String? = nil,
-        runner: @escaping @Sendable ([String: Any]) async throws -> ActionResult
+        runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
         self.title = title
@@ -69,7 +69,7 @@ struct GitHubAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

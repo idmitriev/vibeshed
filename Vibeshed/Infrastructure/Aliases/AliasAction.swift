@@ -41,13 +41,13 @@ struct AliasAction: Action {
         self.profile = profile
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         let target = targetActionID.rawValue
 
         // URL aliases — open in browser
         if target.hasPrefix("http://") || target.hasPrefix("https://") {
             var urlString = target
-            if let query = values["query"] as? String {
+            if let query = values["query"] {
                 let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
                 urlString = urlString.replacingOccurrences(of: "{query}", with: encoded)
             }
@@ -72,18 +72,16 @@ struct AliasAction: Action {
         // Standard action chaining
         var merged = prefilledParameters
         // Substitute {query} placeholders with the provided query parameter
-        if let query = values["query"] as? String {
+        if let query = values["query"] {
             for (key, value) in merged {
                 merged[key] = value.replacingOccurrences(of: "{query}", with: query)
             }
         }
         // Pass through any additional values from parameter input
-        for (key, value) in values {
-            if let str = value as? String, key != "query" {
-                merged[key] = str
-            }
+        for (key, value) in values.raw where key != "query" {
+            merged[key] = value
         }
-        return .chain(targetActionID, values: merged)
+        return .chain(targetActionID, values: ParameterValues(merged))
     }
 
     @MainActor

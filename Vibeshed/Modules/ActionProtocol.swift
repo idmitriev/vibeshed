@@ -44,7 +44,7 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
     var keywords: [String] { get }
     var parameters: [ActionParameter] { get }
 
-    func run(with values: [String: Any]) async throws -> ActionResult
+    func run(with values: ParameterValues) async throws -> ActionResult
 
     /// When true, the picker activates this action on a single mouse click.
     /// Default is false (double-click required) to avoid accidental activation.

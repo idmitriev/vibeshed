@@ -33,7 +33,7 @@ struct CalendarAction: Action {
     let videoURL: URL?
 
     private let runner: @Sendable (
-        [String: Any]
+        ParameterValues
     ) async throws -> ActionResult
 
     init(
@@ -55,7 +55,7 @@ struct CalendarAction: Action {
         videoLinkType: VideoLinkType? = nil,
         videoURL: URL? = nil,
         runner: @escaping @Sendable (
-            [String: Any]
+            ParameterValues
         ) async throws -> ActionResult
     ) {
         self.id = id
@@ -78,7 +78,7 @@ struct CalendarAction: Action {
         self.runner = runner
     }
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
 

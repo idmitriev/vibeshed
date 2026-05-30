@@ -139,7 +139,7 @@ struct MockAction: Action {
     var parameters: [ActionParameter] = []
     var result: ActionResult = .dismiss
 
-    func run(with values: [String: Any]) async throws -> ActionResult {
+    func run(with _: ParameterValues) async throws -> ActionResult {
         result
     }
 }

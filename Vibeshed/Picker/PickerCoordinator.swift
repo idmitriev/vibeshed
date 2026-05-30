@@ -184,7 +184,7 @@ final class PickerCoordinator {
         Task { await executeAction(action, values: values) }
     }
 
-    private func executeAction(_ action: any Action, values: [String: Any]) async {
+    private func executeAction(_ action: any Action, values: ParameterValues) async {
         Log.picker.debug("Executing action '\(action.id, privacy: .public)'")
         panelController.hideAndReset()
         do {
@@ -239,17 +239,13 @@ final class PickerCoordinator {
             pickerState.updateActions(items, cache: cache)
             panelController.showRetainingState()
 
-        case let .chain(actionID, stringValues):
+        case let .chain(actionID, chainValues):
             Task {
                 guard let action = await moduleRegistry.findAction(id: actionID) else {
                     Log.picker.error("Chained action '\(actionID, privacy: .public)' not found")
                     return
                 }
-                var values: [String: Any] = [:]
-                for (key, value) in stringValues {
-                    values[key] = value
-                }
-                await executeAction(action, values: values)
+                await executeAction(action, values: chainValues)
             }
         }
     }

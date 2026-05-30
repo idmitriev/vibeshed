@@ -16,7 +16,7 @@ struct JetBrainsAction: Action {
     let frameContext: String?
 
     private let runner:
-        @Sendable ([String: Any]) async throws -> ActionResult
+        @Sendable (ParameterValues) async throws -> ActionResult
 
     init(
         id: ActionID,
@@ -31,7 +31,7 @@ struct JetBrainsAction: Action {
         ideTag: String? = nil,
         isOpen: Bool = false,
         frameContext: String? = nil,
-        runner: @escaping @Sendable ([String: Any]) async throws
+        runner: @escaping @Sendable (ParameterValues) async throws
             -> ActionResult
     ) {
         self.id = id
@@ -50,7 +50,7 @@ struct JetBrainsAction: Action {
     }
 
     func run(
-        with values: [String: Any]
+        with values: ParameterValues
     ) async throws -> ActionResult {
         try await runner(values)
     }
