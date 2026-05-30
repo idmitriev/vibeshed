@@ -10,7 +10,18 @@ keeps `swift build` green at every step.
 
 ---
 
-## Phase 0 — Unit-test safety net (do this first)
+## Phase 0 — Unit-test safety net (do this first) — ✅ DONE
+
+> **Outcome:** `.testTarget(name: "VibeshedTests", dependencies: ["Vibeshed"])` added to
+> `Package.swift`. The flagged wrinkle did **not** materialize — `@testable import Vibeshed`
+> works directly against the `.executableTarget` (with `@main`) on macOS, so **no library
+> split was needed**. First batch: 44 tests across `ActionID`, `ParameterValues`,
+> `FuzzyMatcher` (match tiers + combined `score`), `URLPatternMatcher` (glob + regex),
+> `KeyComboParser` (modifiers/aliases/errors), and `ConfigManager.parseYAML` (per-section
+> extraction, empty input, unknown sections). Run with `swift test`. Still to add as later
+> phases touch them: `ContextualScorer`, `UsageTracker`, `LayoutTransliterator`.
+
+### Original plan (kept for reference)
 
 **Why first:** 57k LOC with only `VibeshedUITests` + `MockModule`. Every later phase
 mutates pure logic that has zero coverage. Tests make the refactors safe.

@@ -1,0 +1,76 @@
+import CoreGraphics
+import XCTest
+
+@testable import Vibeshed
+
+final class KeyComboParserTests: XCTestCase {
+    func testStandardComboWithSingleModifier() throws {
+        let space = try KeyComboParser.carbonKeyCode(for: "space")
+        XCTAssertEqual(
+            try KeyComboParser.parse("cmd+space"),
+            .standard(carbonKeyCode: space, modifiers: [.maskCommand])
+        )
+    }
+
+    func testStandardComboWithMultipleModifiers() throws {
+        let p = try KeyComboParser.carbonKeyCode(for: "p")
+        XCTAssertEqual(
+            try KeyComboParser.parse("cmd+shift+p"),
+            .standard(carbonKeyCode: p, modifiers: [.maskCommand, .maskShift])
+        )
+    }
+
+    func testModifierAliases() throws {
+        let a = try KeyComboParser.carbonKeyCode(for: "a")
+        XCTAssertEqual(try KeyComboParser.parse("alt+a"), .standard(carbonKeyCode: a, modifiers: [.maskAlternate]))
+        XCTAssertEqual(try KeyComboParser.parse("option+a"), .standard(carbonKeyCode: a, modifiers: [.maskAlternate]))
+        XCTAssertEqual(try KeyComboParser.parse("ctrl+a"), .standard(carbonKeyCode: a, modifiers: [.maskControl]))
+    }
+
+    func testCaseInsensitive() throws {
+        let space = try KeyComboParser.carbonKeyCode(for: "space")
+        XCTAssertEqual(
+            try KeyComboParser.parse("CMD+SPACE"),
+            .standard(carbonKeyCode: space, modifiers: [.maskCommand])
+        )
+    }
+
+    func testMouseButton() throws {
+        // mouse4 → back button → zero-based CG button 3
+        XCTAssertEqual(try KeyComboParser.parse("mouse4"), .mouseButton(button: 3, modifiers: []))
+    }
+
+    func testMouseButtonWithModifier() throws {
+        XCTAssertEqual(
+            try KeyComboParser.parse("cmd+mouse5"),
+            .mouseButton(button: 4, modifiers: [.maskCommand])
+        )
+    }
+
+    func testEmptyComboThrows() {
+        XCTAssertThrowsError(try KeyComboParser.parse("")) { error in
+            guard case .invalidCombo(_, let reason)? = error as? KeyComboError else {
+                return XCTFail("expected invalidCombo, got \(error)")
+            }
+            XCTAssertTrue(reason.contains("empty"))
+        }
+    }
+
+    func testUnknownKeyThrows() {
+        XCTAssertThrowsError(try KeyComboParser.parse("cmd+foo")) { error in
+            guard case .unknownKey(let key)? = error as? KeyComboError else {
+                return XCTFail("expected unknownKey, got \(error)")
+            }
+            XCTAssertEqual(key, "foo")
+        }
+    }
+
+    func testUnknownModifierThrows() {
+        XCTAssertThrowsError(try KeyComboParser.parse("hyper+a")) { error in
+            guard case .unknownModifier(let mod)? = error as? KeyComboError else {
+                return XCTFail("expected unknownModifier, got \(error)")
+            }
+            XCTAssertEqual(mod, "hyper")
+        }
+    }
+}

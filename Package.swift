@@ -19,5 +19,10 @@ let package = Package(
             linkerSettings: [.linkedLibrary("sqlite3")],
             plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
+        .testTarget(
+            name: "VibeshedTests",
+            dependencies: ["Vibeshed"],
+            path: "VibeshedTests"
+        ),
     ]
 )
