@@ -421,7 +421,7 @@ extension GitHubModule {
                 title: repo.fullName,
                 subtitle: subtitle,
                 iconName: "folder",
-                relevanceScore: max(0.3, 0.95 - Double(index) * 0.03),
+                relevanceScore: rankedScore(index: index, step: 0.03),
                 keywords: [
                     "repo", repo.fullName.lowercased(),
                     repo.language?.lowercased(),
@@ -453,7 +453,7 @@ extension GitHubModule {
                 title: "#\(issue.number) \(issue.title)",
                 subtitle: "\(issue.repoFullName) by \(issue.author)",
                 iconName: "exclamationmark.circle",
-                relevanceScore: max(0.3, 0.95 - Double(index) * 0.03),
+                relevanceScore: rankedScore(index: index, step: 0.03),
                 keywords: [
                     "issue", issue.title.lowercased(),
                     issue.repoFullName.lowercased(),
@@ -487,7 +487,7 @@ extension GitHubModule {
                 title: "#\(pr.number) \(pr.title)",
                 subtitle: "\(pr.repoFullName) by \(pr.author)",
                 iconName: "arrow.triangle.pull",
-                relevanceScore: max(0.3, 0.95 - Double(index) * 0.03),
+                relevanceScore: rankedScore(index: index, step: 0.03),
                 keywords: [
                     "pr", "pull", pr.title.lowercased(),
                     pr.repoFullName.lowercased(),
@@ -520,7 +520,7 @@ extension GitHubModule {
                 title: note.title,
                 subtitle: "\(note.repoFullName) · \(note.reason)",
                 iconName: icon,
-                relevanceScore: max(0.3, 0.95 - Double(index) * 0.03),
+                relevanceScore: rankedScore(index: index, step: 0.03),
                 keywords: [
                     "notification", note.title.lowercased(),
                     note.repoFullName.lowercased(),

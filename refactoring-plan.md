@@ -105,7 +105,27 @@ and the build is clean. Bonus: try `-strict-concurrency=targeted` to confirm pro
 
 ---
 
-## Phase 2 — Extract a `ModuleSupport` layer (kill duplication)
+## Phase 2 — Extract a `ModuleSupport` layer (kill duplication) — ✅ DONE (TimedCache deferred)
+
+> **Outcome:** new `Vibeshed/Modules/ModuleSupport.swift` holds the three pure helpers,
+> all duplicate copies removed, build + 51 tests green:
+> - `abbreviatePath(_:)` — single internal free func; deleted **9** private copies
+>   (Zed/VSCode/AI ×module+views, ITerm ×module+views, JetBrainsModule). Call sites unchanged.
+> - `StableID.hash(_:)` — single djb2 implementation; the **8** copies now delegate to it
+>   (String, `Data(path.utf8)`, and composite variants all funnel through `hash`). Byte-for-byte
+>   identical output, so stable IDs (and usage tracking) are unchanged. A unit test pins
+>   `StableID.hash("") == "45h"` so a future refactor can't silently change IDs.
+> - `rankedScore(index:step:)` — replaced the inline `max(0.3, 0.95 - index*step)` copies,
+>   keeping both decay variants (default `0.02`; GitHub/AI search use `step: 0.03`).
+>
+> **`TimedCache` deferred to Phase 3.** Its consumers are mostly the editor modules
+> (VSCode/Zed/JetBrains/AI) that Phase 3 rewrites behind `RecentItemsModule` — migrating
+> them now would be throwaway work, and adding the type with no consumer is dead code. The
+> generic will be introduced in Phase 3 where its first real consumer lives; the remaining
+> non-editor caches (Calendar/MeetingPrep/Homebrew/Bookmark) can adopt it in a small
+> follow-up.
+
+### Original plan (kept for reference)
 
 **Why:** confirmed copy-paste — `abbreviatePath` (9 copies), djb2 `stableID` hash
 (8 copies), the `cacheTTL`+`lastCacheTime`+`refreshCacheIfNeeded` time-cache (6+),
@@ -140,7 +160,39 @@ ranked scoring `max(0.3, 0.95 - index*0.02)` (6+), `enabledActions` filtering, a
 
 ---
 
-## Phase 3 — Unify the editor modules
+## Phase 3 — Unify the editor modules — ✅ DONE
+
+> **Outcome:** the VSCode/Zed/JetBrains `*Module` + `*Action` + `*Views` triplets
+> (9 files, ~990 LOC) collapsed into one generic stack + three thin providers:
+> - `Modules/RecentProjects/`: `RecentProjectItem` (Sendable display model carrying an
+>   `open` closure, mirroring the old `runner`), `RecentProjectsProvider` protocol,
+>   `RecentProjectsModule<Provider>` (generic actor owning cache/scoring/enabledActions/
+>   `ModuleConfigurable` plumbing), `RecentProjectAction`, `RecentProjectViews`.
+> - `VSCodeProvider` / `ZedProvider` / `JetBrainsProvider` (~80 lines each). The editor
+>   `*Config` and `*Manager` files are **unchanged** — the SQLite/SQLite/XML discovery is
+>   genuinely different per editor and was never duplicated.
+> - `TimedCache<Value>` (deferred from Phase 2) added to `ModuleSupport` and used by the
+>   generic module as its first real consumer.
+> - Registration in `AppDelegate` is now `RecentProjectsModule<VSCodeProvider>()` etc.
+> - 4 new tests via a stub provider lock in ID derivation, ranked scoring, and
+>   `enabledActions` filtering (55 tests total, all green; clean build).
+>
+> **LOC:** net **−430** in `Modules/` (9 files / 1047 LOC deleted; 8 files / 617 LOC
+> added), plus ~28 LOC for `TimedCache` in `ModuleSupport` and ~70 LOC of new unit tests
+> — so a real reduction, though far short of the plan's "few thousand": that estimate
+> wrongly assumed the per-editor Managers were duplicated. They aren't (SQLite vs SQLite
+> vs XML), so only the ~990-line presentation triplet collapsed. The structural win
+> matters more than the count: a 4th editor is now an ~80-line provider instead of a
+> ~250-line Module+Action+Views triplet, and list/preview/caching live in one place.
+> This also sets up Phase 5 (move scoring off MainActor) to be a one-file change.
+>
+> **Caveat:** these modules have no GUI test coverage and the runtime UI couldn't be
+> exercised here. The views are mechanical translations of the originals (verified by
+> close reading), and the new *logic* is unit-tested, but a pixel-level visual check
+> (list row trailing badges, preview pills/metadata rows for remote + open states) is
+> worth doing in the running app before relying on it.
+
+### Original plan (kept for reference)
 
 **Why:** `VSCodeModule`, `JetBrainsModule`, `ZedModule` are the same module specialized
 by a discovery function + icon (~520–755 LOC each, plus near-identical Action structs

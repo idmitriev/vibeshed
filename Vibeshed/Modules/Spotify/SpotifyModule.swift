@@ -314,7 +314,7 @@ actor SpotifyModule: ModuleConfigurable {
                 title: track.name,
                 subtitle: "\(track.artistName) — \(track.albumName)",
                 iconName: "music.note",
-                relevanceScore: max(0.3, 0.95 - Double(index) * 0.02),
+                relevanceScore: rankedScore(index: index),
                 keywords: ["track", track.name.lowercased(), track.artistName.lowercased()],
                 artworkURL: track.artworkURL,
                 spotifyItemType: .track,

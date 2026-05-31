@@ -228,12 +228,7 @@ actor ZoomModule: ModuleConfigurable {
     // MARK: - Helpers
 
     private func stableID(_ input: String) -> String {
-        let data = Data(input.utf8)
-        var hash: UInt64 = 5381
-        for byte in data {
-            hash = ((hash &<< 5) &+ hash) &+ UInt64(byte)
-        }
-        return String(hash, radix: 36)
+        StableID.hash(input)
     }
 
     private func actionSuffix(_ id: ActionID) -> String {

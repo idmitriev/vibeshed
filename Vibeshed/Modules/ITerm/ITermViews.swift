@@ -137,11 +137,3 @@ private func itemTypeIcon(_ type: ITermItemType?) -> String {
     case nil: "terminal"
     }
 }
-
-private func abbreviatePath(_ path: String) -> String {
-    let home = FileManager.default.homeDirectoryForCurrentUser.path
-    if path.hasPrefix(home) {
-        return "~" + path.dropFirst(home.count)
-    }
-    return path
-}

@@ -168,7 +168,7 @@ actor AIModule: ModuleConfigurable {
     private func buildSessionActions() -> [AIAction] {
         let config = self.config
         return cachedSessions.enumerated().map { index, session in
-            let score = max(0.3, 0.95 - Double(index) * 0.02)
+            let score = rankedScore(index: index)
             let subtitle = Self.sessionSubtitle(session)
             var kw: [String] = [
                 "ai", "session", "chat",
@@ -215,7 +215,7 @@ actor AIModule: ModuleConfigurable {
         config: AIConfig
     ) -> [AIAction] {
         sessions.enumerated().map { index, session in
-            let score = max(0.3, 0.95 - Double(index) * 0.03)
+            let score = rankedScore(index: index, step: 0.03)
             let subtitle = sessionSubtitle(session)
             return AIAction(
                 id: ActionID(
@@ -414,12 +414,7 @@ actor AIModule: ModuleConfigurable {
     }
 
 private static func stableID(_ input: String) -> String {
-        let data = Data(input.utf8)
-        var hash: UInt64 = 5381
-        for byte in data {
-            hash = ((hash &<< 5) &+ hash) &+ UInt64(byte)
-        }
-        return String(hash, radix: 36)
+        StableID.hash(input)
     }
 
     private static func iconForProvider(
@@ -461,14 +456,5 @@ private static func stableID(_ input: String) -> String {
         case .claudeDesktop: "Claude Desktop"
         case .codex: "Codex"
         }
-    }
-
-    private static func abbreviatePath(_ path: String) -> String {
-        let home = FileManager.default
-            .homeDirectoryForCurrentUser.path
-        if path.hasPrefix(home) {
-            return "~" + path.dropFirst(home.count)
-        }
-        return path
     }
 }
