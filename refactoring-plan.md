@@ -254,7 +254,35 @@ appears ~6 times. A pipeline change today must be made in 2–4 places.
 
 ---
 
-## Phase 5 — Move scoring off the MainActor (performance)
+## Phase 5 — Move scoring off the MainActor (performance) — DONE
+
+> **Outcome:** the per-keystroke scoring hot path now runs off the main actor.
+> - New `Picker/ActionScorer.swift`: a stateless `enum` with `scoreAndRank(...)` holding
+>   the fuzzy-score + context-boost + sort + URL-dedup + 200-cap logic that previously
+>   lived inside the `@MainActor` `buildActionItems`. It takes only `Sendable` inputs
+>   (`[any Action]`, enrichments, query, `ScoringContext`) and returns
+>   `([ActionItem], [ActionID: any Action])`. `normalizeURL` moved here too.
+> - `PickerCoordinator.buildActionItems` is now `async`: it does the cheap alias pass on
+>   the main actor (touches `@MainActor AliasManager`), then runs `ActionScorer.scoreAndRank`
+>   inside `Task.detached { ... }.value` so scoring executes off the main thread. All 6
+>   call sites are `await`ed; a `guard case .search` mode re-check was added after each
+>   newly-introduced suspension point to preserve the existing "bail if mode changed"
+>   invariant (the await now yields the main actor, so the picker mode could change while
+>   scoring runs).
+> - 7 new `ActionScorerTests` (relevance sort, non-match drop, alias-keyword enrichment,
+>   browser-tab-vs-bookmark dedup, 200-cap, normalizeURL). 61 tests total, all green.
+>
+> **Behavior preserved exactly:** scoring math, dedup, and the cap are byte-identical to
+> the old inline version — only their actor changed. One subtlety locked in by a test:
+> dedup drops items from the visible list but does **not** prune the action `cache`
+> (only the 200-cap does); that pre-existing, harmless behavior is unchanged.
+>
+> **Caveat:** no runtime profiling was done here — correctness is unit-tested and the
+> build is clean, but the actual main-thread-time reduction during fast typing wasn't
+> measured with Instruments/signposts in the running app. The `BuildActionItems` /
+> `QueryPipeline` signposts are still in place to measure it if desired.
+
+### Original plan (kept for reference)
 
 **Why:** `PickerCoordinator` is `@MainActor`, so `buildActionItems` (fuzzy scoring +
 sort + URL dedup over the *entire* combined action set) runs on the main thread on every

@@ -274,7 +274,8 @@ final class PickerCoordinator {
                     let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
                     guard case .search = pickerState.mode else { return }
 
-                    let (items, cache) = buildActionItems(from: results, query: query, scoring: scoring)
+                    let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
+                    guard case .search = pickerState.mode else { return }
 
                     // Layout correction fallback: if no results and query is non-empty,
                     // try transliterating from the current keyboard layout.
@@ -290,11 +291,12 @@ final class PickerCoordinator {
                             query: correction.correctedQuery, scoring: correctedScoring
                         )
                         guard case .search = pickerState.mode else { return }
-                        let (correctedItems, correctedCache) = buildActionItems(
+                        let (correctedItems, correctedCache) = await buildActionItems(
                             from: correctedResults,
                             query: correction.correctedQuery,
                             scoring: correctedScoring
                         )
+                        guard case .search = pickerState.mode else { return }
                         if !correctedItems.isEmpty {
                             pickerState.layoutCorrectionHint = correction
                             pickerState.updateActions(correctedItems, cache: correctedCache)
@@ -310,96 +312,31 @@ final class PickerCoordinator {
             }
     }
 
+    /// Applies aliases (cheap, main-actor) then scores/ranks off the main actor.
+    /// Scoring is the per-keystroke hot path, so it runs on a detached task to keep
+    /// the main thread free during typing.
     private func buildActionItems(
         from actions: [any Action],
         query: String,
         scoring: ScoringContext
-    ) -> ([ActionItem], [ActionID: any Action]) {
+    ) async -> ([ActionItem], [ActionID: any Action]) {
         let buildState = Log.signposter.beginInterval("BuildActionItems")
         defer { Log.signposter.endInterval("BuildActionItems", buildState) }
 
         // Apply aliases: enrich keywords for parameterless aliases,
-        // create synthetic actions for parameterized ones
+        // create synthetic actions for parameterized ones. Cheap; stays on main actor.
         let aliasResult = aliasManager?.applyAliases(to: actions)
         let enrichments = aliasResult?.keywordEnrichments ?? [:]
         let allActions: [any Action] = actions + (aliasResult?.syntheticActions ?? [])
 
-        var scored: [(item: ActionItem, action: any Action, score: Double)] = []
-        var cache: [ActionID: any Action] = [:]
-
-        for action in allActions {
-            let extraKeywords = enrichments[action.id] ?? []
-            let combinedKeywords = action.keywords + extraKeywords
-
-            let usageBoost = scoring.usageBoost(for: action.id)
-            let result = FuzzyMatcher.score(
+        return await Task.detached {
+            ActionScorer.scoreAndRank(
+                allActions: allActions,
+                enrichments: enrichments,
                 query: query,
-                title: action.title,
-                subtitle: action.subtitle,
-                keywords: combinedKeywords,
-                relevanceScore: action.relevanceScore,
-                usageBoost: usageBoost
+                scoring: scoring
             )
-
-            // If query is non-empty and fuzzy matcher rejects, skip
-            guard let result else { continue }
-
-            let moduleID = action.id.moduleID
-            let contextBoost: Double
-            if let ctx = scoring.systemContext {
-                contextBoost = ContextualScorer.boost(
-                    actionID: action.id, moduleID: moduleID, context: ctx
-                )
-            } else {
-                contextBoost = 0
-            }
-            let finalScore = result.score + contextBoost
-
-            let item = ActionItem(
-                id: action.id,
-                title: action.title,
-                subtitle: action.subtitle,
-                iconSystemName: action.iconName,
-                score: finalScore,
-                moduleID: moduleID,
-                hasParameters: !action.parameters.filter(\.isRequired).isEmpty,
-                keywords: combinedKeywords,
-                titleHighlightRanges: result.titleRanges.isEmpty ? nil : result.titleRanges
-            )
-            scored.append((item: item, action: action, score: finalScore))
-            cache[action.id] = action
-        }
-
-        scored.sort { $0.score > $1.score }
-
-        // Deduplicate browser tabs vs bookmark/history entries by URL.
-        // Tabs rank higher (relevance 0.8 vs 0.6), so after sorting they naturally win.
-        var seenURLs: Set<String> = []
-        scored.removeAll { entry in
-            let url: String?
-            if let ba = entry.action as? BrowserAction {
-                url = ba.tabURL
-            } else if let bk = entry.action as? BookmarkAction {
-                url = bk.url
-            } else {
-                url = nil
-            }
-            guard let url, !url.isEmpty else { return false }
-            let normalized = Self.normalizeURL(url)
-            return !seenURLs.insert(normalized).inserted
-        }
-
-        // Cap results to avoid rendering huge lists — nobody scrolls past 200 in a launcher.
-        let maxResults = 200
-        if scored.count > maxResults {
-            let dropped = scored[maxResults...]
-            for entry in dropped {
-                cache.removeValue(forKey: entry.action.id)
-            }
-            scored = Array(scored.prefix(maxResults))
-        }
-
-        return (scored.map(\.item), cache)
+        }.value
     }
 
     // MARK: - Parameter option fetching
@@ -517,7 +454,7 @@ final class PickerCoordinator {
                 ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "", systemContext: ctx)
             let results = await moduleRegistry.queryAll(query: "", scoring: scoring)
             guard case .search = pickerState.mode else { return }
-            let (items, cache) = buildActionItems(from: results, query: "", scoring: scoring)
+            let (items, cache) = await buildActionItems(from: results, query: "", scoring: scoring)
             pickerState.updateActions(items, cache: cache)
             pickerState.isLoading = false
 
@@ -542,7 +479,7 @@ final class PickerCoordinator {
                 ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: ctx)
             let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
             guard case .search = pickerState.mode else { return }
-            let (items, cache) = buildActionItems(from: results, query: query, scoring: scoring)
+            let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
             pickerState.updateActions(items, cache: cache, preservingSelection: true)
 
             // Update empty-query cache if applicable
@@ -567,7 +504,7 @@ final class PickerCoordinator {
         let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
         guard case .search = pickerState.mode else { return }
 
-        let (items, cache) = buildActionItems(from: results, query: query, scoring: scoring)
+        let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
 
         if !query.isEmpty, items.isEmpty,
            let correction = layoutTransliterator?.transliterate(query) {
@@ -581,7 +518,7 @@ final class PickerCoordinator {
                 query: correction.correctedQuery, scoring: correctedScoring
             )
             guard case .search = pickerState.mode else { return }
-            let (correctedItems, correctedCache) = buildActionItems(
+            let (correctedItems, correctedCache) = await buildActionItems(
                 from: correctedResults,
                 query: correction.correctedQuery,
                 scoring: correctedScoring
@@ -597,17 +534,6 @@ final class PickerCoordinator {
         pickerState.updateActions(items, cache: cache, preservingSelection: true)
     }
 
-}
-
-// MARK: - Helpers
-
-private extension PickerCoordinator {
-    static func normalizeURL(_ url: String) -> String {
-        var s = url.lowercased()
-        if let i = s.firstIndex(of: "#") { s = String(s[..<i]) }
-        while s.hasSuffix("/") { s.removeLast() }
-        return s
-    }
 }
 
 // MARK: - Notifications
