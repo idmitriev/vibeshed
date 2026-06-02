@@ -25,7 +25,7 @@ enum ZedManager {
             return []
         }
 
-        let openTitles = collectOpenWindowTitles()
+        let openTitles = WindowListHelper.windowTitles(forOwners: ["Zed"])
         var workspaces = queryWorkspaces(
             dbPath: dbPath,
             showRemote: showRemote
@@ -50,33 +50,20 @@ enum ZedManager {
         return Array(workspaces.prefix(maxResults))
     }
 
+    private static let cliCandidates = [
+        "/opt/homebrew/bin/zed",
+        "/usr/local/bin/zed",
+        "/Applications/Zed.app/Contents/MacOS/cli",
+    ]
+
     static func openWorkspace(path: String, zedPath: String?) {
-        guard let cli = resolveZedCLI(customPath: zedPath) else {
-            log.debug("No zed CLI found, falling back to NSWorkspace.open")
-            let url = URL(fileURLWithPath: path)
-            DispatchQueue.main.async {
-                NSWorkspace.shared.open(
-                    [url],
-                    withApplicationAt: URL(
-                        fileURLWithPath: "/Applications/Zed.app"
-                    ),
-                    configuration: .init()
-                )
-            }
-            return
-        }
-        DispatchQueue.global(qos: .userInitiated).async {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: cli)
-            process.arguments = [path]
-            do {
-                try process.run()
-            } catch {
-                log.warning(
-                    "openWorkspace: zed CLI failed: \(error.localizedDescription, privacy: .public)"
-                )
-            }
-        }
+        CLILauncher.open(
+            path: path,
+            customPath: zedPath,
+            candidates: cliCandidates,
+            fallbackAppPath: "/Applications/Zed.app",
+            log: log
+        )
     }
 
     // MARK: - Private
@@ -86,43 +73,6 @@ enum ZedManager {
             .appendingPathComponent("Library/Application Support/Zed/db/0-stable")
         let path = appSupport.appendingPathComponent("db.sqlite").path
         return FileManager.default.fileExists(atPath: path) ? path : nil
-    }
-
-    private static func resolveZedCLI(customPath: String?) -> String? {
-        if let custom = customPath {
-            if FileManager.default.isExecutableFile(atPath: custom) {
-                return custom
-            }
-            log.warning("Custom zed CLI path not executable: \(custom, privacy: .public)")
-            return nil
-        }
-        let candidates = [
-            "/opt/homebrew/bin/zed",
-            "/usr/local/bin/zed",
-            "/Applications/Zed.app/Contents/MacOS/cli",
-        ]
-        return candidates.first {
-            FileManager.default.isExecutableFile(atPath: $0)
-        }
-    }
-
-    private static func collectOpenWindowTitles() -> Set<String> {
-        guard let windowList = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
-        ) as? [[CFString: Any]] else {
-            return []
-        }
-
-        var titles = Set<String>()
-        for window in windowList {
-            guard let ownerName = window[kCGWindowOwnerName] as? String,
-                  ownerName == "Zed",
-                  let title = window[kCGWindowName] as? String,
-                  !title.isEmpty
-            else { continue }
-            titles.insert(title)
-        }
-        return titles
     }
 
     private static func queryWorkspaces(

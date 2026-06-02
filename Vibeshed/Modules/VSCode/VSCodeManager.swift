@@ -43,7 +43,7 @@ enum VSCodeManager {
             }
         }
 
-        let openTitles = collectOpenWindowTitles()
+        let openTitles = WindowListHelper.windowTitles(forOwners: variantAppNames)
 
         var projects: [VSCodeProject] = []
         for variant in allVariants {
@@ -77,80 +77,30 @@ enum VSCodeManager {
         return Array(projects.prefix(maxResults))
     }
 
-    /// Collect window titles from all running VSCode-like apps.
+    /// App names (kCGWindowOwnerName) of VS Code variants, used to detect open projects.
     /// Window titles typically follow "ProjectName — VS Code" format.
-    private static func collectOpenWindowTitles() -> Set<String> {
-        guard let windowList = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
-        ) as? [[CFString: Any]] else {
-            return []
-        }
+    private static let variantAppNames: Set<String> = [
+        "Code", "Electron",  // VS Code
+        "Code - Insiders",   // VS Code Insiders
+        "VSCodium",
+        "Cursor",
+        "Windsurf",
+    ]
 
-        let variantAppNames: Set<String> = [
-            "Code", "Electron",  // VS Code
-            "Code - Insiders",   // VS Code Insiders
-            "VSCodium",
-            "Cursor",
-            "Windsurf",
-        ]
-
-        var titles = Set<String>()
-        for window in windowList {
-            guard let ownerName = window[kCGWindowOwnerName] as? String,
-                  variantAppNames.contains(ownerName),
-                  let title = window[kCGWindowName] as? String,
-                  !title.isEmpty
-            else { continue }
-            titles.insert(title)
-        }
-        return titles
-    }
-
-    static func resolveCodeCLI(customPath: String?) -> String? {
-        if let custom = customPath {
-            if FileManager.default.isExecutableFile(atPath: custom) {
-                return custom
-            }
-            log.warning("Custom code CLI path not executable: \(custom, privacy: .public)")
-            return nil
-        }
-        let candidates = [
-            "/opt/homebrew/bin/code",
-            "/usr/local/bin/code",
-            "/Applications/Visual Studio Code.app"
-                + "/Contents/Resources/app/bin/code",
-        ]
-        return candidates.first {
-            FileManager.default.isExecutableFile(atPath: $0)
-        }
-    }
+    private static let cliCandidates = [
+        "/opt/homebrew/bin/code",
+        "/usr/local/bin/code",
+        "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code",
+    ]
 
     static func openProject(path: String, codePath: String?) {
-        guard let cli = resolveCodeCLI(customPath: codePath) else {
-            log.debug("No code CLI found, falling back to NSWorkspace.open")
-            let url = URL(fileURLWithPath: path)
-            DispatchQueue.main.async {
-                NSWorkspace.shared.open(
-                    [url],
-                    withApplicationAt: URL(
-                        fileURLWithPath:
-                            "/Applications/Visual Studio Code.app"
-                    ),
-                    configuration: .init()
-                )
-            }
-            return
-        }
-        DispatchQueue.global(qos: .userInitiated).async {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: cli)
-            process.arguments = [path]
-            do {
-                try process.run()
-            } catch {
-                log.warning("openProject: code CLI failed: \(error.localizedDescription, privacy: .public)")
-            }
-        }
+        CLILauncher.open(
+            path: path,
+            customPath: codePath,
+            candidates: cliCandidates,
+            fallbackAppPath: "/Applications/Visual Studio Code.app",
+            log: log
+        )
     }
 
     // MARK: - Private

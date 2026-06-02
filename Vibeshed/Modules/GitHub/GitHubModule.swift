@@ -541,7 +541,7 @@ extension GitHubModule {
         if let eventBus {
             await eventBus.publish(.openURL(url))
         } else {
-            await MainActor.run { NSWorkspace.shared.open(url) }
+            await MainActor.run { _ = NSWorkspace.shared.open(url) }
         }
     }
 

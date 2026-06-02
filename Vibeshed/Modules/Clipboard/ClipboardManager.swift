@@ -8,6 +8,7 @@ enum ClipboardManager {
     /// Token returned from `startMonitoring` to control the polling timer.
     final class MonitorToken: @unchecked Sendable {
         fileprivate var timer: Timer?
+        fileprivate var lastChangeCount: Int = 0
 
         func invalidate() {
             timer?.invalidate()
@@ -27,12 +28,12 @@ enum ClipboardManager {
         onChange: @escaping (String, String?) -> Void
     ) -> MonitorToken {
         let token = MonitorToken()
-        var lastChangeCount = NSPasteboard.general.changeCount
+        token.lastChangeCount = NSPasteboard.general.changeCount
 
         let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
             let currentCount = NSPasteboard.general.changeCount
-            guard currentCount != lastChangeCount else { return }
-            lastChangeCount = currentCount
+            guard currentCount != token.lastChangeCount else { return }
+            token.lastChangeCount = currentCount
 
             guard let content = NSPasteboard.general.string(forType: .string),
                   !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

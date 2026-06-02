@@ -66,6 +66,28 @@ enum WindowListHelper {
         return results
     }
 
+    /// Collect non-empty titles of on-screen windows owned by any app in `owners`
+    /// (matched against `kCGWindowOwnerName`). Used to detect which projects/workspaces
+    /// an editor currently has open.
+    static func windowTitles(forOwners owners: Set<String>) -> Set<String> {
+        guard let windowList = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
+        ) as? [[CFString: Any]] else {
+            return []
+        }
+
+        var titles = Set<String>()
+        for window in windowList {
+            guard let ownerName = window[kCGWindowOwnerName] as? String,
+                  owners.contains(ownerName),
+                  let title = window[kCGWindowName] as? String,
+                  !title.isEmpty
+            else { continue }
+            titles.insert(title)
+        }
+        return titles
+    }
+
     /// Count visible windows for a specific PID.
     static func countWindows(for pid: pid_t) -> Int {
         let ownPID = ProcessInfo.processInfo.processIdentifier

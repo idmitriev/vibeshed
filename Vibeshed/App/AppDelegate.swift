@@ -248,12 +248,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         // register() returns without throwing when blocked by permissions — check if actually loaded
-        if moduleRegistry.permissionErrors[id] != nil {
-            let missing = moduleRegistry.permissionErrors[id]!.grantInstructions.joined(
-                separator: ", ")
+        if let permissionError = moduleRegistry.permissionErrors[id] {
+            let missing = permissionError.grantInstructions.joined(separator: ", ")
             Log.stderr("  ⚠ module: \(id) — waiting for permissions (\(missing))")
-        } else if moduleRegistry.configErrors[id] != nil {
-            Log.stderr("  ✗ module: \(id) — config error: \(moduleRegistry.configErrors[id]!)")
+        } else if let configError = moduleRegistry.configErrors[id] {
+            Log.stderr("  ✗ module: \(id) — config error: \(configError)")
         } else {
             Log.stderr("  ✓ module: \(id)")
         }

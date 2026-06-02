@@ -18,7 +18,7 @@ final class PickerCoordinator {
     private var currentContext: SystemContext?
     private var parameterQuerySubscription: AnyCancellable?
     private var querySubscription: AnyCancellable?
-    private var actionRefreshSubscription: Any?
+    private var actionRefreshTask: Task<Void, Never>?
 
     // MARK: - Empty-query cache (instant display on re-open)
 
@@ -260,54 +260,15 @@ final class PickerCoordinator {
                 pickerState.isLoading = true
                 Task { @MainActor [weak self] in
                     guard let self else { return }
-                    let pipelineState = Log.signposter.beginInterval("QueryPipeline")
-                    defer { Log.signposter.endInterval("QueryPipeline", pipelineState) }
-                    if currentContext == nil {
-                        currentContext = SystemContext.capture()
-                        if let ctx = currentContext {
-                            await self.themeEngine?.refresh(context: ctx)
-                        }
-                    }
-                    let ctx = currentContext
-                    let scoring = usageTracker?.makeScoringContext(query: query, systemContext: ctx)
-                        ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: ctx)
-                    let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
-                    guard case .search = pickerState.mode else { return }
-
-                    let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
-                    guard case .search = pickerState.mode else { return }
-
-                    // Layout correction fallback: if no results and query is non-empty,
-                    // try transliterating from the current keyboard layout.
-                    if !query.isEmpty, items.isEmpty,
-                       let correction = layoutTransliterator?.transliterate(query) {
-                        let correctedScoring = usageTracker?.makeScoringContext(
-                            query: correction.correctedQuery, systemContext: ctx
-                        ) ?? ScoringContext(
-                            usageCounts: [:], lastUsedDates: [:],
-                            query: correction.correctedQuery, systemContext: ctx
-                        )
-                        let correctedResults = await moduleRegistry.queryAll(
-                            query: correction.correctedQuery, scoring: correctedScoring
-                        )
-                        guard case .search = pickerState.mode else { return }
-                        let (correctedItems, correctedCache) = await buildActionItems(
-                            from: correctedResults,
-                            query: correction.correctedQuery,
-                            scoring: correctedScoring
-                        )
-                        guard case .search = pickerState.mode else { return }
-                        if !correctedItems.isEmpty {
-                            pickerState.layoutCorrectionHint = correction
-                            pickerState.updateActions(correctedItems, cache: correctedCache)
-                            pickerState.isLoading = false
-                            return
-                        }
-                    }
-
-                    pickerState.layoutCorrectionHint = nil
-                    pickerState.updateActions(items, cache: cache)
-                    pickerState.isLoading = false
+                    // Capture context lazily — only on the first query of a session.
+                    await runQuery(
+                        query,
+                        captureContext: currentContext == nil,
+                        preservingSelection: true,
+                        layoutCorrectionFallback: true,
+                        clearsLoading: true,
+                        updatesEmptyCacheWhenEmpty: false
+                    )
                 }
             }
     }
@@ -337,6 +298,83 @@ final class PickerCoordinator {
                 scoring: scoring
             )
         }.value
+    }
+
+    // MARK: - Unified query pipeline
+
+    private func makeScoring(query: String, context: SystemContext?) -> ScoringContext {
+        usageTracker?.makeScoringContext(query: query, systemContext: context)
+            ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: context)
+    }
+
+    /// Single query → score → display pipeline shared by all four entry points
+    /// (debounced typing, initial load, refresh-in-place, dynamic refresh). The flags
+    /// capture the only differences between them.
+    ///
+    /// - Parameters:
+    ///   - captureContext: capture a fresh `SystemContext` and refresh the theme first.
+    ///   - preservingSelection: keep the current selection across the list update.
+    ///   - layoutCorrectionFallback: on empty results, retry via keyboard transliteration.
+    ///   - clearsLoading: set `isLoading = false` when finished.
+    ///   - updatesEmptyCacheWhenEmpty: refresh the empty-query cache when `query` is empty.
+    private func runQuery(
+        _ query: String,
+        captureContext: Bool,
+        preservingSelection: Bool,
+        layoutCorrectionFallback: Bool,
+        clearsLoading: Bool,
+        updatesEmptyCacheWhenEmpty: Bool
+    ) async {
+        let pipelineState = Log.signposter.beginInterval("QueryPipeline")
+        defer { Log.signposter.endInterval("QueryPipeline", pipelineState) }
+
+        if captureContext {
+            currentContext = SystemContext.capture()
+            if let ctx = currentContext {
+                await themeEngine?.refresh(context: ctx)
+            }
+        }
+        let ctx = currentContext
+
+        func finish(_ items: [ActionItem], _ cache: [ActionID: any Action]) {
+            pickerState.updateActions(items, cache: cache, preservingSelection: preservingSelection)
+            if clearsLoading { pickerState.isLoading = false }
+            if updatesEmptyCacheWhenEmpty, query.isEmpty {
+                cachedEmptyQueryItems = items
+                cachedEmptyQueryActionCache = cache
+            }
+        }
+
+        let scoring = makeScoring(query: query, context: ctx)
+        let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
+        guard case .search = pickerState.mode else { return }
+        let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
+        guard case .search = pickerState.mode else { return }
+
+        // Layout correction fallback: if no results and query is non-empty,
+        // try transliterating from the current keyboard layout.
+        if layoutCorrectionFallback, !query.isEmpty, items.isEmpty,
+           let correction = layoutTransliterator?.transliterate(query) {
+            let correctedScoring = makeScoring(query: correction.correctedQuery, context: ctx)
+            let correctedResults = await moduleRegistry.queryAll(
+                query: correction.correctedQuery, scoring: correctedScoring
+            )
+            guard case .search = pickerState.mode else { return }
+            let (correctedItems, correctedCache) = await buildActionItems(
+                from: correctedResults, query: correction.correctedQuery, scoring: correctedScoring
+            )
+            guard case .search = pickerState.mode else { return }
+            if !correctedItems.isEmpty {
+                pickerState.layoutCorrectionHint = correction
+                finish(correctedItems, correctedCache)
+                return
+            }
+        }
+
+        if layoutCorrectionFallback {
+            pickerState.layoutCorrectionHint = nil
+        }
+        finish(items, cache)
     }
 
     // MARK: - Parameter option fetching
@@ -400,7 +438,7 @@ final class PickerCoordinator {
     // MARK: - Dynamic action refresh
 
     private func wireActionRefresh() {
-        Task { [weak self] in
+        actionRefreshTask = Task { [weak self] in
             guard let self else { return }
             let (_, stream) = await eventBus.subscribe()
             for await event in stream {
@@ -445,22 +483,14 @@ final class PickerCoordinator {
 
         Task { @MainActor [weak self] in
             guard let self else { return }
-            currentContext = SystemContext.capture()
-            if let ctx = currentContext {
-                await self.themeEngine?.refresh(context: ctx)
-            }
-            let ctx = currentContext
-            let scoring = usageTracker?.makeScoringContext(query: "", systemContext: ctx)
-                ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "", systemContext: ctx)
-            let results = await moduleRegistry.queryAll(query: "", scoring: scoring)
-            guard case .search = pickerState.mode else { return }
-            let (items, cache) = await buildActionItems(from: results, query: "", scoring: scoring)
-            pickerState.updateActions(items, cache: cache)
-            pickerState.isLoading = false
-
-            // Update cache for next open
-            cachedEmptyQueryItems = items
-            cachedEmptyQueryActionCache = cache
+            await runQuery(
+                "",
+                captureContext: true,
+                preservingSelection: true,
+                layoutCorrectionFallback: false,
+                clearsLoading: true,
+                updatesEmptyCacheWhenEmpty: true
+            )
         }
     }
 
@@ -469,24 +499,14 @@ final class PickerCoordinator {
     func refreshInPlace() {
         Task { @MainActor [weak self] in
             guard let self else { return }
-            currentContext = SystemContext.capture()
-            if let ctx = currentContext {
-                await self.themeEngine?.refresh(context: ctx)
-            }
-            let query = pickerState.query
-            let ctx = currentContext
-            let scoring = usageTracker?.makeScoringContext(query: query, systemContext: ctx)
-                ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: ctx)
-            let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
-            guard case .search = pickerState.mode else { return }
-            let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
-            pickerState.updateActions(items, cache: cache, preservingSelection: true)
-
-            // Update empty-query cache if applicable
-            if query.isEmpty {
-                cachedEmptyQueryItems = items
-                cachedEmptyQueryActionCache = cache
-            }
+            await runQuery(
+                pickerState.query,
+                captureContext: true,
+                preservingSelection: true,
+                layoutCorrectionFallback: false,
+                clearsLoading: false,
+                updatesEmptyCacheWhenEmpty: true
+            )
         }
     }
 
@@ -497,41 +517,14 @@ final class PickerCoordinator {
     }
 
     func refreshActions() async {
-        let query = pickerState.query
-        let ctx = currentContext
-        let scoring = usageTracker?.makeScoringContext(query: query, systemContext: ctx)
-            ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: ctx)
-        let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
-        guard case .search = pickerState.mode else { return }
-
-        let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
-
-        if !query.isEmpty, items.isEmpty,
-           let correction = layoutTransliterator?.transliterate(query) {
-            let correctedScoring = usageTracker?.makeScoringContext(
-                query: correction.correctedQuery, systemContext: ctx
-            ) ?? ScoringContext(
-                usageCounts: [:], lastUsedDates: [:],
-                query: correction.correctedQuery, systemContext: ctx
-            )
-            let correctedResults = await moduleRegistry.queryAll(
-                query: correction.correctedQuery, scoring: correctedScoring
-            )
-            guard case .search = pickerState.mode else { return }
-            let (correctedItems, correctedCache) = await buildActionItems(
-                from: correctedResults,
-                query: correction.correctedQuery,
-                scoring: correctedScoring
-            )
-            if !correctedItems.isEmpty {
-                pickerState.layoutCorrectionHint = correction
-                pickerState.updateActions(correctedItems, cache: correctedCache, preservingSelection: true)
-                return
-            }
-        }
-
-        pickerState.layoutCorrectionHint = nil
-        pickerState.updateActions(items, cache: cache, preservingSelection: true)
+        await runQuery(
+            pickerState.query,
+            captureContext: false,
+            preservingSelection: true,
+            layoutCorrectionFallback: true,
+            clearsLoading: false,
+            updatesEmptyCacheWhenEmpty: false
+        )
     }
 
 }
