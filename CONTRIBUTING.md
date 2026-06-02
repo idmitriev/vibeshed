@@ -36,6 +36,20 @@ Every module is an actor conforming to `Module` / `ModuleConfigurable`. Actions 
 4. Add a section to `config.example.yaml`. Modules load only when their config section is present.
 5. Provide SwiftUI list and preview views via the module's `view(for:)` if your actions need richer rendering.
 
+### `provideActions` contract
+
+- Return your module's **full action catalog** and let the picker filter — `ActionScorer`
+  does all fuzzy matching/ranking. Most modules ignore the `query` argument. The exception
+  is modules that *compute* results from the input (e.g. `MathModule` parses `query`); those
+  may use it.
+- For families that surface recent projects (editors/IDEs), don't write a module from
+  scratch — implement `RecentProjectsProvider` and register `RecentProjectsModule<YourProvider>`.
+- Keybindings and URIs resolve a single action via `Module.action(id:)`. The default scans
+  `provideActions`; override it only if your IDs are cheaply reversible. Actions computed from
+  a live query (math results, etc.) are intentionally unresolvable this way.
+- To let an action dedupe against equivalents from other modules (e.g. a browser tab vs a
+  bookmark for the same URL), return a `deduplicationKey`.
+
 ## Style
 
 - `make lint` (SwiftLint, xcode reporter). `make lint-fix` for autofixes.

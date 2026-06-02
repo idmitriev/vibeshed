@@ -302,7 +302,25 @@ time dropped for large result sets.
 
 ---
 
-## Phase 6 — Generic cross-source dedup via `Action.deduplicationKey`
+## Phase 6 — Generic cross-source dedup via `Action.deduplicationKey` — DONE
+
+> **Outcome:** the picker's scoring path no longer references concrete module types.
+> - Added `var deduplicationKey: String? { get }` to the `Action` protocol with a default
+>   of `nil` (opt-out) in the protocol extension.
+> - `BrowserAction.deduplicationKey` → `tabURL.map(ActionScorer.normalizeURL)`;
+>   `BookmarkAction.deduplicationKey` → `url.map(ActionScorer.normalizeURL)`. Both reuse
+>   the shared normalizer so a live tab and a history row for the same URL collapse.
+> - Replaced the `as? BrowserAction` / `as? BookmarkAction` type-sniffing block in
+>   `ActionScorer.scoreAndRank` with a generic pass over `entry.action.deduplicationKey`.
+>   `grep` confirms `ActionScorer` references zero concrete action types now.
+> - Behavior is identical (higher-scored survivor wins, since dedup runs after the sort);
+>   the existing tab-vs-bookmark test still passes, plus 3 new tests (default nil, both
+>   URL actions normalize to the same key, distinct keys not deduped). 64 tests, all green.
+> - **Did NOT merge Browser + Bookmark modules** — they stay in their separate permission
+>   domains (`.automation` vs `.fullDiskAccess`) per the plan's guidance. A future
+>   URL-bearing module joins dedup for free just by returning a key.
+
+### Original plan (kept for reference)
 
 **Why:** the generic picker has hardcoded `as? BrowserAction` / `as? BookmarkAction`
 downcasts reaching into `tabURL` / `url` ([PickerCoordinator.swift:382-394](Vibeshed/Picker/PickerCoordinator.swift:382)).
@@ -333,7 +351,36 @@ provider generalization.
 
 ---
 
-## Phase 7 — Fix `findAction` and clarify the `query:` contract
+## Phase 7 — Fix `findAction` and clarify the `query:` contract — DONE (rescoped)
+
+> **Key correction to the plan's premise.** The review claimed "all 24 modules ignore
+> `query`." That is **false**: `MathModule.provideActions` genuinely parses `query`,
+> fetches currency rates, and returns computed results. So the plan's recommended option
+> — *drop `query` from the protocol* — is wrong; `query` is load-bearing. Phase 7 was
+> rescoped accordingly.
+>
+> **What was done:**
+> - Added `Module.action(id:)` to the protocol with a default implementation (the old
+>   "scan provideActions" behavior, moved out of the registry). `ModuleRegistry.findAction`
+>   now delegates to `module.action(id:)`, so per-action resolution is encapsulated in the
+>   module layer and individual modules *can* override it. Behavior-preserving.
+> - Documented the real `provideActions` contract on the protocol and in `CONTRIBUTING.md`:
+>   modules return their full catalog and the picker filters; `query` is used only by
+>   compute-style modules (Math); keybind/URI resolution goes through `action(id:)`;
+>   query-derived actions are intentionally unresolvable.
+> - 2 new tests for the `action(id:)` seam (resolve by ID, nil for unknown). 66 tests green.
+>
+> **What was deliberately NOT done (and why):** the plan framed part 1 as a *perf* fix —
+> "findAction rebuilds expensive catalogs." Investigation showed this is mostly theoretical:
+> heavy modules (GitHub/Spotify/Bookmark/AI) do their network/SQLite work on *cache refresh*
+> (timer/config-driven), while `buildActions` just reads the cache synchronously. Also most
+> action IDs are `StableID` hashes of paths — not reversible — so a targeted `action(id:)`
+> override would still have to iterate the cache, saving nothing. I therefore added the
+> override *seam* (clean, testable, future-proof) but wrote **no speculative overrides**,
+> since none would measurably help on this cold path (keybinding/URI, not per-keystroke).
+> Dropping `query` from the protocol was rejected outright (Math needs it).
+
+### Original plan (kept for reference)
 
 **Why:** `ModuleRegistry.findAction` ([ModuleRegistry.swift:182](Vibeshed/Modules/ModuleRegistry.swift:182))
 resolves one action by calling `provideActions(query: "", scoring: empty)` and

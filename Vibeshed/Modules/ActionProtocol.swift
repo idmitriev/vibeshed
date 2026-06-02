@@ -50,6 +50,11 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
     /// Default is false (double-click required) to avoid accidental activation.
     var activatesOnSingleClick: Bool { get }
 
+    /// Cross-source dedup key. Actions returning the same non-nil key are collapsed
+    /// to one in the ranked list, keeping the highest-scored (e.g. a live browser tab
+    /// and a history entry for the same URL). Default `nil` opts out of dedup.
+    var deduplicationKey: String? { get }
+
     @MainActor
     func makeListItemView() -> AnyView?
     @MainActor
@@ -71,6 +76,10 @@ extension Action {
 
     var activatesOnSingleClick: Bool {
         false
+    }
+
+    var deduplicationKey: String? {
+        nil
     }
 
     @MainActor

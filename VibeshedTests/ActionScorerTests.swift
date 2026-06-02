@@ -89,6 +89,40 @@ final class ActionScorerTests: XCTestCase {
         XCTAssertEqual(cache.count, 200)
     }
 
+    func testDeduplicationKeyDefaultsToNil() {
+        let action = StubAction(id: ActionID("m/x"), title: "X")
+        XCTAssertNil(action.deduplicationKey)
+    }
+
+    func testURLActionsExposeNormalizedDedupKey() {
+        let tab = BrowserAction(
+            id: ActionID("browser/t"), title: "T", subtitle: "",
+            tabURL: "https://Example.com/Path/"
+        ) { _ in .dismiss }
+        let bookmark = BookmarkAction(
+            id: ActionID("bookmark/b"), title: "B", subtitle: "",
+            url: "https://example.com/path"
+        ) { _ in .dismiss }
+        // Both normalize to the same key, which is what drives cross-source dedup.
+        XCTAssertEqual(tab.deduplicationKey, "https://example.com/path")
+        XCTAssertEqual(tab.deduplicationKey, bookmark.deduplicationKey)
+    }
+
+    func testActionsWithDistinctKeysAreNotDeduped() {
+        let a = BrowserAction(
+            id: ActionID("browser/a"), title: "A", subtitle: "",
+            relevanceScore: 0.8, tabURL: "https://a.com"
+        ) { _ in .dismiss }
+        let b = BrowserAction(
+            id: ActionID("browser/b"), title: "B", subtitle: "",
+            relevanceScore: 0.7, tabURL: "https://b.com"
+        ) { _ in .dismiss }
+        let (items, _) = ActionScorer.scoreAndRank(
+            allActions: [a, b], enrichments: [:], query: "", scoring: scoring("")
+        )
+        XCTAssertEqual(items.count, 2)
+    }
+
     func testNormalizeURL() {
         XCTAssertEqual(ActionScorer.normalizeURL("https://A.com/Path/"), "https://a.com/path")
         XCTAssertEqual(ActionScorer.normalizeURL("https://x.com/#frag"), "https://x.com")

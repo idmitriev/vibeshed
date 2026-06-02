@@ -47,6 +47,10 @@ struct BookmarkAction: Action {
         try await runner(values)
     }
 
+    var deduplicationKey: String? {
+        url.map(ActionScorer.normalizeURL)
+    }
+
     @MainActor
     func makeListItemView() -> AnyView? {
         AnyView(BookmarkActionListItemView(action: self))

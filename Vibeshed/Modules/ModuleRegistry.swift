@@ -207,17 +207,10 @@ final class ModuleRegistry {
             return nil
         }
 
-        let actions = await module.provideActions(
-            query: "",
-            scoring: ScoringContext(
-                usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil)
-        )
-
-        guard let action = actions.first(where: { $0.id == id }) else {
+        guard let action = await module.action(id: id) else {
             Log.modules.warning(
                 "Action '\(id, privacy: .public)' not found in module '\(moduleID, privacy: .public)'"
             )
-            Log.modules.debug("Available actions: \(actions.map(\.id), privacy: .public)")
             return nil
         }
 

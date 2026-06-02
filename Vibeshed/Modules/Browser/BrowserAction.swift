@@ -43,6 +43,10 @@ struct BrowserAction: Action {
 
     var activatesOnSingleClick: Bool { true }
 
+    var deduplicationKey: String? {
+        tabURL.map(ActionScorer.normalizeURL)
+    }
+
     @MainActor
     func makeListItemView() -> AnyView? {
         AnyView(BrowserActionListItemView(action: self))

@@ -71,6 +71,20 @@ final class RecentProjectsModuleTests: XCTestCase {
         XCTAssertTrue(RecentProjectsModule<StubProvider>.validate(StubConfig()).isValid)
     }
 
+    func testActionByIDResolvesViaDefaultSeam() async {
+        let module = RecentProjectsModule<StubProvider>()
+        let targetID = ActionID("stub/project.\(StableID.hash("/b/two"))")
+        let resolved = await module.action(id: targetID)
+        XCTAssertEqual(resolved?.id, targetID)
+        XCTAssertEqual(resolved?.title, "two")
+    }
+
+    func testActionByIDReturnsNilForUnknownID() async {
+        let module = RecentProjectsModule<StubProvider>()
+        let resolved = await module.action(id: ActionID("stub/project.nonexistent"))
+        XCTAssertNil(resolved)
+    }
+
     private var emptyScoring: ScoringContext {
         ScoringContext(usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil)
     }

@@ -66,21 +66,13 @@ enum ActionScorer {
 
         scored.sort { $0.score > $1.score }
 
-        // Deduplicate browser tabs vs bookmark/history entries by URL.
-        // Tabs rank higher (relevance 0.8 vs 0.6), so after sorting they naturally win.
-        var seenURLs: Set<String> = []
+        // Collapse actions sharing a deduplication key (e.g. a browser tab and a
+        // bookmark/history entry for the same URL). Higher-scored entries are kept
+        // because they sort first, so the survivor is the better-ranked one.
+        var seenKeys: Set<String> = []
         scored.removeAll { entry in
-            let url: String?
-            if let ba = entry.action as? BrowserAction {
-                url = ba.tabURL
-            } else if let bk = entry.action as? BookmarkAction {
-                url = bk.url
-            } else {
-                url = nil
-            }
-            guard let url, !url.isEmpty else { return false }
-            let normalized = normalizeURL(url)
-            return !seenURLs.insert(normalized).inserted
+            guard let key = entry.action.deduplicationKey, !key.isEmpty else { return false }
+            return !seenKeys.insert(key).inserted
         }
 
         if scored.count > maxResults {
