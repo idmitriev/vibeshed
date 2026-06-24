@@ -26,7 +26,8 @@ struct SpotifyActionListItemView: View {
             Spacer()
 
             if let itemType = action.spotifyItemType,
-               itemType != .control {
+               itemType != .control
+            {
                 Text(itemType.rawValue.capitalized)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -73,10 +74,11 @@ struct SpotifyActionPreviewView: View {
     @ViewBuilder
     private var artworkSection: some View {
         if let artworkURL = action.artworkURL,
-           let url = URL(string: artworkURL) {
+           let url = URL(string: artworkURL)
+        {
             AsyncImage(url: url) { phase in
                 switch phase {
-                case .success(let image):
+                case let .success(image):
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)

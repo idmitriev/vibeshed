@@ -8,9 +8,13 @@ actor ITermModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = ITermConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
-    static var requiredPermissions: Set<Permission> { [] }
+    static var requiredPermissions: Set<Permission> {
+        []
+    }
 
     private var config: ITermConfig = .init()
     private var context: ModuleContext?
@@ -42,9 +46,7 @@ actor ITermModule: ModuleConfigurable {
         query: String,
         scoring: ScoringContext
     ) async -> [any Action] {
-        let actions = await buildActions()
-
-        return actions
+        await buildActions()
     }
 
     // MARK: - Private

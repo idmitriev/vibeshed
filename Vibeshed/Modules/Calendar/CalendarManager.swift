@@ -3,7 +3,6 @@ import EventKit
 import Foundation
 
 enum CalendarManager {
-
     // MARK: - Permission
 
     static var hasAccess: Bool {
@@ -86,14 +85,14 @@ enum CalendarManager {
         let ekEvents = store.events(matching: predicate)
 
         return ekEvents.compactMap { event in
-            if event.isAllDay && !showAllDay { return nil }
+            if event.isAllDay, !showAllDay { return nil }
 
             let status = mapStatus(event)
-            if status == .declined && !showDeclined { return nil }
+            if status == .declined, !showDeclined { return nil }
 
             let attendees = (event.attendees ?? [])
                 .filter { !$0.isCurrentUser }
-                .compactMap { $0.name }
+                .compactMap(\.name)
 
             return CalendarEvent(
                 eventIdentifier: event.eventIdentifier,

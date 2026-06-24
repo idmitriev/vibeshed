@@ -52,11 +52,10 @@ enum AILaunchers {
             let cli = AIModule.resolveClaudeCLI(
                 customPath: config.claudePath
             )
-            let command: String
-            if let prompt, !prompt.isEmpty {
-                command = "\(cli) \(shellQuote(prompt))"
+            let command: String = if let prompt, !prompt.isEmpty {
+                "\(cli) \(shellQuote(prompt))"
             } else {
-                command = cli
+                cli
             }
             AIModule.launchInTerminal(
                 command: command,

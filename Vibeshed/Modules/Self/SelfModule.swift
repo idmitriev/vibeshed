@@ -25,7 +25,9 @@ actor SelfModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = SelfConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config = SelfConfig()
     private var context: ModuleContext?
@@ -65,9 +67,7 @@ actor SelfModule: ModuleConfigurable {
         query: String,
         scoring: ScoringContext
     ) async -> [any Action] {
-        let actions = buildActions()
-
-        return actions
+        buildActions()
     }
 
     // MARK: - Build Actions
@@ -176,7 +176,7 @@ actor SelfModule: ModuleConfigurable {
                     }
                 }
                 return .pushActions(subActions)
-            }
+            },
         ]
     }
 

@@ -34,7 +34,8 @@ final class FocusedAppTracker: @unchecked Sendable {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
-    @objc private func appDidActivate(_ notification: Notification) {
+    @objc
+    private func appDidActivate(_ notification: Notification) {
         guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
               let bundleID = app.bundleIdentifier
         else { return }

@@ -5,14 +5,14 @@ enum PermissionError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .denied(let id, let permissions):
+        case let .denied(id, permissions):
             "Module '\(id)' requires permissions: \(permissions.map(\.displayName).sorted().joined(separator: ", "))"
         }
     }
 
     var grantInstructions: [String] {
         switch self {
-        case .denied(_, let permissions):
+        case let .denied(_, permissions):
             permissions.sorted(by: { $0.rawValue < $1.rawValue }).map { permission in
                 "\(permission.displayName): \(permission.grantInstructions)"
             }

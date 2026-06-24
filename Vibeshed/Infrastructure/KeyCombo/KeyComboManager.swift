@@ -73,7 +73,7 @@ final class KeyComboManager {
                 switch event {
                 case .configReloaded:
                     self.handleConfigReloaded()
-                case .permissionChanged(let permission, let granted):
+                case let .permissionChanged(permission, granted):
                     self.handlePermissionChanged(
                         permission: permission, granted: granted
                     )
@@ -120,7 +120,8 @@ final class KeyComboManager {
             return
         }
         let oldCount = currentEntries.count
-        Log.keybindings.info("Config reloaded: \(newEntries.count, privacy: .public) entries (was \(oldCount, privacy: .public))")
+        Log.keybindings
+            .info("Config reloaded: \(newEntries.count, privacy: .public) entries (was \(oldCount, privacy: .public))")
         currentEntries = newEntries
         rebindAll()
     }
@@ -147,7 +148,8 @@ final class KeyComboManager {
             if eventTapRunning {
                 let hasCaps = currentEntries.contains { entry in
                     if let ct = try? KeyComboParser.parse(entry.combo),
-                       case .capsLockModifier = ct {
+                       case .capsLockModifier = ct
+                    {
                         return true
                     }
                     return false
@@ -258,7 +260,7 @@ final class KeyComboManager {
                 } else if let remap = entry.remap {
                     // Remap entry
                     switch comboType {
-                    case .mouseButton(let button, let modifiers):
+                    case let .mouseButton(button, modifiers):
                         let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap)
                         resolvedMouseRemaps.append(ResolvedMouseRemap(
                             button: button, modifiers: modifiers,
@@ -331,7 +333,9 @@ final class KeyComboManager {
             Log.keybindings.error(
                 "Event tap creation failed — all \(totalBindings + totalRemaps, privacy: .public) bindings+remaps inactive"
             )
-            for entry in currentEntries where bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] == nil {
+            for entry in currentEntries
+                where bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] == nil
+            {
                 bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
             }
             return
@@ -385,7 +389,8 @@ final class KeyComboManager {
     private func setCapsLockErrors(_ message: String) {
         for entry in currentEntries {
             if let ct = try? KeyComboParser.parse(entry.combo),
-               case .capsLockModifier = ct {
+               case .capsLockModifier = ct
+            {
                 bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
             }
         }
@@ -410,7 +415,7 @@ final class KeyComboManager {
         var currentValues: ParameterValues = [:]
         let maxChainDepth = 5
 
-        for depth in 0..<maxChainDepth {
+        for depth in 0 ..< maxChainDepth {
             guard let action = await moduleRegistry.findAction(id: currentID) else {
                 Log.keybindings.error("Action not found: \(currentID, privacy: .public)")
                 await eventBus.publish(.actionFailed(currentID, message: "Action not found"))

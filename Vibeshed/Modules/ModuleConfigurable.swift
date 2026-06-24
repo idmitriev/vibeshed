@@ -7,11 +7,11 @@ enum ModuleConfigError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .decodingFailed(let id, let err):
+        case let .decodingFailed(id, err):
             "Module '\(id)' config decode error: \(err.localizedDescription)"
-        case .validationFailed(let id, let reasons):
+        case let .validationFailed(id, reasons):
             "Module '\(id)' config invalid: \(reasons.joined(separator: "; "))"
-        case .missingRequired(let id):
+        case let .missingRequired(id):
             "Module '\(id)' requires config but none provided"
         }
     }
@@ -37,6 +37,9 @@ protocol ModuleConfigurable: Module {
 }
 
 extension ModuleConfigurable {
-    static func validate(_: Config) -> ConfigValidationResult { .valid }
+    static func validate(_: Config) -> ConfigValidationResult {
+        .valid
+    }
+
     func configDidUpdate(_: Config) async {}
 }

@@ -50,7 +50,7 @@ final class URIManager {
                 switch event {
                 case .configReloaded:
                     self.handleConfigReloaded()
-                case .openURL(let url):
+                case let .openURL(url):
                     self.handleURL(url)
                 default:
                     break
@@ -79,7 +79,8 @@ final class URIManager {
             handleWebURL(url)
         default:
             Log.uri.warning("Unsupported URL scheme: \(scheme, privacy: .public)")
-            Task { await eventBus.publish(.uriError(url: url.absoluteString, message: "Unsupported scheme: \(scheme)")) }
+            Task { await eventBus.publish(.uriError(url: url.absoluteString, message: "Unsupported scheme: \(scheme)"))
+            }
         }
     }
 
@@ -197,10 +198,14 @@ final class URIManager {
     private func fallbackOpen(_ url: URL) {
         // Use the browser that was default before we registered, skipping ourselves
         if let prevBrowser = previousDefaultBrowser,
-           prevBrowser != Bundle.main.bundleIdentifier {
+           prevBrowser != Bundle.main.bundleIdentifier
+        {
             do {
                 try BrowserRegistry.open(url: url, browser: prevBrowser, profile: nil)
-                Log.uri.info("Routed \(url, privacy: .public) to previous default browser \(prevBrowser, privacy: .public)")
+                Log.uri
+                    .info(
+                        "Routed \(url, privacy: .public) to previous default browser \(prevBrowser, privacy: .public)"
+                    )
                 return
             } catch {
                 Log.uri.warning("Previous default browser failed: \(error.localizedDescription, privacy: .public)")
@@ -359,7 +364,10 @@ final class URIManager {
             if rule.browser == nil, rule.action == nil {
                 let message = "Rule must specify either 'browser' or 'action'"
                 routingErrors[key] = message
-                Log.uri.error("Invalid routing rule #\(index, privacy: .public) '\(rule.pattern, privacy: .public)': \(message, privacy: .public)")
+                Log.uri
+                    .error(
+                        "Invalid routing rule #\(index, privacy: .public) '\(rule.pattern, privacy: .public)': \(message, privacy: .public)"
+                    )
                 Task { await eventBus.publish(.uriError(url: rule.pattern, message: message)) }
                 continue
             }
@@ -379,7 +387,10 @@ final class URIManager {
                 Task { [weak self] in
                     guard let self else { return }
                     if await moduleRegistry.findAction(id: actionID) == nil {
-                        Log.uri.warning("Action '\(action, privacy: .public)' for rule '\(rule.pattern, privacy: .public)' not currently available")
+                        Log.uri
+                            .warning(
+                                "Action '\(action, privacy: .public)' for rule '\(rule.pattern, privacy: .public)' not currently available"
+                            )
                     }
                 }
             }
@@ -407,12 +418,18 @@ final class URIManager {
 
         NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: "http") { error in
             if let error {
-                Log.uri.warning("Default browser registration (http) failed: \(error.localizedDescription, privacy: .public)")
+                Log.uri
+                    .warning(
+                        "Default browser registration (http) failed: \(error.localizedDescription, privacy: .public)"
+                    )
             }
         }
         NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: "https") { error in
             if let error {
-                Log.uri.warning("Default browser registration (https) failed: \(error.localizedDescription, privacy: .public)")
+                Log.uri
+                    .warning(
+                        "Default browser registration (https) failed: \(error.localizedDescription, privacy: .public)"
+                    )
             } else {
                 Log.uri.info("Registered as default browser")
             }
@@ -438,7 +455,8 @@ final class URIManager {
             _ = try await action.run(with: values)
             await eventBus.publish(.actionExecuted(actionID, moduleID: moduleID))
         } catch {
-            Log.uri.error("Action \(actionID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+            Log.uri
+                .error("Action \(actionID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
             await eventBus.publish(.actionFailed(actionID, message: error.localizedDescription))
         }
     }

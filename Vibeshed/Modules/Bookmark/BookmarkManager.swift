@@ -241,14 +241,14 @@ enum BookmarkManager {
         defer { sqlite3_close(db) }
 
         let sql = """
-            SELECT h.url, v.title, h.visit_count
-            FROM history_items h
-            JOIN history_visits v ON h.id = v.history_item
-            WHERE h.visit_count >= ?1
-            GROUP BY h.url
-            ORDER BY h.visit_count DESC
-            LIMIT 500
-            """
+        SELECT h.url, v.title, h.visit_count
+        FROM history_items h
+        JOIN history_visits v ON h.id = v.history_item
+        WHERE h.visit_count >= ?1
+        GROUP BY h.url
+        ORDER BY h.visit_count DESC
+        LIMIT 500
+        """
 
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -263,11 +263,10 @@ enum BookmarkManager {
         while sqlite3_step(stmt) == SQLITE_ROW {
             guard let urlPtr = sqlite3_column_text(stmt, 0) else { continue }
             let url = String(cString: urlPtr)
-            let title: String
-            if let titlePtr = sqlite3_column_text(stmt, 1) {
-                title = String(cString: titlePtr)
+            let title: String = if let titlePtr = sqlite3_column_text(stmt, 1) {
+                String(cString: titlePtr)
             } else {
-                title = url
+                url
             }
             let visitCount = Int(sqlite3_column_int(stmt, 2))
 
@@ -316,12 +315,12 @@ enum BookmarkManager {
         defer { sqlite3_close(db) }
 
         let sql = """
-            SELECT url, title, visit_count, last_visit_time
-            FROM urls
-            WHERE visit_count >= ?1 AND hidden = 0
-            ORDER BY visit_count DESC
-            LIMIT 500
-            """
+        SELECT url, title, visit_count, last_visit_time
+        FROM urls
+        WHERE visit_count >= ?1 AND hidden = 0
+        ORDER BY visit_count DESC
+        LIMIT 500
+        """
 
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -336,11 +335,10 @@ enum BookmarkManager {
         while sqlite3_step(stmt) == SQLITE_ROW {
             guard let urlPtr = sqlite3_column_text(stmt, 0) else { continue }
             let url = String(cString: urlPtr)
-            let title: String
-            if let titlePtr = sqlite3_column_text(stmt, 1) {
-                title = String(cString: titlePtr)
+            let title: String = if let titlePtr = sqlite3_column_text(stmt, 1) {
+                String(cString: titlePtr)
             } else {
-                title = url
+                url
             }
             let visitCount = Int(sqlite3_column_int(stmt, 2))
 

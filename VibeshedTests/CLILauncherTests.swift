@@ -1,8 +1,7 @@
 import Foundation
 import OSLog
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 final class CLILauncherTests: XCTestCase {
     private let log = Logger(subsystem: "test", category: "cli")

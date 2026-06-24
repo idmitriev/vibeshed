@@ -9,9 +9,13 @@ actor BrowserModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = BrowserConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
-    static var requiredPermissions: Set<Permission> { [] }
+    static var requiredPermissions: Set<Permission> {
+        []
+    }
 
     private var config: BrowserConfig = .init()
     private let browserManager = BrowserManager()
@@ -74,7 +78,7 @@ actor BrowserModule: ModuleConfigurable {
         switch parameterID {
         case "tab":
             let tabs = await getCachedOrFreshTabs()
-            let options = tabs.map { tab in
+            return tabs.map { tab in
                 let appURL = NSWorkspace.shared.urlForApplication(
                     withBundleIdentifier: tab.browserBundleID
                 )
@@ -86,11 +90,10 @@ actor BrowserModule: ModuleConfigurable {
                     iconURL: appURL
                 )
             }
-            return options
 
         case "browser":
             let browsers = resolveBrowserList()
-            let options = browsers.map { browser in
+            return browsers.map { browser in
                 let appURL = NSWorkspace.shared.urlForApplication(
                     withBundleIdentifier: browser.bundleID
                 )
@@ -101,7 +104,6 @@ actor BrowserModule: ModuleConfigurable {
                     iconURL: appURL
                 )
             }
-            return options
 
         default:
             return []
@@ -231,7 +233,7 @@ actor BrowserModule: ModuleConfigurable {
         guard parts.count == 3 else { return nil }
         let bundleID = String(parts[0])
         let browserName = BrowserRegistry.name(for: bundleID) ?? "Browser"
-        let currentTabs = (try? await mgr.listTabs(for: bundleID, browserName: browserName)) ?? []
+        let currentTabs = await (try? mgr.listTabs(for: bundleID, browserName: browserName)) ?? []
         return currentTabs.first(where: { $0.id == tabID })
     }
 

@@ -293,6 +293,21 @@ modules:
       - flushDNS
       - purgeMemory
 
+  # --- System Settings Panes ---
+  settings:
+    # Uncomment to restrict which panes appear (default: all):
+    # enabledPanes:
+    #   - wifi
+    #   - bluetooth
+    #   - displays
+    #   - sound
+    #   - keyboard
+    #   - privacy
+
+    # Add custom panes as "Title": "pane-target-identifier"
+    # customPanes:
+    #   "Game Center": "com.apple.Game-Center-Settings.extension"
+
   # --- Theme / Appearance ---
   theme:
     # Uncomment to restrict which actions appear:

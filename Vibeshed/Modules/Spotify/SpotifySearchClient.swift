@@ -224,7 +224,10 @@ final class SpotifySearchClient: @unchecked Sendable {
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "redirect_uri", value: redirectURI),
-            URLQueryItem(name: "scope", value: "user-read-playback-state user-modify-playback-state user-library-read user-library-modify"),
+            URLQueryItem(
+                name: "scope",
+                value: "user-read-playback-state user-modify-playback-state user-library-read user-library-modify"
+            ),
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "code_challenge", value: challenge),
         ]
@@ -525,8 +528,8 @@ final class SpotifySearchClient: @unchecked Sendable {
             switch self {
             case .notAuthenticated: "Not authenticated with Spotify"
             case .invalidQuery: "Invalid search query"
-            case .apiError(let code): "Spotify API error (HTTP \(code))"
-            case .authFailed(let reason): "Spotify auth failed: \(reason)"
+            case let .apiError(code): "Spotify API error (HTTP \(code))"
+            case let .authFailed(reason): "Spotify auth failed: \(reason)"
             case .parseFailed: "Failed to parse Spotify response"
             }
         }

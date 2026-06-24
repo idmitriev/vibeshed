@@ -8,7 +8,9 @@ actor HomebrewModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = HomebrewConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: HomebrewConfig = .init()
     private var context: ModuleContext?

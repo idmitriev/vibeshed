@@ -4,7 +4,6 @@ import OSLog
 private let log = Log.module("homebrew")
 
 enum HomebrewManager {
-
     struct PackageInfo: Sendable {
         let name: String
         let version: String?
@@ -151,7 +150,9 @@ enum HomebrewManager {
                 let errOutput = String(data: errData, encoding: .utf8) ?? ""
                 let message = errOutput.isEmpty ? output : errOutput
                 log.warning("brew \(args.joined(separator: " ")) failed: \(message, privacy: .public)")
-                continuation.resume(throwing: HomebrewError.commandFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
+                continuation
+                    .resume(throwing: HomebrewError
+                        .commandFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
                 return
             }
 
@@ -165,7 +166,7 @@ enum HomebrewError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .commandFailed(let message): message
+        case let .commandFailed(message): message
         }
     }
 }

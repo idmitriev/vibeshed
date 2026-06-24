@@ -10,7 +10,9 @@ actor CalendarModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = CalendarConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: CalendarConfig = .init()
     private var context: ModuleContext?

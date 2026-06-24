@@ -9,9 +9,13 @@ actor BookmarkModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = BookmarkConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
-    static var requiredPermissions: Set<Permission> { [.fullDiskAccess] }
+    static var requiredPermissions: Set<Permission> {
+        [.fullDiskAccess]
+    }
 
     private var config: BookmarkConfig = .init()
     private var context: ModuleContext?
@@ -142,7 +146,7 @@ actor BookmarkModule: ModuleConfigurable {
     // MARK: - Action Builders
 
     private func buildBookmarkAction(for bookmark: BookmarkInfo) -> BookmarkAction {
-        let urlHash = bookmark.url.hashValue & 0x7FFFFFFF
+        let urlHash = bookmark.url.hashValue & 0x7FFF_FFFF
         return BookmarkAction(
             id: ActionID(module: "bookmark", name: "bm.\(urlHash)"),
             title: bookmark.title,
@@ -162,7 +166,7 @@ actor BookmarkModule: ModuleConfigurable {
     }
 
     private func buildVisitedAction(for site: VisitedSite) -> BookmarkAction {
-        let urlHash = site.url.hashValue & 0x7FFFFFFF
+        let urlHash = site.url.hashValue & 0x7FFF_FFFF
         return BookmarkAction(
             id: ActionID(module: "bookmark", name: "visited.\(urlHash)"),
             title: site.title,

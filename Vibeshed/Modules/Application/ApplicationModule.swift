@@ -9,7 +9,9 @@ actor ApplicationModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = ApplicationConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: ApplicationConfig = .init()
     private let appManager = ApplicationManager()
@@ -62,17 +64,16 @@ actor ApplicationModule: ModuleConfigurable {
         // launchOrFocus shows all apps; quit shows only running
         let showAll = actionName.hasSuffix("/launchOrFocus") && !cfg.showRunningOnly
 
-        let apps: [AppInfo]
-        if showAll {
-            apps = await getCachedOrFreshApps()
+        let apps: [AppInfo] = if showAll {
+            await getCachedOrFreshApps()
         } else {
-            apps = await MainActor.run { appManager.listRunningApplications() }
+            await MainActor.run { appManager.listRunningApplications() }
         }
 
         let excluded = Set(cfg.excludedBundleIDs)
         let filtered = apps.filter { !excluded.contains($0.id) }
 
-        let options = filtered.map { app in
+        return filtered.map { app in
             ParameterOption(
                 id: app.id,
                 label: app.isRunning ? app.displayLabel : app.name,
@@ -80,8 +81,6 @@ actor ApplicationModule: ModuleConfigurable {
                 iconURL: app.bundleURL
             )
         }
-
-        return options
     }
 
     // MARK: - Build Actions
@@ -167,11 +166,10 @@ actor ApplicationModule: ModuleConfigurable {
         if now.timeIntervalSince(cacheTimestamp) < config.cacheTTLSeconds, !appCache.isEmpty {
             return appCache
         }
-        let apps: [AppInfo]
-        if config.showRunningOnly {
-            apps = await MainActor.run { appManager.listRunningApplications() }
+        let apps: [AppInfo] = if config.showRunningOnly {
+            await MainActor.run { appManager.listRunningApplications() }
         } else {
-            apps = await MainActor.run { appManager.listInstalledApplications() }
+            await MainActor.run { appManager.listInstalledApplications() }
         }
         appCache = apps
         cacheTimestamp = now

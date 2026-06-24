@@ -146,7 +146,6 @@ struct MeetingPrepPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private var pills: some View {
         HStack(spacing: 8) {
             if let start = action.startDate {
@@ -225,7 +224,6 @@ struct MeetingPrepPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private var prepDescription: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("This action will:")
@@ -284,21 +282,21 @@ struct MeetingPrepPreviewView: View {
 
     private var actionTypeLabel: String {
         switch action.actionType {
-        case .prepForMeeting: return "Prep"
-        case .joinVideo: return "Join"
-        case .hideDistractions: return "Focus"
-        case .restoreWindows: return "Restore"
-        case .utility: return "Utility"
+        case .prepForMeeting: "Prep"
+        case .joinVideo: "Join"
+        case .hideDistractions: "Focus"
+        case .restoreWindows: "Restore"
+        case .utility: "Utility"
         }
     }
 
     private var actionTypeIcon: String {
         switch action.actionType {
-        case .prepForMeeting: return "clock.badge.checkmark"
-        case .joinVideo: return "video.fill"
-        case .hideDistractions: return "eye.slash"
-        case .restoreWindows: return "macwindow.on.rectangle"
-        case .utility: return "gear"
+        case .prepForMeeting: "clock.badge.checkmark"
+        case .joinVideo: "video.fill"
+        case .hideDistractions: "eye.slash"
+        case .restoreWindows: "macwindow.on.rectangle"
+        case .utility: "gear"
         }
     }
 
@@ -340,9 +338,9 @@ struct MeetingPrepPreviewView: View {
 
     private func videoLabel(for type: VideoLinkType) -> String {
         switch type {
-        case .zoom: return "Zoom"
-        case .googleMeet: return "Google Meet"
-        case .teams: return "Teams"
+        case .zoom: "Zoom"
+        case .googleMeet: "Google Meet"
+        case .teams: "Teams"
         }
     }
 

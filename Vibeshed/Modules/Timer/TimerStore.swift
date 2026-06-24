@@ -180,7 +180,8 @@ final class TimerStore {
         let now = Date()
         var changed = false
         for index in items.indices
-        where items[index].status == .active && items[index].fireDate <= now {
+            where items[index].status == .active && items[index].fireDate <= now
+        {
             items[index].status = .fired
             changed = true
         }

@@ -7,9 +7,9 @@ enum AppleScriptError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .scriptFailed(let stderr): "AppleScript error: \(stderr)"
+        case let .scriptFailed(stderr): "AppleScript error: \(stderr)"
         case .scriptTimeout: "AppleScript execution timed out"
-        case .appNotRunning(let name): "\(name) is not running"
+        case let .appNotRunning(name): "\(name) is not running"
         }
     }
 }

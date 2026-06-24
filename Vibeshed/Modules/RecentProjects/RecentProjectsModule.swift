@@ -12,7 +12,10 @@ actor RecentProjectsModule<Provider: RecentProjectsProvider>: ModuleConfigurable
     let iconName: String
     var isEnabled = true
 
-    static var defaultConfig: Config? { Provider.defaultConfig }
+    static var defaultConfig: Config? {
+        Provider.defaultConfig
+    }
+
     static func validate(_ config: Config) -> ConfigValidationResult {
         Provider.validate(config)
     }
@@ -37,7 +40,10 @@ actor RecentProjectsModule<Provider: RecentProjectsProvider>: ModuleConfigurable
         self.context = context
         refreshCache()
         provider.applySideEffects(config: config)
-        log.info("\(self.displayName, privacy: .public) module initialized (\(self.cache.value?.count ?? 0, privacy: .public) items found)")
+        log
+            .info(
+                "\(self.displayName, privacy: .public) module initialized (\(self.cache.value?.count ?? 0, privacy: .public) items found)"
+            )
     }
 
     func teardown() async {

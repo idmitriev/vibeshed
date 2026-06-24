@@ -5,7 +5,6 @@ import OSLog
 private let log = Log.module("system")
 
 enum SystemManager {
-
     // MARK: - Power
 
     static func lockScreen() {
@@ -48,7 +47,14 @@ enum SystemManager {
         // Remove explicit dark/light override so the system follows its schedule
         runProcessIgnoringErrors("/usr/bin/defaults", "delete", "NSGlobalDomain", "AppleInterfaceStyle")
 
-        try runProcess("/usr/bin/defaults", "write", "NSGlobalDomain", "AppleInterfaceStyleSwitchesAutomatically", "-bool", "true")
+        try runProcess(
+            "/usr/bin/defaults",
+            "write",
+            "NSGlobalDomain",
+            "AppleInterfaceStyleSwitchesAutomatically",
+            "-bool",
+            "true"
+        )
 
         // Notify the system of the change
         try? AppleScriptRunner.runSync("""

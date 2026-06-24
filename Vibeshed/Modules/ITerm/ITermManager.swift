@@ -54,19 +54,19 @@ enum ITermManager {
         let escaped = text.escapedForAppleScript
         let nl = newline ? "" : " newline no"
         let script = """
-            tell application "iTerm2"
-                repeat with w in windows
-                    repeat with t in tabs of w
-                        repeat with s in sessions of t
-                            if id of s is "\(id)" then
-                                tell s to write text "\(escaped)"\(nl)
-                                return "ok"
-                            end if
-                        end repeat
+        tell application "iTerm2"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    repeat with s in sessions of t
+                        if id of s is "\(id)" then
+                            tell s to write text "\(escaped)"\(nl)
+                            return "ok"
+                        end if
                     end repeat
                 end repeat
-            end tell
-            """
+            end repeat
+        end tell
+        """
         try await runScript(script)
     }
 
@@ -79,17 +79,17 @@ enum ITermManager {
         let profileClause = profilePart(profile)
         let commandClause = commandPart(command)
         let script = """
-            tell application "iTerm2"
-                if (count of windows) is 0 then
-                    create window with \(profileClause)\(commandClause)
-                else
-                    tell current window
-                        create tab with \(profileClause)\(commandClause)
-                    end tell
-                end if
-                activate
-            end tell
-            """
+        tell application "iTerm2"
+            if (count of windows) is 0 then
+                create window with \(profileClause)\(commandClause)
+            else
+                tell current window
+                    create tab with \(profileClause)\(commandClause)
+                end tell
+            end if
+            activate
+        end tell
+        """
         try await runScript(script)
     }
 
@@ -102,11 +102,11 @@ enum ITermManager {
         let profileClause = profilePart(profile)
         let commandClause = commandPart(command)
         let script = """
-            tell application "iTerm2"
-                create window with \(profileClause)\(commandClause)
-                activate
-            end tell
-            """
+        tell application "iTerm2"
+            create window with \(profileClause)\(commandClause)
+            activate
+        end tell
+        """
         try await runScript(script)
     }
 

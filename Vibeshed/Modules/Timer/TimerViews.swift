@@ -143,7 +143,6 @@ struct TimerActionPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private var pills: some View {
         HStack(spacing: 8) {
             if action.isActive {

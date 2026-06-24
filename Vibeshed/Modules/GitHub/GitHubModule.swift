@@ -10,7 +10,9 @@ actor GitHubModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = GitHubConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: GitHubConfig = .init()
     private var context: ModuleContext?
@@ -22,7 +24,10 @@ actor GitHubModule: ModuleConfigurable {
         self.context = context
         updateAPIClient()
         await fetchRepos()
-        log.info("GitHub module initialized (token: \(self.config.token != nil ? "configured" : "none", privacy: .public))")
+        log
+            .info(
+                "GitHub module initialized (token: \(self.config.token != nil ? "configured" : "none", privacy: .public))"
+            )
     }
 
     func configDidUpdate(_ config: GitHubConfig) async {
@@ -48,7 +53,8 @@ actor GitHubModule: ModuleConfigurable {
         var errors: [String] = []
 
         if let token = config.token,
-           token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+           token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        {
             errors.append("token must not be empty when specified")
         }
         if config.maxResults < 1 || config.maxResults > 100 {
@@ -80,9 +86,7 @@ actor GitHubModule: ModuleConfigurable {
         query: String,
         scoring: ScoringContext
     ) async -> [any Action] {
-        let actions = buildActions()
-
-        return actions
+        buildActions()
     }
 
     // MARK: - Private
@@ -125,12 +129,18 @@ actor GitHubModule: ModuleConfigurable {
                 }
             } catch {
                 let label = owner ?? "authenticated-user"
-                log.error("Failed to fetch repos for '\(label, privacy: .public)': \(error.localizedDescription, privacy: .public)")
+                log
+                    .error(
+                        "Failed to fetch repos for '\(label, privacy: .public)': \(error.localizedDescription, privacy: .public)"
+                    )
             }
         }
 
         cachedRepos = Array(allRepos.prefix(config.maxResults))
-        log.info("Fetched \(self.cachedRepos.count, privacy: .public) repos from \(owners.count, privacy: .public) owner(s)")
+        log
+            .info(
+                "Fetched \(self.cachedRepos.count, privacy: .public) repos from \(owners.count, privacy: .public) owner(s)"
+            )
     }
 
     private func actionName(_ id: ActionID) -> String {
@@ -401,7 +411,6 @@ actor GitHubModule: ModuleConfigurable {
             return .pushActions(results)
         }
     }
-
 }
 
 // MARK: - Result Builders & Helpers

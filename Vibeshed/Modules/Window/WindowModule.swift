@@ -29,7 +29,9 @@ actor WindowModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = WindowConfig
-    static var defaultConfig: Config? { .defaultValue }
+    static var defaultConfig: Config? {
+        .defaultValue
+    }
 
     static var requiredPermissions: Set<Permission> {
         [.accessibility, .screenRecording]
@@ -71,7 +73,8 @@ actor WindowModule: ModuleConfigurable {
             }
         }
         if config.padding.top < 0 || config.padding.bottom < 0
-            || config.padding.left < 0 || config.padding.right < 0 {
+            || config.padding.left < 0 || config.padding.right < 0
+        {
             errors.append("Padding values must be non-negative")
         }
         if config.padding.gap < 0 {
@@ -84,7 +87,7 @@ actor WindowModule: ModuleConfigurable {
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        return buildActions()
+        buildActions()
     }
 
     func provideParameterOptions(
@@ -97,7 +100,7 @@ actor WindowModule: ModuleConfigurable {
         let windows = await MainActor.run {
             windowManager.listWindows(includeMinimized: includeMinimized)
         }
-        let options = windows.map { window in
+        return windows.map { window in
             let appURL = window.bundleID.flatMap {
                 NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)
             }
@@ -108,7 +111,6 @@ actor WindowModule: ModuleConfigurable {
                 iconURL: appURL
             )
         }
-        return options
     }
 
     // MARK: - Build Actions
@@ -167,9 +169,8 @@ actor WindowModule: ModuleConfigurable {
             guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
                 return .showResult(title: "No Window", body: "No focused window found")
             }
-            let newFrame: CGRect
-            if horizontal {
-                newFrame = WindowSizing.cycleHorizontal(
+            let newFrame: CGRect = if horizontal {
+                WindowSizing.cycleHorizontal(
                     currentFrame: focused.frame,
                     screenFrame: focused.screenFrame,
                     padding: cfg.padding,
@@ -177,7 +178,7 @@ actor WindowModule: ModuleConfigurable {
                     anchor: anchor
                 )
             } else {
-                newFrame = WindowSizing.cycleVertical(
+                WindowSizing.cycleVertical(
                     currentFrame: focused.frame,
                     screenFrame: focused.screenFrame,
                     padding: cfg.padding,

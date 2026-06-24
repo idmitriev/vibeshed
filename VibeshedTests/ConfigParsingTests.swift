@@ -1,6 +1,5 @@
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 @MainActor
 final class ConfigParsingTests: XCTestCase {
@@ -52,7 +51,7 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertEqual(Set(config.moduleConfigs.keys), ["window", "clipboard"])
         XCTAssertNotNil(config.moduleConfigs["window"])
         // The stored bytes should be the serialized YAML for that section.
-        let windowYAML = String(data: config.moduleConfigs["window"]!, encoding: .utf8) ?? ""
+        let windowYAML = try String(data: XCTUnwrap(config.moduleConfigs["window"]), encoding: .utf8) ?? ""
         XCTAssertTrue(windowYAML.contains("gap"))
     }
 

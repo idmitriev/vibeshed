@@ -88,23 +88,22 @@ enum ZedManager {
         }
         defer { sqlite3_close(db) }
 
-        let sql: String
-        if showRemote {
-            sql = """
-                SELECT w.paths, w.timestamp, r.kind, r.host, r.user \
-                FROM workspaces w \
-                LEFT JOIN remote_connections r ON w.remote_connection_id = r.id \
-                WHERE w.paths IS NOT NULL AND w.paths != '' \
-                ORDER BY w.timestamp DESC
-                """
+        let sql = if showRemote {
+            """
+            SELECT w.paths, w.timestamp, r.kind, r.host, r.user \
+            FROM workspaces w \
+            LEFT JOIN remote_connections r ON w.remote_connection_id = r.id \
+            WHERE w.paths IS NOT NULL AND w.paths != '' \
+            ORDER BY w.timestamp DESC
+            """
         } else {
-            sql = """
-                SELECT w.paths, w.timestamp, NULL, NULL, NULL \
-                FROM workspaces w \
-                WHERE w.paths IS NOT NULL AND w.paths != '' \
-                AND w.remote_connection_id IS NULL \
-                ORDER BY w.timestamp DESC
-                """
+            """
+            SELECT w.paths, w.timestamp, NULL, NULL, NULL \
+            FROM workspaces w \
+            WHERE w.paths IS NOT NULL AND w.paths != '' \
+            AND w.remote_connection_id IS NULL \
+            ORDER BY w.timestamp DESC
+            """
         }
 
         var stmt: OpaquePointer?
@@ -138,11 +137,10 @@ enum ZedManager {
 
             let isRemote = kind != nil
 
-            let remoteHost: String?
-            if let host {
-                remoteHost = user != nil ? "\(user!)@\(host)" : host
+            let remoteHost: String? = if let host {
+                user != nil ? "\(user!)@\(host)" : host
             } else {
-                remoteHost = nil
+                nil
             }
 
             let name = projectName(from: paths)

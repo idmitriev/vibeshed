@@ -43,7 +43,8 @@ enum FuzzyMatcher {
 
                 // Bonus: consecutive match
                 if matchedIndices.count >= 2,
-                   matchedIndices[matchedIndices.count - 1] == matchedIndices[matchedIndices.count - 2] + 1 {
+                   matchedIndices[matchedIndices.count - 1] == matchedIndices[matchedIndices.count - 2] + 1
+                {
                     totalScore += 0.1
                 }
 
@@ -125,7 +126,7 @@ enum FuzzyMatcher {
         var currentIdx = string.startIndex
         var currentInt = 0
 
-        // Advance currentIdx to the given int position
+        /// Advance currentIdx to the given int position
         func advance(to target: Int) -> String.Index {
             while currentInt < target {
                 currentIdx = string.index(after: currentIdx)

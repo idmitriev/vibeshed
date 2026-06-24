@@ -1,9 +1,10 @@
+@testable import Vibeshed
 import XCTest
 
-@testable import Vibeshed
-
 final class URLPatternMatcherTests: XCTestCase {
-    private func url(_ s: String) -> URL { URL(string: s)! }
+    private func url(_ s: String) -> URL {
+        URL(string: s)!
+    }
 
     func testGlobMatchesPathWildcard() {
         XCTAssertTrue(

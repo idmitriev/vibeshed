@@ -1,6 +1,5 @@
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 /// `FuzzyMatcher.match` is a single normalized subsequence scorer (start-of-string,
 /// word-boundary, and consecutive bonuses, then normalized to 0...1). These tests
@@ -26,26 +25,26 @@ final class FuzzyMatcherTests: XCTestCase {
         XCTAssertNil(FuzzyMatcher.match(query: "ba", against: "abc"))
     }
 
-    func testSubsequenceMatchScoresWithinRange() {
+    func testSubsequenceMatchScoresWithinRange() throws {
         let result = FuzzyMatcher.match(query: "ac", against: "abc")
         XCTAssertNotNil(result)
-        XCTAssertGreaterThan(result!.score, 0)
-        XCTAssertLessThanOrEqual(result!.score, 1)
+        XCTAssertGreaterThan(try XCTUnwrap(result?.score), 0)
+        XCTAssertLessThanOrEqual(try XCTUnwrap(result?.score), 1)
     }
 
     func testMatchIsCaseInsensitive() {
         XCTAssertNotNil(FuzzyMatcher.match(query: "ABC", against: "abc"))
     }
 
-    func testStartOfStringScoresHigherThanLaterMatch() {
-        let atStart = FuzzyMatcher.match(query: "a", against: "abc")!.score
-        let later = FuzzyMatcher.match(query: "c", against: "abc")!.score
+    func testStartOfStringScoresHigherThanLaterMatch() throws {
+        let atStart = try XCTUnwrap(FuzzyMatcher.match(query: "a", against: "abc")?.score)
+        let later = try XCTUnwrap(FuzzyMatcher.match(query: "c", against: "abc")?.score)
         XCTAssertGreaterThan(atStart, later)
     }
 
-    func testWordBoundaryScoresHigherThanMidWord() {
-        let boundary = FuzzyMatcher.match(query: "w", against: "a-w")!.score
-        let midWord = FuzzyMatcher.match(query: "w", against: "aaw")!.score
+    func testWordBoundaryScoresHigherThanMidWord() throws {
+        let boundary = try XCTUnwrap(FuzzyMatcher.match(query: "w", against: "a-w")?.score)
+        let midWord = try XCTUnwrap(FuzzyMatcher.match(query: "w", against: "aaw")?.score)
         XCTAssertGreaterThan(boundary, midWord)
     }
 

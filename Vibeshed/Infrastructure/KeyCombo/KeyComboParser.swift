@@ -21,7 +21,7 @@ enum KeyComboParser {
             let cgButton = buttonNum - 1
             var modifiers = CGEventFlags()
             for (i, comp) in components.enumerated() where i != mouseIndex {
-                modifiers.insert(try modifierFlag(for: comp))
+                try modifiers.insert(modifierFlag(for: comp))
             }
             return .mouseButton(button: cgButton, modifiers: modifiers)
         }
@@ -43,7 +43,8 @@ enum KeyComboParser {
 
         // Space as modifier: "space" + another key
         if components.contains("space"), components.count == 2,
-           let otherKey = components.first(where: { $0 != "space" }) {
+           let otherKey = components.first(where: { $0 != "space" })
+        {
             // Check if the other component is a regular key (not a modifier name)
             if modifierNames[otherKey] == nil {
                 let keyCode = try carbonKeyCode(for: otherKey)
@@ -53,7 +54,8 @@ enum KeyComboParser {
 
         // Tab as modifier: "tab" + another key
         if components.contains("tab"), components.count == 2,
-           let otherKey = components.first(where: { $0 != "tab" }) {
+           let otherKey = components.first(where: { $0 != "tab" })
+        {
             if modifierNames[otherKey] == nil {
                 let keyCode = try carbonKeyCode(for: otherKey)
                 return .tabModifier(carbonKeyCode: keyCode)
@@ -67,7 +69,7 @@ enum KeyComboParser {
         let keyCode = try carbonKeyCode(for: keyName)
         var modifiers = CGEventFlags()
         for comp in components.dropLast() {
-            modifiers.insert(try modifierFlag(for: comp))
+            try modifiers.insert(modifierFlag(for: comp))
         }
         return .standard(carbonKeyCode: keyCode, modifiers: modifiers)
     }
@@ -76,7 +78,7 @@ enum KeyComboParser {
     /// Used for remap targets where we need the raw key data.
     static func parseStandard(_ combo: String) throws -> (keyCode: UInt16, modifiers: CGEventFlags) {
         let comboType = try parse(combo)
-        guard case .standard(let keyCode, let modifiers) = comboType else {
+        guard case let .standard(keyCode, modifiers) = comboType else {
             throw KeyComboError.invalidCombo(
                 combo,
                 reason: "remap target must be a standard key combo (not capslock/space/mouse)"

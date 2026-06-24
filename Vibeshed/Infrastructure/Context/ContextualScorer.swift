@@ -25,8 +25,8 @@ enum ContextualScorer {
 
     private static let vscodeBundleIDPrefixes = [
         "com.microsoft.VSCode",
-        "com.todesktop.230313mzl4w4u92",  // Cursor
-        "com.exafunction.windsurf",        // Windsurf
+        "com.todesktop.230313mzl4w4u92", // Cursor
+        "com.exafunction.windsurf", // Windsurf
     ]
 
     private static func focusedAppBoost(
@@ -151,7 +151,7 @@ enum ContextualScorer {
             }
         } else if context.outputVolume == 0 {
             // Volume is zero but not muted, boost volume set actions
-            if name.hasPrefix("volume") && !name.hasSuffix("Down") {
+            if name.hasPrefix("volume"), !name.hasSuffix("Down") {
                 return 0.06
             }
         }

@@ -9,7 +9,7 @@ enum BrowserError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .tabNotFound(let id): "Tab not found: \(id)"
+        case let .tabNotFound(id): "Tab not found: \(id)"
         }
     }
 }
@@ -31,12 +31,15 @@ struct BrowserManager: Sendable {
     func listAllTabs(browsers: [(name: String, bundleID: String)]) async -> [TabInfo] {
         await withTaskGroup(of: [TabInfo].self, returning: [TabInfo].self) { group in
             for browser in browsers {
-                guard BrowserRegistry.isRunning( browser.bundleID) else { continue }
+                guard BrowserRegistry.isRunning(browser.bundleID) else { continue }
                 group.addTask {
                     do {
                         return try await self.listTabs(for: browser.bundleID, browserName: browser.name)
                     } catch {
-                        log.warning("listAllTabs: failed for \(browser.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                        log
+                            .warning(
+                                "listAllTabs: failed for \(browser.name, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                            )
                         return []
                     }
                 }
@@ -52,7 +55,7 @@ struct BrowserManager: Sendable {
     // MARK: - Focus Tab
 
     func focusTab(_ tab: TabInfo) async throws {
-        guard BrowserRegistry.isRunning( tab.browserBundleID) else {
+        guard BrowserRegistry.isRunning(tab.browserBundleID) else {
             log.error("focusTab: browser not running \(tab.browserName, privacy: .public)")
             throw AppleScriptError.appNotRunning(tab.browserName)
         }
@@ -80,7 +83,7 @@ struct BrowserManager: Sendable {
     // MARK: - Close Tab
 
     func closeTab(_ tab: TabInfo) async throws {
-        guard BrowserRegistry.isRunning( tab.browserBundleID) else {
+        guard BrowserRegistry.isRunning(tab.browserBundleID) else {
             log.error("closeTab: browser not running \(tab.browserName, privacy: .public)")
             throw AppleScriptError.appNotRunning(tab.browserName)
         }
@@ -107,34 +110,33 @@ struct BrowserManager: Sendable {
 
     func openURL(_ urlString: String, in bundleID: String) async throws {
         let escaped = urlString.escapedForAppleScript
-        let script: String
-        if bundleID == "com.apple.Safari" {
-            script = """
-                tell application "Safari"
-                    activate
-                    if (count of windows) = 0 then
-                        make new document with properties {URL:"\(escaped)"}
-                    else
-                        tell window 1
-                            set current tab to (make new tab with properties {URL:"\(escaped)"})
-                        end tell
-                    end if
-                end tell
-                """
+        let script = if bundleID == "com.apple.Safari" {
+            """
+            tell application "Safari"
+                activate
+                if (count of windows) = 0 then
+                    make new document with properties {URL:"\(escaped)"}
+                else
+                    tell window 1
+                        set current tab to (make new tab with properties {URL:"\(escaped)"})
+                    end tell
+                end if
+            end tell
+            """
         } else {
-            script = """
-                tell application id "\(bundleID)"
-                    activate
-                    if (count of windows) = 0 then
-                        make new window
-                        set URL of active tab of window 1 to "\(escaped)"
-                    else
-                        tell window 1
-                            set newTab to make new tab with properties {URL:"\(escaped)"}
-                        end tell
-                    end if
-                end tell
-                """
+            """
+            tell application id "\(bundleID)"
+                activate
+                if (count of windows) = 0 then
+                    make new window
+                    set URL of active tab of window 1 to "\(escaped)"
+                else
+                    tell window 1
+                        set newTab to make new tab with properties {URL:"\(escaped)"}
+                    end tell
+                end if
+            end tell
+            """
         }
         try await AppleScriptRunner.run(script)
         await activateBrowser(bundleID: bundleID)

@@ -1,7 +1,6 @@
 import CoreGraphics
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 final class KeyComboParserTests: XCTestCase {
     func testStandardComboWithSingleModifier() throws {
@@ -49,7 +48,7 @@ final class KeyComboParserTests: XCTestCase {
 
     func testEmptyComboThrows() {
         XCTAssertThrowsError(try KeyComboParser.parse("")) { error in
-            guard case .invalidCombo(_, let reason)? = error as? KeyComboError else {
+            guard case let .invalidCombo(_, reason)? = error as? KeyComboError else {
                 return XCTFail("expected invalidCombo, got \(error)")
             }
             XCTAssertTrue(reason.contains("empty"))
@@ -58,7 +57,7 @@ final class KeyComboParserTests: XCTestCase {
 
     func testUnknownKeyThrows() {
         XCTAssertThrowsError(try KeyComboParser.parse("cmd+foo")) { error in
-            guard case .unknownKey(let key)? = error as? KeyComboError else {
+            guard case let .unknownKey(key)? = error as? KeyComboError else {
                 return XCTFail("expected unknownKey, got \(error)")
             }
             XCTAssertEqual(key, "foo")
@@ -67,7 +66,7 @@ final class KeyComboParserTests: XCTestCase {
 
     func testUnknownModifierThrows() {
         XCTAssertThrowsError(try KeyComboParser.parse("hyper+a")) { error in
-            guard case .unknownModifier(let mod)? = error as? KeyComboError else {
+            guard case let .unknownModifier(mod)? = error as? KeyComboError else {
                 return XCTFail("expected unknownModifier, got \(error)")
             }
             XCTAssertEqual(mod, "hyper")

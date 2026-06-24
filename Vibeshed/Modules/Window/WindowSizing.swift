@@ -37,9 +37,9 @@ enum WindowSizing {
     static func resolveStop(_ stop: SizeStop, screenDimension: Double) -> Double {
         switch stop.unit {
         case .percent:
-            return screenDimension * stop.value / 100.0
+            screenDimension * stop.value / 100.0
         case .pixels:
-            return stop.value
+            stop.value
         }
     }
 
@@ -78,24 +78,22 @@ enum WindowSizing {
 
         let currentWidth = currentFrame.width
         let matchIndex = nearestStopIndex(currentValue: currentWidth, resolvedStops: resolved)
-        let nextIndex: Int
-        if let match = matchIndex {
-            nextIndex = (match + 1) % resolved.count
+        let nextIndex: Int = if let match = matchIndex {
+            (match + 1) % resolved.count
         } else {
-            nextIndex = 0
+            0
         }
 
         let newWidth = resolved[nextIndex]
         let newHeight = currentFrame.height
 
-        let newX: Double
-        switch anchor {
+        let newX: Double = switch anchor {
         case .left:
-            newX = area.origin.x
+            area.origin.x
         case .right:
-            newX = area.maxX - newWidth
+            area.maxX - newWidth
         default:
-            newX = area.origin.x
+            area.origin.x
         }
 
         return CGRect(x: newX, y: currentFrame.origin.y, width: newWidth, height: newHeight)
@@ -116,24 +114,22 @@ enum WindowSizing {
 
         let currentHeight = currentFrame.height
         let matchIndex = nearestStopIndex(currentValue: currentHeight, resolvedStops: resolved)
-        let nextIndex: Int
-        if let match = matchIndex {
-            nextIndex = (match + 1) % resolved.count
+        let nextIndex: Int = if let match = matchIndex {
+            (match + 1) % resolved.count
         } else {
-            nextIndex = 0
+            0
         }
 
         let newHeight = resolved[nextIndex]
         let newWidth = currentFrame.width
 
-        let newY: Double
-        switch anchor {
+        let newY: Double = switch anchor {
         case .top:
-            newY = area.origin.y
+            area.origin.y
         case .bottom:
-            newY = area.maxY - newHeight
+            area.maxY - newHeight
         default:
-            newY = area.origin.y
+            area.origin.y
         }
 
         return CGRect(x: currentFrame.origin.x, y: newY, width: newWidth, height: newHeight)
@@ -225,16 +221,15 @@ enum WindowSizing {
         let newWidth = min(currentFrame.width + resolvedStep, area.width)
         let newHeight = currentFrame.height
 
-        let newX: Double
-        switch anchor {
+        let newX: Double = switch anchor {
         case .left:
-            newX = area.origin.x
+            area.origin.x
         case .right:
-            newX = area.maxX - newWidth
+            area.maxX - newWidth
         case .center:
-            newX = area.midX - newWidth / 2.0
+            area.midX - newWidth / 2.0
         default:
-            newX = currentFrame.origin.x
+            currentFrame.origin.x
         }
 
         return CGRect(x: newX, y: currentFrame.origin.y, width: newWidth, height: newHeight)
@@ -253,16 +248,15 @@ enum WindowSizing {
         let newWidth = max(currentFrame.width - resolvedStep, resolvedStep)
         let newHeight = currentFrame.height
 
-        let newX: Double
-        switch anchor {
+        let newX: Double = switch anchor {
         case .left:
-            newX = area.origin.x
+            area.origin.x
         case .right:
-            newX = area.maxX - newWidth
+            area.maxX - newWidth
         case .center:
-            newX = area.midX - newWidth / 2.0
+            area.midX - newWidth / 2.0
         default:
-            newX = currentFrame.origin.x
+            currentFrame.origin.x
         }
 
         return CGRect(x: newX, y: currentFrame.origin.y, width: newWidth, height: newHeight)
@@ -281,16 +275,15 @@ enum WindowSizing {
         let newWidth = currentFrame.width
         let newHeight = min(currentFrame.height + resolvedStep, area.height)
 
-        let newY: Double
-        switch anchor {
+        let newY: Double = switch anchor {
         case .top:
-            newY = area.origin.y
+            area.origin.y
         case .bottom:
-            newY = area.maxY - newHeight
+            area.maxY - newHeight
         case .center:
-            newY = area.midY - newHeight / 2.0
+            area.midY - newHeight / 2.0
         default:
-            newY = currentFrame.origin.y
+            currentFrame.origin.y
         }
 
         return CGRect(x: currentFrame.origin.x, y: newY, width: newWidth, height: newHeight)
@@ -309,16 +302,15 @@ enum WindowSizing {
         let newWidth = currentFrame.width
         let newHeight = max(currentFrame.height - resolvedStep, resolvedStep)
 
-        let newY: Double
-        switch anchor {
+        let newY: Double = switch anchor {
         case .top:
-            newY = area.origin.y
+            area.origin.y
         case .bottom:
-            newY = area.maxY - newHeight
+            area.maxY - newHeight
         case .center:
-            newY = area.midY - newHeight / 2.0
+            area.midY - newHeight / 2.0
         default:
-            newY = currentFrame.origin.y
+            currentFrame.origin.y
         }
 
         return CGRect(x: currentFrame.origin.x, y: newY, width: newWidth, height: newHeight)
@@ -328,7 +320,12 @@ enum WindowSizing {
 
     private static var savedFrames: [Int: CGRect] = [:]
 
-    static func isMaximized(currentFrame: CGRect, screenFrame: CGRect, padding: PaddingConfig, tolerance: Double = 5.0) -> Bool {
+    static func isMaximized(
+        currentFrame: CGRect,
+        screenFrame: CGRect,
+        padding: PaddingConfig,
+        tolerance: Double = 5.0
+    ) -> Bool {
         let area = usableArea(screenFrame: screenFrame, padding: padding)
         let widthMatch = abs(currentFrame.width - area.width) <= tolerance
         let heightMatch = abs(currentFrame.height - area.height) <= tolerance

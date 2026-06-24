@@ -129,13 +129,13 @@ final class ThemeEngine {
     private func timeOfDayBaseColor(hour: Int) -> NSColor {
         if hour >= 20 || hour < 5 {
             // Night: warm amber
-            return NSColor(red: 0.9, green: 0.6, blue: 0.3, alpha: 1)
+            NSColor(red: 0.9, green: 0.6, blue: 0.3, alpha: 1)
         } else if hour >= 5, hour < 8 {
             // Early morning: cool blue
-            return NSColor(red: 0.3, green: 0.5, blue: 0.8, alpha: 1)
+            NSColor(red: 0.3, green: 0.5, blue: 0.8, alpha: 1)
         } else {
             // Daytime: neutral system accent
-            return NSColor.controlAccentColor
+            NSColor.controlAccentColor
         }
     }
 

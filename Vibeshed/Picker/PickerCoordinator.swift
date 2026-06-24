@@ -46,7 +46,8 @@ final class PickerCoordinator {
         pickerState.enterParameterMode(action: action)
         // Trigger initial fetch for dynamicSelection
         if let param = pickerState.currentParameter,
-           case .dynamicSelection = param.type {
+           case .dynamicSelection = param.type
+        {
             fetchParameterOptions(for: param, actionID: action.id, query: "")
         }
     }
@@ -71,7 +72,7 @@ final class PickerCoordinator {
     }
 
     func handleTab() {
-        guard case .parameterInput(_, let parameterIndex) = pickerState.mode else { return }
+        guard case let .parameterInput(_, parameterIndex) = pickerState.mode else { return }
         // Skip current optional parameter and advance
         pickerState.advanceToNextParameter(startingFrom: parameterIndex + 1)
         if pickerState.allRequiredParametersFilled {
@@ -126,7 +127,8 @@ final class PickerCoordinator {
             pickerState.enterParameterMode(action: action)
             // Trigger initial fetch for dynamicSelection
             if let param = pickerState.currentParameter,
-               case .dynamicSelection = param.type {
+               case .dynamicSelection = param.type
+            {
                 fetchParameterOptions(for: param, actionID: action.id, query: "")
             }
         }
@@ -170,7 +172,8 @@ final class PickerCoordinator {
             // Trigger fetch for dynamicSelection
             if let nextParam = pickerState.currentParameter,
                case .dynamicSelection = nextParam.type,
-               let action = pickerState.activeAction {
+               let action = pickerState.activeAction
+            {
                 fetchParameterOptions(for: nextParam, actionID: action.id, query: "")
             }
         }
@@ -193,7 +196,10 @@ final class PickerCoordinator {
             await eventBus.publish(.actionExecuted(action.id, moduleID: action.id.moduleID))
             handleActionResult(result)
         } catch {
-            Log.picker.error("Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)")
+            Log.picker
+                .error(
+                    "Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)"
+                )
             await eventBus.publish(.actionFailed(action.id, message: error.localizedDescription))
             postErrorNotification(
                 title: action.title,
@@ -354,7 +360,8 @@ final class PickerCoordinator {
         // Layout correction fallback: if no results and query is non-empty,
         // try transliterating from the current keyboard layout.
         if layoutCorrectionFallback, !query.isEmpty, items.isEmpty,
-           let correction = layoutTransliterator?.transliterate(query) {
+           let correction = layoutTransliterator?.transliterate(query)
+        {
             let correctedScoring = makeScoring(query: correction.correctedQuery, context: ctx)
             let correctedResults = await moduleRegistry.queryAll(
                 query: correction.correctedQuery, scoring: correctedScoring
@@ -414,7 +421,8 @@ final class PickerCoordinator {
             // Only apply if still in the same parameter mode
             if case let .parameterInput(currentActionID, _) = pickerState.mode,
                currentActionID == actionID,
-               pickerState.currentParameter?.id == param.id {
+               pickerState.currentParameter?.id == param.id
+            {
                 let filtered = query.isEmpty ? options : fuzzyFilterOptions(options, query: query)
                 pickerState.parameterOptions = filtered
                 pickerState.selectedParameterOptionID = filtered.first?.id
@@ -465,7 +473,8 @@ final class PickerCoordinator {
     /// Called before the show animation so the user sees content immediately.
     func showCachedActionsIfAvailable() {
         if let cachedItems = cachedEmptyQueryItems,
-           let cachedCache = cachedEmptyQueryActionCache {
+           let cachedCache = cachedEmptyQueryActionCache
+        {
             pickerState.updateActions(cachedItems, cache: cachedCache)
             pickerState.isLoading = false
         } else {
@@ -526,7 +535,6 @@ final class PickerCoordinator {
             updatesEmptyCacheWhenEmpty: false
         )
     }
-
 }
 
 // MARK: - Notifications

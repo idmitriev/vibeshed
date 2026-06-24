@@ -57,12 +57,12 @@ enum MenuBarIcon {
             ctx.setLineWidth(strokeWidth)
 
             // Three arcs sweeping the upper-right quadrant, sized to stay inside the bbox.
-            let waveStart = CGFloat(-Double.pi / 10)   // -18°
-            let waveEnd = CGFloat(Double.pi / 2.6)     // ~69°
+            let waveStart = CGFloat(-Double.pi / 10) // -18°
+            let waveEnd = CGFloat(Double.pi / 2.6) // ~69°
             let baseRadius = headRadius + strokeWidth * 1.5
             let step = strokeWidth * 1.9
 
-            for index in 0..<3 {
+            for index in 0 ..< 3 {
                 let radius = baseRadius + step * CGFloat(index)
                 ctx.beginPath()
                 ctx.addArc(

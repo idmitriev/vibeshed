@@ -1,6 +1,5 @@
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 private struct StubAction: Action {
     let id: ActionID
@@ -10,7 +9,9 @@ private struct StubAction: Action {
     var relevanceScore: Double = 0.5
     var keywords: [String] = []
     var parameters: [ActionParameter] = []
-    func run(with _: ParameterValues) async throws -> ActionResult { .dismiss }
+    func run(with _: ParameterValues) async throws -> ActionResult {
+        .dismiss
+    }
 }
 
 final class ActionScorerTests: XCTestCase {
@@ -27,7 +28,7 @@ final class ActionScorerTests: XCTestCase {
         let (items, cache) = ActionScorer.scoreAndRank(
             allActions: actions, enrichments: [:], query: "", scoring: scoring("")
         )
-        XCTAssertEqual(items.map { $0.id.actionName }, ["high", "mid", "low"])
+        XCTAssertEqual(items.map(\.id.actionName), ["high", "mid", "low"])
         XCTAssertEqual(cache.count, 3)
     }
 
@@ -39,7 +40,7 @@ final class ActionScorerTests: XCTestCase {
         let (items, _) = ActionScorer.scoreAndRank(
             allActions: actions, enrichments: [:], query: "set", scoring: scoring("set")
         )
-        XCTAssertEqual(items.map { $0.id.actionName }, ["settings"])
+        XCTAssertEqual(items.map(\.id.actionName), ["settings"])
     }
 
     func testEnrichmentEnablesKeywordMatch() {

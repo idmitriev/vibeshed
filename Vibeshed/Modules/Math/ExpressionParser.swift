@@ -37,8 +37,8 @@ enum ExpressionParser {
         guard let tokens = tokenize(cleaned) else { return false }
         return tokens.contains { token in
             switch token {
-            case .op, .function, .factorial: return true
-            default: return false
+            case .op, .function, .factorial: true
+            default: false
             }
         }
     }
@@ -111,6 +111,7 @@ enum ExpressionParser {
         }
         return tokens
     }
+
     // swiftlint:enable cyclomatic_complexity
 
     private static func scanNumber(
@@ -157,10 +158,10 @@ enum ExpressionParser {
 
     private static func precedence(_ op: Character) -> Int {
         switch op {
-        case "+", "-": return 1
-        case "*", "/", "%": return 2
-        case "^": return 3
-        default: return 0
+        case "+", "-": 1
+        case "*", "/", "%": 2
+        case "^": 3
+        default: 0
         }
     }
 
@@ -172,13 +173,13 @@ enum ExpressionParser {
         _ op: Character, _ lhs: Double, _ rhs: Double
     ) -> Double? {
         switch op {
-        case "+": return lhs + rhs
-        case "-": return lhs - rhs
-        case "*": return lhs * rhs
-        case "/": return rhs == 0 ? nil : lhs / rhs
-        case "^": return pow(lhs, rhs)
-        case "%": return rhs == 0 ? nil : lhs.truncatingRemainder(dividingBy: rhs)
-        default: return nil
+        case "+": lhs + rhs
+        case "-": lhs - rhs
+        case "*": lhs * rhs
+        case "/": rhs == 0 ? nil : lhs / rhs
+        case "^": pow(lhs, rhs)
+        case "%": rhs == 0 ? nil : lhs.truncatingRemainder(dividingBy: rhs)
+        default: nil
         }
     }
 
@@ -186,21 +187,21 @@ enum ExpressionParser {
         _ name: String, _ val: Double
     ) -> Double? {
         switch name {
-        case "sqrt": return val >= 0 ? sqrt(val) : nil
-        case "sin": return sin(val)
-        case "cos": return cos(val)
-        case "tan": return tan(val)
-        case "asin": return val >= -1 && val <= 1 ? asin(val) : nil
-        case "acos": return val >= -1 && val <= 1 ? acos(val) : nil
-        case "atan": return atan(val)
-        case "log": return val > 0 ? log10(val) : nil
-        case "ln": return val > 0 ? log(val) : nil
-        case "abs": return abs(val)
-        case "ceil": return ceil(val)
-        case "floor": return floor(val)
-        case "round": return (val).rounded()
-        case "exp": return exp(val)
-        default: return nil
+        case "sqrt": val >= 0 ? sqrt(val) : nil
+        case "sin": sin(val)
+        case "cos": cos(val)
+        case "tan": tan(val)
+        case "asin": val >= -1 && val <= 1 ? asin(val) : nil
+        case "acos": val >= -1 && val <= 1 ? acos(val) : nil
+        case "atan": atan(val)
+        case "log": val > 0 ? log10(val) : nil
+        case "ln": val > 0 ? log(val) : nil
+        case "abs": abs(val)
+        case "ceil": ceil(val)
+        case "floor": floor(val)
+        case "round": val.rounded()
+        case "exp": exp(val)
+        default: nil
         }
     }
 
@@ -270,6 +271,7 @@ enum ExpressionParser {
         }
         return true
     }
+
     // swiftlint:enable cyclomatic_complexity
 
     private static func handleRightParen(

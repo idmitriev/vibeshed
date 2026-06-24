@@ -6,7 +6,9 @@ struct ZedProvider: RecentProjectsProvider {
     static let moduleID = "zed"
     static let displayName = "Zed"
     static let iconName = "pencil.and.outline"
-    static var defaultConfig: ZedConfig { .init() }
+    static var defaultConfig: ZedConfig {
+        .init()
+    }
 
     static func validate(_ config: ZedConfig) -> ConfigValidationResult {
         var errors: [String] = []
@@ -15,7 +17,8 @@ struct ZedProvider: RecentProjectsProvider {
         }
         if let path = config.zedPath,
            !path.isEmpty,
-           !FileManager.default.fileExists(atPath: path) {
+           !FileManager.default.fileExists(atPath: path)
+        {
             errors.append("zedPath does not exist: \(path)")
         }
         return errors.isEmpty ? .valid : .invalid(errors)

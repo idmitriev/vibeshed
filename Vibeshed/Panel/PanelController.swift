@@ -10,7 +10,7 @@ final class PanelController {
     private let configManager: ConfigManager
     var coordinator: PickerCoordinator?
     var themeEngine: ThemeEngine?
-    @ObservationIgnored nonisolated(unsafe) private var windowCloseObserver: NSObjectProtocol?
+    @ObservationIgnored private nonisolated(unsafe) var windowCloseObserver: NSObjectProtocol?
 
     private(set) var isVisible: Bool = false
 

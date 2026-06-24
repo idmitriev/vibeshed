@@ -83,17 +83,17 @@ final class PermissionsManager {
     private func check(_ permission: Permission) -> Bool {
         switch permission {
         case .accessibility:
-            return checkAccessibility(prompt: false)
+            checkAccessibility(prompt: false)
         case .screenRecording:
-            return checkScreenRecording()
+            checkScreenRecording()
         case .automation:
-            return checkAutomation()
+            checkAutomation()
         case .inputMonitoring:
-            return checkInputMonitoring()
+            checkInputMonitoring()
         case .fullDiskAccess:
-            return checkFullDiskAccess()
+            checkFullDiskAccess()
         case .calendars:
-            return checkCalendars()
+            checkCalendars()
         }
     }
 

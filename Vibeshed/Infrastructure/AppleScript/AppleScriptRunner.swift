@@ -4,7 +4,6 @@ import OSLog
 private let log = Log.module("applescript")
 
 enum AppleScriptRunner {
-
     // MARK: - Async (with timeout + continuation)
 
     @discardableResult
@@ -38,7 +37,10 @@ enum AppleScriptRunner {
                 if process.terminationStatus != 0 {
                     let errorMsg = String(data: errorData, encoding: .utf8)?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
-                    log.error("AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(errorMsg, privacy: .public)")
+                    log
+                        .error(
+                            "AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(errorMsg, privacy: .public)"
+                        )
                     gate.resume(with: .failure(AppleScriptError.scriptFailed(errorMsg)))
                 } else {
                     let output = String(data: outputData, encoding: .utf8) ?? ""

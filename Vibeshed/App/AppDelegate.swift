@@ -165,6 +165,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(WindowModule())
             await registerModule(ApplicationModule())
             await registerModule(SystemModule())
+            await registerModule(SettingsModule())
             await registerModule(ThemeModule())
             await registerModule(buildSelfModule())
             await registerModule(AudioModule())
@@ -195,10 +196,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func promptBrowserAutomation() {
         // First, request System Events automation (triggers TCC registration)
         let systemEventsScript = """
-            tell application "System Events"
-                return name of first process
-            end tell
-            """
+        tell application "System Events"
+            return name of first process
+        end tell
+        """
         if let script = NSAppleScript(source: systemEventsScript) {
             var error: NSDictionary?
             script.executeAndReturnError(&error)
@@ -218,10 +219,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard BrowserRegistry.isRunning(bundleID) else { continue }
 
             let browserScript = """
-                tell application id "\(bundleID)"
-                    return name
-                end tell
-                """
+            tell application id "\(bundleID)"
+                return name
+            end tell
+            """
             if let script = NSAppleScript(source: browserScript) {
                 var error: NSDictionary?
                 script.executeAndReturnError(&error)
@@ -277,7 +278,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     entries.append(
                         .init(
                             id: id, status: .configError, message: msg
-                        ))
+                        )
+                    )
                 }
                 for (id, err) in registry.permissionErrors {
                     entries.append(
@@ -285,7 +287,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             id: id,
                             status: .permissionError,
                             message: err.localizedDescription
-                        ))
+                        )
+                    )
                 }
                 return ModuleStatusInfo(
                     entries: entries.sorted { $0.id < $1.id }
@@ -315,7 +318,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)
-        -> Bool {
+        -> Bool
+    {
         panelController.show()
         return false
     }

@@ -39,13 +39,12 @@ enum ActionScorer {
             ) else { continue }
 
             let moduleID = action.id.moduleID
-            let contextBoost: Double
-            if let ctx = scoring.systemContext {
-                contextBoost = ContextualScorer.boost(
+            let contextBoost: Double = if let ctx = scoring.systemContext {
+                ContextualScorer.boost(
                     actionID: action.id, moduleID: moduleID, context: ctx
                 )
             } else {
-                contextBoost = 0
+                0
             }
             let finalScore = result.score + contextBoost
 
@@ -88,7 +87,9 @@ enum ActionScorer {
     static func normalizeURL(_ url: String) -> String {
         var s = url.lowercased()
         if let i = s.firstIndex(of: "#") { s = String(s[..<i]) }
-        while s.hasSuffix("/") { s.removeLast() }
+        while s.hasSuffix("/") {
+            s.removeLast()
+        }
         return s
     }
 }

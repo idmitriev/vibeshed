@@ -9,7 +9,9 @@ actor TimerModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = TimerConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: TimerConfig = .init()
     private var context: ModuleContext?
@@ -65,7 +67,8 @@ actor TimerModule: ModuleConfigurable {
             errors.append("presetDurations must not be empty")
         }
         for dur in config.presetDurations
-        where dur < 1 || dur > 1440 {
+            where dur < 1 || dur > 1440
+        {
             errors.append(
                 "presetDurations values must be between 1 and 1440 minutes"
             )
@@ -224,7 +227,7 @@ actor TimerModule: ModuleConfigurable {
                 )
             }
 
-            let label = (values["label"]) ?? ""
+            let label = values["label"] ?? ""
 
             await MainActor.run {
                 currentScheduler?.ensureNotificationPermission()
@@ -342,7 +345,7 @@ actor TimerModule: ModuleConfigurable {
                 )
             }
 
-            let label = (values["label"]) ?? ""
+            let label = values["label"] ?? ""
 
             await MainActor.run {
                 currentScheduler?.ensureNotificationPermission()

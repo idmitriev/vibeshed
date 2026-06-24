@@ -10,7 +10,9 @@ actor MeetingPrepModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = MeetingPrepConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     static var requiredPermissions: Set<Permission> {
         [.accessibility, .screenRecording]
@@ -26,7 +28,7 @@ actor MeetingPrepModule: ModuleConfigurable {
     private var cacheTimestamp: Date = .distantPast
     private let cacheTTL: TimeInterval = 30
 
-    // Track hidden windows for restore
+    /// Track hidden windows for restore
     private var hiddenWindowIDs: [Int] = []
 
     func initialize(context: ModuleContext) async throws {
@@ -115,7 +117,7 @@ actor MeetingPrepModule: ModuleConfigurable {
             guard !event.isAllDay else { return false }
             let timeUntilStart = event.startDate.timeIntervalSince(now)
             // Show prep actions if meeting is happening now or starting within prep window
-            return (timeUntilStart <= prepWindow && now < event.endDate)
+            return timeUntilStart <= prepWindow && now < event.endDate
         }
     }
 
@@ -447,9 +449,9 @@ actor MeetingPrepModule: ModuleConfigurable {
 
     private func videoLabel(for type: VideoLinkType) -> String {
         switch type {
-        case .zoom: return "Zoom"
-        case .googleMeet: return "Google Meet"
-        case .teams: return "Teams"
+        case .zoom: "Zoom"
+        case .googleMeet: "Google Meet"
+        case .teams: "Teams"
         }
     }
 

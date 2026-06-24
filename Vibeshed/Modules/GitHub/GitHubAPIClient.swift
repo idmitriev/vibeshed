@@ -68,7 +68,7 @@ enum GitHubError: Error, LocalizedError {
         switch self {
         case .invalidToken:
             return "GitHub token is invalid or expired"
-        case .rateLimited(let reset):
+        case let .rateLimited(reset):
             if let reset {
                 let formatter = RelativeDateTimeFormatter()
                 let relative = formatter.localizedString(
@@ -77,9 +77,9 @@ enum GitHubError: Error, LocalizedError {
                 return "GitHub rate limit exceeded. Resets \(relative)"
             }
             return "GitHub rate limit exceeded"
-        case .apiError(let code, let msg):
+        case let .apiError(code, msg):
             return "GitHub API error \(code): \(msg)"
-        case .networkError(let err):
+        case let .networkError(err):
             return "Network error: \(err.localizedDescription)"
         case .parseFailed:
             return "Failed to parse GitHub API response"
@@ -232,7 +232,10 @@ final class GitHubAPIClient: @unchecked Sendable {
     }
 
     private func performRequest(_ request: URLRequest) async throws -> Any {
-        log.debug("GitHub API: \(request.httpMethod ?? "GET", privacy: .public) \(request.url?.path ?? "", privacy: .public)")
+        log
+            .debug(
+                "GitHub API: \(request.httpMethod ?? "GET", privacy: .public) \(request.url?.path ?? "", privacy: .public)"
+            )
         let data: Data
         let response: URLResponse
         do {
@@ -258,7 +261,10 @@ final class GitHubAPIClient: @unchecked Sendable {
                 forHTTPHeaderField: "X-RateLimit-Remaining"
             )
             if remaining == "0" {
-                log.warning("GitHub rate limit exceeded, resets at \(resetDate?.description ?? "unknown", privacy: .public)")
+                log
+                    .warning(
+                        "GitHub rate limit exceeded, resets at \(resetDate?.description ?? "unknown", privacy: .public)"
+                    )
                 throw GitHubError.rateLimited(resetDate: resetDate)
             }
         }

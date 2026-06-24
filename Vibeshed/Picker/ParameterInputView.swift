@@ -107,7 +107,6 @@ struct ParameterInputView: View {
         }
     }
 
-    @ViewBuilder
     private func textInputHint(for param: ActionParameter) -> some View {
         VStack(spacing: 16) {
             Image(systemName: iconForParameterType(param.type))

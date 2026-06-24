@@ -142,7 +142,8 @@ final class LayoutTransliterator {
             for keyCode in UInt16(0) ... 127 {
                 if let srcChar = srcUnshifted[keyCode],
                    let latChar = latinUnshifted[keyCode],
-                   srcChar != latChar {
+                   srcChar != latChar
+                {
                     charMapping[srcChar] = latChar
                 }
             }
@@ -151,14 +152,16 @@ final class LayoutTransliterator {
             for keyCode in UInt16(0) ... 127 {
                 if let srcChar = srcShifted[keyCode],
                    let latChar = latinShifted[keyCode],
-                   srcChar != latChar {
+                   srcChar != latChar
+                {
                     charMapping[srcChar] = latChar
                 }
             }
 
             if !charMapping.isEmpty {
                 mappingTables[sid] = charMapping
-                Log.layout.debug("Built mapping table for '\(name, privacy: .public)' with \(charMapping.count) entries")
+                Log.layout
+                    .debug("Built mapping table for '\(name, privacy: .public)' with \(charMapping.count) entries")
             }
         }
 
@@ -178,7 +181,7 @@ final class LayoutTransliterator {
 
         var map: [UInt16: Character] = [:]
         var chars = [UniChar](repeating: 0, count: 4)
-        var actualLength: Int = 0
+        var actualLength = 0
         var deadKeyState: UInt32 = 0
 
         for keyCode in UInt16(0) ... 127 {

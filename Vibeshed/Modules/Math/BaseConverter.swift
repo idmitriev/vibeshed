@@ -97,13 +97,13 @@ enum BaseConverter {
 
     private static func parseIntValue(_ str: String) -> Int? {
         if str.hasPrefix("0x") {
-            return Int(str.dropFirst(2), radix: 16)
+            Int(str.dropFirst(2), radix: 16)
         } else if str.hasPrefix("0b") {
-            return Int(str.dropFirst(2), radix: 2)
+            Int(str.dropFirst(2), radix: 2)
         } else if str.hasPrefix("0o") {
-            return Int(str.dropFirst(2), radix: 8)
+            Int(str.dropFirst(2), radix: 8)
         } else {
-            return Int(str)
+            Int(str)
         }
     }
 
@@ -116,11 +116,11 @@ enum BaseConverter {
 
     private static func normalizeBase(_ str: String) -> String {
         switch str.lowercased() {
-        case "hex", "hexadecimal": return "hex"
-        case "bin", "binary": return "bin"
-        case "oct", "octal": return "oct"
-        case "dec", "decimal": return "dec"
-        default: return str
+        case "hex", "hexadecimal": "hex"
+        case "bin", "binary": "bin"
+        case "oct", "octal": "oct"
+        case "dec", "decimal": "dec"
+        default: str
         }
     }
 

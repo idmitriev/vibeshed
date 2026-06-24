@@ -105,7 +105,7 @@ struct BookmarkActionPreviewView: View {
             HStack(spacing: 12) {
                 AsyncImage(url: faviconURL) { phase in
                     switch phase {
-                    case .success(let image):
+                    case let .success(image):
                         image.resizable().aspectRatio(contentMode: .fit)
                     default:
                         Image(systemName: action.iconName ?? "bookmark")
@@ -133,7 +133,6 @@ struct BookmarkActionPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private func browserRow(bundleID: String) -> some View {
         HStack(spacing: 8) {
             if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {

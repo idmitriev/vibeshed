@@ -9,7 +9,9 @@ actor ClipboardModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = ClipboardConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: ClipboardConfig = .init()
     private var context: ModuleContext?
@@ -28,7 +30,10 @@ actor ClipboardModule: ModuleConfigurable {
         await startMonitoring()
         let maxItems = self.config.maxItems
         let interval = self.config.pollingInterval
-        log.info("Clipboard module initialized (maxItems: \(maxItems, privacy: .public), interval: \(interval, privacy: .public)s)")
+        log
+            .info(
+                "Clipboard module initialized (maxItems: \(maxItems, privacy: .public), interval: \(interval, privacy: .public)s)"
+            )
     }
 
     func teardown() async {

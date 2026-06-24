@@ -14,7 +14,8 @@ struct ActionPreviewView: View {
         Group {
             if let item = selectedItem {
                 if let action = actionCache[item.id],
-                   let customPreview = action.makePreviewView() {
+                   let customPreview = action.makePreviewView()
+                {
                     customPreview
                 } else {
                     defaultPreview(for: item)
@@ -34,7 +35,6 @@ struct ActionPreviewView: View {
         .accessibilityIdentifier("actionPreview")
     }
 
-    @ViewBuilder
     private func defaultPreview(for item: ActionItem) -> some View {
         PreviewLayout(moduleName: item.moduleID) {
             PreviewHeader(title: item.title, subtitle: item.subtitle) {

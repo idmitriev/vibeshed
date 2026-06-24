@@ -36,7 +36,6 @@ struct ITermActionListItemView: View {
         .contentShape(Rectangle())
     }
 
-    @ViewBuilder
     private var iconView: some View {
         Image(systemName: iconForAction)
             .font(.title3)
@@ -57,7 +56,6 @@ struct ITermActionListItemView: View {
         }
     }
 
-    @ViewBuilder
     private func promptIndicator(_ atPrompt: Bool) -> some View {
         Circle()
             .fill(atPrompt ? .green : .orange)

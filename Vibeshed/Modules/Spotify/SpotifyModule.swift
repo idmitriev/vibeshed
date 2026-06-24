@@ -8,9 +8,13 @@ actor SpotifyModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = SpotifyConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
-    static var requiredPermissions: Set<Permission> { [] }
+    static var requiredPermissions: Set<Permission> {
+        []
+    }
 
     private var config: SpotifyConfig = .init()
     private var context: ModuleContext?
@@ -20,7 +24,10 @@ actor SpotifyModule: ModuleConfigurable {
     func initialize(context: ModuleContext) async throws {
         self.context = context
         updateSearchClient()
-        log.info("Spotify module initialized (searchClient: \(self.searchClient != nil ? "enabled" : "disabled", privacy: .public))")
+        log
+            .info(
+                "Spotify module initialized (searchClient: \(self.searchClient != nil ? "enabled" : "disabled", privacy: .public))"
+            )
     }
 
     func configDidUpdate(_ config: SpotifyConfig) async {
@@ -36,7 +43,8 @@ actor SpotifyModule: ModuleConfigurable {
         var errors: [String] = []
 
         if let clientId = config.clientId,
-           clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+           clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        {
             errors.append("clientId must not be empty when specified")
         }
         if config.maxSearchResults < 1 || config.maxSearchResults > 50 {
@@ -52,16 +60,15 @@ actor SpotifyModule: ModuleConfigurable {
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        let actions = await buildActions()
-
-        return actions
+        await buildActions()
     }
 
     // MARK: - Private
 
     private func updateSearchClient() {
         if let clientId = config.clientId,
-           !clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+           !clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        {
             searchClient = SpotifySearchClient(clientId: clientId)
         } else {
             searchClient = nil

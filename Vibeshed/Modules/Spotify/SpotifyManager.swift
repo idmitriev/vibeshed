@@ -26,8 +26,8 @@ enum SpotifyManager {
 
     static func playerState() async throws -> String {
         let output = try await runScript("""
-            tell application "Spotify" to return player state as string
-            """)
+        tell application "Spotify" to return player state as string
+        """)
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -47,49 +47,49 @@ enum SpotifyManager {
 
     static func toggleShuffle() async throws {
         try await runScript("""
-            tell application "Spotify"
-                if shuffling then
-                    set shuffling to false
-                else
-                    set shuffling to true
-                end if
-            end tell
-            """)
+        tell application "Spotify"
+            if shuffling then
+                set shuffling to false
+            else
+                set shuffling to true
+            end if
+        end tell
+        """)
     }
 
     static func toggleRepeat() async throws {
         try await runScript("""
-            tell application "Spotify"
-                if repeating then
-                    set repeating to false
-                else
-                    set repeating to true
-                end if
-            end tell
-            """)
+        tell application "Spotify"
+            if repeating then
+                set repeating to false
+            else
+                set repeating to true
+            end if
+        end tell
+        """)
     }
 
     // MARK: - Now Playing
 
     static func nowPlaying() async throws -> SpotifyNowPlaying? {
         let output = try await runScript("""
-            tell application "Spotify"
-                if player state is stopped then return ""
-                set trackName to name of current track
-                set artistName to artist of current track
-                set albumName to album of current track
-                set artURL to artwork url of current track
-                set trackDuration to duration of current track
-                set playerPos to player position
-                set trackID to id of current track
-                set pState to player state as string
-                set d to "\t"
-                set o to trackName & d & artistName & d & albumName
-                set o to o & d & artURL & d & trackDuration
-                set o to o & d & playerPos & d & trackID & d & pState
-                return o
-            end tell
-            """)
+        tell application "Spotify"
+            if player state is stopped then return ""
+            set trackName to name of current track
+            set artistName to artist of current track
+            set albumName to album of current track
+            set artURL to artwork url of current track
+            set trackDuration to duration of current track
+            set playerPos to player position
+            set trackID to id of current track
+            set pState to player state as string
+            set d to "\t"
+            set o to trackName & d & artistName & d & albumName
+            set o to o & d & artURL & d & trackDuration
+            set o to o & d & playerPos & d & trackID & d & pState
+            return o
+        end tell
+        """)
 
         let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -114,11 +114,11 @@ enum SpotifyManager {
     static func openURI(_ uri: String) async throws {
         let escaped = uri.escapedForAppleScript
         try await runScript("""
-            tell application "Spotify"
-                open location "\(escaped)"
-                play
-            end tell
-            """)
+        tell application "Spotify"
+            open location "\(escaped)"
+            play
+        end tell
+        """)
     }
 
     // MARK: - Private: AppleScript Execution

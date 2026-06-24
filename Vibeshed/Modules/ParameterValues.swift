@@ -19,10 +19,14 @@ struct ParameterValues: Sendable, Equatable, Codable, ExpressibleByDictionaryLit
 
     static let empty = ParameterValues()
 
-    var isEmpty: Bool { storage.isEmpty }
+    var isEmpty: Bool {
+        storage.isEmpty
+    }
 
     /// The underlying string-keyed values, e.g. for forwarding to `ActionResult.chain`.
-    var raw: [String: String] { storage }
+    var raw: [String: String] {
+        storage
+    }
 
     subscript(_ id: String) -> String? {
         get { storage[id] }
@@ -35,7 +39,9 @@ struct ParameterValues: Sendable, Equatable, Codable, ExpressibleByDictionaryLit
 
     // MARK: - Typed accessors
 
-    func string(_ id: String) -> String? { storage[id] }
+    func string(_ id: String) -> String? {
+        storage[id]
+    }
 
     func double(_ id: String) -> Double? {
         storage[id].flatMap(Double.init)

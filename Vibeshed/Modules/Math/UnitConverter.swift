@@ -108,6 +108,7 @@ enum UnitConverter {
 
         return u
     }()
+
     // swiftlint:enable function_body_length
 
     // MARK: - Parsing
@@ -195,10 +196,10 @@ enum UnitConverter {
 
     private static func temperatureBase(_ unit: String) -> String? {
         switch unit {
-        case "c", "celsius", "\u{00B0}c": return "c"
-        case "f", "fahrenheit", "\u{00B0}f": return "f"
-        case "k", "kelvin": return "k"
-        default: return nil
+        case "c", "celsius", "\u{00B0}c": "c"
+        case "f", "fahrenheit", "\u{00B0}f": "f"
+        case "k", "kelvin": "k"
+        default: nil
         }
     }
 }

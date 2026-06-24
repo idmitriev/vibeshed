@@ -7,11 +7,25 @@ struct RecentProjectAction: Action {
     let relevanceScore: Double
     let item: RecentProjectItem
 
-    var title: String { item.title }
-    var subtitle: String { item.subtitle }
-    var iconName: String? { item.listIcon }
-    var keywords: [String] { item.keywords }
-    var parameters: [ActionParameter] { [] }
+    var title: String {
+        item.title
+    }
+
+    var subtitle: String {
+        item.subtitle
+    }
+
+    var iconName: String? {
+        item.listIcon
+    }
+
+    var keywords: [String] {
+        item.keywords
+    }
+
+    var parameters: [ActionParameter] {
+        []
+    }
 
     func run(with _: ParameterValues) async throws -> ActionResult {
         item.open()

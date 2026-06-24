@@ -6,7 +6,9 @@ struct JetBrainsProvider: RecentProjectsProvider {
     static let moduleID = "jetbrains"
     static let displayName = "JetBrains"
     static let iconName = "hammer"
-    static var defaultConfig: JetBrainsConfig { .init() }
+    static var defaultConfig: JetBrainsConfig {
+        .init()
+    }
 
     static func validate(_ config: JetBrainsConfig) -> ConfigValidationResult {
         var errors: [String] = []

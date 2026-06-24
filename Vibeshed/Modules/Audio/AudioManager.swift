@@ -7,7 +7,6 @@ import OSLog
 private let log = Log.module("audio")
 
 enum AudioManager {
-
     // MARK: - Output Volume
 
     static func getOutputVolume() -> Float {
@@ -301,7 +300,10 @@ enum AudioManager {
         let status = AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &name)
         guard status == noErr, let cfName = name?.takeRetainedValue() else {
             if status != noErr {
-                log.error("deviceName: failed for device \(deviceID, privacy: .public) (status \(status, privacy: .public))")
+                log
+                    .error(
+                        "deviceName: failed for device \(deviceID, privacy: .public) (status \(status, privacy: .public))"
+                    )
             }
             return nil
         }

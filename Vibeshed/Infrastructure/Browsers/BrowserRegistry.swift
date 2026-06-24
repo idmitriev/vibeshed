@@ -12,13 +12,28 @@ enum BrowserRegistry {
     static let all: [BrowserEntry] = [
         BrowserEntry(name: "Safari", bundleID: "com.apple.Safari", isChromium: false, supportsAppleScriptTabs: true),
         BrowserEntry(name: "Chrome", bundleID: "com.google.Chrome", isChromium: true, supportsAppleScriptTabs: true),
-        BrowserEntry(name: "Firefox", bundleID: "org.mozilla.firefox", isChromium: false, supportsAppleScriptTabs: false),
+        BrowserEntry(
+            name: "Firefox",
+            bundleID: "org.mozilla.firefox",
+            isChromium: false,
+            supportsAppleScriptTabs: false
+        ),
         BrowserEntry(name: "Brave", bundleID: "com.brave.Browser", isChromium: true, supportsAppleScriptTabs: true),
         BrowserEntry(name: "Edge", bundleID: "com.microsoft.edgemac", isChromium: true, supportsAppleScriptTabs: true),
-        BrowserEntry(name: "Arc", bundleID: "company.thebrowser.Browser", isChromium: false, supportsAppleScriptTabs: true),
+        BrowserEntry(
+            name: "Arc",
+            bundleID: "company.thebrowser.Browser",
+            isChromium: false,
+            supportsAppleScriptTabs: true
+        ),
         BrowserEntry(name: "Orion", bundleID: "com.kagi.kagimacOS", isChromium: false, supportsAppleScriptTabs: false),
         BrowserEntry(name: "Vivaldi", bundleID: "com.vivaldi.Vivaldi", isChromium: true, supportsAppleScriptTabs: true),
-        BrowserEntry(name: "Opera", bundleID: "com.operasoftware.Opera", isChromium: true, supportsAppleScriptTabs: true),
+        BrowserEntry(
+            name: "Opera",
+            bundleID: "com.operasoftware.Opera",
+            isChromium: true,
+            supportsAppleScriptTabs: true
+        ),
     ]
 
     /// Browsers that support AppleScript tab access (Safari + Chromium-based, excluding Firefox/Orion).

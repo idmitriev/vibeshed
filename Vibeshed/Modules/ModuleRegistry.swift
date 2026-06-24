@@ -43,7 +43,8 @@ final class ModuleRegistry {
 
         // 0. Skip modules whose config section is not present in YAML
         if module is any ModuleConfigurable,
-           !configManager.config.moduleConfigs.keys.contains(id) {
+           !configManager.config.moduleConfigs.keys.contains(id)
+        {
             Log.modules.debug("Module '\(id, privacy: .public)' skipped: no config section")
             return
         }
@@ -74,10 +75,11 @@ final class ModuleRegistry {
             } catch {
                 let message =
                     (error as? ModuleConfigError)?.errorDescription
-                    ?? error.localizedDescription
+                        ?? error.localizedDescription
                 configErrors[id] = message
                 Log.modules.error(
-                    "Module '\(id, privacy: .public)' not loaded: \(message, privacy: .public)")
+                    "Module '\(id, privacy: .public)' not loaded: \(message, privacy: .public)"
+                )
                 await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
                 return
             }
@@ -223,7 +225,7 @@ final class ModuleRegistry {
         for module: any Module,
         id: String
     ) -> ModuleConfigDecoder? {
-        func open<M: ModuleConfigurable>(_ m: M, id: String) -> ModuleConfigDecoder {
+        func open(_ m: some ModuleConfigurable, id: String) -> ModuleConfigDecoder {
             ModuleConfigDecoder.make(for: m, moduleID: id)
         }
         guard let configurable = module as? any ModuleConfigurable else {
@@ -241,7 +243,7 @@ final class ModuleRegistry {
             } catch {
                 let message =
                     (error as? ModuleConfigError)?.errorDescription
-                    ?? error.localizedDescription
+                        ?? error.localizedDescription
                 configErrors[id] = message
                 Log.modules.error(
                     "Config change rejected for module '\(id, privacy: .public)': \(message, privacy: .public)"

@@ -11,7 +11,9 @@ actor TelegramModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = TelegramConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: TelegramConfig = .init()
     private var context: ModuleContext?
@@ -42,7 +44,7 @@ actor TelegramModule: ModuleConfigurable {
                     "Chat at index \(index) has an empty name"
                 )
             }
-            if entry.username == nil && entry.phone == nil {
+            if entry.username == nil, entry.phone == nil {
                 errors.append(
                     "Chat '\(entry.name)' needs a username or phone"
                 )
@@ -50,7 +52,8 @@ actor TelegramModule: ModuleConfigurable {
             if let username = entry.username,
                username.trimmingCharacters(
                    in: .whitespacesAndNewlines
-               ).isEmpty {
+               ).isEmpty
+            {
                 errors.append(
                     "Chat '\(entry.name)' has an empty username"
                 )
@@ -58,7 +61,8 @@ actor TelegramModule: ModuleConfigurable {
             if let phone = entry.phone,
                phone.trimmingCharacters(
                    in: .whitespacesAndNewlines
-               ).isEmpty {
+               ).isEmpty
+            {
                 errors.append(
                     "Chat '\(entry.name)' has an empty phone"
                 )
@@ -78,8 +82,7 @@ actor TelegramModule: ModuleConfigurable {
         query: String,
         scoring: ScoringContext
     ) async -> [any Action] {
-        let actions = buildActions()
-        return actions
+        buildActions()
     }
 
     private func buildActions() -> [TelegramAction] {

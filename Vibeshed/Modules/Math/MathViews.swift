@@ -36,11 +36,11 @@ struct MathActionListItemView: View {
 
     private var iconColor: Color {
         switch action.resultType {
-        case .expression: return .orange
-        case .unitConversion: return .blue
-        case .currencyConversion: return .green
-        case .percentage: return .pink
-        case .baseConversion: return .purple
+        case .expression: .orange
+        case .unitConversion: .blue
+        case .currencyConversion: .green
+        case .percentage: .pink
+        case .baseConversion: .purple
         }
     }
 }
@@ -82,31 +82,31 @@ struct MathActionPreviewView: View {
 
     private var headerColor: Color {
         switch action.resultType {
-        case .expression: return .orange
-        case .unitConversion: return .blue
-        case .currencyConversion: return .green
-        case .percentage: return .pink
-        case .baseConversion: return .purple
+        case .expression: .orange
+        case .unitConversion: .blue
+        case .currencyConversion: .green
+        case .percentage: .pink
+        case .baseConversion: .purple
         }
     }
 
     private var typeName: String {
         switch action.resultType {
-        case .expression: return "Expression"
-        case .unitConversion: return "Unit Conversion"
-        case .currencyConversion: return "Currency"
-        case .percentage: return "Percentage"
-        case .baseConversion: return "Base Conversion"
+        case .expression: "Expression"
+        case .unitConversion: "Unit Conversion"
+        case .currencyConversion: "Currency"
+        case .percentage: "Percentage"
+        case .baseConversion: "Base Conversion"
         }
     }
 
     private var typeIcon: String {
         switch action.resultType {
-        case .expression: return "function"
-        case .unitConversion: return "arrow.left.arrow.right"
-        case .currencyConversion: return "dollarsign.circle"
-        case .percentage: return "percent"
-        case .baseConversion: return "number"
+        case .expression: "function"
+        case .unitConversion: "arrow.left.arrow.right"
+        case .currencyConversion: "dollarsign.circle"
+        case .percentage: "percent"
+        case .baseConversion: "number"
         }
     }
 }

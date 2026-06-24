@@ -85,12 +85,12 @@ final class CapsLockMonitor: @unchecked Sendable {
 
     private func ioReturnDescription(_ code: IOReturn) -> String {
         switch code {
-        case kIOReturnSuccess: return "success"
-        case kIOReturnNotPermitted: return "kIOReturnNotPermitted — grant Input Monitoring"
-        case kIOReturnNotPrivileged: return "kIOReturnNotPrivileged"
-        case kIOReturnBadArgument: return "kIOReturnBadArgument"
-        case kIOReturnExclusiveAccess: return "kIOReturnExclusiveAccess"
-        default: return "unknown IOReturn 0x\(String(UInt32(bitPattern: code), radix: 16))"
+        case kIOReturnSuccess: "success"
+        case kIOReturnNotPermitted: "kIOReturnNotPermitted — grant Input Monitoring"
+        case kIOReturnNotPrivileged: "kIOReturnNotPrivileged"
+        case kIOReturnBadArgument: "kIOReturnBadArgument"
+        case kIOReturnExclusiveAccess: "kIOReturnExclusiveAccess"
+        default: "unknown IOReturn 0x\(String(UInt32(bitPattern: code), radix: 16))"
         }
     }
 

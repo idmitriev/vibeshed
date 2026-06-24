@@ -8,7 +8,9 @@ actor SystemModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = SystemConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: SystemConfig = .init()
     private var context: ModuleContext?
@@ -33,9 +35,7 @@ actor SystemModule: ModuleConfigurable {
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        let actions = buildActions(config: config)
-
-        return actions
+        buildActions(config: config)
     }
 
     // MARK: - Build Actions

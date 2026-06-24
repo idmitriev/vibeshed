@@ -26,7 +26,6 @@ struct AISession: Sendable {
 // MARK: - Reader
 
 enum AISessionReader {
-
     static func readAllSessions(
         providers: [String],
         maxResults: Int
@@ -178,7 +177,8 @@ enum AISessionReader {
     // MARK: - Claude Desktop
 
     private static func readClaudeDesktopMetadata()
-        -> [DesktopSessionMeta] {
+        -> [DesktopSessionMeta]
+    {
         let base = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(
                 "Library/Application Support/Claude/claude-code-sessions"
@@ -279,7 +279,8 @@ enum AISessionReader {
         for meta in metas {
             if meta.isArchived { continue }
             if let cliID = meta.cliSessionId,
-               excludeCliIDs.contains(cliID) {
+               excludeCliIDs.contains(cliID)
+            {
                 continue
             }
             let title = meta.title
@@ -332,7 +333,7 @@ enum AISessionReader {
         guard let data = FileManager.default.contents(
             atPath: historyPath
         ),
-              let content = String(data: data, encoding: .utf8)
+            let content = String(data: data, encoding: .utf8)
         else {
             log.debug("Codex history.jsonl not found or unreadable")
             return []
@@ -437,7 +438,7 @@ enum AISessionReader {
                   with: data
               ) as? [String: Any],
               let threadTitles = json["thread-titles"]
-                  as? [String: Any],
+              as? [String: Any],
               let titles = threadTitles["titles"] as? [String: String]
         else { return [:] }
         return titles

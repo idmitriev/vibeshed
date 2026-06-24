@@ -121,5 +121,4 @@ final class TimerScheduler {
     private func playSound(named name: String) {
         NSSound(named: NSSound.Name(name))?.play()
     }
-
 }

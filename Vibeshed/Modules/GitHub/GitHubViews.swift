@@ -26,7 +26,8 @@ struct GitHubActionListItemView: View {
 
             HStack(spacing: 4) {
                 if let stateIcon = action.stateIcon,
-                   let stateColor = action.stateColor {
+                   let stateColor = action.stateColor
+                {
                     Image(systemName: stateIcon)
                         .font(.caption)
                         .foregroundStyle(stateColor)
@@ -45,10 +46,11 @@ struct GitHubActionListItemView: View {
     @ViewBuilder
     private var avatarOrIcon: some View {
         if let avatarURL = action.avatarURL,
-           let url = URL(string: avatarURL) {
+           let url = URL(string: avatarURL)
+        {
             AsyncImage(url: url) { phase in
                 switch phase {
-                case .success(let image):
+                case let .success(image):
                     image.resizable().aspectRatio(contentMode: .fill)
                 default:
                     fallbackIcon
@@ -96,10 +98,11 @@ struct GitHubActionPreviewView: View {
     @ViewBuilder
     private var avatarHero: some View {
         if let avatarURL = action.avatarURL,
-           let url = URL(string: avatarURL) {
+           let url = URL(string: avatarURL)
+        {
             AsyncImage(url: url) { phase in
                 switch phase {
-                case .success(let image):
+                case let .success(image):
                     image.resizable().aspectRatio(contentMode: .fill)
                 default:
                     previewFallbackIcon
@@ -124,11 +127,11 @@ struct GitHubActionPreviewView: View {
         .frame(width: 72, height: 72)
     }
 
-    @ViewBuilder
     private var badgeRow: some View {
         HStack(spacing: 8) {
             if let stateIcon = action.stateIcon,
-               let stateColor = action.stateColor {
+               let stateColor = action.stateColor
+            {
                 PreviewPill(
                     text: stateLabel,
                     icon: stateIcon,
@@ -161,7 +164,6 @@ struct GitHubActionPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private var metadataSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             if let stars = action.repoStars {

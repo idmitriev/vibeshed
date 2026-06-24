@@ -9,7 +9,9 @@ actor ZoomModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = ZoomConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: ZoomConfig = .init()
     private var context: ModuleContext?
@@ -38,7 +40,7 @@ actor ZoomModule: ModuleConfigurable {
             if name.isEmpty {
                 errors.append("Meeting at index \(index) has an empty name")
             }
-            if entry.meetingId == nil && entry.link == nil {
+            if entry.meetingId == nil, entry.link == nil {
                 errors.append(
                     "Meeting '\(entry.name)' needs a meetingId or link"
                 )

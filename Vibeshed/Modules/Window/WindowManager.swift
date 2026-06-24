@@ -16,7 +16,7 @@ enum WindowManagerError: Error, LocalizedError {
             "No focused window found"
         case .windowNotFound:
             "Window not found"
-        case .accessibilityError(let msg):
+        case let .accessibilityError(msg):
             "Accessibility error: \(msg)"
         }
     }
@@ -61,7 +61,10 @@ struct WindowManager: Sendable {
 
     func focusWindow(_ window: WindowInfo) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log.error("focusWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)")
+            log
+                .error(
+                    "focusWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)"
+                )
             throw WindowManagerError.windowNotFound
         }
         if AXWindowHelper.isMinimized(axWindow) {
@@ -77,7 +80,10 @@ struct WindowManager: Sendable {
 
     func setFrame(_ window: WindowInfo, frame: CGRect) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log.error("setFrame: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)")
+            log
+                .error(
+                    "setFrame: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)"
+                )
             throw WindowManagerError.windowNotFound
         }
 
@@ -105,7 +111,10 @@ struct WindowManager: Sendable {
 
     func minimizeWindow(_ window: WindowInfo) throws {
         guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log.error("minimizeWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)")
+            log
+                .error(
+                    "minimizeWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)"
+                )
             throw WindowManagerError.windowNotFound
         }
         AXUIElementSetAttributeValue(

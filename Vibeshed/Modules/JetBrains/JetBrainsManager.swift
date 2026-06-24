@@ -108,7 +108,8 @@ enum JetBrainsManager {
 
     static func openProject(_ project: JetBrainsProject) {
         if let cmd = project.launchCommand,
-           FileManager.default.isExecutableFile(atPath: cmd) {
+           FileManager.default.isExecutableFile(atPath: cmd)
+        {
             DispatchQueue.global(qos: .userInitiated).async {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: cmd)
@@ -144,7 +145,8 @@ enum JetBrainsManager {
         for dir in contents {
             guard let ideInfo = matchIDE(dir) else { continue }
             if let enabled = enabledIDEs,
-               !enabled.contains(ideInfo.tag) {
+               !enabled.contains(ideInfo.tag)
+            {
                 continue
             }
 
@@ -306,7 +308,8 @@ enum JetBrainsManager {
 // MARK: - XML Parser
 
 private final class RecentProjectsXMLParser: NSObject,
-    XMLParserDelegate {
+    XMLParserDelegate
+{
     let ideInfo: JetBrainsIDEInfo
     let tool: ToolboxTool?
     var projects: [JetBrainsProject] = []
@@ -353,7 +356,8 @@ private final class RecentProjectsXMLParser: NSObject,
 
         case "option" where inEntry:
             if let name = attributes["name"],
-               let value = attributes["value"] {
+               let value = attributes["value"]
+            {
                 switch name {
                 case "activationTimestamp":
                     currentActivationTimestamp = Int64(value)

@@ -44,9 +44,9 @@ struct TelegramActionListItemView: View {
 
     private var colorForType: Color {
         switch action.telegramItemType {
-        case .chat: return .blue
-        case .utility: return .secondary
-        case nil: return .secondary
+        case .chat: .blue
+        case .utility: .secondary
+        case nil: .secondary
         }
     }
 }
@@ -82,9 +82,9 @@ struct TelegramActionPreviewView: View {
 
     private var previewColor: Color {
         switch action.telegramItemType {
-        case .chat: return .blue
-        case .utility: return .secondary
-        case nil: return .secondary
+        case .chat: .blue
+        case .utility: .secondary
+        case nil: .secondary
         }
     }
 }
@@ -93,16 +93,16 @@ struct TelegramActionPreviewView: View {
 
 private func iconForChatType(_ type: TelegramChatType) -> String {
     switch type {
-    case .chat: return "person.fill"
-    case .group: return "person.3.fill"
-    case .channel: return "megaphone.fill"
+    case .chat: "person.fill"
+    case .group: "person.3.fill"
+    case .channel: "megaphone.fill"
     }
 }
 
 private func chatTypeLabel(_ type: TelegramChatType) -> String {
     switch type {
-    case .chat: return "Chat"
-    case .group: return "Group"
-    case .channel: return "Channel"
+    case .chat: "Chat"
+    case .group: "Group"
+    case .channel: "Channel"
     }
 }

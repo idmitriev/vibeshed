@@ -48,7 +48,7 @@ struct ParameterOption: Sendable, Identifiable {
     }
 }
 
-// Exclude labelHighlightRanges from equality/hashing (display-only decoration)
+/// Exclude labelHighlightRanges from equality/hashing (display-only decoration)
 extension ParameterOption: Equatable {
     static func == (lhs: ParameterOption, rhs: ParameterOption) -> Bool {
         lhs.id == rhs.id && lhs.label == rhs.label && lhs.subtitle == rhs.subtitle

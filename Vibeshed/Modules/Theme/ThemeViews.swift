@@ -41,24 +41,24 @@ struct ThemeActionListItemView: View {
 
     private var iconColor: Color {
         switch action.category {
-        case .system: return .orange
-        case .vscode: return .blue
-        case .jetbrains: return .purple
-        case .iterm: return .green
-        case .github: return .gray
-        case .preset: return .pink
-        case .none: return .secondary
+        case .system: .orange
+        case .vscode: .blue
+        case .jetbrains: .purple
+        case .iterm: .green
+        case .github: .gray
+        case .preset: .pink
+        case .none: .secondary
         }
     }
 
     private var categoryBadge: String? {
         switch action.category {
-        case .vscode: return "VS Code"
-        case .jetbrains: return "JetBrains"
-        case .iterm: return "iTerm"
-        case .github: return "GitHub"
-        case .preset: return "Preset"
-        case .system, .none: return nil
+        case .vscode: "VS Code"
+        case .jetbrains: "JetBrains"
+        case .iterm: "iTerm"
+        case .github: "GitHub"
+        case .preset: "Preset"
+        case .system, .none: nil
         }
     }
 }
@@ -74,13 +74,12 @@ struct ThemeActionPreviewView: View {
                 systemIcon: action.iconName ?? "paintpalette"
             )
 
-            if case .preset(let preset) = action.category {
+            if case let .preset(preset) = action.category {
                 presetDetails(preset)
             }
         }
     }
 
-    @ViewBuilder
     private func presetDetails(_ preset: ThemePreset) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Changes")

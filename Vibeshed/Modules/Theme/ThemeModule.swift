@@ -8,7 +8,9 @@ actor ThemeModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = ThemeConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: ThemeConfig = .init()
     private var context: ModuleContext?
@@ -36,7 +38,8 @@ actor ThemeModule: ModuleConfigurable {
                     errors.append("Preset name cannot be empty")
                 }
                 if let appearance = preset.appearance,
-                   appearance != "dark" && appearance != "light" {
+                   appearance != "dark", appearance != "light"
+                {
                     errors.append("Preset '\(preset.name)' appearance must be 'dark' or 'light'")
                 }
             }
@@ -55,21 +58,21 @@ actor ThemeModule: ModuleConfigurable {
     ) async -> [ParameterOption] {
         switch parameterID {
         case "color":
-            return ThemeManager.accentColors.map { entry in
+            ThemeManager.accentColors.map { entry in
                 ParameterOption(id: entry.name, label: entry.name, iconName: "circle.fill")
             }
         case "theme" where actionID.rawValue == "theme.vscodeTheme":
-            return vscodeThemeOptions()
+            vscodeThemeOptions()
         case "theme" where actionID.rawValue == "theme.jetbrainsTheme":
-            return ThemeManager.jetbrainsThemes.map { entry in
+            ThemeManager.jetbrainsThemes.map { entry in
                 ParameterOption(id: entry.name, label: entry.name, iconName: "paintbrush")
             }
         case "preset":
-            return itermPresetOptions()
+            itermPresetOptions()
         case "mode":
-            return githubThemeOptions()
+            githubThemeOptions()
         default:
-            return []
+            []
         }
     }
 
@@ -372,13 +375,12 @@ actor ThemeModule: ModuleConfigurable {
 
     private func githubThemeOptions() -> [ParameterOption] {
         ThemeConfig.defaultGitHubThemes.map { name in
-            let icon: String
-            switch name.lowercased() {
-            case "auto": icon = "circle.lefthalf.filled"
-            case "light": icon = "sun.max"
-            case "dark": icon = "moon.fill"
-            case "dark dimmed": icon = "moon"
-            default: icon = "globe"
+            let icon = switch name.lowercased() {
+            case "auto": "circle.lefthalf.filled"
+            case "light": "sun.max"
+            case "dark": "moon.fill"
+            case "dark dimmed": "moon"
+            default: "globe"
             }
             return ParameterOption(id: name.lowercased(), label: name, iconName: icon)
         }

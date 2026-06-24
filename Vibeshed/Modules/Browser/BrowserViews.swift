@@ -79,7 +79,7 @@ struct BrowserActionPreviewView: View {
             HStack(spacing: 12) {
                 AsyncImage(url: faviconURL) { phase in
                     switch phase {
-                    case .success(let image):
+                    case let .success(image):
                         image.resizable().aspectRatio(contentMode: .fit)
                     default:
                         browserOrGlobeIcon
@@ -127,7 +127,6 @@ struct BrowserActionPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private func urlSection(_ urlString: String) -> some View {
         Text(urlString)
             .font(.caption)
@@ -136,7 +135,6 @@ struct BrowserActionPreviewView: View {
             .textSelection(.enabled)
     }
 
-    @ViewBuilder
     private func browserRow(bundleID: String) -> some View {
         HStack(spacing: 8) {
             if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {

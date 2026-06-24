@@ -6,7 +6,9 @@ struct VSCodeProvider: RecentProjectsProvider {
     static let moduleID = "vscode"
     static let displayName = "VS Code"
     static let iconName = "chevron.left.forwardslash.chevron.right"
-    static var defaultConfig: VSCodeConfig { .init() }
+    static var defaultConfig: VSCodeConfig {
+        .init()
+    }
 
     static func validate(_ config: VSCodeConfig) -> ConfigValidationResult {
         var errors: [String] = []
@@ -15,7 +17,8 @@ struct VSCodeProvider: RecentProjectsProvider {
         }
         if let path = config.codePath,
            !path.isEmpty,
-           !FileManager.default.fileExists(atPath: path) {
+           !FileManager.default.fileExists(atPath: path)
+        {
             errors.append("codePath does not exist: \(path)")
         }
         return errors.isEmpty ? .valid : .invalid(errors)

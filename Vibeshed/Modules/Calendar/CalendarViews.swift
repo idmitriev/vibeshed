@@ -124,7 +124,6 @@ struct CalendarActionPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private var pills: some View {
         HStack(spacing: 8) {
             if let start = action.startDate {
@@ -251,9 +250,9 @@ struct CalendarActionPreviewView: View {
 
     private func videoLabel(for type: VideoLinkType) -> String {
         switch type {
-        case .zoom: return "Zoom"
-        case .googleMeet: return "Google Meet"
-        case .teams: return "Teams"
+        case .zoom: "Zoom"
+        case .googleMeet: "Google Meet"
+        case .teams: "Teams"
         }
     }
 

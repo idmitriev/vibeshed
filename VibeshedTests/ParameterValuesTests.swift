@@ -1,6 +1,5 @@
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 final class ParameterValuesTests: XCTestCase {
     func testDictionaryLiteralAndSubscript() {

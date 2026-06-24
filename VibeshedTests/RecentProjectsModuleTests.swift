@@ -1,7 +1,6 @@
 import Foundation
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 /// Exercises the generic `RecentProjectsModule` logic (ID derivation, ranked scoring,
 /// enabledActions filtering, caching) via a stub provider — independent of the real
@@ -16,9 +15,13 @@ private struct StubProvider: RecentProjectsProvider {
     static let moduleID = "stub"
     static let displayName = "Stub"
     static let iconName = "questionmark"
-    static var defaultConfig: StubConfig { .init() }
+    static var defaultConfig: StubConfig {
+        .init()
+    }
 
-    func enabledActions(_ config: StubConfig) -> Set<String>? { config.enabled }
+    func enabledActions(_ config: StubConfig) -> Set<String>? {
+        config.enabled
+    }
 
     func makeItems(config _: StubConfig) -> [RecentProjectItem] {
         ["/a/one", "/b/two", "/c/three"].map { path in
@@ -63,7 +66,7 @@ final class RecentProjectsModuleTests: XCTestCase {
         await module.configDidUpdate(StubConfig(enabled: [onlyTwo]))
 
         let actions = await module.provideActions(query: "", scoring: emptyScoring)
-        XCTAssertEqual(actions.map { $0.id.actionName }, [onlyTwo])
+        XCTAssertEqual(actions.map(\.id.actionName), [onlyTwo])
     }
 
     func testStaticValidateDelegatesToProvider() {

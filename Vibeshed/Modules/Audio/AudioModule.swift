@@ -9,7 +9,9 @@ actor AudioModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = AudioConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: AudioConfig = .init()
     private var context: ModuleContext?
@@ -42,9 +44,7 @@ actor AudioModule: ModuleConfigurable {
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        let actions = buildActions(config: config)
-
-        return actions
+        buildActions(config: config)
     }
 
     func provideParameterOptions(
@@ -68,7 +68,7 @@ actor AudioModule: ModuleConfigurable {
             currentID = AudioManager.defaultOutputDeviceID()
         }
 
-        let options = devices.map { device in
+        return devices.map { device in
             let label = device.id == currentID
                 ? "\(device.name) (current)"
                 : device.name
@@ -78,8 +78,6 @@ actor AudioModule: ModuleConfigurable {
                 iconName: isInput ? "mic" : "speaker.wave.2"
             )
         }
-
-        return options
     }
 
     // MARK: - Build Actions

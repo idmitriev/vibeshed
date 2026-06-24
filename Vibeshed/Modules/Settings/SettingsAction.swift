@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct BrowserAction: Action {
+struct SettingsAction: Action {
     let id: ActionID
     let title: String
     let subtitle: String
@@ -10,19 +10,15 @@ struct BrowserAction: Action {
     let parameters: [ActionParameter]
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
-    let browserBundleID: String?
-    let tabURL: String?
 
     init(
         id: ActionID,
         title: String,
         subtitle: String,
         iconName: String? = nil,
-        relevanceScore: Double = 0.8,
+        relevanceScore: Double = 0.6,
         keywords: [String] = [],
         parameters: [ActionParameter] = [],
-        browserBundleID: String? = nil,
-        tabURL: String? = nil,
         runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
@@ -32,8 +28,6 @@ struct BrowserAction: Action {
         self.relevanceScore = relevanceScore
         self.keywords = keywords
         self.parameters = parameters
-        self.browserBundleID = browserBundleID
-        self.tabURL = tabURL
         self.runner = runner
     }
 
@@ -41,31 +35,13 @@ struct BrowserAction: Action {
         try await runner(values)
     }
 
-    var activatesOnSingleClick: Bool {
-        true
-    }
-
-    var deduplicationKey: String? {
-        tabURL.map(ActionScorer.normalizeURL)
-    }
-
     @MainActor
     func makeListItemView() -> AnyView? {
-        AnyView(BrowserActionListItemView(action: self))
+        AnyView(SettingsActionListItemView(action: self))
     }
 
     @MainActor
     func makePreviewView() -> AnyView? {
-        AnyView(BrowserActionPreviewView(action: self))
-    }
-}
-
-extension BrowserAction {
-    @MainActor
-    var browserIcon: NSImage? {
-        guard let bundleID = browserBundleID,
-              let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
-        else { return nil }
-        return NSWorkspace.shared.icon(forFile: url.path)
+        AnyView(SettingsActionPreviewView(action: self))
     }
 }

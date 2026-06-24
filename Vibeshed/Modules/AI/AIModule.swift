@@ -10,7 +10,9 @@ actor AIModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = AIConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: AIConfig = .init()
     private var context: ModuleContext?
@@ -55,7 +57,8 @@ actor AIModule: ModuleConfigurable {
         }
         if let path = config.claudePath,
            !path.isEmpty,
-           !FileManager.default.fileExists(atPath: path) {
+           !FileManager.default.fileExists(atPath: path)
+        {
             errors.append("claudePath does not exist: \(path)")
         }
         return errors.isEmpty ? .valid : .invalid(errors)
@@ -66,9 +69,7 @@ actor AIModule: ModuleConfigurable {
         scoring: ScoringContext
     ) async -> [any Action] {
         refreshCacheIfNeeded()
-        let actions = buildActions()
-
-        return actions
+        return buildActions()
     }
 
     // MARK: - Cache
@@ -279,7 +280,8 @@ actor AIModule: ModuleConfigurable {
         customPath: String?
     ) -> String {
         if let custom = customPath,
-           FileManager.default.isExecutableFile(atPath: custom) {
+           FileManager.default.isExecutableFile(atPath: custom)
+        {
             return custom
         }
         let candidates = [
@@ -346,20 +348,20 @@ actor AIModule: ModuleConfigurable {
             cdPart = ""
         }
         return """
-            tell application "iTerm2"
-                if (count of windows) is 0 then
-                    create window with default profile
-                else
-                    tell current window
-                        create tab with default profile
-                    end tell
-                end if
-            \(cdPart)    tell current session of current window
-                    write text "\(command)"
+        tell application "iTerm2"
+            if (count of windows) is 0 then
+                create window with default profile
+            else
+                tell current window
+                    create tab with default profile
                 end tell
-                activate
+            end if
+        \(cdPart)    tell current session of current window
+                write text "\(command)"
             end tell
-            """
+            activate
+        end tell
+        """
     }
 
     private static func buildTerminalAppScript(
@@ -374,11 +376,11 @@ actor AIModule: ModuleConfigurable {
             cdClause = ""
         }
         return """
-            tell application "Terminal"
-                do script "\(cdClause)\(command)"
-                activate
-            end tell
-            """
+        tell application "Terminal"
+            do script "\(cdClause)\(command)"
+            activate
+        end tell
+        """
     }
 
     private static func detectTerminal() -> String {
@@ -413,7 +415,7 @@ actor AIModule: ModuleConfigurable {
         }
     }
 
-private static func stableID(_ input: String) -> String {
+    private static func stableID(_ input: String) -> String {
         StableID.hash(input)
     }
 

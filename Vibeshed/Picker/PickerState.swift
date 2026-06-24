@@ -137,12 +137,17 @@ final class PickerState {
 
     // MARK: - Action list updates (with selection stability)
 
-    func updateActions(_ newActions: [ActionItem], cache: [ActionID: any Action] = [:], preservingSelection: Bool = true) {
+    func updateActions(
+        _ newActions: [ActionItem],
+        cache: [ActionID: any Action] = [:],
+        preservingSelection: Bool = true
+    ) {
         let previousSelection = selectedActionID
         actions = newActions
         actionCache = cache
         if preservingSelection, let prev = previousSelection,
-           newActions.contains(where: { $0.id == prev }) {
+           newActions.contains(where: { $0.id == prev })
+        {
             selectedActionID = prev
         } else {
             selectedActionID = newActions.first?.id

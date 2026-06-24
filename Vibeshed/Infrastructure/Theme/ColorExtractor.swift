@@ -70,7 +70,7 @@ enum ColorExtractor {
         var vibRed = 0.0, vibGreen = 0.0, vibBlue = 0.0
         let pixelCount = thumbSize * thumbSize
 
-        for idx in 0..<pixelCount {
+        for idx in 0 ..< pixelCount {
             let offset = idx * 4
             let red = Double(buffer[offset]) / 255.0
             let green = Double(buffer[offset + 1]) / 255.0
@@ -101,13 +101,12 @@ enum ColorExtractor {
             alpha: 1
         )
 
-        let vibrant: NSColor
-        if bestScore > 0.1 {
-            vibrant = NSColor(
+        let vibrant: NSColor = if bestScore > 0.1 {
+            NSColor(
                 red: vibRed, green: vibGreen, blue: vibBlue, alpha: 1
             )
         } else {
-            vibrant = dominant
+            dominant
         }
 
         return (dominant: dominant, vibrant: vibrant)

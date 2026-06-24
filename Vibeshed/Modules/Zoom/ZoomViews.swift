@@ -35,22 +35,22 @@ struct ZoomActionListItemView: View {
 
     private var iconForType: String {
         switch action.zoomItemType {
-        case .meeting: return "video.fill"
-        case .utility: return "video"
+        case .meeting: "video.fill"
+        case .utility: "video"
         }
     }
 
     private var colorForType: Color {
         switch action.zoomItemType {
-        case .meeting: return .blue
-        case .utility: return .secondary
+        case .meeting: .blue
+        case .utility: .secondary
         }
     }
 
     private var typeLabel: String {
         switch action.zoomItemType {
-        case .meeting: return "Meeting"
-        case .utility: return "Zoom"
+        case .meeting: "Meeting"
+        case .utility: "Zoom"
         }
     }
 }
@@ -85,22 +85,22 @@ struct ZoomActionPreviewView: View {
 
     private var previewColor: Color {
         switch action.zoomItemType {
-        case .meeting: return .blue
-        case .utility: return .secondary
+        case .meeting: .blue
+        case .utility: .secondary
         }
     }
 
     private var pillText: String {
         switch action.zoomItemType {
-        case .meeting: return "Meeting"
-        case .utility: return "Zoom"
+        case .meeting: "Meeting"
+        case .utility: "Zoom"
         }
     }
 
     private var pillIcon: String {
         switch action.zoomItemType {
-        case .meeting: return "video.fill"
-        case .utility: return "video"
+        case .meeting: "video.fill"
+        case .utility: "video"
         }
     }
 }

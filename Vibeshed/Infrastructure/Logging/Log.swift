@@ -5,9 +5,7 @@ enum Log {
     private static let subsystem = Bundle.main.bundleIdentifier ?? "com.ivandmitriev.Vibeshed"
 
     /// Mirror warning/error messages to stderr when running from a terminal.
-    static let stderrEnabled: Bool = {
-        isatty(STDERR_FILENO) != 0 || CommandLine.arguments.contains("--stderr-log")
-    }()
+    static let stderrEnabled: Bool = isatty(STDERR_FILENO) != 0 || CommandLine.arguments.contains("--stderr-log")
 
     static let app = Logger(subsystem: subsystem, category: "app")
     static let picker = Logger(subsystem: subsystem, category: "picker")

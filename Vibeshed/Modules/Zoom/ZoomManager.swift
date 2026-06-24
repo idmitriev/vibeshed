@@ -4,7 +4,6 @@ import Foundation
 private let zoomBundleID = "us.zoom.xos"
 
 enum ZoomManager {
-
     // MARK: - URL Building
 
     static func joinURL(meetingId: String, password: String?) -> URL? {

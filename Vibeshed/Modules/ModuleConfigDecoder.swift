@@ -3,7 +3,9 @@ import Yams
 
 final class MutableBox<T>: @unchecked Sendable {
     var value: T
-    init(_ value: T) { self.value = value }
+    init(_ value: T) {
+        self.value = value
+    }
 }
 
 struct ModuleConfigDecoder: Sendable {

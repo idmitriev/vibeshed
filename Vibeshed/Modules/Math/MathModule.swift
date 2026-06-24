@@ -8,7 +8,9 @@ actor MathModule: ModuleConfigurable {
     var isEnabled = true
 
     typealias Config = MathConfig
-    static var defaultConfig: Config? { .init() }
+    static var defaultConfig: Config? {
+        .init()
+    }
 
     private var config: MathConfig = .init()
     private var context: ModuleContext?
@@ -211,8 +213,13 @@ actor MathModule: ModuleConfigurable {
             subtitle: "\(formattedValue) \(fromCurrency) \u{2192} \(toCurrency)",
             iconName: "dollarsign.circle",
             relevanceScore: 0.98,
-            keywords: [query.lowercased(), "currency", "exchange",
-                       fromCurrency.lowercased(), toCurrency.lowercased()],
+            keywords: [
+                query.lowercased(),
+                "currency",
+                "exchange",
+                fromCurrency.lowercased(),
+                toCurrency.lowercased(),
+            ],
             resultType: .currencyConversion,
             formattedResult: "\(formattedResult) \(toCurrency)",
             detailLines: [
@@ -276,8 +283,15 @@ actor MathModule: ModuleConfigurable {
             subtitle: "\(original) (\(fromBase))",
             iconName: "number",
             relevanceScore: 0.96,
-            keywords: [query.lowercased(), "hex", "binary", "octal",
-                       "decimal", "base", "convert"],
+            keywords: [
+                query.lowercased(),
+                "hex",
+                "binary",
+                "octal",
+                "decimal",
+                "base",
+                "convert",
+            ],
             resultType: .baseConversion,
             formattedResult: primaryResult,
             detailLines: conversions.map { (label: $0.base, value: $0.value) }

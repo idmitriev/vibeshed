@@ -80,8 +80,8 @@ enum VSCodeManager {
     /// App names (kCGWindowOwnerName) of VS Code variants, used to detect open projects.
     /// Window titles typically follow "ProjectName — VS Code" format.
     private static let variantAppNames: Set<String> = [
-        "Code", "Electron",  // VS Code
-        "Code - Insiders",   // VS Code Insiders
+        "Code", "Electron", // VS Code
+        "Code - Insiders", // VS Code Insiders
         "VSCodium",
         "Cursor",
         "Windsurf",
@@ -147,9 +147,9 @@ enum VSCodeManager {
         defer { sqlite3_close(db) }
 
         let sql = """
-            SELECT value FROM ItemTable \
-            WHERE key = 'history.recentlyOpenedPathsList'
-            """
+        SELECT value FROM ItemTable \
+        WHERE key = 'history.recentlyOpenedPathsList'
+        """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
             log.error("SQLite prepare failed for \(variant, privacy: .public)")
@@ -182,7 +182,7 @@ enum VSCodeManager {
     ) -> [VSCodeProject] {
         guard let data = jsonString.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data)
-                  as? [String: Any],
+              as? [String: Any],
               let entries = json["entries"] as? [[String: Any]]
         else {
             log.warning("Failed to parse recentlyOpenedPathsList JSON for \(variant, privacy: .public)")

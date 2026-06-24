@@ -60,7 +60,6 @@ struct WindowActionPreviewView: View {
         }
     }
 
-    @ViewBuilder
     private func screenshotHero(_ image: NSImage) -> some View {
         Image(nsImage: image)
             .resizable()
@@ -73,7 +72,6 @@ struct WindowActionPreviewView: View {
             .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
     }
 
-    @ViewBuilder
     private func appInfoRow(bundleID: String) -> some View {
         HStack(spacing: 8) {
             if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {

@@ -5,7 +5,6 @@ import OSLog
 private let log = Log.module("theme")
 
 enum ThemeManager {
-
     // MARK: - Accent Colors
 
     struct AccentColor: Sendable {
@@ -130,7 +129,10 @@ enum ThemeManager {
                 applied += 1
                 log.info("Set \(variant.name, privacy: .public) theme to \(themeName, privacy: .public)")
             } catch {
-                log.warning("Failed to update \(variant.name, privacy: .public) settings: \(error.localizedDescription, privacy: .public)")
+                log
+                    .warning(
+                        "Failed to update \(variant.name, privacy: .public) settings: \(error.localizedDescription, privacy: .public)"
+                    )
             }
         }
 
@@ -175,7 +177,10 @@ enum ThemeManager {
                 applied += 1
                 log.info("Set \(ideInfo.displayName, privacy: .public) theme to \(themeName, privacy: .public)")
             } catch {
-                log.warning("Failed to update \(ideInfo.displayName, privacy: .public) laf.xml: \(error.localizedDescription, privacy: .public)")
+                log
+                    .warning(
+                        "Failed to update \(ideInfo.displayName, privacy: .public) laf.xml: \(error.localizedDescription, privacy: .public)"
+                    )
             }
         }
 
@@ -400,7 +405,7 @@ enum ThemeError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .fileNotFound(let path): "File not found: \(path)"
+        case let .fileNotFound(path): "File not found: \(path)"
         }
     }
 }

@@ -69,8 +69,8 @@ enum MathParser {
         // 5. Expression evaluation (skip if already matched as conversion/base)
         let hasConversion = results.contains { r in
             switch r {
-            case .unitConversion, .currencyConversion: return true
-            default: return false
+            case .unitConversion, .currencyConversion: true
+            default: false
             }
         }
         if !hasConversion, let val = ExpressionParser.evaluate(trimmed) {

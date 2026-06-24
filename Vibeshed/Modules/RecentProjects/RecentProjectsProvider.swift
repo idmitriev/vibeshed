@@ -28,8 +28,17 @@ protocol RecentProjectsProvider: Sendable {
 }
 
 extension RecentProjectsProvider {
-    static var cacheTTL: TimeInterval { 5 }
-    static func validate(_: Config) -> ConfigValidationResult { .valid }
-    func enabledActions(_: Config) -> Set<String>? { nil }
+    static var cacheTTL: TimeInterval {
+        5
+    }
+
+    static func validate(_: Config) -> ConfigValidationResult {
+        .valid
+    }
+
+    func enabledActions(_: Config) -> Set<String>? {
+        nil
+    }
+
     func applySideEffects(config _: Config) {}
 }

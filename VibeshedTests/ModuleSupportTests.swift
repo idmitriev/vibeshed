@@ -1,7 +1,6 @@
 import Foundation
-import XCTest
-
 @testable import Vibeshed
+import XCTest
 
 final class ModuleSupportTests: XCTestCase {
     // MARK: - StableID

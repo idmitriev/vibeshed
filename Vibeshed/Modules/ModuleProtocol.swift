@@ -35,7 +35,9 @@ protocol Module: Actor {
 }
 
 extension Module {
-    static var requiredPermissions: Set<Permission> { [] }
+    static var requiredPermissions: Set<Permission> {
+        []
+    }
 
     func teardown() async {}
 

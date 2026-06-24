@@ -194,7 +194,6 @@ struct PickerView: View {
         }
     }
 
-    @ViewBuilder
     private var content: some View {
         Group {
             switch state.mode {
@@ -234,7 +233,6 @@ struct PickerView: View {
         }
     }
 
-    @ViewBuilder
     private var parameterContent: some View {
         ParameterInputView(
             state: state,

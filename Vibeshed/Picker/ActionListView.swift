@@ -86,7 +86,8 @@ struct ActionListView: View {
     @ViewBuilder
     private func actionRow(for item: ActionItem, hotkeyNumber: Int?, isSelected: Bool) -> some View {
         if let action = actionCache[item.id],
-           let customView = action.makeListItemView() {
+           let customView = action.makeListItemView()
+        {
             customView
                 .environment(\.isPickerRowSelected, isSelected)
                 .foregroundStyle(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
