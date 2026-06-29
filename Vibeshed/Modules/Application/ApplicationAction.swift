@@ -54,6 +54,10 @@ struct ApplicationAction: Action {
 }
 
 extension ApplicationAction {
+    var appIconPath: String? {
+        appBundleURL?.path
+    }
+
     @MainActor
     var appIcon: NSImage? {
         guard let url = appBundleURL else { return nil }

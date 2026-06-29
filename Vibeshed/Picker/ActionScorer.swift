@@ -53,6 +53,7 @@ enum ActionScorer {
                 title: action.title,
                 subtitle: action.subtitle,
                 iconSystemName: action.iconName,
+                appIconPath: action.appIconPath,
                 score: finalScore,
                 moduleID: moduleID,
                 hasParameters: !action.parameters.filter(\.isRequired).isEmpty,

@@ -3,12 +3,25 @@ import SwiftUI
 struct WindowActionListItemView: View {
     let action: WindowAction
 
+    private var appIcon: NSImage? {
+        guard let path = action.appIconPath else { return nil }
+        return NSWorkspace.shared.icon(forFile: path)
+    }
+
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: action.iconName ?? "macwindow")
-                .font(.title3)
-                .frame(width: 32, height: 32)
-                .foregroundStyle(.secondary)
+            Group {
+                if let appIcon {
+                    Image(nsImage: appIcon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } else {
+                    Image(systemName: action.iconName ?? "macwindow")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.title)

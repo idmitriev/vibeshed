@@ -329,6 +329,8 @@ struct ActionItem: Identifiable, Equatable, Sendable {
     let title: String
     let subtitle: String
     let iconSystemName: String?
+    /// Path to an app bundle whose Finder icon represents this item (apps/windows).
+    let appIconPath: String?
     let score: Double
     let moduleID: String
     let hasParameters: Bool
@@ -340,6 +342,7 @@ struct ActionItem: Identifiable, Equatable, Sendable {
         title: String,
         subtitle: String,
         iconSystemName: String? = nil,
+        appIconPath: String? = nil,
         score: Double = 0,
         moduleID: String = "",
         hasParameters: Bool = false,
@@ -350,6 +353,7 @@ struct ActionItem: Identifiable, Equatable, Sendable {
         self.title = title
         self.subtitle = subtitle
         self.iconSystemName = iconSystemName
+        self.appIconPath = appIconPath
         self.score = score
         self.moduleID = moduleID
         self.hasParameters = hasParameters

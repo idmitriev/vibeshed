@@ -42,6 +42,39 @@ struct PickerView: View {
         }
     }
 
+    /// The currently highlighted result, used to render its icon at the trailing edge of the search bar.
+    private var selectedItem: ActionItem? {
+        switch state.mode {
+        case .search, .pushedActions:
+            return state.selectedActionID.flatMap { id in state.actions.first { $0.id == id } }
+        case .parameterInput:
+            return nil
+        }
+    }
+
+    /// SF Symbol of the currently highlighted result, shown at the trailing edge of the search bar.
+    private var selectionIconSystemName: String? {
+        switch state.mode {
+        case .search, .pushedActions:
+            return selectedItem.map { $0.iconSystemName ?? "sparkle" }
+        case .parameterInput:
+            guard let id = state.selectedParameterOptionID,
+                  let option = state.parameterOptions.first(where: { $0.id == id })
+            else { return nil }
+            return option.iconName
+        }
+    }
+
+    /// App-bundle path of the highlighted result (apps/windows), preferred over the SF Symbol.
+    private var selectionAppIconPath: String? {
+        switch state.mode {
+        case .search, .pushedActions:
+            return selectedItem?.appIconPath
+        case .parameterInput:
+            return nil
+        }
+    }
+
     private var searchFieldPills: [SearchFieldPill] {
         switch state.mode {
         case .search:
@@ -103,7 +136,9 @@ struct PickerView: View {
                         placeholder: searchPlaceholder,
                         pills: searchFieldPills,
                         onRemovePill: { _ in _ = state.popMode() },
-                        onBackspaceEmpty: { _ = state.popMode() }
+                        onBackspaceEmpty: { _ = state.popMode() },
+                        selectionIconSystemName: selectionIconSystemName,
+                        selectionAppIconPath: selectionAppIconPath
                     )
 
                     if let hint = state.layoutCorrectionHint, case .search = state.mode {

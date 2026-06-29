@@ -231,6 +231,7 @@ final class PickerCoordinator {
                     title: action.title,
                     subtitle: action.subtitle,
                     iconSystemName: action.iconName,
+                    appIconPath: action.appIconPath,
                     score: action.relevanceScore,
                     moduleID: action.id.moduleID,
                     hasParameters: !action.parameters.filter(\.isRequired).isEmpty,

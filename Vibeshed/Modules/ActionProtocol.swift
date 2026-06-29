@@ -40,6 +40,10 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
     var title: String { get }
     var subtitle: String { get }
     var iconName: String? { get }
+    /// Filesystem path to an app bundle whose Finder icon represents this action
+    /// (e.g. an app or a window belonging to an app). When non-nil, the picker
+    /// renders the real app icon in preference to `iconName`.
+    var appIconPath: String? { get }
     var relevanceScore: Double { get }
     var keywords: [String] { get }
     var parameters: [ActionParameter] { get }
@@ -63,6 +67,10 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
 
 extension Action {
     var iconName: String? {
+        nil
+    }
+
+    var appIconPath: String? {
         nil
     }
 

@@ -84,6 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         title: action.title,
                         subtitle: action.subtitle,
                         iconSystemName: action.iconName,
+                        appIconPath: action.appIconPath,
                         score: action.relevanceScore,
                         moduleID: "url",
                         hasParameters: false,

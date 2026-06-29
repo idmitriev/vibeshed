@@ -14,6 +14,10 @@ struct PickerSearchField: View {
     var pills: [SearchFieldPill] = []
     var onRemovePill: ((SearchFieldPill) -> Void)?
     var onBackspaceEmpty: (() -> Void)?
+    /// SF Symbol of the currently selected result, shown at the trailing edge.
+    var selectionIconSystemName: String?
+    /// App-bundle path of the selected result; its Finder icon is shown in preference to the SF Symbol.
+    var selectionAppIconPath: String?
     @Environment(\.vibeTheme) private var theme
 
     var body: some View {
@@ -35,7 +39,27 @@ struct PickerSearchField: View {
                 onBackspaceEmpty: onBackspaceEmpty
             )
             .accessibilityIdentifier("pickerSearchField")
+
+            if let appIconPath = selectionAppIconPath {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: appIconPath))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 28, height: 28)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                    .id(appIconPath)
+                    .accessibilityIdentifier("pickerSearchSelectionIcon")
+            } else if let icon = selectionIconSystemName {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(theme.iconTint ?? .secondary)
+                    .frame(width: 28, height: 28)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                    .id(icon)
+                    .accessibilityIdentifier("pickerSearchSelectionIcon")
+            }
         }
+        .animation(.easeOut(duration: 0.15), value: selectionIconSystemName)
+        .animation(.easeOut(duration: 0.15), value: selectionAppIconPath)
     }
 }
 

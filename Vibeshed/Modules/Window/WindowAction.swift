@@ -38,6 +38,11 @@ struct WindowAction: Action {
         self.runner = runner
     }
 
+    var appIconPath: String? {
+        guard let bundleID = appBundleID else { return nil }
+        return NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)?.path
+    }
+
     func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }
