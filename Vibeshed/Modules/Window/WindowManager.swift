@@ -140,4 +140,16 @@ struct WindowManager: Sendable {
         }
         return count
     }
+
+    // MARK: - Tileability
+
+    /// True if `window` is a normal, resizable content window — i.e. worth tiling.
+    /// Filters out tooltips, HUDs, panels, dialogs, and other non-standard/fixed-size
+    /// windows that shouldn't be forced into a grid cell.
+    func isTileable(_ window: WindowInfo) -> Bool {
+        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
+            return false
+        }
+        return AXWindowHelper.isStandardWindow(axWindow) && AXWindowHelper.isResizable(axWindow)
+    }
 }

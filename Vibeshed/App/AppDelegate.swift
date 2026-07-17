@@ -164,6 +164,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func registerModules() {
         Task { @MainActor in
             await registerModule(WindowModule())
+            await registerModule(TilingModule())
             await registerModule(ApplicationModule())
             await registerModule(SystemModule())
             await registerModule(SettingsModule())

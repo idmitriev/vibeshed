@@ -74,7 +74,12 @@ enum WindowSizing {
     ) -> CGRect {
         guard !stops.isEmpty else { return currentFrame }
         let area = usableArea(screenFrame: screenFrame, padding: padding)
-        let resolved = stops.map { resolveStop($0, screenDimension: area.width) }
+        // Each stop loses half the gap as a margin on its non-anchored (inner) edge, so two
+        // windows cycled to complementary left/right stops end up separated by exactly `gap`,
+        // matching tileLeft/tileRight's convention. Stops and matching both use this
+        // gap-adjusted value so cycling still advances correctly through the stop list.
+        let halfGap = padding.gap / 2.0
+        let resolved = stops.map { max(resolveStop($0, screenDimension: area.width) - halfGap, 0) }
 
         let currentWidth = currentFrame.width
         let matchIndex = nearestStopIndex(currentValue: currentWidth, resolvedStops: resolved)
@@ -110,7 +115,9 @@ enum WindowSizing {
     ) -> CGRect {
         guard !stops.isEmpty else { return currentFrame }
         let area = usableArea(screenFrame: screenFrame, padding: padding)
-        let resolved = stops.map { resolveStop($0, screenDimension: area.height) }
+        // See cycleHorizontal: half the gap is reserved on the non-anchored (inner) edge.
+        let halfGap = padding.gap / 2.0
+        let resolved = stops.map { max(resolveStop($0, screenDimension: area.height) - halfGap, 0) }
 
         let currentHeight = currentFrame.height
         let matchIndex = nearestStopIndex(currentValue: currentHeight, resolvedStops: resolved)

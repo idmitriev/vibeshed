@@ -58,6 +58,10 @@ struct ModuleConfigDecoder: Sendable {
                 // non-nil Data that fails to decode. Fall back to defaultConfig
                 // when available; otherwise surface the decode error.
                 if let defaultConfig = M.defaultConfig {
+                    let reason = String(describing: error)
+                    Log.config.error(
+                        "Module '\(moduleID, privacy: .public)' config failed to decode, falling back to defaults: \(reason, privacy: .public)"
+                    )
                     return defaultConfig
                 }
                 throw ModuleConfigError.decodingFailed(

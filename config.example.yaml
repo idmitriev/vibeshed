@@ -250,15 +250,51 @@ modules:
       - { value: 50, unit: percent }
       - { value: 100, unit: percent }
     padding:
-      top: 0
-      bottom: 0
-      left: 0
-      right: 0
-      gap: 8
+      top: 4
+      bottom: 4
+      left: 4
+      right: 4
+      gap: 4
     includeMinimized: false
     enlargeShrinkStep:
       value: 10
       unit: percent
+
+  # --- Tiling Window Manager ---
+  # A configurable region grid per display. "match" is the display's exact name
+  # (NSScreen.localizedName, e.g. "Kuycon P20"), "main" (the primary display),
+  # or a 0-based connection-order index ("1", "2", ...). columns/rows are
+  # relative weights, not pixel counts or a fixed cell count alone —
+  # [1, 2, 1] means 3 columns where the middle one is 2x as wide.
+  # No macOS Space awareness (grids apply the same regardless of active Space).
+  tiling:
+    displays:
+      # - match: main
+      #   columns: [1, 1, 1]     # 3 equal columns
+      #   rows: [2, 1]           # top row twice as tall as bottom row
+      - match: "Kuycon P20"
+        columns: [5707, 4293]      # ~ 57% / 43% width split
+        rows: [1]
+    defaultGrid:
+      columns: [1]
+      rows: [1]
+    padding:
+      top: 4
+      bottom: 4
+      left: 4
+      right: 4
+      gap: 4
+    # Tuning for auto-tile. Auto-tile itself is NOT a config flag - it's off by
+    # default on every launch and toggled at runtime via the tiling/enableAutoTile
+    # and tiling/disableAutoTile actions (bind hotkeys below). While enabled it
+    # tiles new/moved/resized windows, snaps once dropped (never mid-drag), and
+    # never repositions a window already aligned to a cell (5pt tolerance).
+    # Tooltips/HUDs/panels/dialogs are filtered out (fixed-size or non-standard
+    # AX subrole) before tiling, plus anything below minimumSize.
+    autoTile:
+      pollingInterval: 1.0         # seconds between checks (also affects move/resize latency)
+      excludedBundleIDs: []        # e.g. ["com.apple.systempreferences"]
+      minimumSize: 120             # skip windows narrower/shorter than this (tooltips, HUDs, etc.)
 
   # --- Application Launcher ---
   application:

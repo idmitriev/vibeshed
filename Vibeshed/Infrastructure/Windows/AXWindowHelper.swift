@@ -92,6 +92,27 @@ enum AXWindowHelper {
         )
     }
 
+    /// True if the AX window's subrole marks it as a normal content window
+    /// (AXStandardWindow), as opposed to a panel/dialog/system window/tooltip.
+    static func isStandardWindow(_ element: AXUIElement) -> Bool {
+        var ref: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(
+            element, kAXSubroleAttribute as CFString, &ref
+        )
+        guard result == .success, let subrole = ref as? String else { return false }
+        return subrole == kAXStandardWindowSubrole as String
+    }
+
+    /// True if the AX window's size can be changed programmatically. Fixed-size
+    /// panels, tooltips, and dialogs typically report false here.
+    static func isResizable(_ element: AXUIElement) -> Bool {
+        var settable: DarwinBoolean = false
+        let result = AXUIElementIsAttributeSettable(
+            element, kAXSizeAttribute as CFString, &settable
+        )
+        return result == .success && settable.boolValue
+    }
+
     /// Resolve a window to its AXUIElement by matching CGWindowID first, then frame proximity.
     static func resolve(windowID: Int, pid: pid_t, frame: CGRect) -> AXUIElement? {
         let axWindows = windows(for: pid)

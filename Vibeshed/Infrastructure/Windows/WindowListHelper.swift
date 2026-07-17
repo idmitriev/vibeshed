@@ -131,12 +131,11 @@ enum WindowListHelper {
         return counts
     }
 
-    /// Determine which screen contains the center of a CG-coordinate frame.
+    /// Determine which NSScreen contains the center of a CG-coordinate frame.
     @MainActor
-    static func screenForFrame(_ frame: CGRect) -> CGRect {
+    static func screen(forFrame frame: CGRect) -> NSScreen? {
         let center = CGPoint(x: frame.midX, y: frame.midY)
         for screen in NSScreen.screens {
-            let cgFrame = WindowSizing.visibleFrameCG(of: screen)
             let primaryHeight = NSScreen.screens.first?.frame.height ?? screen.frame.height
             let fullCG = CGRect(
                 x: screen.frame.origin.x,
@@ -145,12 +144,16 @@ enum WindowListHelper {
                 height: screen.frame.height
             )
             if fullCG.contains(center) {
-                return cgFrame
+                return screen
             }
         }
-        if let primary = NSScreen.main {
-            return WindowSizing.visibleFrameCG(of: primary)
-        }
-        return .zero
+        return NSScreen.main
+    }
+
+    /// Determine which screen contains the center of a CG-coordinate frame.
+    @MainActor
+    static func screenForFrame(_ frame: CGRect) -> CGRect {
+        guard let screen = screen(forFrame: frame) else { return .zero }
+        return WindowSizing.visibleFrameCG(of: screen)
     }
 }
