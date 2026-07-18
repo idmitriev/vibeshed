@@ -141,6 +141,24 @@ struct WindowManager: Sendable {
         return count
     }
 
+    // MARK: - Per-Display Stops
+
+    /// Resolves the horizontal/vertical stop lists to use for a window's frame, based on
+    /// which physical display it's on. Falls back to the top-level `config.horizontalStops`/
+    /// `verticalStops` if no `displays[]` entry matches, or the matched entry leaves a
+    /// dimension nil.
+    @MainActor
+    func resolveStops(for frame: CGRect, config: WindowConfig) -> (horizontal: [SizeStop], vertical: [SizeStop]) {
+        guard let screen = WindowListHelper.screen(forFrame: frame) else {
+            return (config.horizontalStops, config.verticalStops)
+        }
+        let keys = WindowListHelper.candidateMatchKeys(for: screen)
+        let matched = keys.lazy.compactMap { key in config.displays.first(where: { $0.match == key }) }.first
+        let horizontal = matched?.horizontalStops ?? config.horizontalStops
+        let vertical = matched?.verticalStops ?? config.verticalStops
+        return (horizontal, vertical)
+    }
+
     // MARK: - Tileability
 
     /// True if `window` is a normal, resizable content window — i.e. worth tiling.

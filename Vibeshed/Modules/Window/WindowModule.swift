@@ -56,22 +56,27 @@ actor WindowModule: ModuleConfigurable {
 
     static func validate(_ config: WindowConfig) -> ConfigValidationResult {
         var errors: [String] = []
-        if config.horizontalStops.isEmpty {
-            errors.append("horizontalStops must not be empty")
-        }
-        if config.verticalStops.isEmpty {
-            errors.append("verticalStops must not be empty")
-        }
-        for (i, stop) in config.horizontalStops.enumerated() {
-            if stop.value <= 0 {
-                errors.append("horizontalStops[\(i)].value must be positive")
+        errors.append(contentsOf: validateStops(config.horizontalStops, label: "horizontalStops"))
+        errors.append(contentsOf: validateStops(config.verticalStops, label: "verticalStops"))
+
+        var seenMatches: Set<String> = []
+        for display in config.displays {
+            if display.match.isEmpty {
+                errors.append("displays[].match must not be empty")
+                continue
+            }
+            if seenMatches.contains(display.match) {
+                errors.append("duplicate displays[].match value: \(display.match)")
+            }
+            seenMatches.insert(display.match)
+            if let stops = display.horizontalStops {
+                errors.append(contentsOf: validateStops(stops, label: "displays[\(display.match)].horizontalStops"))
+            }
+            if let stops = display.verticalStops {
+                errors.append(contentsOf: validateStops(stops, label: "displays[\(display.match)].verticalStops"))
             }
         }
-        for (i, stop) in config.verticalStops.enumerated() {
-            if stop.value <= 0 {
-                errors.append("verticalStops[\(i)].value must be positive")
-            }
-        }
+
         if config.padding.top < 0 || config.padding.bottom < 0
             || config.padding.left < 0 || config.padding.right < 0
         {
@@ -84,6 +89,17 @@ actor WindowModule: ModuleConfigurable {
             errors.append("enlargeShrinkStep.value must be positive")
         }
         return errors.isEmpty ? .valid : .invalid(errors)
+    }
+
+    private static func validateStops(_ stops: [SizeStop], label: String) -> [String] {
+        var errors: [String] = []
+        if stops.isEmpty {
+            errors.append("\(label) must not be empty")
+        }
+        for (index, stop) in stops.enumerated() where stop.value <= 0 {
+            errors.append("\(label)[\(index)].value must be positive")
+        }
+        return errors
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
@@ -169,12 +185,13 @@ actor WindowModule: ModuleConfigurable {
             guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
                 return .showResult(title: "No Window", body: "No focused window found")
             }
+            let stops = await MainActor.run { mgr.resolveStops(for: focused.frame, config: cfg) }
             let newFrame: CGRect = if horizontal {
                 WindowSizing.cycleHorizontal(
                     currentFrame: focused.frame,
                     screenFrame: focused.screenFrame,
                     padding: cfg.padding,
-                    stops: cfg.horizontalStops,
+                    stops: stops.horizontal,
                     anchor: anchor
                 )
             } else {
@@ -182,7 +199,7 @@ actor WindowModule: ModuleConfigurable {
                     currentFrame: focused.frame,
                     screenFrame: focused.screenFrame,
                     padding: cfg.padding,
-                    stops: cfg.verticalStops,
+                    stops: stops.vertical,
                     anchor: anchor
                 )
             }

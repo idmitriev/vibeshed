@@ -156,4 +156,23 @@ enum WindowListHelper {
         guard let screen = screen(forFrame: frame) else { return .zero }
         return WindowSizing.visibleFrameCG(of: screen)
     }
+
+    /// Candidate match keys for a screen, most-specific first: its display name
+    /// (`NSScreen.localizedName`, e.g. "Kuycon P20", exact match), then "main" for the
+    /// primary display (NSScreen.screens.first, consistent with this codebase's existing
+    /// primary-screen convention), then its 0-based positional index. Shared by any
+    /// per-display config that matches against a screen (Tiling grids, Window stops).
+    @MainActor
+    static func candidateMatchKeys(for screen: NSScreen) -> [String] {
+        guard let index = NSScreen.screens.firstIndex(of: screen) else { return [] }
+        var keys: [String] = []
+        if !screen.localizedName.isEmpty {
+            keys.append(screen.localizedName)
+        }
+        if index == 0 {
+            keys.append("main")
+        }
+        keys.append(String(index))
+        return keys
+    }
 }

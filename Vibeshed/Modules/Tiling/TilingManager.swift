@@ -40,7 +40,7 @@ struct TilingManager: Sendable {
         // more specific match (e.g. an exact display name) always wins over a broader one
         // (e.g. "main") even when both match the same physical screen and "main" happens to
         // be listed first in the config.
-        let keys = candidateKeys(for: screen)
+        let keys = WindowListHelper.candidateMatchKeys(for: screen)
         let matchedGrid = keys.lazy.compactMap { key in
             config.displays.first(where: { $0.match == key })
         }.first
@@ -51,23 +51,5 @@ struct TilingManager: Sendable {
         let effectivePadding = grid.padding ?? config.padding
         let area = WindowSizing.usableArea(screenFrame: screenFrame, padding: effectivePadding)
         return ResolvedGrid(grid: grid, area: area, displayKey: keys.first ?? "unknown", gap: effectivePadding.gap)
-    }
-
-    /// Candidate match keys for a screen, most-specific first: its display name
-    /// (`NSScreen.localizedName`, e.g. "Kuycon P20", exact match), then "main" for the
-    /// primary display (NSScreen.screens.first, consistent with this codebase's existing
-    /// primary-screen convention), then its 0-based positional index.
-    @MainActor
-    private func candidateKeys(for screen: NSScreen) -> [String] {
-        guard let index = NSScreen.screens.firstIndex(of: screen) else { return [] }
-        var keys: [String] = []
-        if !screen.localizedName.isEmpty {
-            keys.append(screen.localizedName)
-        }
-        if index == 0 {
-            keys.append("main")
-        }
-        keys.append(String(index))
-        return keys
     }
 }

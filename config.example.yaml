@@ -243,12 +243,20 @@ modules:
   window:
     horizontalStops:
       - { value: 50, unit: percent }
-      - { value: 33.33, unit: percent }
-      - { value: 66.67, unit: percent }
       - { value: 100, unit: percent }
     verticalStops:
       - { value: 50, unit: percent }
       - { value: 100, unit: percent }
+    # Per-display stop overrides. "match" is a display's exact name
+    # (NSScreen.localizedName), "main", or a 0-based connection-order index.
+    # A display with no matching entry (or one that omits a dimension) falls
+    # back to horizontalStops/verticalStops above.
+    # displays:
+    #   - match: "Kuycon P20"
+    #     horizontalStops:
+    #       - { value: 57, unit: percent }
+    #       - { value: 43, unit: percent }
+    #       - { value: 100, unit: percent }
     padding:
       top: 4
       bottom: 4
