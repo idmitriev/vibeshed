@@ -1,5 +1,7 @@
+import AppKit
 import CoreGraphics
 import OSLog
+import SwiftUI
 
 actor TilingModule: ModuleConfigurable {
     let id = "tiling"
@@ -29,6 +31,11 @@ actor TilingModule: ModuleConfigurable {
     private var lastKnownFrames: [Int: CGRect] = [:]
     private var pollTask: Task<Void, Never>?
 
+    /// Runtime-only; always starts disabled on launch and is toggled via
+    /// `tiling/enableFocusBorder` / `tiling/disableFocusBorder` — not persisted config.
+    private var focusBorderEnabled = false
+    private var focusBorderPollTask: Task<Void, Never>?
+
     func initialize(context: ModuleContext) async throws {
         self.context = context
         // Seed seen-window/frame state from what's already open so the poller (below)
@@ -37,12 +44,16 @@ actor TilingModule: ModuleConfigurable {
         seenWindowIDs = Set(existing.map(\.id))
         lastKnownFrames = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0.frame) })
         startPolling()
+        startFocusBorderPolling()
         log.info("Tiling module initialized")
     }
 
     func teardown() async {
         pollTask?.cancel()
         pollTask = nil
+        focusBorderPollTask?.cancel()
+        focusBorderPollTask = nil
+        await FocusBorderController.shared.hide()
     }
 
     func configDidUpdate(_ config: TilingConfig) async {
@@ -80,6 +91,20 @@ actor TilingModule: ModuleConfigurable {
         }
         if config.autoTile.minimumSize < 0 {
             errors.append("autoTile.minimumSize must be non-negative")
+        }
+        if let focusBorder = config.focusBorder {
+            if Color(tilingHex: focusBorder.color) == nil {
+                errors.append("focusBorder.color must be a valid hex color (e.g. \"#0A84FF\")")
+            }
+            if focusBorder.width <= 0 {
+                errors.append("focusBorder.width must be positive")
+            }
+            if focusBorder.cornerRadius < 0 {
+                errors.append("focusBorder.cornerRadius must be non-negative")
+            }
+            if focusBorder.pollingInterval <= 0 {
+                errors.append("focusBorder.pollingInterval must be positive")
+            }
         }
         return errors.isEmpty ? .valid : .invalid(errors)
     }
@@ -121,6 +146,8 @@ actor TilingModule: ModuleConfigurable {
             makeMoveAction(direction: .down, mgr: mgr, cfg: cfg),
             makeEnableAutoTileAction(),
             makeDisableAutoTileAction(),
+            makeEnableFocusBorderAction(),
+            makeDisableFocusBorderAction(),
         ]
         if let enabled = cfg.enabledActions {
             actions = actions.filter { enabled.contains($0.id.actionName) }
@@ -195,6 +222,32 @@ actor TilingModule: ModuleConfigurable {
             keywords: ["tiling", "grid", "auto", "disable", "stop"]
         ) { [weak self] _ in
             await self?.disableAutoTile()
+            return .dismiss
+        }
+    }
+
+    private func makeEnableFocusBorderAction() -> TilingAction {
+        TilingAction(
+            id: ActionID(module: "tiling", name: "enableFocusBorder"),
+            title: "Enable Focus Border",
+            subtitle: "Draw a contrast border around the focused tiled window",
+            iconName: "viewfinder",
+            keywords: ["tiling", "grid", "border", "highlight", "focus", "enable"]
+        ) { [weak self] _ in
+            await self?.enableFocusBorder()
+            return .dismiss
+        }
+    }
+
+    private func makeDisableFocusBorderAction() -> TilingAction {
+        TilingAction(
+            id: ActionID(module: "tiling", name: "disableFocusBorder"),
+            title: "Disable Focus Border",
+            subtitle: "Stop drawing the focus border",
+            iconName: "xmark.circle",
+            keywords: ["tiling", "grid", "border", "highlight", "focus", "disable"]
+        ) { [weak self] _ in
+            await self?.disableFocusBorder()
             return .dismiss
         }
     }
@@ -319,6 +372,59 @@ actor TilingModule: ModuleConfigurable {
 
     private func disableAutoTile() {
         autoTileEnabled = false
+    }
+
+    // MARK: - Focus Border
+
+    private func startFocusBorderPolling() {
+        focusBorderPollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let interval = await self.config.focusBorder?.pollingInterval ?? 0.15
+                try? await Task.sleep(for: .seconds(interval))
+                guard !Task.isCancelled else { return }
+                await self.pollFocusBorder()
+            }
+        }
+    }
+
+    /// Shows the border around the focused window if (and only if) it's currently tracked
+    /// as tiled (has a grid `assignments` entry) — independent of `autoTileEnabled`, so a
+    /// window manually attached earlier still gets a border even with auto-tile off.
+    private func pollFocusBorder() async {
+        guard focusBorderEnabled else { return }
+        // While Mission Control, Launchpad, App Exposé, or "Show Desktop" is active, the Dock
+        // process is frontmost and every real window scatters/animates away — leaving the
+        // border floating in its old, now-meaningless position. Hide it for the duration.
+        let (focused, missionControlActive) = await MainActor.run {
+            (
+                manager.getFocusedWindow(),
+                NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.dock"
+            )
+        }
+        guard !missionControlActive, let focused, assignments[focused.id] != nil else {
+            await FocusBorderController.shared.hide()
+            return
+        }
+        let borderConfig = config.focusBorder ?? FocusBorderConfig()
+        await FocusBorderController.shared.show(
+            cgFrame: focused.frame,
+            colorHex: borderConfig.color,
+            width: borderConfig.width,
+            cornerRadius: borderConfig.cornerRadius
+        )
+    }
+
+    private func enableFocusBorder() async {
+        guard !focusBorderEnabled else { return }
+        focusBorderEnabled = true
+        await pollFocusBorder()
+    }
+
+    private func disableFocusBorder() async {
+        guard focusBorderEnabled else { return }
+        focusBorderEnabled = false
+        await FocusBorderController.shared.hide()
     }
 
     private static func isLeftMouseButtonDown() -> Bool {

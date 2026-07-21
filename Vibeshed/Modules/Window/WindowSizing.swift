@@ -20,6 +20,15 @@ enum WindowSizing {
         return CGRect(x: visible.origin.x, y: y, width: visible.width, height: visible.height)
     }
 
+    /// Converts a CG top-left-origin frame (as used by AX/CGWindowList/WindowInfo.frame) back
+    /// into AppKit bottom-left-origin coordinates suitable for `NSWindow.setFrame(_:display:)`.
+    /// Self-inverse of the flip in `visibleFrameCG` (same formula, same reference height).
+    static func appKitFrame(fromCG cgFrame: CGRect) -> CGRect {
+        let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
+        let y = primaryHeight - cgFrame.origin.y - cgFrame.height
+        return CGRect(x: cgFrame.origin.x, y: y, width: cgFrame.width, height: cgFrame.height)
+    }
+
     // MARK: - Usable Area
 
     /// Returns the usable area of the screen after applying padding.

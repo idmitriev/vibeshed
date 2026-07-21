@@ -6,6 +6,13 @@ struct TilingConfig: Codable, Sendable, Equatable {
     var padding: PaddingConfig
     var enabledActions: Set<String>?
     var autoTile: AutoTileConfig
+    /// Tuning for the focus border (color/width/poll rate). Optional, so an existing
+    /// config.yaml without this key decodes fine (Optional properties are automatically
+    /// decodeIfPresent under synthesized Decodable — no custom decoder needed here, unlike
+    /// AutoTileConfig's non-optional fields). Whether the border is actually drawn is
+    /// runtime-only state toggled via `tiling/enableFocusBorder`/`disableFocusBorder`,
+    /// same pattern as auto-tile.
+    var focusBorder: FocusBorderConfig?
 
     static let defaultValue = TilingConfig(
         displays: [],
@@ -17,7 +24,8 @@ struct TilingConfig: Codable, Sendable, Equatable {
         ),
         padding: PaddingConfig(),
         enabledActions: nil,
-        autoTile: AutoTileConfig()
+        autoTile: AutoTileConfig(),
+        focusBorder: nil
     )
 }
 
@@ -58,6 +66,42 @@ struct AutoTileConfig: Codable, Sendable, Equatable {
         excludedBundleIDs = try container.decodeIfPresent([String].self, forKey: .excludedBundleIDs) ?? []
         pollingInterval = try container.decodeIfPresent(Double.self, forKey: .pollingInterval) ?? 1.0
         minimumSize = try container.decodeIfPresent(Double.self, forKey: .minimumSize) ?? 100
+    }
+}
+
+struct FocusBorderConfig: Codable, Sendable, Equatable {
+    /// "#RRGGBB" hex string. Validated in `TilingModule.validate` via `Color(tilingHex:)`.
+    var color: String = "#0A84FF"
+    var width: Double = 3.0
+    /// Corner radius (points) of the border's rounded rect. 0 = sharp corners.
+    var cornerRadius: Double = 8.0
+    /// How often (seconds) to check whether the focused window changed.
+    var pollingInterval: Double = 0.15
+
+    init(
+        color: String = "#0A84FF",
+        width: Double = 3.0,
+        cornerRadius: Double = 8.0,
+        pollingInterval: Double = 0.15
+    ) {
+        self.color = color
+        self.width = width
+        self.cornerRadius = cornerRadius
+        self.pollingInterval = pollingInterval
+    }
+
+    // Same reasoning as AutoTileConfig's custom decoder: missing keys fall back to their
+    // default instead of throwing keyNotFound and discarding the whole TilingConfig.
+    enum CodingKeys: String, CodingKey {
+        case color, width, cornerRadius, pollingInterval
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#0A84FF"
+        width = try container.decodeIfPresent(Double.self, forKey: .width) ?? 3.0
+        cornerRadius = try container.decodeIfPresent(Double.self, forKey: .cornerRadius) ?? 8.0
+        pollingInterval = try container.decodeIfPresent(Double.self, forKey: .pollingInterval) ?? 0.15
     }
 }
 
