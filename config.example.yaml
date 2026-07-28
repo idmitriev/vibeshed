@@ -638,6 +638,11 @@ modules:
 # can choose where to open the link. Chromium browser profiles are discovered
 # automatically.
 #
+# Zoom meeting links (https://*.zoom.us/j/...) are handled before any of the
+# above: if Zoom is installed, they always launch the Zoom app directly and
+# never show a rule match or the browser chooser picker. This is built-in,
+# not configurable via rules below.
+#
 # Pattern syntax:
 #   Glob:  *.example.com/*
 #   Regex: /pattern/

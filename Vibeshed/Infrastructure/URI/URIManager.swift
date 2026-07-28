@@ -129,6 +129,10 @@ final class URIManager {
     // MARK: - HTTP/HTTPS Routing
 
     private func handleWebURL(_ url: URL) {
+        if openZoomMeetingIfPossible(url) {
+            return
+        }
+
         for rule in currentConfig.rules {
             if URLPatternMatcher.matches(url: url, pattern: rule.pattern) {
                 applyRule(rule, for: url)
@@ -136,6 +140,26 @@ final class URIManager {
             }
         }
         showBrowserChooser(for: url)
+    }
+
+    // MARK: - Zoom Meeting Links
+
+    /// Zoom join links (https://*.zoom.us/j/...) always launch the Zoom app directly,
+    /// bypassing routing rules and the browser chooser, so meetings never open in a
+    /// browser tab or show a picker.
+    private func openZoomMeetingIfPossible(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased(), host.hasSuffix("zoom.us"),
+              let parsed = ZoomManager.parseMeetingInput(url.absoluteString),
+              let zoomAppURL = ZoomManager.joinURL(meetingId: parsed.meetingId, password: parsed.password),
+              NSWorkspace.shared.urlForApplication(withBundleIdentifier: ZoomManager.bundleID) != nil
+        else {
+            return false
+        }
+
+        NSWorkspace.shared.open(zoomAppURL)
+        Log.uri.info("Routed \(url, privacy: .public) to Zoom app")
+        Task { await eventBus.publish(.uriRouted(url: url.absoluteString, destination: "zoom")) }
+        return true
     }
 
     private func applyRule(_ rule: URLRoutingRule, for url: URL) {
