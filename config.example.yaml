@@ -345,6 +345,12 @@ modules:
       - flushDNS
       - purgeMemory
 
+  # --- Processes (list by CPU/mem/port usage, kill on select) ---
+  processes:
+    cacheTTLSeconds: 2.0
+    maxResults: 100
+    excludedNames: []          # e.g. ["kernel_task"]
+
   # --- System Settings Panes ---
   settings:
     # Uncomment to restrict which panes appear (default: all):

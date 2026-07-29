@@ -167,6 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await registerModule(TilingModule())
             await registerModule(ApplicationModule())
             await registerModule(SystemModule())
+            await registerModule(ProcessesModule())
             await registerModule(SettingsModule())
             await registerModule(ThemeModule())
             await registerModule(buildSelfModule())
