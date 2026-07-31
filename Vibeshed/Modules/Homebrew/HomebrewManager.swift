@@ -140,13 +140,31 @@ enum HomebrewManager {
                 return
             }
 
+            // Drain both pipes concurrently before waiting on exit: brew output (e.g. `search`,
+            // `list --versions`) regularly exceeds the 64KB pipe buffer, and waitUntilExit()
+            // before reading deadlocks — the child blocks on a full-buffer write() while we
+            // block waiting for it to exit. Draining stdout/stderr sequentially isn't enough
+            // either, since the other pipe can fill up while we wait on the first.
+            let readGroup = DispatchGroup()
+            // Safe: readGroup.wait() below is a happens-before barrier against both writes.
+            nonisolated(unsafe) var data = Data()
+            nonisolated(unsafe) var errData = Data()
+            readGroup.enter()
+            DispatchQueue.global(qos: .utility).async {
+                data = pipe.fileHandleForReading.readDataToEndOfFile()
+                readGroup.leave()
+            }
+            readGroup.enter()
+            DispatchQueue.global(qos: .utility).async {
+                errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+                readGroup.leave()
+            }
+            readGroup.wait()
             task.waitUntilExit()
 
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
             let output = String(data: data, encoding: .utf8) ?? ""
 
             if task.terminationStatus != 0 {
-                let errData = errPipe.fileHandleForReading.readDataToEndOfFile()
                 let errOutput = String(data: errData, encoding: .utf8) ?? ""
                 let message = errOutput.isEmpty ? output : errOutput
                 log.warning("brew \(args.joined(separator: " ")) failed: \(message, privacy: .public)")

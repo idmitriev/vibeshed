@@ -121,8 +121,11 @@ enum ProcessesManager {
                 return
             }
 
-            task.waitUntilExit()
+            // Drain the pipe before waiting on exit: `ps` output regularly exceeds the
+            // 64KB pipe buffer, and waitUntilExit() before reading deadlocks — the child
+            // blocks on a full-buffer write() while we block waiting for it to exit.
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            task.waitUntilExit()
             continuation.resume(returning: String(data: data, encoding: .utf8) ?? "")
         }
     }
