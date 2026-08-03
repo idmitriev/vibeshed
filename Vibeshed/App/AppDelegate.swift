@@ -163,40 +163,57 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func registerModules() {
         Task { @MainActor in
-            await registerModule(WindowModule())
-            await registerModule(TilingModule())
-            await registerModule(ApplicationModule())
-            await registerModule(SystemModule())
-            await registerModule(ProcessesModule())
-            await registerModule(SettingsModule())
-            await registerModule(ThemeModule())
-            await registerModule(buildSelfModule())
-            await registerModule(AudioModule())
-            await registerModule(ClipboardModule())
-            promptBrowserAutomation()
-            await registerModule(BrowserModule())
-            await registerModule(SpotifyModule())
-            await registerModule(GitHubModule())
-            await registerModule(RecentProjectsModule<VSCodeProvider>())
-            await registerModule(RecentProjectsModule<JetBrainsProvider>())
-            await registerModule(RecentProjectsModule<ZedProvider>())
-            await registerModule(ITermModule())
-            await registerModule(AIModule())
-            await registerModule(TelegramModule())
-            await registerModule(ZoomModule())
-            await registerModule(CalendarModule())
-            await registerModule(MeetingPrepModule())
-            await registerModule(BookmarkModule())
-            await registerModule(TimerModule())
-            await registerModule(MathModule())
-            await registerModule(HomebrewModule())
+            let modules: [any Module] = [
+                WindowModule(),
+                TilingModule(),
+                ApplicationModule(),
+                SystemModule(),
+                ProcessesModule(),
+                SettingsModule(),
+                ThemeModule(),
+                buildSelfModule(),
+                AudioModule(),
+                ClipboardModule(),
+                BrowserModule(),
+                SpotifyModule(),
+                GitHubModule(),
+                RecentProjectsModule<VSCodeProvider>(),
+                RecentProjectsModule<JetBrainsProvider>(),
+                RecentProjectsModule<ZedProvider>(),
+                ITermModule(),
+                AIModule(),
+                TelegramModule(),
+                ZoomModule(),
+                CalendarModule(),
+                MeetingPrepModule(),
+                BookmarkModule(),
+                TimerModule(),
+                MathModule(),
+                HomebrewModule(),
+            ]
+            // Register concurrently: each module's initialize does independent I/O
+            // (SQLite reads, disk scans), so time-to-ready is the slowest module
+            // rather than the sum of all of them.
+            await withTaskGroup(of: Void.self) { group in
+                for module in modules {
+                    group.addTask { @MainActor in
+                        await self.registerModule(module)
+                    }
+                }
+            }
+            // Probe automation consent after registration, off the main thread —
+            // executeAndReturnError blocks until the user answers the TCC dialog,
+            // which would freeze the UI if run on the main actor.
+            Task.detached(priority: .utility) {
+                Self.promptBrowserAutomation()
+            }
         }
     }
 
     /// Trigger the macOS automation consent dialog via NSAppleScript.
     /// First probes System Events, then each running browser.
     /// NSAppleScript runs in-process which is required for TCC to register the app properly.
-    private func promptBrowserAutomation() {
+    private nonisolated static func promptBrowserAutomation() {
         // First, request System Events automation (triggers TCC registration)
         let systemEventsScript = """
         tell application "System Events"

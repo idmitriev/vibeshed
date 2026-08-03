@@ -8,6 +8,14 @@ protocol Module: Actor {
 
     static var requiredPermissions: Set<Permission> { get }
 
+    /// Whether `provideActions` output depends on the query text.
+    ///
+    /// Catalog modules (the default, `false`) ignore `query` and return their full
+    /// action catalog — the picker fetches them once per session and re-scores the
+    /// cached corpus on every keystroke. Query-dependent modules (`true`, e.g.
+    /// `MathModule`) *compute* actions from the input and are re-queried per keystroke.
+    static var isQueryDependent: Bool { get }
+
     func initialize(context: ModuleContext) async throws
     func teardown() async
 
@@ -37,6 +45,10 @@ protocol Module: Actor {
 extension Module {
     static var requiredPermissions: Set<Permission> {
         []
+    }
+
+    static var isQueryDependent: Bool {
+        false
     }
 
     func teardown() async {}

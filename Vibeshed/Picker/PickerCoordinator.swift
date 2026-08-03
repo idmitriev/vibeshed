@@ -25,6 +25,19 @@ final class PickerCoordinator {
     @ObservationIgnored private var cachedEmptyQueryItems: [ActionItem]?
     @ObservationIgnored private var cachedEmptyQueryActionCache: [ActionID: any Action]?
 
+    // MARK: - Catalog corpus (query-independent actions, scored per keystroke)
+
+    /// Actions from catalog modules with precomputed search text. Fetched on panel
+    /// show and on module-change events; keystrokes only re-score this cache plus
+    /// the (cheap) query-dependent modules.
+    @ObservationIgnored private var catalogCorpus: [ScorableAction]?
+
+    /// Monotonic id for query pipeline runs. Each `runQuery` claims the next value;
+    /// results whose generation is no longer current are dropped, so a slow older
+    /// query can never overwrite a newer one's results.
+    @ObservationIgnored private var queryGeneration = 0
+    @ObservationIgnored private var runningQueryTask: Task<Void, Never>?
+
     init(
         pickerState: PickerState,
         moduleRegistry: ModuleRegistry,
@@ -265,12 +278,14 @@ final class PickerCoordinator {
                 guard let self else { return }
                 guard case .search = pickerState.mode else { return }
                 pickerState.isLoading = true
-                Task { @MainActor [weak self] in
+                runningQueryTask?.cancel()
+                runningQueryTask = Task { @MainActor [weak self] in
                     guard let self else { return }
                     // Capture context lazily — only on the first query of a session.
                     await runQuery(
                         query,
                         captureContext: currentContext == nil,
+                        refreshCorpus: false,
                         preservingSelection: true,
                         layoutCorrectionFallback: true,
                         clearsLoading: true,
@@ -280,30 +295,44 @@ final class PickerCoordinator {
             }
     }
 
-    /// Applies aliases (cheap, main-actor) then scores/ranks off the main actor.
-    /// Scoring is the per-keystroke hot path, so it runs on a detached task to keep
-    /// the main thread free during typing.
-    private func buildActionItems(
-        from actions: [any Action],
-        query: String,
-        scoring: ScoringContext
-    ) async -> ([ActionItem], [ActionID: any Action]) {
-        let buildState = Log.signposter.beginInterval("BuildActionItems")
-        defer { Log.signposter.endInterval("BuildActionItems", buildState) }
+    /// Fetches the catalog (query-independent) actions, applies aliases, and
+    /// precomputes lowercase search text off the main actor. Stores the result
+    /// as the corpus that per-keystroke scoring runs against.
+    private func fetchCatalogCorpus(scoring: ScoringContext) async -> [ScorableAction] {
+        let fetchState = Log.signposter.beginInterval("FetchCatalogCorpus")
+        defer { Log.signposter.endInterval("FetchCatalogCorpus", fetchState) }
+
+        let actions = await moduleRegistry.catalogActions(scoring: scoring)
 
         // Apply aliases: enrich keywords for parameterless aliases,
         // create synthetic actions for parameterized ones. Cheap; stays on main actor.
         let aliasResult = aliasManager?.applyAliases(to: actions)
         let enrichments = aliasResult?.keywordEnrichments ?? [:]
-        let allActions: [any Action] = actions + (aliasResult?.syntheticActions ?? [])
+        let synthetics: [any Action] = aliasResult?.syntheticActions ?? []
 
+        let corpus = await Task.detached {
+            (actions + synthetics).map {
+                ScorableAction(action: $0, extraKeywords: enrichments[$0.id] ?? [])
+            }
+        }.value
+        catalogCorpus = corpus
+        return corpus
+    }
+
+    /// Queries query-dependent modules (e.g. math), merges with the cached corpus,
+    /// and scores/ranks off the main actor — the per-keystroke hot path.
+    private func scoreQuery(
+        _ query: String,
+        corpus: [ScorableAction],
+        scoring: ScoringContext
+    ) async -> ([ActionItem], [ActionID: any Action]) {
+        let buildState = Log.signposter.beginInterval("BuildActionItems")
+        defer { Log.signposter.endInterval("BuildActionItems", buildState) }
+
+        let searchResults = await moduleRegistry.searchActions(query: query, scoring: scoring)
         return await Task.detached {
-            ActionScorer.scoreAndRank(
-                allActions: allActions,
-                enrichments: enrichments,
-                query: query,
-                scoring: scoring
-            )
+            let combined = corpus + searchResults.map { ScorableAction(action: $0) }
+            return ActionScorer.scoreAndRank(corpus: combined, query: query, scoring: scoring)
         }.value
     }
 
@@ -320,6 +349,8 @@ final class PickerCoordinator {
     ///
     /// - Parameters:
     ///   - captureContext: capture a fresh `SystemContext` and refresh the theme first.
+    ///   - refreshCorpus: re-fetch the catalog corpus from modules instead of reusing
+    ///     the cached one. Keystrokes pass `false`; show/refresh paths pass `true`.
     ///   - preservingSelection: keep the current selection across the list update.
     ///   - layoutCorrectionFallback: on empty results, retry via keyboard transliteration.
     ///   - clearsLoading: set `isLoading = false` when finished.
@@ -327,6 +358,7 @@ final class PickerCoordinator {
     private func runQuery(
         _ query: String,
         captureContext: Bool,
+        refreshCorpus: Bool,
         preservingSelection: Bool,
         layoutCorrectionFallback: Bool,
         clearsLoading: Bool,
@@ -334,6 +366,16 @@ final class PickerCoordinator {
     ) async {
         let pipelineState = Log.signposter.beginInterval("QueryPipeline")
         defer { Log.signposter.endInterval("QueryPipeline", pipelineState) }
+
+        queryGeneration += 1
+        let generation = queryGeneration
+        // Stale-guard: a later runQuery superseded this one during an await,
+        // or the picker left search mode. Results must be dropped, not displayed.
+        func isCurrent() -> Bool {
+            guard generation == queryGeneration else { return false }
+            guard case .search = pickerState.mode else { return false }
+            return true
+        }
 
         if captureContext {
             currentContext = SystemContext.capture()
@@ -353,10 +395,17 @@ final class PickerCoordinator {
         }
 
         let scoring = makeScoring(query: query, context: ctx)
-        let results = await moduleRegistry.queryAll(query: query, scoring: scoring)
-        guard case .search = pickerState.mode else { return }
-        let (items, cache) = await buildActionItems(from: results, query: query, scoring: scoring)
-        guard case .search = pickerState.mode else { return }
+
+        let corpus: [ScorableAction]
+        if refreshCorpus || catalogCorpus == nil {
+            corpus = await fetchCatalogCorpus(scoring: scoring)
+        } else {
+            corpus = catalogCorpus ?? []
+        }
+        guard isCurrent() else { return }
+
+        let (items, cache) = await scoreQuery(query, corpus: corpus, scoring: scoring)
+        guard isCurrent() else { return }
 
         // Layout correction fallback: if no results and query is non-empty,
         // try transliterating from the current keyboard layout.
@@ -364,14 +413,10 @@ final class PickerCoordinator {
            let correction = layoutTransliterator?.transliterate(query)
         {
             let correctedScoring = makeScoring(query: correction.correctedQuery, context: ctx)
-            let correctedResults = await moduleRegistry.queryAll(
-                query: correction.correctedQuery, scoring: correctedScoring
+            let (correctedItems, correctedCache) = await scoreQuery(
+                correction.correctedQuery, corpus: corpus, scoring: correctedScoring
             )
-            guard case .search = pickerState.mode else { return }
-            let (correctedItems, correctedCache) = await buildActionItems(
-                from: correctedResults, query: correction.correctedQuery, scoring: correctedScoring
-            )
-            guard case .search = pickerState.mode else { return }
+            guard isCurrent() else { return }
             if !correctedItems.isEmpty {
                 pickerState.layoutCorrectionHint = correction
                 finish(correctedItems, correctedCache)
@@ -496,6 +541,7 @@ final class PickerCoordinator {
             await runQuery(
                 "",
                 captureContext: true,
+                refreshCorpus: true,
                 preservingSelection: true,
                 layoutCorrectionFallback: false,
                 clearsLoading: true,
@@ -512,6 +558,7 @@ final class PickerCoordinator {
             await runQuery(
                 pickerState.query,
                 captureContext: true,
+                refreshCorpus: true,
                 preservingSelection: true,
                 layoutCorrectionFallback: false,
                 clearsLoading: false,
@@ -520,16 +567,19 @@ final class PickerCoordinator {
         }
     }
 
-    /// Invalidates the empty-query cache so the next fresh open re-queries modules.
+    /// Invalidates the empty-query cache and the catalog corpus so the next
+    /// query re-fetches from modules.
     private func invalidateEmptyQueryCache() {
         cachedEmptyQueryItems = nil
         cachedEmptyQueryActionCache = nil
+        catalogCorpus = nil
     }
 
     func refreshActions() async {
         await runQuery(
             pickerState.query,
             captureContext: false,
+            refreshCorpus: true,
             preservingSelection: true,
             layoutCorrectionFallback: true,
             clearsLoading: false,

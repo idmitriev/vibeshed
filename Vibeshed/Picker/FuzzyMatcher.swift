@@ -9,15 +9,26 @@ enum FuzzyMatcher {
     /// Fuzzy match a query against a target string.
     /// Returns nil if the query cannot be matched, otherwise returns a score (0..1) and highlight ranges.
     static func match(query: String, against target: String) -> MatchResult? {
-        guard !query.isEmpty else {
+        match(
+            queryChars: Array(query.lowercased()),
+            against: Array(target.lowercased()),
+            original: target
+        )
+    }
+
+    /// Core matcher over pre-lowercased character arrays. The per-keystroke scoring
+    /// path precomputes these once per action (see `ScorableAction`) instead of
+    /// re-lowercasing every title/subtitle/keyword on each keystroke.
+    /// `original` is the un-lowercased target, used to build highlight ranges.
+    static func match(
+        queryChars: [Character],
+        against targetChars: [Character],
+        original: String
+    ) -> MatchResult? {
+        guard !queryChars.isEmpty else {
             return MatchResult(score: 1.0, matchedRanges: [])
         }
-        guard !target.isEmpty else { return nil }
-
-        let queryLower = query.lowercased()
-        let targetLower = target.lowercased()
-        let queryChars = Array(queryLower)
-        let targetChars = Array(targetLower)
+        guard !targetChars.isEmpty else { return nil }
 
         var qIdx = 0
         var matchedIndices: [Int] = []
@@ -69,9 +80,30 @@ enum FuzzyMatcher {
         let normalizedScore = min(1.0, max(0.0, totalScore / maxPossible))
 
         // Build ranges for highlighting
-        let matchedRanges = buildRanges(from: matchedIndices, in: target)
+        let matchedRanges = buildRanges(from: matchedIndices, in: original)
 
         return MatchResult(score: normalizedScore, matchedRanges: matchedRanges)
+    }
+
+    /// Precomputed lowercase forms of one action's searchable fields. Built once
+    /// per action when the corpus is (re)fetched so per-keystroke scoring does no
+    /// string lowercasing or `Array(String)` conversion.
+    struct ScoreTarget: Sendable {
+        let title: String
+        let titleChars: [Character]
+        let subtitle: String
+        let subtitleChars: [Character]
+        let keywordsLower: [String]
+        let relevanceScore: Double
+
+        init(title: String, subtitle: String, keywords: [String], relevanceScore: Double) {
+            self.title = title
+            self.titleChars = Array(title.lowercased())
+            self.subtitle = subtitle
+            self.subtitleChars = Array(subtitle.lowercased())
+            self.keywordsLower = keywords.map { $0.lowercased() }
+            self.relevanceScore = relevanceScore
+        }
     }
 
     /// Score an action against a query, combining fuzzy match with module score and usage.
@@ -84,16 +116,41 @@ enum FuzzyMatcher {
         relevanceScore: Double,
         usageBoost: Double
     ) -> (score: Double, titleRanges: [Range<String.Index>])? {
-        guard !query.isEmpty else {
+        let queryLower = query.lowercased()
+        return score(
+            queryLower: queryLower,
+            queryChars: Array(queryLower),
+            target: ScoreTarget(
+                title: title,
+                subtitle: subtitle,
+                keywords: keywords,
+                relevanceScore: relevanceScore
+            ),
+            usageBoost: usageBoost
+        )
+    }
+
+    /// Precomputed-input variant of `score` — the per-keystroke hot path. All
+    /// lowercased forms come in ready-made so no string transforms happen here.
+    static func score(
+        queryLower: String,
+        queryChars: [Character],
+        target: ScoreTarget,
+        usageBoost: Double
+    ) -> (score: Double, titleRanges: [Range<String.Index>])? {
+        guard !queryChars.isEmpty else {
             // No query: score based on relevance and usage only
-            let score = relevanceScore * 0.4 + usageBoost * 0.6
+            let score = target.relevanceScore * 0.4 + usageBoost * 0.6
             return (score: score, titleRanges: [])
         }
 
-        let queryLower = query.lowercased()
-        let titleMatch = match(query: query, against: title)
-        let subtitleMatch = match(query: query, against: subtitle)
-        let keywordMatch = keywords.contains { $0.lowercased().hasPrefix(queryLower) }
+        let titleMatch = match(
+            queryChars: queryChars, against: target.titleChars, original: target.title
+        )
+        let subtitleMatch = match(
+            queryChars: queryChars, against: target.subtitleChars, original: target.subtitle
+        )
+        let keywordMatch = target.keywordsLower.contains { $0.hasPrefix(queryLower) }
 
         // Must match at least title, subtitle, or keyword
         guard titleMatch != nil || subtitleMatch != nil || keywordMatch else {
@@ -107,7 +164,7 @@ enum FuzzyMatcher {
         let combined = titleScore * 0.4
             + subtitleScore * 0.1
             + keywordBonus
-            + relevanceScore * 0.15
+            + target.relevanceScore * 0.15
             + usageBoost * 0.25
 
         return (

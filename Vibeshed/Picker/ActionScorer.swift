@@ -1,5 +1,27 @@
 import Foundation
 
+/// An action bundled with the precomputed lowercase forms the fuzzy matcher needs.
+/// Built once when the catalog corpus is (re)fetched, so per-keystroke scoring does
+/// no string lowercasing or `Array(String)` conversion at all.
+struct ScorableAction: Sendable {
+    let action: any Action
+    /// Keywords including any alias enrichments, in original casing (shown in UI).
+    let keywords: [String]
+    let target: FuzzyMatcher.ScoreTarget
+
+    init(action: any Action, extraKeywords: [String] = []) {
+        self.action = action
+        let combined = action.keywords + extraKeywords
+        self.keywords = combined
+        self.target = FuzzyMatcher.ScoreTarget(
+            title: action.title,
+            subtitle: action.subtitle,
+            keywords: combined,
+            relevanceScore: action.relevanceScore
+        )
+    }
+}
+
 /// Pure, actor-independent scoring/ranking of actions into display items.
 ///
 /// This is the per-keystroke hot path (fuzzy scoring + sort + URL dedup over the full
@@ -10,31 +32,26 @@ enum ActionScorer {
     /// Maximum rendered results — nobody scrolls past 200 in a launcher.
     private static let maxResults = 200
 
-    /// Scores `allActions` against `query`, ranks them, dedups browser tabs vs
+    /// Scores the precomputed corpus against `query`, ranks it, dedups browser tabs vs
     /// bookmark/history entries by URL, and caps the result.
-    ///
-    /// - Parameters:
-    ///   - allActions: module actions plus any synthetic alias actions.
-    ///   - enrichments: extra keywords contributed by aliases, keyed by action ID.
     static func scoreAndRank(
-        allActions: [any Action],
-        enrichments: [ActionID: [String]],
+        corpus: [ScorableAction],
         query: String,
         scoring: ScoringContext
     ) -> ([ActionItem], [ActionID: any Action]) {
+        let queryLower = query.lowercased()
+        let queryChars = Array(queryLower)
+
         var scored: [(item: ActionItem, action: any Action, score: Double)] = []
         var cache: [ActionID: any Action] = [:]
 
-        for action in allActions {
-            let combinedKeywords = action.keywords + (enrichments[action.id] ?? [])
-
+        for scorable in corpus {
+            let action = scorable.action
             let usageBoost = scoring.usageBoost(for: action.id)
             guard let result = FuzzyMatcher.score(
-                query: query,
-                title: action.title,
-                subtitle: action.subtitle,
-                keywords: combinedKeywords,
-                relevanceScore: action.relevanceScore,
+                queryLower: queryLower,
+                queryChars: queryChars,
+                target: scorable.target,
                 usageBoost: usageBoost
             ) else { continue }
 
@@ -57,7 +74,7 @@ enum ActionScorer {
                 score: finalScore,
                 moduleID: moduleID,
                 hasParameters: !action.parameters.filter(\.isRequired).isEmpty,
-                keywords: combinedKeywords,
+                keywords: scorable.keywords,
                 titleHighlightRanges: result.titleRanges.isEmpty ? nil : result.titleRanges
             )
             scored.append((item: item, action: action, score: finalScore))
@@ -83,6 +100,20 @@ enum ActionScorer {
         }
 
         return (scored.map(\.item), cache)
+    }
+
+    /// Convenience over the corpus variant for callers holding raw actions —
+    /// builds the precomputed forms inline. Equivalent output.
+    static func scoreAndRank(
+        allActions: [any Action],
+        enrichments: [ActionID: [String]],
+        query: String,
+        scoring: ScoringContext
+    ) -> ([ActionItem], [ActionID: any Action]) {
+        let corpus = allActions.map {
+            ScorableAction(action: $0, extraKeywords: enrichments[$0.id] ?? [])
+        }
+        return scoreAndRank(corpus: corpus, query: query, scoring: scoring)
     }
 
     static func normalizeURL(_ url: String) -> String {

@@ -123,14 +123,28 @@ final class ModuleRegistry {
 
     private let moduleQueryTimeout: TimeInterval = 2.0
 
-    func queryAll(
+    /// Fetches the full catalog from query-independent modules (the vast majority).
+    /// Called once per picker session and on module-change events — not per keystroke.
+    func catalogActions(scoring: ScoringContext) async -> [any Action] {
+        let signpostState = Log.signposter.beginInterval("ModuleCatalog")
+        defer { Log.signposter.endInterval("ModuleCatalog", signpostState) }
+        let catalogModules = modules.values.filter { !type(of: $0).isQueryDependent }
+        return await fanOut(modules: Array(catalogModules), query: "", scoring: scoring)
+    }
+
+    /// Queries modules whose actions are computed from the query text (e.g. math).
+    /// Called per keystroke — these modules must be fast.
+    func searchActions(query: String, scoring: ScoringContext) async -> [any Action] {
+        let searchModules = modules.values.filter { type(of: $0).isQueryDependent }
+        guard !searchModules.isEmpty else { return [] }
+        return await fanOut(modules: Array(searchModules), query: query, scoring: scoring)
+    }
+
+    private func fanOut(
+        modules allModules: [any Module],
         query: String,
         scoring: ScoringContext
     ) async -> [any Action] {
-        let signpostState = Log.signposter.beginInterval("ModuleQueryAll")
-        defer { Log.signposter.endInterval("ModuleQueryAll", signpostState) }
-
-        let allModules = Array(modules.values)
         let timeout = moduleQueryTimeout
 
         return await withTaskGroup(of: [any Action].self) { group in

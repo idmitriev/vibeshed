@@ -12,6 +12,10 @@ actor MathModule: ModuleConfigurable {
         .init()
     }
 
+    /// Math actions are computed from the query text, so the picker re-queries
+    /// this module on every keystroke instead of serving it from the corpus cache.
+    static let isQueryDependent = true
+
     private var config: MathConfig = .init()
     private var context: ModuleContext?
     private var rateCache: CurrencyRateCache?

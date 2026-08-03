@@ -19,6 +19,9 @@ actor ITermModule: ModuleConfigurable {
     private var config: ITermConfig = .init()
     private var context: ModuleContext?
     private let log = Log.module("iterm")
+    /// Session listing goes through an osascript subprocess — cache it so
+    /// repeated picker fetches don't spawn AppleScript each time.
+    private var sessionCache = TimedCache<[ITermSession]>(ttl: 5)
 
     func initialize(context: ModuleContext) async throws {
         self.context = context
@@ -207,11 +210,16 @@ actor ITermModule: ModuleConfigurable {
 
     private func buildSessionActions() async -> [ITermAction] {
         let sessions: [ITermSession]
-        do {
-            sessions = try await ITermManager.listSessions()
-        } catch {
-            log.error("Failed to list iTerm sessions: \(error.localizedDescription, privacy: .public)")
-            return []
+        if let cached = sessionCache.value {
+            sessions = cached
+        } else {
+            do {
+                sessions = try await ITermManager.listSessions()
+                sessionCache.store(sessions)
+            } catch {
+                log.error("Failed to list iTerm sessions: \(error.localizedDescription, privacy: .public)")
+                return []
+            }
         }
 
         let config = self.config
