@@ -30,7 +30,6 @@ actor SelfModule: ModuleConfigurable {
     }
 
     private var config = SelfConfig()
-    private var context: ModuleContext?
     private let log = Log.module("self")
     private let configFileURL: URL
     private let configDirURL: URL
@@ -50,7 +49,6 @@ actor SelfModule: ModuleConfigurable {
     }
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Self module initialized")
     }
 

@@ -16,11 +16,9 @@ actor TelegramModule: ModuleConfigurable {
     }
 
     private var config: TelegramConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("telegram")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Telegram module initialized (\(self.config.chats.count, privacy: .public) chats configured)")
     }
 

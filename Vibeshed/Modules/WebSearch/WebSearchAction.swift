@@ -1,11 +1,12 @@
-struct TilingAction: Action {
+import Foundation
+
+struct WebSearchAction: Action {
     let id: ActionID
     let title: String
     let subtitle: String
     let iconName: String?
     let relevanceScore: Double
     let keywords: [String]
-    let parameters: [ActionParameter]
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
@@ -14,9 +15,8 @@ struct TilingAction: Action {
         title: String,
         subtitle: String,
         iconName: String? = nil,
-        relevanceScore: Double = 0.8,
+        relevanceScore: Double = 0.05,
         keywords: [String] = [],
-        parameters: [ActionParameter] = [],
         runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
@@ -25,7 +25,6 @@ struct TilingAction: Action {
         self.iconName = iconName
         self.relevanceScore = relevanceScore
         self.keywords = keywords
-        self.parameters = parameters
         self.runner = runner
     }
 

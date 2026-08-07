@@ -19,7 +19,6 @@ actor MeetingPrepModule: ModuleConfigurable {
     }
 
     private var config: MeetingPrepConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("meetingPrep")
     private let windowManager = WindowManager()
 
@@ -32,7 +31,6 @@ actor MeetingPrepModule: ModuleConfigurable {
     private var hiddenWindowIDs: [Int] = []
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Meeting Prep module initialized")
     }
 

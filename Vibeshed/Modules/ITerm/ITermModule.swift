@@ -12,23 +12,15 @@ actor ITermModule: ModuleConfigurable {
         .init()
     }
 
-    static var requiredPermissions: Set<Permission> {
-        []
-    }
-
     private var config: ITermConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("iterm")
     /// Session listing goes through an osascript subprocess — cache it so
     /// repeated picker fetches don't spawn AppleScript each time.
     private var sessionCache = TimedCache<[ITermSession]>(ttl: 5)
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("iTerm module initialized")
     }
-
-    func teardown() async {}
 
     func configDidUpdate(_ config: ITermConfig) async {
         self.config = config

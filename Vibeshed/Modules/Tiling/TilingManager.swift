@@ -25,6 +25,10 @@ struct TilingManager: Sendable {
         try windowManager.setFrame(window, frame: frame)
     }
 
+    func focusWindow(_ window: WindowInfo) throws {
+        try windowManager.focusWindow(window)
+    }
+
     func isTileable(_ window: WindowInfo) -> Bool {
         windowManager.isTileable(window)
     }

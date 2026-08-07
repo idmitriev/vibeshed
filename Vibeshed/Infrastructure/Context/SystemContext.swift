@@ -4,26 +4,17 @@ import Foundation
 
 struct SystemContext: Sendable {
     let focusedAppBundleID: String?
-    let focusedAppName: String?
-    let runningAppBundleIDs: Set<String>
     let hour: Int
     let isWeekend: Bool
     let outputVolume: Float
     let isOutputMuted: Bool
     let isSpotifyRunning: Bool
-    let focusedWindowTitle: String?
     let visibleWindowCount: Int
 
     @MainActor
     static func capture() -> SystemContext {
         let frontApp = NSWorkspace.shared.frontmostApplication
         let focusedBundleID = frontApp?.bundleIdentifier
-        let focusedName = frontApp?.localizedName
-
-        let runningBundleIDs = Set(
-            NSWorkspace.shared.runningApplications
-                .compactMap(\.bundleIdentifier)
-        )
 
         let now = Date()
         let calendar = Calendar.current
@@ -38,30 +29,16 @@ struct SystemContext: Sendable {
             .runningApplications(withBundleIdentifier: "com.spotify.client")
             .isEmpty
 
-        // Focused window title — needs accessibility, gracefully returns nil if denied
-        var windowTitle: String?
-        if let pid = frontApp?.processIdentifier,
-           let axWindow = AXWindowHelper.focusedWindow(for: pid)
-        {
-            let title = AXWindowHelper.title(of: axWindow)
-            if !title.isEmpty {
-                windowTitle = title
-            }
-        }
-
         // Visible window count — CGWindowList works without screen recording for basic info
         let windowCount = captureVisibleWindowCount()
 
         return SystemContext(
             focusedAppBundleID: focusedBundleID,
-            focusedAppName: focusedName,
-            runningAppBundleIDs: runningBundleIDs,
             hour: hour,
             isWeekend: isWeekend,
             outputVolume: volume,
             isOutputMuted: muted,
             isSpotifyRunning: spotifyRunning,
-            focusedWindowTitle: windowTitle,
             visibleWindowCount: windowCount
         )
     }

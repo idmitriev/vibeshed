@@ -55,6 +55,22 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertTrue(windowYAML.contains("gap"))
     }
 
+    func testBadSectionFallsBackWithoutDiscardingOthers() throws {
+        let yaml = """
+        keybindings:
+          - combo: cmd+space
+            action: picker/toggle
+        appearance:
+          panelWidth: "not a number"
+        """
+        let config = try ConfigManager.parseYAML(yaml)
+        // The malformed appearance section falls back to defaults…
+        XCTAssertEqual(config.appearance, AppConfig().appearance)
+        // …without discarding the valid sections around it.
+        XCTAssertEqual(config.keybindings.count, 1)
+        XCTAssertEqual(config.keybindings.first?.combo, "cmd+space")
+    }
+
     func testIgnoresUnknownTopLevelSections() throws {
         let yaml = """
         somethingUnknown:

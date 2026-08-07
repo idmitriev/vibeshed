@@ -338,6 +338,61 @@
 - [ ] Open logs action works
 - [ ] Quit app action works
 
+### 36. Tiling Module
+
+- [ ] Attach snaps focused window to nearest grid cell
+- [ ] Attach All tiles every open window
+- [ ] Detach stops managing window without moving it
+- [ ] Move left/right/up/down snaps window between cells (no wraparound at edges)
+- [ ] Per-display grids resolved by display name/"main"/index
+- [ ] Enable auto-tile tiles new and moved/resized windows; disable stops it
+- [ ] Dragged window snaps only after drop, never mid-drag
+- [ ] Tooltips/panels/small windows are not auto-tiled
+- [ ] Focus border appears around focused tiled window when enabled; hides in Mission Control
+
+### 37. Processes Module
+
+- [ ] Lists running processes with CPU/memory
+- [ ] Search by process name and port
+- [ ] Kill action terminates the process
+- [ ] Kill failure (e.g. protected process) shows an error notification
+- [ ] excludedNames filters processes from the list
+
+### 38. Settings Module
+
+- [ ] Lists System Settings panes
+- [ ] Opening a pane launches System Settings at that pane
+- [ ] enabledPanes restricts the list
+- [ ] customPanes entries appear and open
+
+### 39. Homebrew Module
+
+- [ ] Search formulas and casks by name
+- [ ] Install/uninstall formula and cask actions work (notification shows output)
+- [ ] Update/upgrade/outdated/cleanup actions work
+- [ ] Long brew output (e.g. many outdated packages) doesn't hang the app
+
+### 40. Zed Module
+
+- [ ] Lists recent Zed workspaces
+- [ ] Opening a workspace launches Zed with that path
+- [ ] Remote workspaces hidden unless showRemote is true
+
+### 41. Web Search Module
+
+- [ ] Queries shorter than minQueryLength produce no search actions
+- [ ] Search actions appear at the bottom of results for longer queries
+- [ ] Selecting opens the engine URL with the query percent-encoded
+- [ ] Custom engines from config appear; invalid urlTemplate (no {query}) rejected at validation
+
+### 42. Emoji Module
+
+- [ ] Typing an emoji name (e.g. "shrug") shows matching emoji
+- [ ] Keyword matches work (e.g. "happy" finds smileys)
+- [ ] Selecting copies the emoji to the clipboard
+- [ ] pasteOnSelect: true also pastes into the frontmost app
+- [ ] maxResults caps the number of emoji rows
+
 ---
 
 ## Edge Cases

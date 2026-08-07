@@ -12,17 +12,11 @@ actor SpotifyModule: ModuleConfigurable {
         .init()
     }
 
-    static var requiredPermissions: Set<Permission> {
-        []
-    }
-
     private var config: SpotifyConfig = .init()
-    private var context: ModuleContext?
     private var searchClient: SpotifySearchClient?
     private let log = Log.module("spotify")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         updateSearchClient()
         log
             .info(

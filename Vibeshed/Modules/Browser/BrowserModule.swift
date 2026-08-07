@@ -13,13 +13,8 @@ actor BrowserModule: ModuleConfigurable {
         .init()
     }
 
-    static var requiredPermissions: Set<Permission> {
-        []
-    }
-
     private var config: BrowserConfig = .init()
     private let browserManager = BrowserManager()
-    private var context: ModuleContext?
     private let log = Log.module("browser")
 
     // Cache
@@ -27,7 +22,6 @@ actor BrowserModule: ModuleConfigurable {
     private var cacheTimestamp: Date = .distantPast
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Browser module initialized")
     }
 

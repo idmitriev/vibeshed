@@ -9,53 +9,70 @@ enum AppleScriptRunner {
     @discardableResult
     static func run(_ script: String, timeout: TimeInterval = 5) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-
-            let inputPipe = Pipe()
-            let stdoutPipe = Pipe()
-            let stderrPipe = Pipe()
-            process.standardInput = inputPipe
-            process.standardOutput = stdoutPipe
-            process.standardError = stderrPipe
-
             let gate = ResumeGate(continuation: continuation)
+            DispatchQueue.global(qos: .userInitiated).async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
 
-            let timeoutWorkItem = DispatchWorkItem {
-                log.warning("AppleScript timed out after \(timeout, privacy: .public)s")
-                gate.resume(with: .failure(AppleScriptError.scriptTimeout))
-                process.terminate()
-            }
-            DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: timeoutWorkItem)
+                let inputPipe = Pipe()
+                let stdoutPipe = Pipe()
+                let stderrPipe = Pipe()
+                process.standardInput = inputPipe
+                process.standardOutput = stdoutPipe
+                process.standardError = stderrPipe
 
-            process.terminationHandler = { _ in
+                let timeoutWorkItem = DispatchWorkItem {
+                    log.warning("AppleScript timed out after \(timeout, privacy: .public)s")
+                    gate.resume(with: .failure(AppleScriptError.scriptTimeout))
+                    process.terminate()
+                }
+                DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: timeoutWorkItem)
+
+                do {
+                    try process.run()
+                } catch {
+                    timeoutWorkItem.cancel()
+                    log.error("Failed to launch osascript: \(error.localizedDescription, privacy: .public)")
+                    gate.resume(with: .failure(error))
+                    return
+                }
+                inputPipe.fileHandleForWriting.write(script.data(using: .utf8) ?? Data())
+                inputPipe.fileHandleForWriting.closeFile()
+
+                // Drain both pipes concurrently before waiting on exit: reading only after
+                // termination deadlocks once output exceeds the 64KB pipe buffer — the child
+                // blocks on a full-buffer write() and never exits. Same pattern as
+                // HomebrewManager.runBrew.
+                let readGroup = DispatchGroup()
+                // Safe: readGroup.wait() below is a happens-before barrier against both writes.
+                nonisolated(unsafe) var outputData = Data()
+                nonisolated(unsafe) var errorData = Data()
+                readGroup.enter()
+                DispatchQueue.global(qos: .utility).async {
+                    outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                    readGroup.leave()
+                }
+                readGroup.enter()
+                DispatchQueue.global(qos: .utility).async {
+                    errorData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                    readGroup.leave()
+                }
+                readGroup.wait()
+                process.waitUntilExit()
                 timeoutWorkItem.cancel()
-
-                let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
 
                 if process.terminationStatus != 0 {
                     let errorMsg = String(data: errorData, encoding: .utf8)?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
-                    log
-                        .error(
-                            "AppleScript failed (exit \(process.terminationStatus, privacy: .public)): \(errorMsg, privacy: .public)"
-                        )
+                    let status = process.terminationStatus
+                    log.error(
+                        "AppleScript failed (exit \(status, privacy: .public)): \(errorMsg, privacy: .public)"
+                    )
                     gate.resume(with: .failure(AppleScriptError.scriptFailed(errorMsg)))
                 } else {
                     let output = String(data: outputData, encoding: .utf8) ?? ""
                     gate.resume(with: .success(output))
                 }
-            }
-
-            do {
-                try process.run()
-                inputPipe.fileHandleForWriting.write(script.data(using: .utf8) ?? Data())
-                inputPipe.fileHandleForWriting.closeFile()
-            } catch {
-                timeoutWorkItem.cancel()
-                log.error("Failed to launch osascript: \(error.localizedDescription, privacy: .public)")
-                gate.resume(with: .failure(error))
             }
         }
     }
@@ -86,13 +103,15 @@ enum AppleScriptRunner {
 
         do {
             try task.run()
-            task.waitUntilExit()
         } catch {
             log.warning("osascript launch failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
 
+        // Drain before waiting: waitUntilExit() first deadlocks once output exceeds
+        // the 64KB pipe buffer. Single pipe, so a sequential read is sufficient.
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        task.waitUntilExit()
         return String(data: data, encoding: .utf8)
     }
 }

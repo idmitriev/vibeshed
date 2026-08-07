@@ -25,10 +25,6 @@ actor EventBus {
         return (id, stream)
     }
 
-    func unsubscribe(id: UUID) {
-        continuations.removeValue(forKey: id)?.finish()
-    }
-
     private func storeContinuation(
         _ continuation: AsyncStream<AppEvent>.Continuation,
         for id: UUID

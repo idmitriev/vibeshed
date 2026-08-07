@@ -102,12 +102,15 @@ The app watches the config file for changes and hot-reloads automatically.
 | Module | Description |
 |--------|-------------|
 | **Window** | Resize, move, tile, cycle, maximize/restore, focus windows |
+| **Tiling** | Per-display grid tiling, auto-tile, directional moves, focus border |
 | **Application** | Launch, focus, quit applications |
+| **Processes** | List and kill running processes |
 | **Browser** | Search/focus/close tabs in Safari and Chromium browsers |
 | **Bookmark** | Browser bookmarks and most-visited URLs |
 | **Clipboard** | Clipboard history with search, paste, and persistence |
 | **Audio** | Volume, mute, device selection, media key control |
 | **System** | Lock, sleep, restart, shutdown, appearance, screenshots |
+| **Settings** | Open macOS System Settings panes |
 | **Spotify** | Search artists/albums/playlists, playback control |
 | **GitHub** | Search repos, issues, PRs; view notifications |
 | **VSCode** | Search and open recent projects |
@@ -122,6 +125,8 @@ The app watches the config file for changes and hot-reloads automatically.
 | **MeetingPrep** | Prepare workspace for meetings |
 | **Timer** | Set timers and reminders |
 | **Math** | Arithmetic, unit/currency conversion |
+| **Web Search** | Search the web when nothing else matches |
+| **Emoji** | Search and copy/paste emoji |
 | **Theme** | Dynamic appearance theming |
 | **Self** | Open config, reload modules, view logs, quit |
 

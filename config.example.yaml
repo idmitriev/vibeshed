@@ -90,6 +90,10 @@ keybindings:
     action: "window/focusWindow"
   - combo: "capslock+period"
     action: "window/focusWindow"
+  - combo: "capslock+j"
+    action: "tiling/focusNextSplit"       # focus window in next split (recent window off-grid)
+  - combo: "capslock+k"
+    action: "tiling/focusPreviousSplit"   # focus window in previous split (recent window off-grid)
 
   # --- system ---
   - combo: "capslock+q"
@@ -315,6 +319,7 @@ modules:
   # --- Application Launcher ---
   application:
     showRunningOnly: false
+    cacheTTLSeconds: 3.0
     excludedBundleIDs:
       - "com.apple.Dock"
       - "com.apple.loginwindow"
@@ -625,6 +630,20 @@ modules:
     #   - outdated
     #   - cleanup
 
+  # --- Web Search (fallback actions when nothing else matches) ---
+  websearch:
+    minQueryLength: 2
+    engines:
+      - name: "Google"
+        urlTemplate: "https://www.google.com/search?q={query}"
+      - name: "DuckDuckGo"
+        urlTemplate: "https://duckduckgo.com/?q={query}"
+
+  # --- Emoji (search by name/keyword, copies to clipboard) ---
+  emoji:
+    maxResults: 8
+    pasteOnSelect: false     # true: also send Cmd+V into the frontmost app
+
   # --- Self (Vibeshed meta-actions) ---
   self:
     enabledActions:
@@ -634,6 +653,17 @@ modules:
       - moduleStatus
       - openLogs
       - quit
+
+# ---------------------------------------------------------------------------
+# Layout Correction
+# ---------------------------------------------------------------------------
+# When a query matches nothing but transliterating it from another keyboard
+# layout (e.g. Cyrillic typed while the wrong layout was active) would match,
+# the picker retries with the corrected text and shows a hint banner.
+# Enabled by default; set enabled: false to turn it off.
+# ---------------------------------------------------------------------------
+layoutCorrection:
+  enabled: true
 
 # ---------------------------------------------------------------------------
 # URL Routing (default browser replacement)

@@ -12,7 +12,7 @@ SWIFTLINT = .build/artifacts/swiftlintplugins/SwiftLintBinary/SwiftLintBinary.ar
 VERSION := $(shell V=$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//'); echo "$${V:-0.1.0-dev}")
 BUILD_NUMBER := $(shell git rev-list --count HEAD 2>/dev/null || echo "1")
 
-.PHONY: build run run-debug install clean log lint lint-fix
+.PHONY: build run run-debug install clean log lint lint-fix test
 
 build:
 	swift build
@@ -62,6 +62,9 @@ log:
 clean:
 	swift package clean
 	rm -rf "$(APP_BUNDLE)"
+
+test:
+	swift test
 
 lint:
 	$(SWIFTLINT) lint --reporter xcode

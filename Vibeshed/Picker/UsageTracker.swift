@@ -9,9 +9,9 @@ final class UsageTracker {
     private let storageURL: URL
     private var saveTask: Task<Void, Never>?
 
-    init() {
+    init(storageURL: URL? = nil) {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        storageURL = home
+        self.storageURL = storageURL ?? home
             .appendingPathComponent(".config/vibeshed/usage.json")
         load()
     }
@@ -38,7 +38,9 @@ final class UsageTracker {
         guard FileManager.default.fileExists(atPath: storageURL.path) else { return }
         do {
             let data = try Data(contentsOf: storageURL)
-            let stored = try JSONDecoder().decode(StoredUsage.self, from: data)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let stored = try decoder.decode(StoredUsage.self, from: data)
             usageCounts = stored.counts
             lastUsedDates = stored.lastUsed
             Log.picker.info("Loaded usage data: \(self.usageCounts.count, privacy: .public) actions tracked")
@@ -56,7 +58,7 @@ final class UsageTracker {
         }
     }
 
-    private func save() {
+    func save() {
         let stored = StoredUsage(counts: usageCounts, lastUsed: lastUsedDates)
         do {
             let encoder = JSONEncoder()

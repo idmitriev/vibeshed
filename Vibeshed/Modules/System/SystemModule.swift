@@ -13,11 +13,9 @@ actor SystemModule: ModuleConfigurable {
     }
 
     private var config: SystemConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("system")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("System module initialized")
     }
 

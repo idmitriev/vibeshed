@@ -21,7 +21,6 @@ actor TilingModule: ModuleConfigurable {
     private var config: TilingConfig = .defaultValue
     private let manager = TilingManager()
     private var assignments: [Int: GridAssignment] = [:]
-    private var context: ModuleContext?
     private let log = Log.module("tiling")
 
     /// Runtime-only; always starts disabled on launch and is toggled via
@@ -37,7 +36,6 @@ actor TilingModule: ModuleConfigurable {
     private var focusBorderPollTask: Task<Void, Never>?
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         // Seed seen-window/frame state from what's already open so the poller (below)
         // only reacts to windows/moves that appear after auto-tile is enabled.
         let existing = await MainActor.run { manager.listWindows(includeMinimized: false) }
@@ -130,6 +128,34 @@ actor TilingModule: ModuleConfigurable {
         buildActions()
     }
 
+    /// Options for `detachWindow`: only windows currently tracked as tiled (having a grid
+    /// assignment) — detaching an unmanaged window would be a no-op. The picker applies
+    /// fuzzy filtering on the query itself.
+    func provideParameterOptions(
+        for parameterID: String,
+        in actionID: ActionID,
+        query: String
+    ) async -> [ParameterOption] {
+        guard parameterID == "window", actionID.actionName == "detachWindow" else { return [] }
+        let tiledIDs = Set(assignments.keys)
+        guard !tiledIDs.isEmpty else { return [] }
+        let mgr = manager
+        let windows = await MainActor.run {
+            mgr.listWindows(includeMinimized: false).filter { tiledIDs.contains($0.id) }
+        }
+        return windows.map { window in
+            let appURL = window.bundleID.flatMap {
+                NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)
+            }
+            return ParameterOption(
+                id: String(window.id),
+                label: window.displayLabel,
+                iconName: "macwindow",
+                iconURL: appURL
+            )
+        }
+    }
+
     // MARK: - Build Actions
 
     private func buildActions() -> [TilingAction] {
@@ -140,6 +166,10 @@ actor TilingModule: ModuleConfigurable {
             makeAttachAction(mgr: mgr, cfg: cfg),
             makeAttachAllAction(mgr: mgr),
             makeDetachAction(mgr: mgr),
+            makeDetachWindowAction(),
+            makeSwapNextSplitAction(mgr: mgr, cfg: cfg),
+            makeFocusSplitAction(forward: true, mgr: mgr, cfg: cfg),
+            makeFocusSplitAction(forward: false, mgr: mgr, cfg: cfg),
             makeMoveAction(direction: .left, mgr: mgr, cfg: cfg),
             makeMoveAction(direction: .right, mgr: mgr, cfg: cfg),
             makeMoveAction(direction: .up, mgr: mgr, cfg: cfg),
@@ -393,16 +423,22 @@ actor TilingModule: ModuleConfigurable {
     /// window manually attached earlier still gets a border even with auto-tile off.
     private func pollFocusBorder() async {
         guard focusBorderEnabled else { return }
-        // While Mission Control, Launchpad, App Exposé, or "Show Desktop" is active, the Dock
-        // process is frontmost and every real window scatters/animates away — leaving the
-        // border floating in its old, now-meaningless position. Hide it for the duration.
+        // While Mission Control, App Exposé, or a space-switch/fullscreen transition is
+        // active, every real window scatters or shrinks to a thumbnail — but still reports
+        // its normal frame via AX, so the border would float in its old, now-meaningless
+        // position. There is no public "Mission Control is active" signal (the frontmost
+        // app does NOT change to the Dock on modern macOS), so instead verify the focused
+        // window is actually on screen at its AX-reported frame; if it isn't where it
+        // claims to be, hide the border for the duration.
         let (focused, missionControlActive) = await MainActor.run {
             (
                 manager.getFocusedWindow(),
                 NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.dock"
             )
         }
-        guard !missionControlActive, let focused, assignments[focused.id] != nil else {
+        guard !missionControlActive, let focused, assignments[focused.id] != nil,
+              Self.windowIsAtItsFrame(focused)
+        else {
             await FocusBorderController.shared.hide()
             return
         }
@@ -429,6 +465,18 @@ actor TilingModule: ModuleConfigurable {
 
     private static func isLeftMouseButtonDown() -> Bool {
         CGEventSource.buttonState(.combinedSessionState, button: .left)
+    }
+
+    /// True if the window is currently on screen at (roughly) the frame AX reports for it.
+    /// False while the window is scattered by Mission Control/App Exposé, sits on another
+    /// space, or is otherwise not rendered where AX claims — all states where drawing the
+    /// border at the AX frame would put it in the wrong place.
+    private static func windowIsAtItsFrame(_ window: WindowInfo, tolerance: Double = 2.0) -> Bool {
+        guard let onScreen = WindowListHelper.onScreenBounds(of: window.id) else { return false }
+        return abs(onScreen.origin.x - window.frame.origin.x) <= tolerance
+            && abs(onScreen.origin.y - window.frame.origin.y) <= tolerance
+            && abs(onScreen.width - window.frame.width) <= tolerance
+            && abs(onScreen.height - window.frame.height) <= tolerance
     }
 
     private static func framesRoughlyEqual(_ previous: CGRect?, _ current: CGRect, tolerance: Double = 1.0) -> Bool {
@@ -525,11 +573,13 @@ actor TilingModule: ModuleConfigurable {
 
     // MARK: - Assignment State
 
-    private func setAssignment(windowID: Int, displayKey: String, row: Int, col: Int) {
+    // Internal (not private): also called from the split-navigation actions in
+    // TilingModule+SplitActions.swift.
+    func setAssignment(windowID: Int, displayKey: String, row: Int, col: Int) {
         assignments[windowID] = GridAssignment(displayKey: displayKey, row: row, col: col)
     }
 
-    private func removeAssignment(windowID: Int) {
+    func removeAssignment(windowID: Int) {
         assignments.removeValue(forKey: windowID)
     }
 }

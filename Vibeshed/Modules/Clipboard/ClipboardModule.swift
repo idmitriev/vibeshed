@@ -14,13 +14,11 @@ actor ClipboardModule: ModuleConfigurable {
     }
 
     private var config: ClipboardConfig = .init()
-    private var context: ModuleContext?
     private var monitorToken: ClipboardManager.MonitorToken?
     private var history: ClipboardHistory?
     private let log = Log.module("clipboard")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         let hist = await MainActor.run { ClipboardHistory() }
         self.history = hist
         await hist.updateConfig(

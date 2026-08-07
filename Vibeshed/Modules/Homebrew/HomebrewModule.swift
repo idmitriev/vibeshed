@@ -13,11 +13,9 @@ actor HomebrewModule: ModuleConfigurable {
     }
 
     private var config: HomebrewConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("homebrew")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Homebrew module initialized")
     }
 

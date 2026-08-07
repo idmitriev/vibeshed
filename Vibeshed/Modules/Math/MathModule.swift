@@ -17,12 +17,10 @@ actor MathModule: ModuleConfigurable {
     static let isQueryDependent = true
 
     private var config: MathConfig = .init()
-    private var context: ModuleContext?
     private var rateCache: CurrencyRateCache?
     private let log = Log.module("math")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         if config.enableCurrency {
             let cache = CurrencyRateCache(
                 ttl: TimeInterval(config.currencyRateTTL)

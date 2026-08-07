@@ -14,11 +14,9 @@ actor ZoomModule: ModuleConfigurable {
     }
 
     private var config: ZoomConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("zoom")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info(
             "Zoom module initialized (\(self.config.meetings.count, privacy: .public) meetings configured)"
         )

@@ -89,7 +89,6 @@ struct ActionListView: View {
            let customView = action.makeListItemView()
         {
             customView
-                .environment(\.isPickerRowSelected, isSelected)
                 .foregroundStyle(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
         } else {
             ActionListItemView(
@@ -147,16 +146,5 @@ private struct ActivationPulseModifier: ViewModifier {
 private extension View {
     func activationPulse(trigger: Int, cornerRadius: CGFloat, inset: CGFloat) -> some View {
         modifier(ActivationPulseModifier(trigger: trigger, cornerRadius: cornerRadius, inset: inset))
-    }
-}
-
-private struct IsPickerRowSelectedKey: EnvironmentKey {
-    static let defaultValue = false
-}
-
-extension EnvironmentValues {
-    var isPickerRowSelected: Bool {
-        get { self[IsPickerRowSelectedKey.self] }
-        set { self[IsPickerRowSelectedKey.self] = newValue }
     }
 }

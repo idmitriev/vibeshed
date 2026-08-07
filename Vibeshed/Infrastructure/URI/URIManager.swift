@@ -79,8 +79,6 @@ final class URIManager {
             handleWebURL(url)
         default:
             Log.uri.warning("Unsupported URL scheme: \(scheme, privacy: .public)")
-            Task { await eventBus.publish(.uriError(url: url.absoluteString, message: "Unsupported scheme: \(scheme)"))
-            }
         }
     }
 
@@ -89,7 +87,6 @@ final class URIManager {
     private func handleVibeshedURI(_ url: URL) {
         guard let host = url.host else {
             Log.uri.error("Invalid vibeshed URI: no host in \(url, privacy: .public)")
-            Task { await eventBus.publish(.uriError(url: url.absoluteString, message: "No host component")) }
             return
         }
 
@@ -111,7 +108,6 @@ final class URIManager {
         let pathComponents = url.pathComponents.filter { $0 != "/" }
         guard let actionName = pathComponents.first else {
             Log.uri.error("Invalid vibeshed URI: no action in \(url, privacy: .public)")
-            Task { await eventBus.publish(.uriError(url: url.absoluteString, message: "No action specified")) }
             return
         }
 
@@ -158,7 +154,6 @@ final class URIManager {
 
         NSWorkspace.shared.open(zoomAppURL)
         Log.uri.info("Routed \(url, privacy: .public) to Zoom app")
-        Task { await eventBus.publish(.uriRouted(url: url.absoluteString, destination: "zoom")) }
         return true
     }
 
@@ -166,7 +161,6 @@ final class URIManager {
         if rule.action == "picker" {
             showPicker(url.absoluteString)
             Log.uri.info("Routed \(url, privacy: .public) to picker")
-            Task { await eventBus.publish(.uriRouted(url: url.absoluteString, destination: "picker")) }
             return
         }
 
@@ -188,13 +182,11 @@ final class URIManager {
                 try BrowserRegistry.open(url: url, browser: browser, profile: rule.profile)
                 let dest = browser + (rule.profile.map { "/\($0)" } ?? "")
                 Log.uri.info("Routed \(url, privacy: .public) to \(dest, privacy: .public)")
-                Task { await eventBus.publish(.uriRouted(url: url.absoluteString, destination: dest)) }
             } catch {
                 let desc = error.localizedDescription
                 Log.uri.error(
                     "Failed to open \(url, privacy: .public) in \(browser, privacy: .public): \(desc, privacy: .public)"
                 )
-                Task { await eventBus.publish(.uriError(url: url.absoluteString, message: error.localizedDescription)) }
                 openInDefaultBrowser(url)
             }
             return
@@ -209,7 +201,6 @@ final class URIManager {
             do {
                 try BrowserRegistry.open(url: url, browser: defaultBrowser, profile: currentConfig.defaultProfile)
                 Log.uri.info("Routed \(url, privacy: .public) to default browser \(defaultBrowser, privacy: .public)")
-                Task { await eventBus.publish(.uriRouted(url: url.absoluteString, destination: defaultBrowser)) }
             } catch {
                 Log.uri.error("Default browser failed: \(error.localizedDescription, privacy: .public)")
                 fallbackOpen(url)
@@ -254,11 +245,6 @@ final class URIManager {
         }
         showURLChooser(url, actions)
         Log.uri.info("Showing browser chooser for \(url, privacy: .public)")
-        Task {
-            await eventBus.publish(
-                .uriRouted(url: url.absoluteString, destination: "chooser")
-            )
-        }
     }
 
     private func buildChooserActions(for url: URL) -> [any Action] {
@@ -381,7 +367,6 @@ final class URIManager {
                 let message = patternResult.errors.joined(separator: "; ")
                 routingErrors[key] = message
                 Log.uri.error("Invalid routing rule #\(index, privacy: .public): \(message, privacy: .public)")
-                Task { await eventBus.publish(.uriError(url: rule.pattern, message: message)) }
                 continue
             }
 
@@ -392,7 +377,6 @@ final class URIManager {
                     .error(
                         "Invalid routing rule #\(index, privacy: .public) '\(rule.pattern, privacy: .public)': \(message, privacy: .public)"
                     )
-                Task { await eventBus.publish(.uriError(url: rule.pattern, message: message)) }
                 continue
             }
 
@@ -470,18 +454,14 @@ final class URIManager {
     ) async {
         guard let action = await moduleRegistry.findAction(id: actionID) else {
             Log.uri.error("Action not found: \(actionID, privacy: .public)")
-            await eventBus.publish(.actionFailed(actionID, message: "Action not found"))
             return
         }
 
-        let moduleID = actionID.moduleID
         do {
             _ = try await action.run(with: values)
-            await eventBus.publish(.actionExecuted(actionID, moduleID: moduleID))
         } catch {
             Log.uri
                 .error("Action \(actionID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-            await eventBus.publish(.actionFailed(actionID, message: error.localizedDescription))
         }
     }
 }

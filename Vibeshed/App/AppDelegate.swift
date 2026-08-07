@@ -190,6 +190,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 TimerModule(),
                 MathModule(),
                 HomebrewModule(),
+                WebSearchModule(),
+                EmojiModule(),
             ]
             // Register concurrently: each module's initialize does independent I/O
             // (SQLite reads, disk scans), so time-to-ready is the slowest module

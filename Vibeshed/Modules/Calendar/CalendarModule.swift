@@ -15,7 +15,6 @@ actor CalendarModule: ModuleConfigurable {
     }
 
     private var config: CalendarConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("calendar")
 
     private var cachedEvents: [CalendarManager.CalendarEvent] = []
@@ -23,7 +22,6 @@ actor CalendarModule: ModuleConfigurable {
     private let cacheTTL: TimeInterval = 30
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info(
             "Calendar module initialized (lookahead: \(self.config.lookaheadHours, privacy: .public)h)"
         )

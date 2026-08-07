@@ -14,11 +14,9 @@ actor AudioModule: ModuleConfigurable {
     }
 
     private var config: AudioConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("audio")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Audio module initialized")
     }
 

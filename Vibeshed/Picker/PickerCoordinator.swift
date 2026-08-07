@@ -206,15 +206,13 @@ final class PickerCoordinator {
         do {
             let result = try await action.run(with: values)
             usageTracker?.recordUsage(actionID: action.id)
-            await eventBus.publish(.actionExecuted(action.id, moduleID: action.id.moduleID))
             handleActionResult(result)
         } catch {
             Log.picker
                 .error(
                     "Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)"
                 )
-            await eventBus.publish(.actionFailed(action.id, message: error.localizedDescription))
-            postErrorNotification(
+            postActionNotification(
                 title: action.title,
                 body: error.localizedDescription
             )
@@ -223,18 +221,13 @@ final class PickerCoordinator {
 
     private func handleActionResult(_ result: ActionResult) {
         switch result {
-        case .dismiss, .showResult:
+        case .dismiss:
             break
 
-        case .keepOpen:
-            panelController.showRetainingState()
+        case let .showResult(title, body):
+            postActionNotification(title: title, body: body)
 
-        case let .setQuery(newQuery):
-            pickerState.mode = .search
-            pickerState.activeAction = nil
-            pickerState.collectedValues = [:]
-            pickerState.currentParameter = nil
-            pickerState.query = newQuery
+        case .keepOpen:
             panelController.showRetainingState()
 
         case let .pushActions(actions):
@@ -590,13 +583,13 @@ final class PickerCoordinator {
 
 // MARK: - Notifications
 
-private func postErrorNotification(title: String, body: String) {
+private func postActionNotification(title: String, body: String) {
     let content = UNMutableNotificationContent()
     content.title = title
     content.body = body
     content.sound = .default
     let request = UNNotificationRequest(
-        identifier: "vibeshed.action.error.\(UUID().uuidString)",
+        identifier: "vibeshed.action.result.\(UUID().uuidString)",
         content: content,
         trigger: nil
     )

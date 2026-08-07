@@ -22,7 +22,6 @@ actor RecentProjectsModule<Provider: RecentProjectsProvider>: ModuleConfigurable
 
     private let provider: Provider
     private var config: Config
-    private var context: ModuleContext?
     private var cache: TimedCache<[RecentProjectItem]>
     private let log: Logger
 
@@ -37,7 +36,6 @@ actor RecentProjectsModule<Provider: RecentProjectsProvider>: ModuleConfigurable
     }
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         refreshCache()
         provider.applySideEffects(config: config)
         log

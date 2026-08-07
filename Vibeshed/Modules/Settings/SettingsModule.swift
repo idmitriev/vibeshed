@@ -13,11 +13,9 @@ actor SettingsModule: ModuleConfigurable {
     }
 
     private var config: SettingsConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("settings")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Settings module initialized")
     }
 

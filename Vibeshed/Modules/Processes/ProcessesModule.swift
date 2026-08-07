@@ -13,13 +13,11 @@ actor ProcessesModule: ModuleConfigurable {
     }
 
     private var config: ProcessesConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("processes")
     private var processCache: [ProcessEntry] = []
     private var cacheTimestamp: Date = .distantPast
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Processes module initialized")
     }
 

@@ -39,11 +39,9 @@ actor WindowModule: ModuleConfigurable {
 
     private var config: WindowConfig = .defaultValue
     private let windowManager = WindowManager()
-    private var context: ModuleContext?
     private let log = Log.module("window")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Window module initialized")
     }
 

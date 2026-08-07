@@ -71,58 +71,60 @@ final class ConfigManager {
         var config = AppConfig()
         let decoder = YAMLDecoder()
 
-        if let keybindingsNode = rootMapping[Node("keybindings")] {
-            let keybindingsYAML = try Yams.serialize(node: keybindingsNode)
-            config.keybindings = try decoder.decode(
-                [KeyBindingEntry].self,
-                from: keybindingsYAML
-            )
-        }
-
-        if let appearanceNode = rootMapping[Node("appearance")] {
-            let appearanceYAML = try Yams.serialize(node: appearanceNode)
-            config.appearance = try decoder.decode(
-                AppConfig.AppearanceConfig.self,
-                from: appearanceYAML
-            )
-        }
+        // Each section is decoded independently: a bad section falls back to its
+        // default (with an error log) instead of discarding the whole file.
+        config.keybindings = decodeSection(
+            "keybindings", from: rootMapping, decoder: decoder
+        ) ?? config.keybindings
+        config.appearance = decodeSection(
+            "appearance", from: rootMapping, decoder: decoder
+        ) ?? config.appearance
+        config.urlRouting = decodeSection(
+            "urlRouting", from: rootMapping, decoder: decoder
+        ) ?? config.urlRouting
+        config.layoutCorrection = decodeSection(
+            "layoutCorrection", from: rootMapping, decoder: decoder
+        ) ?? config.layoutCorrection
+        config.aliases = decodeSection(
+            "aliases", from: rootMapping, decoder: decoder
+        ) ?? config.aliases
 
         if let modulesNode = rootMapping[Node("modules")],
            let modulesMapping = modulesNode.mapping
         {
             for (keyNode, valueNode) in modulesMapping {
-                if let key = keyNode.string {
+                guard let key = keyNode.string else { continue }
+                do {
                     let moduleYAML = try Yams.serialize(node: valueNode)
                     config.moduleConfigs[key] = Data(moduleYAML.utf8)
+                } catch {
+                    let desc = error.localizedDescription
+                    Log.config.error(
+                        "Bad 'modules.\(key, privacy: .public)' section, skipping: \(desc, privacy: .public)"
+                    )
                 }
             }
         }
 
-        if let urlRoutingNode = rootMapping[Node("urlRouting")] {
-            let urlRoutingYAML = try Yams.serialize(node: urlRoutingNode)
-            config.urlRouting = try decoder.decode(
-                URLRoutingConfig.self,
-                from: urlRoutingYAML
-            )
-        }
-
-        if let layoutCorrectionNode = rootMapping[Node("layoutCorrection")] {
-            let layoutCorrectionYAML = try Yams.serialize(node: layoutCorrectionNode)
-            config.layoutCorrection = try decoder.decode(
-                AppConfig.LayoutCorrectionConfig.self,
-                from: layoutCorrectionYAML
-            )
-        }
-
-        if let aliasesNode = rootMapping[Node("aliases")] {
-            let aliasesYAML = try Yams.serialize(node: aliasesNode)
-            config.aliases = try decoder.decode(
-                [AliasEntry].self,
-                from: aliasesYAML
-            )
-        }
-
         return config
+    }
+
+    private static func decodeSection<T: Decodable>(
+        _ key: String,
+        from mapping: Yams.Node.Mapping,
+        decoder: YAMLDecoder
+    ) -> T? {
+        guard let node = mapping[Node(key)] else { return nil }
+        do {
+            let yaml = try Yams.serialize(node: node)
+            return try decoder.decode(T.self, from: yaml)
+        } catch {
+            let desc = error.localizedDescription
+            Log.config.error(
+                "Ignoring invalid '\(key, privacy: .public)' section, using defaults: \(desc, privacy: .public)"
+            )
+            return nil
+        }
     }
 
     private func startMonitoring() {

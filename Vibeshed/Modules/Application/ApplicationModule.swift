@@ -15,13 +15,11 @@ actor ApplicationModule: ModuleConfigurable {
 
     private var config: ApplicationConfig = .init()
     private let appManager = ApplicationManager()
-    private var context: ModuleContext?
     private let log = Log.module("application")
     private var appCache: [AppInfo] = []
     private var cacheTimestamp: Date = .distantPast
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Application module initialized")
     }
 

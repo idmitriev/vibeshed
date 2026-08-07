@@ -13,11 +13,9 @@ actor ThemeModule: ModuleConfigurable {
     }
 
     private var config: ThemeConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("theme")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Theme module initialized")
     }
 
@@ -61,9 +59,9 @@ actor ThemeModule: ModuleConfigurable {
             ThemeManager.accentColors.map { entry in
                 ParameterOption(id: entry.name, label: entry.name, iconName: "circle.fill")
             }
-        case "theme" where actionID.rawValue == "theme.vscodeTheme":
+        case "theme" where actionID.actionName == "vscodeTheme":
             vscodeThemeOptions()
-        case "theme" where actionID.rawValue == "theme.jetbrainsTheme":
+        case "theme" where actionID.actionName == "jetbrainsTheme":
             ThemeManager.jetbrainsThemes.map { entry in
                 ParameterOption(id: entry.name, label: entry.name, iconName: "paintbrush")
             }

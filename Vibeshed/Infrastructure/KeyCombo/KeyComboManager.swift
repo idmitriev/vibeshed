@@ -234,7 +234,6 @@ final class KeyComboManager {
             let dupeKey = "\(entry.combo.lowercased())@\(entry.app ?? "*")"
             if seenCombos.contains(dupeKey) {
                 bindingErrors[errorKey] = KeyComboError.duplicateBinding(entry.combo).localizedDescription
-                Task { await eventBus.publish(.keybindingError(combo: entry.combo, message: bindingErrors[errorKey]!)) }
                 continue
             }
             seenCombos.insert(dupeKey)
@@ -290,7 +289,6 @@ final class KeyComboManager {
                 let message = error.localizedDescription
                 bindingErrors[errorKey] = message
                 Log.keybindings.error("Invalid entry '\(entry.combo, privacy: .public)': \(message, privacy: .public)")
-                Task { await eventBus.publish(.keybindingError(combo: entry.combo, message: message)) }
             }
         }
 
@@ -418,7 +416,6 @@ final class KeyComboManager {
         for depth in 0 ..< maxChainDepth {
             guard let action = await moduleRegistry.findAction(id: currentID) else {
                 Log.keybindings.error("Action not found: \(currentID, privacy: .public)")
-                await eventBus.publish(.actionFailed(currentID, message: "Action not found"))
                 return
             }
 
@@ -433,17 +430,14 @@ final class KeyComboManager {
                 return
             }
 
-            let moduleID = currentID.moduleID
             let result: ActionResult
             do {
                 result = try await action.run(with: currentValues)
-                await eventBus.publish(.actionExecuted(currentID, moduleID: moduleID))
             } catch {
                 let msg = error.localizedDescription
                 Log.keybindings.error(
                     "Action \(currentID, privacy: .public) failed: \(msg, privacy: .public)"
                 )
-                await eventBus.publish(.actionFailed(currentID, message: msg))
                 return
             }
 
@@ -459,6 +453,5 @@ final class KeyComboManager {
         }
 
         Log.keybindings.error("Chain depth exceeded at \(currentID, privacy: .public)")
-        await eventBus.publish(.actionFailed(currentID, message: "Chain depth exceeded"))
     }
 }

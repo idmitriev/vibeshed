@@ -32,9 +32,10 @@ Every module is an actor conforming to `Module` / `ModuleConfigurable`. Actions 
 
 1. Create `Vibeshed/Modules/MyThing/` with `MyThingModule.swift` and `MyThingConfig.swift`.
 2. Conform to `ModuleConfigurable`. Declare `requiredPermissions` if any.
-3. Register in `ModuleRegistry`.
+3. Register in `AppDelegate.registerModules()`.
 4. Add a section to `config.example.yaml`. Modules load only when their config section is present.
-5. Provide SwiftUI list and preview views via the module's `view(for:)` if your actions need richer rendering.
+5. Provide SwiftUI list and preview views via your action's `makeListItemView()` / `makePreviewView()`
+   if your actions need richer rendering.
 
 ### `provideActions` contract
 
@@ -55,7 +56,8 @@ Every module is an actor conforming to `Module` / `ModuleConfigurable`. Actions 
 - `make lint` (SwiftLint, xcode reporter). `make lint-fix` for autofixes.
 - `.swiftformat` is enforced — run your editor's SwiftFormat integration.
 - Function bodies cap at 100 lines (SwiftLint). Split action builders into helpers.
-- No new dependencies without discussion. We have two (KeyboardShortcuts, Yams). Keep it small.
+- No new dependencies without discussion. We have one runtime dependency (Yams) plus the
+  SwiftLint/SwiftFormat build plugins. Keep it small.
 
 ## Testing
 

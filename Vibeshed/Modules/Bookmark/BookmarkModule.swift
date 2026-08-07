@@ -18,7 +18,6 @@ actor BookmarkModule: ModuleConfigurable {
     }
 
     private var config: BookmarkConfig = .init()
-    private var context: ModuleContext?
     private let log = Log.module("bookmark")
 
     // Cache
@@ -27,7 +26,6 @@ actor BookmarkModule: ModuleConfigurable {
     private var cacheTimestamp: Date = .distantPast
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         log.info("Bookmark module initialized")
     }
 

@@ -86,7 +86,7 @@ final class PanelController {
     }
 
     /// Re-shows the panel without resetting state. Used when an action's result
-    /// needs the picker back (e.g. pushActions, setQuery).
+    /// needs the picker back (e.g. pushActions).
     func showRetainingState() {
         let panel = getOrCreatePanel()
         deferredLoad = nil

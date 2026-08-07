@@ -60,7 +60,6 @@ final class ModuleRegistry {
                 Log.modules.error(
                     "Module '\(id, privacy: .public)' not loaded: \(error.localizedDescription, privacy: .public)"
                 )
-                await eventBus.publish(.modulePermissionError(moduleID: id, missing: missing))
                 return
             }
         }
@@ -80,7 +79,6 @@ final class ModuleRegistry {
                 Log.modules.error(
                     "Module '\(id, privacy: .public)' not loaded: \(message, privacy: .public)"
                 )
-                await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
                 return
             }
         }
@@ -262,7 +260,6 @@ final class ModuleRegistry {
                 Log.modules.error(
                     "Config change rejected for module '\(id, privacy: .public)': \(message, privacy: .public)"
                 )
-                await eventBus.publish(.moduleConfigError(moduleID: id, message: message))
             }
         }
     }

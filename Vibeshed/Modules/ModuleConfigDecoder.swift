@@ -51,12 +51,20 @@ struct ModuleConfigDecoder: Sendable {
         moduleID: String
     ) throws -> M.Config {
         if let yamlData {
+            // A section with no keys (or only comments) serializes to a null
+            // scalar — that means "enable with defaults", not a decode error.
+            let text = String(data: yamlData, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let text, text.isEmpty || text == "null" || text == "~",
+               let defaultConfig = M.defaultConfig
+            {
+                return defaultConfig
+            }
             do {
                 return try YAMLDecoder().decode(M.Config.self, from: yamlData)
             } catch {
-                // Empty/null YAML sections (e.g. `theme:` with no keys) produce
-                // non-nil Data that fails to decode. Fall back to defaultConfig
-                // when available; otherwise surface the decode error.
+                // Fall back to defaultConfig when available; otherwise surface
+                // the decode error.
                 if let defaultConfig = M.defaultConfig {
                     let reason = String(describing: error)
                     Log.config.error(

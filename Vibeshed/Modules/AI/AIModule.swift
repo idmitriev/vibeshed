@@ -15,14 +15,12 @@ actor AIModule: ModuleConfigurable {
     }
 
     private var config: AIConfig = .init()
-    private var context: ModuleContext?
     private var cachedSessions: [AISession] = []
     private var lastCacheTime: Date = .distantPast
     private let cacheTTL: TimeInterval = 5
     private let log = Log.module("ai")
 
     func initialize(context: ModuleContext) async throws {
-        self.context = context
         refreshCache()
         log.info("AI module initialized (\(self.cachedSessions.count, privacy: .public) sessions found)")
     }
