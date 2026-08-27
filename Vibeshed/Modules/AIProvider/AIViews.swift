@@ -7,7 +7,7 @@ struct AIActionListItemView: View {
         HStack(spacing: 12) {
             Image(systemName: action.iconName ?? "brain")
                 .font(.title3)
-                .foregroundStyle(colorForProvider)
+                .foregroundStyle(accentColor)
                 .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -26,8 +26,8 @@ struct AIActionListItemView: View {
             Spacer()
 
             HStack(spacing: 4) {
-                if let provider = action.provider {
-                    Text(providerShortLabel(provider))
+                if let source = action.source {
+                    Text(source.shortLabel)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -42,15 +42,8 @@ struct AIActionListItemView: View {
         .contentShape(Rectangle())
     }
 
-    private var colorForProvider: Color {
-        guard let provider = action.provider else {
-            return .secondary
-        }
-        switch provider {
-        case .claudeCode: return .orange
-        case .claudeDesktop: return .purple
-        case .codex: return .green
-        }
+    private var accentColor: Color {
+        color(for: action.source?.accent)
     }
 }
 
@@ -58,19 +51,19 @@ struct AIActionPreviewView: View {
     let action: AIAction
 
     var body: some View {
-        PreviewLayout(moduleName: "ai") {
+        PreviewLayout(moduleName: action.moduleName) {
             PreviewHeader(
                 title: action.title,
                 subtitle: action.subtitle,
                 systemIcon: action.iconName ?? "brain",
-                iconColor: previewColor
+                iconColor: accentColor
             )
 
-            if let provider = action.provider {
+            if let source = action.source {
                 PreviewPill(
-                    text: providerFullLabel(provider),
-                    icon: providerIcon(provider),
-                    color: previewColor
+                    text: source.fullLabel,
+                    icon: source.iconName,
+                    color: accentColor
                 )
             }
 
@@ -79,6 +72,14 @@ struct AIActionPreviewView: View {
                     icon: "folder",
                     label: "Project",
                     value: abbreviatePath(path)
+                )
+            }
+
+            if let branch = action.branch {
+                PreviewMetadataRow(
+                    icon: "arrow.triangle.branch",
+                    label: "Branch",
+                    value: branch
                 )
             }
 
@@ -100,41 +101,20 @@ struct AIActionPreviewView: View {
         }
     }
 
-    private var previewColor: Color {
-        guard let provider = action.provider else {
-            return .secondary
-        }
-        switch provider {
-        case .claudeCode: return .orange
-        case .claudeDesktop: return .purple
-        case .codex: return .green
-        }
+    private var accentColor: Color {
+        color(for: action.source?.accent)
     }
 }
 
 // MARK: - Helpers
 
-private func providerShortLabel(_ provider: AIProvider) -> String {
-    switch provider {
-    case .claudeCode: "CODE"
-    case .claudeDesktop: "DESKTOP"
-    case .codex: "CODEX"
-    }
-}
-
-private func providerFullLabel(_ provider: AIProvider) -> String {
-    switch provider {
-    case .claudeCode: "Claude Code"
-    case .claudeDesktop: "Claude Desktop"
-    case .codex: "Codex CLI"
-    }
-}
-
-private func providerIcon(_ provider: AIProvider) -> String {
-    switch provider {
-    case .claudeCode: "terminal"
-    case .claudeDesktop: "brain"
-    case .codex: "terminal.fill"
+private func color(for accent: AIAccent?) -> Color {
+    switch accent {
+    case .orange: .orange
+    case .purple: .purple
+    case .green: .green
+    case .teal: .teal
+    case .neutral, nil: .secondary
     }
 }
 
