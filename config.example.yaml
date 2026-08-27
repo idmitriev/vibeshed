@@ -75,7 +75,7 @@ keybindings:
   - combo: "capslock+backslash"
     action: "window/tileRight"         # tile window to right half
   - combo: "capslock+n"
-    action: "window/focusWindow"       # move window to next screen
+    action: "tiling/swapNextSplit"     # swap focused window with next split
   - combo: "capslock+minus"
     action: "window/shrinkWidth"       # make window narrower
   - combo: "capslock+equal"
@@ -297,8 +297,8 @@ modules:
       right: 4
       gap: 4
     # Tuning for auto-tile. Auto-tile itself is NOT a config flag - it's off by
-    # default on every launch and toggled at runtime via the tiling/enableAutoTile
-    # and tiling/disableAutoTile actions (bind hotkeys below). While enabled it
+    # default on every launch and toggled at runtime via the tiling/toggleAutoTile
+    # action (bind a hotkey below). While enabled it
     # tiles new/moved/resized windows, snaps once dropped (never mid-drag), and
     # never repositions a window already aligned to a cell (5pt tolerance).
     # Tooltips/HUDs/panels/dialogs are filtered out (fixed-size or non-standard
@@ -309,7 +309,7 @@ modules:
       minimumSize: 120             # skip windows narrower/shorter than this (tooltips, HUDs, etc.)
     # Tuning for the focus border (a contrast-colored outline drawn around the focused
     # window, only while it's tiled). Also NOT a config flag - off by default on every
-    # launch, toggled at runtime via tiling/enableFocusBorder and tiling/disableFocusBorder.
+    # launch, toggled at runtime via tiling/toggleFocusBorder.
     focusBorder:
       color: "#0A84FF"       # "#RRGGBB" hex
       width: 3.0              # points

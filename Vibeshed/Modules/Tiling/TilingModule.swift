@@ -24,14 +24,14 @@ actor TilingModule: ModuleConfigurable {
     private let log = Log.module("tiling")
 
     /// Runtime-only; always starts disabled on launch and is toggled via
-    /// `tiling/enableAutoTile` / `tiling/disableAutoTile` — not persisted config.
+    /// `tiling/toggleAutoTile` — not persisted config.
     private var autoTileEnabled = false
     private var seenWindowIDs: Set<Int> = []
     private var lastKnownFrames: [Int: CGRect] = [:]
     private var pollTask: Task<Void, Never>?
 
     /// Runtime-only; always starts disabled on launch and is toggled via
-    /// `tiling/enableFocusBorder` / `tiling/disableFocusBorder` — not persisted config.
+    /// `tiling/toggleFocusBorder` — not persisted config.
     private var focusBorderEnabled = false
     private var focusBorderPollTask: Task<Void, Never>?
 
@@ -174,10 +174,8 @@ actor TilingModule: ModuleConfigurable {
             makeMoveAction(direction: .right, mgr: mgr, cfg: cfg),
             makeMoveAction(direction: .up, mgr: mgr, cfg: cfg),
             makeMoveAction(direction: .down, mgr: mgr, cfg: cfg),
-            makeEnableAutoTileAction(),
-            makeDisableAutoTileAction(),
-            makeEnableFocusBorderAction(),
-            makeDisableFocusBorderAction(),
+            makeToggleAutoTileAction(),
+            makeToggleFocusBorderAction(),
         ]
         if let enabled = cfg.enabledActions {
             actions = actions.filter { enabled.contains($0.id.actionName) }
@@ -230,54 +228,34 @@ actor TilingModule: ModuleConfigurable {
         }
     }
 
-    private func makeEnableAutoTileAction() -> TilingAction {
-        TilingAction(
-            id: ActionID(module: "tiling", name: "enableAutoTile"),
-            title: "Enable Auto-Tile",
-            subtitle: "Automatically tile new, moved, and resized windows",
-            iconName: "wand.and.stars",
-            keywords: ["tiling", "grid", "auto", "enable", "start"]
+    private func makeToggleAutoTileAction() -> TilingAction {
+        let enabled = autoTileEnabled
+        return TilingAction(
+            id: ActionID(module: "tiling", name: "toggleAutoTile"),
+            title: enabled ? "Disable Auto-Tile" : "Enable Auto-Tile",
+            subtitle: enabled
+                ? "Stop automatically tiling windows"
+                : "Automatically tile new, moved, and resized windows",
+            iconName: enabled ? "xmark.circle" : "wand.and.stars",
+            keywords: ["tiling", "grid", "auto", "toggle", "enable", "disable", "start", "stop"]
         ) { [weak self] _ in
-            await self?.enableAutoTile()
+            await self?.toggleAutoTile()
             return .dismiss
         }
     }
 
-    private func makeDisableAutoTileAction() -> TilingAction {
-        TilingAction(
-            id: ActionID(module: "tiling", name: "disableAutoTile"),
-            title: "Disable Auto-Tile",
-            subtitle: "Stop automatically tiling windows",
-            iconName: "xmark.circle",
-            keywords: ["tiling", "grid", "auto", "disable", "stop"]
+    private func makeToggleFocusBorderAction() -> TilingAction {
+        let enabled = focusBorderEnabled
+        return TilingAction(
+            id: ActionID(module: "tiling", name: "toggleFocusBorder"),
+            title: enabled ? "Disable Focus Border" : "Enable Focus Border",
+            subtitle: enabled
+                ? "Stop drawing the focus border"
+                : "Draw a contrast border around the focused tiled window",
+            iconName: enabled ? "xmark.circle" : "viewfinder",
+            keywords: ["tiling", "grid", "border", "highlight", "focus", "toggle", "enable", "disable"]
         ) { [weak self] _ in
-            await self?.disableAutoTile()
-            return .dismiss
-        }
-    }
-
-    private func makeEnableFocusBorderAction() -> TilingAction {
-        TilingAction(
-            id: ActionID(module: "tiling", name: "enableFocusBorder"),
-            title: "Enable Focus Border",
-            subtitle: "Draw a contrast border around the focused tiled window",
-            iconName: "viewfinder",
-            keywords: ["tiling", "grid", "border", "highlight", "focus", "enable"]
-        ) { [weak self] _ in
-            await self?.enableFocusBorder()
-            return .dismiss
-        }
-    }
-
-    private func makeDisableFocusBorderAction() -> TilingAction {
-        TilingAction(
-            id: ActionID(module: "tiling", name: "disableFocusBorder"),
-            title: "Disable Focus Border",
-            subtitle: "Stop drawing the focus border",
-            iconName: "xmark.circle",
-            keywords: ["tiling", "grid", "border", "highlight", "focus", "disable"]
-        ) { [weak self] _ in
-            await self?.disableFocusBorder()
+            await self?.toggleFocusBorder()
             return .dismiss
         }
     }
@@ -389,6 +367,14 @@ actor TilingModule: ModuleConfigurable {
         }
     }
 
+    private func toggleAutoTile() async {
+        if autoTileEnabled {
+            disableAutoTile()
+        } else {
+            await enableAutoTile()
+        }
+    }
+
     private func enableAutoTile() async {
         guard !autoTileEnabled else { return }
         autoTileEnabled = true
@@ -449,6 +435,14 @@ actor TilingModule: ModuleConfigurable {
             width: borderConfig.width,
             cornerRadius: borderConfig.cornerRadius
         )
+    }
+
+    private func toggleFocusBorder() async {
+        if focusBorderEnabled {
+            await disableFocusBorder()
+        } else {
+            await enableFocusBorder()
+        }
     }
 
     private func enableFocusBorder() async {

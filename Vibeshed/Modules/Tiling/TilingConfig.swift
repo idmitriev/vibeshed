@@ -10,8 +10,8 @@ struct TilingConfig: Codable, Sendable, Equatable {
     /// config.yaml without this key decodes fine (Optional properties are automatically
     /// decodeIfPresent under synthesized Decodable — no custom decoder needed here, unlike
     /// AutoTileConfig's non-optional fields). Whether the border is actually drawn is
-    /// runtime-only state toggled via `tiling/enableFocusBorder`/`disableFocusBorder`,
-    /// same pattern as auto-tile.
+    /// runtime-only state toggled via `tiling/toggleFocusBorder`, same pattern as
+    /// auto-tile.
     var focusBorder: FocusBorderConfig?
 
     static let defaultValue = TilingConfig(
@@ -30,8 +30,8 @@ struct TilingConfig: Codable, Sendable, Equatable {
 }
 
 /// Tuning parameters for auto-tile. Whether auto-tile is actually running is *not*
-/// config — it's runtime-only state toggled via `tiling/enableAutoTile` /
-/// `tiling/disableAutoTile`, and always starts off on launch.
+/// config — it's runtime-only state toggled via `tiling/toggleAutoTile`, and always
+/// starts off on launch.
 struct AutoTileConfig: Codable, Sendable, Equatable {
     /// Bundle IDs to never auto-tile (manual `tiling/attach` still works on them).
     var excludedBundleIDs: [String] = []
