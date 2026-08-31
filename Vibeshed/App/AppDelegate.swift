@@ -199,7 +199,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // rather than the sum of all of them.
             await withTaskGroup(of: Void.self) { group in
                 for module in modules {
-                    group.addTask { @MainActor in
+                    group.addTask {
                         await self.registerModule(module)
                     }
                 }

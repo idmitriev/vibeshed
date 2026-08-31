@@ -9,8 +9,8 @@ final class KeyComboManager {
     private let configManager: ConfigManager
     private let moduleRegistry: ModuleRegistry
     private let permissionsManager: PermissionsManager
-    private let togglePicker: () -> Void
-    private let showParameterInput: (any Action) -> Void
+    private let togglePicker: @MainActor @Sendable () -> Void
+    private let showParameterInput: @MainActor @Sendable (any Action) -> Void
 
     private let focusedAppTracker = FocusedAppTracker()
     private let eventTapHandler: EventTapHandler
@@ -23,8 +23,8 @@ final class KeyComboManager {
         configManager: ConfigManager,
         moduleRegistry: ModuleRegistry,
         permissionsManager: PermissionsManager,
-        togglePicker: @escaping () -> Void,
-        showParameterInput: @escaping (any Action) -> Void
+        togglePicker: @escaping @MainActor @Sendable () -> Void,
+        showParameterInput: @escaping @MainActor @Sendable (any Action) -> Void
     ) {
         self.eventBus = eventBus
         self.configManager = configManager
@@ -407,7 +407,7 @@ final class KeyComboManager {
         _ actionID: ActionID,
         moduleRegistry: ModuleRegistry,
         eventBus: EventBus,
-        showParameterInput: @escaping (any Action) -> Void
+        showParameterInput: @escaping @MainActor @Sendable (any Action) -> Void
     ) async {
         var currentID = actionID
         var currentValues: ParameterValues = [:]

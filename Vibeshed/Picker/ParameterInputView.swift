@@ -177,7 +177,7 @@ struct ParameterOptionRow: View, Equatable {
     var isSelected: Bool = false
     @Environment(\.vibeTheme) private var theme
 
-    static func == (lhs: ParameterOptionRow, rhs: ParameterOptionRow) -> Bool {
+    nonisolated static func == (lhs: ParameterOptionRow, rhs: ParameterOptionRow) -> Bool {
         lhs.option == rhs.option
             && lhs.hotkeyNumber == rhs.hotkeyNumber
             && lhs.rowHeight == rhs.rowHeight

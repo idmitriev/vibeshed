@@ -61,17 +61,17 @@ actor MeetingPrepModule: ModuleConfigurable {
         scoring: ScoringContext
     ) async -> [any Action] {
         guard CalendarManager.hasAccess else { return [] }
-        refreshCacheIfNeeded()
+        await refreshCacheIfNeeded()
         return buildActions()
     }
 
-    private func refreshCacheIfNeeded() {
+    private func refreshCacheIfNeeded() async {
         let now = Date()
         guard now.timeIntervalSince(cacheTimestamp) > cacheTTL else {
             return
         }
 
-        cachedEvents = CalendarManager.fetchEvents(
+        cachedEvents = await CalendarManager.fetchEvents(
             lookaheadHours: 2,
             lookbehindMinutes: 5,
             excludedCalendars: nil,

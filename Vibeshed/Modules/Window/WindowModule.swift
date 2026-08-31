@@ -4,9 +4,9 @@ import OSLog
 
 // MARK: - Helper Types
 
-private struct TileFunctions {
-    let primary: (CGRect, PaddingConfig) -> CGRect
-    let opposite: (CGRect, PaddingConfig) -> CGRect
+private struct TileFunctions: Sendable {
+    let primary: @Sendable (CGRect, PaddingConfig) -> CGRect
+    let opposite: @Sendable (CGRect, PaddingConfig) -> CGRect
 }
 
 private struct OppositeTileInfo {
@@ -320,7 +320,7 @@ actor WindowModule: ModuleConfigurable {
             guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
                 return .showResult(title: "No Window", body: "No focused window found")
             }
-            let newFrame = WindowSizing.toggleMaximize(
+            let newFrame = await WindowSizing.toggleMaximize(
                 windowID: focused.id,
                 currentFrame: focused.frame,
                 screenFrame: focused.screenFrame,
@@ -458,7 +458,7 @@ actor WindowModule: ModuleConfigurable {
 
     private func makeResizeAction(
         id: String, title: String, subtitle: String, icon: String, keywords: [String],
-        resizeFunc: @escaping (CGRect, CGRect, PaddingConfig, SizeStop) -> CGRect,
+        resizeFunc: @escaping @Sendable (CGRect, CGRect, PaddingConfig, SizeStop) -> CGRect,
         mgr: WindowManager, cfg: WindowConfig
     ) -> WindowAction {
         WindowAction(

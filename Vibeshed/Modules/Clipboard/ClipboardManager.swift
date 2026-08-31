@@ -25,6 +25,9 @@ enum ClipboardManager {
     @MainActor
     static func startMonitoring(
         interval: TimeInterval,
+        // Not `@MainActor @Sendable`: the callback is invoked from `Timer`'s
+        // nonisolated block. Annotating it would need `MainActor.assumeIsolated`
+        // (a runtime trap) or a `Task` hop that loosens capture ordering.
         onChange: @escaping (String, String?) -> Void
     ) -> MonitorToken {
         let token = MonitorToken()

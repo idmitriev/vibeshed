@@ -332,10 +332,12 @@ final class SpotifySearchClient: @unchecked Sendable {
               (200 ... 299).contains(httpResponse.statusCode)
         else {
             log.warning("Spotify token refresh failed, clearing tokens and re-authenticating")
-            lock.lock()
-            defer { lock.unlock() }
-            self.accessToken = nil
-            self.refreshToken = nil
+            // Scoped to the mutation only: `saveTokens()` and `authenticate()`
+            // both take this same non-recursive lock.
+            lock.withLock {
+                self.accessToken = nil
+                self.refreshToken = nil
+            }
             saveTokens()
             try await authenticate()
             return

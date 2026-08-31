@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -16,14 +16,15 @@ let package = Package(
             dependencies: ["Yams"],
             path: "Vibeshed",
             exclude: ["Info.plist", "Vibeshed.entitlements"],
-            swiftSettings: [.enableExperimentalFeature("StrictConcurrency=targeted")],
+            swiftSettings: [.swiftLanguageMode(.v6)],
             linkerSettings: [.linkedLibrary("sqlite3")],
             plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
         .testTarget(
             name: "VibeshedTests",
             dependencies: ["Vibeshed"],
-            path: "VibeshedTests"
+            path: "VibeshedTests",
+            swiftSettings: [.swiftLanguageMode(.v6)]
         ),
     ]
 )

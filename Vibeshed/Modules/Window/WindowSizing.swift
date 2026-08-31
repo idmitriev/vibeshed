@@ -334,8 +334,6 @@ enum WindowSizing {
 
     // MARK: - Toggle Maximize/Restore
 
-    private static var savedFrames: [Int: CGRect] = [:]
-
     static func isMaximized(
         currentFrame: CGRect,
         screenFrame: CGRect,
@@ -355,9 +353,9 @@ enum WindowSizing {
         currentFrame: CGRect,
         screenFrame: CGRect,
         padding: PaddingConfig
-    ) -> CGRect {
+    ) async -> CGRect {
         if isMaximized(currentFrame: currentFrame, screenFrame: screenFrame, padding: padding) {
-            if let saved = savedFrames.removeValue(forKey: windowID) {
+            if let saved = await MaximizeMemory.shared.restore(windowID) {
                 return saved
             }
             // Fallback: center at 80% if no saved frame
@@ -368,8 +366,24 @@ enum WindowSizing {
             let y = area.origin.y + (area.height - restoreHeight) / 2.0
             return CGRect(x: x, y: y, width: restoreWidth, height: restoreHeight)
         } else {
-            savedFrames[windowID] = currentFrame
+            await MaximizeMemory.shared.save(currentFrame, for: windowID)
             return maximize(screenFrame: screenFrame, padding: padding)
         }
+    }
+}
+
+/// Remembers each window's pre-maximize frame so a second toggle can restore it.
+/// Window actions run off the `WindowModule` actor, so this owns its own isolation.
+actor MaximizeMemory {
+    static let shared = MaximizeMemory()
+
+    private var frames: [Int: CGRect] = [:]
+
+    func save(_ frame: CGRect, for windowID: Int) {
+        frames[windowID] = frame
+    }
+
+    func restore(_ windowID: Int) -> CGRect? {
+        frames.removeValue(forKey: windowID)
     }
 }

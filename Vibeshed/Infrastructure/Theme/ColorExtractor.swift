@@ -2,13 +2,33 @@ import AppKit
 import CoreGraphics
 import Foundation
 
-enum ColorExtractor {
-    private static var cache: [String: (dominant: NSColor, vibrant: NSColor)] = [:]
+/// Memoizes artwork extraction by URL. Kept on its own actor rather than on the
+/// main actor so `rasterize`/`analyzePixels` stay off the main thread.
+private actor ArtworkColorCache {
+    static let shared = ArtworkColorCache()
 
+    private var storage: [String: (dominant: NSColor, vibrant: NSColor)] = [:]
+
+    func colors(for key: String) -> (dominant: NSColor, vibrant: NSColor)? {
+        storage[key]
+    }
+
+    func store(_ colors: (dominant: NSColor, vibrant: NSColor), for key: String) {
+        storage[key] = colors
+    }
+
+    func removeAll() {
+        storage.removeAll()
+    }
+}
+
+enum ColorExtractor {
     static func extractColors(
         from urlString: String
     ) async -> (dominant: NSColor, vibrant: NSColor)? {
-        if let cached = cache[urlString] { return cached }
+        if let cached = await ArtworkColorCache.shared.colors(for: urlString) {
+            return cached
+        }
 
         guard let url = URL(string: urlString),
               let (data, _) = try? await URLSession.shared.data(from: url),
@@ -20,7 +40,7 @@ enum ColorExtractor {
         else { return nil }
 
         let result = analyzePixels(pixels)
-        cache[urlString] = result
+        await ArtworkColorCache.shared.store(result, for: urlString)
         return result
     }
 
@@ -32,8 +52,8 @@ enum ColorExtractor {
         return analyzePixels(pixels)
     }
 
-    static func clearCache() {
-        cache.removeAll()
+    static func clearCache() async {
+        await ArtworkColorCache.shared.removeAll()
     }
 
     // MARK: - Internal

@@ -2,6 +2,14 @@ import AppKit
 import EventKit
 import Foundation
 
+/// Isolates the shared `EKEventStore`. It is not `Sendable` and is reached from
+/// two module actors (`CalendarModule`, `MeetingPrepModule`), so every member
+/// that touches it is pinned to this actor rather than to either caller.
+@globalActor
+actor CalendarStoreActor {
+    static let shared = CalendarStoreActor()
+}
+
 enum CalendarManager {
     // MARK: - Permission
 
@@ -9,6 +17,7 @@ enum CalendarManager {
         EKEventStore.authorizationStatus(for: .event) == .fullAccess
     }
 
+    @CalendarStoreActor
     static func requestAccess() async -> Bool {
         do {
             return try await store.requestFullAccessToEvents()
@@ -27,6 +36,7 @@ enum CalendarManager {
 
     // MARK: - Event Store
 
+    @CalendarStoreActor
     private static let store = EKEventStore()
 
     // MARK: - Data Types
@@ -55,6 +65,7 @@ enum CalendarManager {
 
     // MARK: - Fetch Events
 
+    @CalendarStoreActor
     static func fetchEvents(
         lookaheadHours: Int,
         lookbehindMinutes: Int,
@@ -231,6 +242,7 @@ enum CalendarManager {
 
     // MARK: - Private Helpers
 
+    @CalendarStoreActor
     private static func resolveCalendars(
         excluded: [String]?,
         included: [String]?

@@ -43,7 +43,7 @@ targets:
             CFBundleURLName: com.ivandmitriev.Vibeshed.url
     settings:
       base:
-        SWIFT_VERSION: "5.9"
+        SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_IDENTITY: "-"
@@ -62,7 +62,7 @@ targets:
       - target: Vibeshed
     settings:
       base:
-        SWIFT_VERSION: "5.9"
+        SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         TEST_TARGET_NAME: Vibeshed
         GENERATE_INFOPLIST_FILE: YES

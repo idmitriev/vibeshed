@@ -66,17 +66,17 @@ actor CalendarModule: ModuleConfigurable {
         guard CalendarManager.hasAccess else {
             return [buildGrantAccessAction()]
         }
-        refreshCacheIfNeeded()
+        await refreshCacheIfNeeded()
         return buildActions()
     }
 
-    private func refreshCacheIfNeeded() {
+    private func refreshCacheIfNeeded() async {
         let now = Date()
         guard now.timeIntervalSince(cacheTimestamp) > cacheTTL else {
             return
         }
 
-        cachedEvents = CalendarManager.fetchEvents(
+        cachedEvents = await CalendarManager.fetchEvents(
             lookaheadHours: config.lookaheadHours,
             lookbehindMinutes: config.lookbehindMinutes,
             excludedCalendars: config.excludedCalendars,

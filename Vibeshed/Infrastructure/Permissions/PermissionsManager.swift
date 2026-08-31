@@ -98,8 +98,11 @@ final class PermissionsManager {
     }
 
     private func checkAccessibility(prompt: Bool) -> Bool {
+        // `kAXTrustedCheckOptionPrompt` imports as a global `var`, which Swift 6
+        // rejects as shared mutable state. Its value is a stable documented
+        // constant, so spell it out rather than reading the global.
         let options = [
-            kAXTrustedCheckOptionPrompt.takeUnretainedValue(): prompt,
+            "AXTrustedCheckOptionPrompt" as CFString: prompt,
         ] as CFDictionary
         if AXIsProcessTrustedWithOptions(options) {
             return true
