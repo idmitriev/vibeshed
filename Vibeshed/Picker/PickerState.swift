@@ -14,6 +14,11 @@ final class PickerState {
     var selectedActionID: ActionID?
     var isLoading: Bool = false
 
+    /// Bumped whenever a list update snaps the selection back to the first row.
+    /// The list view watches it to scroll back to the top — `selectedActionID`
+    /// alone can't signal that, since the new first row may carry the same ID.
+    private(set) var listResetToken: Int = 0
+
     // MARK: - Mode state machine
 
     var mode: PickerMode = .search
@@ -101,6 +106,7 @@ final class PickerState {
         parameterQuery = ""
         actions = []
         selectedActionID = nil
+        listResetToken = 0
         isLoading = false
         mode = .search
         modeStack = []
@@ -137,20 +143,27 @@ final class PickerState {
 
     // MARK: - Action list updates (with selection stability)
 
+    /// Replaces the action list. Selection only survives an update that leaves the
+    /// list identical (same IDs, same order) — a background refresh re-delivering
+    /// the same results. Any change to the results snaps the selection back to the
+    /// first row, so the user is never left pointing at a moved or stale item.
     func updateActions(
         _ newActions: [ActionItem],
         cache: [ActionID: any Action] = [:],
         preservingSelection: Bool = true
     ) {
         let previousSelection = selectedActionID
+        let listUnchanged = actions.count == newActions.count
+            && zip(actions, newActions).allSatisfy { $0.id == $1.id }
         actions = newActions
         actionCache = cache
-        if preservingSelection, let prev = previousSelection,
+        if preservingSelection, listUnchanged, let prev = previousSelection,
            newActions.contains(where: { $0.id == prev })
         {
             selectedActionID = prev
         } else {
             selectedActionID = newActions.first?.id
+            listResetToken &+= 1
         }
     }
 

@@ -5,6 +5,8 @@ struct ActionListView: View {
     @Binding var selectedID: ActionID?
     var actionCache: [ActionID: any Action] = [:]
     var activationCounters: [ActionID: Int] = [:]
+    /// Changes when the results changed and selection snapped back to the first row.
+    var listResetToken: Int = 0
     var rowHeight: CGFloat = 52
     var topInset: CGFloat = 0
     var onActivate: ((ActionID) -> Void)?
@@ -47,6 +49,11 @@ struct ActionListView: View {
             .onChange(of: selectedID) { _, newID in
                 if let newID {
                     proxy.scrollTo(newID, anchor: nil)
+                }
+            }
+            .onChange(of: listResetToken) { _, _ in
+                if let firstID = actions.first?.id {
+                    proxy.scrollTo(firstID, anchor: .top)
                 }
             }
         }
