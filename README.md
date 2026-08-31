@@ -53,7 +53,7 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 - VSCode, JetBrains, and Zed project/workspace search
 - iTerm session management and command execution
 - GitHub repo/issue/PR search and notifications
-- AI session search across Claude, ChatGPT, and Codex
+- AI session search and resume across Claude Code, Claude Desktop, and Codex
 - Homebrew package search, install, upgrade, and cleanup
 
 **Media & Communication**
@@ -116,7 +116,8 @@ The app watches the config file for changes and hot-reloads automatically.
 | **VSCode** | Search and open recent projects |
 | **JetBrains** | Search and open IDE projects |
 | **ITerm** | Session listing, command execution, new tabs |
-| **AI** | Search Claude/ChatGPT/Codex sessions |
+| **Claude** | Resume Claude Code/Desktop sessions, start new ones, jump to sessions awaiting input |
+| **Codex** | Resume Codex threads with project/branch/model context, start new sessions |
 | **Zed** | Search and open recent workspaces |
 | **Homebrew** | Search, install, uninstall, upgrade packages and casks |
 | **Zoom** | Join meetings, start personal meeting, configured shortcuts |

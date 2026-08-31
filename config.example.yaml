@@ -501,15 +501,34 @@ modules:
       "Lazydocker": "lazydocker"
       "SSH Dev": "ssh user@dev.example.com"
 
-  # --- AI Sessions (Claude Code, Codex) ---
-  ai:
+  # --- Claude (Claude Code CLI + Claude Desktop) ---
+  anthropic:
     maxResults: 20
-    providers:
+    sources:
       - claudeCode
       - claudeDesktop
+    showLaunchers: true
+    # Where a session reopens by default: "terminal" (claude --resume) or
+    # "desktop" (claude:// deeplink).
+    resumeIn: "terminal"
+    # Also list each session's other surface as its own row (a CLI session handed
+    # to Claude Desktop, or a desktop session dropped into a terminal). Doubles
+    # the number of session rows, so off by default.
+    showAlternateResume: false
+    terminalApp: "iterm"
+    # claudePath: "/opt/homebrew/bin/claude"  # custom CLI path (auto-detected)
+
+  # --- Codex (Codex CLI + Codex desktop app) ---
+  openai:
+    maxResults: 20
+    sources:
       - codex
     showLaunchers: true
+    # Start new sessions in a terminal instead of the Codex app. Existing
+    # sessions always reopen in the app, the only surface addressable by id.
+    newSessionInTerminal: false
     terminalApp: "iterm"
+    # codexPath: "/opt/homebrew/bin/codex"    # custom CLI path (auto-detected)
 
   # --- Telegram ---
   telegram:
