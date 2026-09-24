@@ -34,8 +34,8 @@ git tag -a "$TAG" -m "Release $TAG"
 git push origin "$TAG"
 
 echo
-echo "Tag pushed. The 'Release' workflow on GitHub Actions will build, sign,"
-echo "notarize, and publish the GitHub Release."
+echo "Tag pushed. The 'Release' workflow on GitHub Actions will build, ad-hoc sign,"
+echo "and publish the GitHub Release (not notarized)."
 echo
 echo "Once the release is live, update the Homebrew cask:"
 echo "  1. Download Vibeshed-${VERSION}.zip from the release"

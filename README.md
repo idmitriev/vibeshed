@@ -165,7 +165,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup and house style.
 
 ## Releases
 
-Built, signed, and notarized by GitHub Actions on tag push. See [RELEASING.md](RELEASING.md) for the workflow.
+Built and ad-hoc signed (not notarized) by GitHub Actions on tag push. See [RELEASING.md](RELEASING.md) for the workflow.
 
 ## Support
 
