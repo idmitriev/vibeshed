@@ -23,6 +23,31 @@ final class ConfigParsingTests: XCTestCase {
         XCTAssertEqual(config.keybindings.last?.remap, "escape")
     }
 
+    func testParsesKeybindingExclusions() throws {
+        let yaml = """
+        keybindings:
+          - combo: cmd+space
+            action: picker/toggle
+        keybindingExclusions:
+          - com.realvnc.vncviewer
+          - com.microsoft.rdc.macos
+        """
+        let config = try ConfigManager.parseYAML(yaml)
+        XCTAssertEqual(config.keybindingExclusions, ["com.realvnc.vncviewer", "com.microsoft.rdc.macos"])
+        // Exclusions don't disturb the bindings themselves.
+        XCTAssertEqual(config.keybindings.count, 1)
+    }
+
+    func testMissingKeybindingExclusionsDefaultsToEmpty() throws {
+        let yaml = """
+        keybindings:
+          - combo: cmd+space
+            action: picker/toggle
+        """
+        let config = try ConfigManager.parseYAML(yaml)
+        XCTAssertTrue(config.keybindingExclusions.isEmpty)
+    }
+
     func testParsesAppearance() throws {
         // NOTE: AppearanceConfig is Codable with defaulted properties, but Codable
         // synthesis ignores Swift defaults, so YAMLDecoder requires every key.

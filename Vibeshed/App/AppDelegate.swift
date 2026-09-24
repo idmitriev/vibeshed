@@ -129,7 +129,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         layoutTransliterator.start()
         pickerCoordinator.start()
         keyComboManager.startListening()
-        keyComboManager.applyBindings(configManager.config.keybindings)
+        keyComboManager.applyBindings(
+            configManager.config.keybindings,
+            exclusions: configManager.config.keybindingExclusions
+        )
         uriManager.start()
 
         if isUITesting {

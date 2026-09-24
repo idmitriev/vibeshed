@@ -3,6 +3,10 @@ import Foundation
 struct AppConfig: Sendable, Equatable {
     var appearance: AppearanceConfig = .init()
     var keybindings: [KeyBindingEntry] = []
+    /// Bundle IDs where every keybinding and remap is suppressed — the event
+    /// tap passes input straight through while one of these apps is focused.
+    /// Matched case-insensitively.
+    var keybindingExclusions: [String] = []
     var moduleConfigs: [String: Data] = [:]
     var urlRouting: URLRoutingConfig = .init()
     var aliases: [AliasEntry] = []

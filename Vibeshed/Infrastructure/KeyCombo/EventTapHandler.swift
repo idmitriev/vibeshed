@@ -24,6 +24,9 @@ final class EventTapHandler: @unchecked Sendable {
     private var mouseRemaps: [MouseKey: RemapTarget] = [:]
     private var standardRemaps: [StandardKey: [String: RemapTarget]] = [:]
 
+    /// Apps that opt out of every binding and remap. Owns its own lock.
+    private let exclusions = AppExclusionList()
+
     // Modifier hold state — only accessed from tap callback thread
     private var spaceHeld = false
     private var spaceUsedAsModifier = false
@@ -130,7 +133,8 @@ final class EventTapHandler: @unchecked Sendable {
         mouse: [ResolvedBinding],
         remaps: [ResolvedRemap],
         tabRemapList: [ResolvedRemap] = [],
-        mouseRemapList: [ResolvedMouseRemap] = []
+        mouseRemapList: [ResolvedMouseRemap] = [],
+        excluded: Set<String> = []
     ) {
         var newStandard: [StandardKey: BindingSlot] = [:]
         for binding in standard {
@@ -269,6 +273,8 @@ final class EventTapHandler: @unchecked Sendable {
         let summary = "\(std)/\(caps)/\(spc)/\(tb)/\(mse)+\(rmp)rmp+\(trmp)trmp+\(mrmp)mrmp"
         Log.keybindings.debug("Bindings: \(summary, privacy: .public)")
 
+        exclusions.update(excluded)
+
         os_unfair_lock_lock(&lock)
         standardBindings = newStandard
         capsLockBindings = newCapsLock
@@ -298,8 +304,9 @@ final class EventTapHandler: @unchecked Sendable {
         type: CGEventType,
         event: CGEvent
     ) -> Unmanaged<CGEvent>? {
-        switch type {
-        case .tapDisabledByTimeout, .tapDisabledByUserInput:
+        // Re-enabling a disabled tap has to happen whatever app is focused,
+        // so it is checked before the exclusion bypass below.
+        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let port = tapPort {
                 let reason = type == .tapDisabledByTimeout ? "timeout" : "user input"
                 Log.keybindings.warning(
@@ -308,7 +315,18 @@ final class EventTapHandler: @unchecked Sendable {
                 CGEvent.tapEnable(tap: port, enable: true)
             }
             return Unmanaged.passUnretained(event)
+        }
 
+        if exclusions.excludes(focusedAppTracker.focusedBundleIDLowercased) {
+            // Hands off entirely: no bindings, no remaps, no capslock/space/tab
+            // interception. Clear any half-finished modifier hold so the next
+            // non-excluded app doesn't inherit stale state.
+            spaceHeld = false
+            tabHeld = false
+            return Unmanaged.passUnretained(event)
+        }
+
+        switch type {
         case .flagsChanged:
             return handleFlagsChanged(event: event)
 
@@ -597,6 +615,45 @@ final class EventTapHandler: @unchecked Sendable {
 }
 
 // MARK: - File-Private Types
+
+/// Bundle IDs whose events the tap forwards untouched. Written from the main
+/// actor on config reload, read from the tap callback thread on every event.
+private final class AppExclusionList: @unchecked Sendable {
+    private var lock = os_unfair_lock()
+    private var bundleIDs: Set<String> = []
+    /// Last app an exclusion was logged for, so entering an excluded app logs
+    /// once rather than on every event. Tap callback thread only.
+    private var lastLogged: String?
+
+    func update(_ newValue: Set<String>) {
+        let folded = Set(newValue.map { $0.lowercased() })
+        os_unfair_lock_lock(&lock)
+        bundleIDs = folded
+        os_unfair_lock_unlock(&lock)
+        guard !folded.isEmpty else { return }
+        let list = folded.sorted().joined(separator: ", ")
+        Log.keybindings.info("Keybindings disabled in: \(list, privacy: .public)")
+    }
+
+    /// `focusedApp` must already be lowercased.
+    func excludes(_ focusedApp: String) -> Bool {
+        os_unfair_lock_lock(&lock)
+        let matched = bundleIDs.contains(focusedApp)
+        os_unfair_lock_unlock(&lock)
+
+        guard matched else {
+            lastLogged = nil
+            return false
+        }
+        if lastLogged != focusedApp {
+            lastLogged = focusedApp
+            Log.keybindings.info(
+                "Passing input through — keybindings disabled for \(focusedApp, privacy: .public)"
+            )
+        }
+        return true
+    }
+}
 
 private struct BindingSlot {
     var global: ActionID?

@@ -134,6 +134,25 @@ keybindings:
     remap: "cmd+]"                 # browser forward
 
 # ---------------------------------------------------------------------------
+# Keybinding Exclusions
+# ---------------------------------------------------------------------------
+# Bundle IDs where vibeshed keeps its hands off the keyboard completely.
+# While one of these apps is focused, every key and mouse event passes
+# straight through: no bindings (including the picker toggle), no remaps,
+# and no capslock / space / tab modifier interception.
+#
+# Useful for remote-desktop and VM clients, where the combos belong to the
+# machine on the other end rather than to this one.
+# Bundle IDs are matched case-insensitively.
+# ---------------------------------------------------------------------------
+keybindingExclusions:
+  - "com.realvnc.vncviewer"        # RealVNC Viewer
+  # - "com.tigervnc.tigervnc"      # TigerVNC
+  # - "com.microsoft.rdc.macos"    # Microsoft Remote Desktop
+  # - "com.vmware.fusion"          # VMware Fusion
+  # - "com.parallels.desktop.console"  # Parallels Desktop
+
+# ---------------------------------------------------------------------------
 # Aliases (action shortcuts with optional pre-filled parameters)
 # ---------------------------------------------------------------------------
 # Aliases create searchable shortcuts for actions. Two types:

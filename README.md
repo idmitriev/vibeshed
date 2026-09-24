@@ -150,6 +150,15 @@ keybindings:
 
 Modifiers: `cmd`, `ctrl`, `option`/`alt`, `shift`, `capslock` (hyper), `space`. Mouse buttons: `mouse1`-`mouse5`.
 
+To hand the keyboard back entirely in certain apps — remote-desktop and VM clients, where the combos belong to the machine on the other end — list their bundle IDs (matched case-insensitively) under `keybindingExclusions:`:
+
+```yaml
+keybindingExclusions:
+  - "com.realvnc.vncviewer"
+```
+
+While one of those apps is focused, every key and mouse event passes straight through: no bindings (including the picker toggle), no remaps, and no capslock/space/tab modifier interception.
+
 ## Architecture
 
 - **Swift Package Manager** with `Package.swift` — no Xcode project required

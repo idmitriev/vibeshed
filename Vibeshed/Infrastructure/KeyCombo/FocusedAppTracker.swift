@@ -4,6 +4,7 @@ import os
 final class FocusedAppTracker: @unchecked Sendable {
     private var lock = os_unfair_lock()
     private var _bundleID: String = ""
+    private var _bundleIDLowercased: String = ""
 
     /// Thread-safe read of the currently focused app's bundle ID.
     /// Called from the event tap thread.
@@ -13,12 +14,21 @@ final class FocusedAppTracker: @unchecked Sendable {
         return _bundleID
     }
 
+    /// Lowercased form of `focusedBundleID`, folded once per focus change so
+    /// case-insensitive lookups on the event tap thread stay allocation-free.
+    var focusedBundleIDLowercased: String {
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
+        return _bundleIDLowercased
+    }
+
     /// Must be called from MainActor to start observing workspace notifications.
     @MainActor
     func start() {
         let initial = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
         os_unfair_lock_lock(&lock)
         _bundleID = initial
+        _bundleIDLowercased = initial.lowercased()
         os_unfair_lock_unlock(&lock)
 
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -41,6 +51,7 @@ final class FocusedAppTracker: @unchecked Sendable {
         else { return }
         os_unfair_lock_lock(&lock)
         _bundleID = bundleID
+        _bundleIDLowercased = bundleID.lowercased()
         os_unfair_lock_unlock(&lock)
     }
 }

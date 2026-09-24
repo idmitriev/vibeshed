@@ -76,6 +76,9 @@ final class ConfigManager {
         config.keybindings = decodeSection(
             "keybindings", from: rootMapping, decoder: decoder
         ) ?? config.keybindings
+        config.keybindingExclusions = decodeSection(
+            "keybindingExclusions", from: rootMapping, decoder: decoder
+        ) ?? config.keybindingExclusions
         config.appearance = decodeSection(
             "appearance", from: rootMapping, decoder: decoder
         ) ?? config.appearance

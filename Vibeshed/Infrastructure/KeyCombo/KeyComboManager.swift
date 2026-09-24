@@ -15,6 +15,7 @@ final class KeyComboManager {
     private let focusedAppTracker = FocusedAppTracker()
     private let eventTapHandler: EventTapHandler
     private var currentEntries: [KeyBindingEntry] = []
+    private var currentExclusions: [String] = []
     private var eventTapRunning = false
     private var capsLockMonitorRunning = false
 
@@ -86,7 +87,7 @@ final class KeyComboManager {
         }
     }
 
-    func applyBindings(_ entries: [KeyBindingEntry]) {
+    func applyBindings(_ entries: [KeyBindingEntry], exclusions: [String] = []) {
         Log.keybindings.info("applyBindings called with \(entries.count, privacy: .public) entries")
         for entry in entries {
             let scope = entry.app ?? "global"
@@ -96,6 +97,7 @@ final class KeyComboManager {
             )
         }
         currentEntries = entries
+        currentExclusions = exclusions
         rebindAll()
     }
 
@@ -108,6 +110,7 @@ final class KeyComboManager {
             capsLockMonitorRunning = false
         }
         currentEntries = []
+        currentExclusions = []
         bindingErrors = [:]
     }
 
@@ -115,7 +118,8 @@ final class KeyComboManager {
 
     private func handleConfigReloaded() {
         let newEntries = configManager.config.keybindings
-        guard newEntries != currentEntries else {
+        let newExclusions = configManager.config.keybindingExclusions
+        guard newEntries != currentEntries || newExclusions != currentExclusions else {
             Log.keybindings.debug("Config reloaded but keybindings unchanged")
             return
         }
@@ -123,6 +127,7 @@ final class KeyComboManager {
         Log.keybindings
             .info("Config reloaded: \(newEntries.count, privacy: .public) entries (was \(oldCount, privacy: .public))")
         currentEntries = newEntries
+        currentExclusions = newExclusions
         rebindAll()
     }
 
@@ -301,7 +306,8 @@ final class KeyComboManager {
             mouse: mouse,
             remaps: resolvedRemaps,
             tabRemapList: resolvedTabRemaps,
-            mouseRemapList: resolvedMouseRemaps
+            mouseRemapList: resolvedMouseRemaps,
+            excluded: Set(currentExclusions)
         )
 
         // Start event tap if we have any bindings or remaps
