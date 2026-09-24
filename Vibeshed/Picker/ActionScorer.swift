@@ -8,11 +8,17 @@ struct ScorableAction: Sendable {
     /// Keywords including any alias enrichments, in original casing (shown in UI).
     let keywords: [String]
     let target: FuzzyMatcher.ScoreTarget
+    /// Scheduled window, hoisted out of the action so the per-keystroke imminence
+    /// boost needs no witness-table lookups.
+    let scheduledStart: Date?
+    let scheduledEnd: Date?
 
     init(action: any Action, extraKeywords: [String] = []) {
         self.action = action
         let combined = action.keywords + extraKeywords
         self.keywords = combined
+        self.scheduledStart = action.scheduledStart
+        self.scheduledEnd = action.scheduledEnd
         self.target = FuzzyMatcher.ScoreTarget(
             title: action.title,
             subtitle: action.subtitle,
@@ -63,7 +69,14 @@ enum ActionScorer {
             } else {
                 0
             }
-            let finalScore = result.score + contextBoost
+            // Deliberately unclamped and applied on top: an event about to start
+            // outranks even an exact match elsewhere in the list.
+            let imminenceBoost = ImminenceScorer.boost(
+                scheduledStart: scorable.scheduledStart,
+                scheduledEnd: scorable.scheduledEnd,
+                now: scoring.now
+            )
+            let finalScore = result.score + contextBoost + imminenceBoost
 
             let item = ActionItem(
                 id: action.id,

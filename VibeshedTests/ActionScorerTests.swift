@@ -9,14 +9,19 @@ private struct StubAction: Action {
     var relevanceScore: Double = 0.5
     var keywords: [String] = []
     var parameters: [ActionParameter] = []
+    var scheduledStart: Date?
+    var scheduledEnd: Date?
     func run(with _: ParameterValues) async throws -> ActionResult {
         .dismiss
     }
 }
 
 final class ActionScorerTests: XCTestCase {
-    private func scoring(_ query: String) -> ScoringContext {
-        ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: nil)
+    private func scoring(_ query: String, now: Date = Date()) -> ScoringContext {
+        ScoringContext(
+            usageCounts: [:], lastUsedDates: [:], query: query,
+            systemContext: nil, now: now
+        )
     }
 
     func testEmptyQuerySortsByRelevanceDescending() {
@@ -122,6 +127,66 @@ final class ActionScorerTests: XCTestCase {
             allActions: [a, b], enrichments: [:], query: "", scoring: scoring("")
         )
         XCTAssertEqual(items.count, 2)
+    }
+
+    func testImminentEventOutranksAStrongerTextMatch() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let start = now.addingTimeInterval(3 * 60)
+        // "standup" matches the exact title of the non-event action and only fuzzily
+        // (s-t-a-n-d-u-p scattered) the event's — yet the event must still win.
+        let exactMatch = StubAction(
+            id: ActionID("m/standup"), title: "Standup", relevanceScore: 0.9
+        )
+        let event = StubAction(
+            id: ActionID("calendar/event.x"), title: "Sprint Team Sync and Updates Prep",
+            relevanceScore: 0.9,
+            scheduledStart: start, scheduledEnd: start.addingTimeInterval(1800)
+        )
+        let (items, _) = ActionScorer.scoreAndRank(
+            allActions: [exactMatch, event], enrichments: [:],
+            query: "standup", scoring: scoring("standup", now: now)
+        )
+        XCTAssertEqual(items.map(\.id.actionName), ["event.x", "standup"])
+    }
+
+    func testDistantEventDoesNotOutrankAStrongerTextMatch() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let start = now.addingTimeInterval(8 * 3600)
+        let exactMatch = StubAction(
+            id: ActionID("m/standup"), title: "Standup", relevanceScore: 0.9
+        )
+        let event = StubAction(
+            id: ActionID("calendar/event.x"), title: "Sprint Team Sync and Updates Prep",
+            relevanceScore: 0.9,
+            scheduledStart: start, scheduledEnd: start.addingTimeInterval(1800)
+        )
+        let (items, _) = ActionScorer.scoreAndRank(
+            allActions: [exactMatch, event], enrichments: [:],
+            query: "standup", scoring: scoring("standup", now: now)
+        )
+        XCTAssertEqual(items.map(\.id.actionName), ["standup", "event.x"])
+    }
+
+    func testEventsRankByHowSoonTheyStart() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        func event(_ name: String, inMinutes: Double) -> StubAction {
+            let start = now.addingTimeInterval(inMinutes * 60)
+            return StubAction(
+                id: ActionID("calendar/\(name)"), title: "Meeting \(name)",
+                relevanceScore: 0.5,
+                scheduledStart: start, scheduledEnd: start.addingTimeInterval(1800)
+            )
+        }
+        let actions: [any Action] = [
+            event("later", inMinutes: 90),
+            event("soon", inMinutes: 2),
+            event("mid", inMinutes: 30),
+        ]
+        let (items, _) = ActionScorer.scoreAndRank(
+            allActions: actions, enrichments: [:],
+            query: "meeting", scoring: scoring("meeting", now: now)
+        )
+        XCTAssertEqual(items.map(\.id.actionName), ["soon", "mid", "later"])
     }
 
     func testNormalizeURL() {

@@ -72,6 +72,14 @@ struct MeetingPrepAction: Action {
         self.runner = runner
     }
 
+    var scheduledStart: Date? {
+        startDate
+    }
+
+    var scheduledEnd: Date? {
+        endDate
+    }
+
     func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }

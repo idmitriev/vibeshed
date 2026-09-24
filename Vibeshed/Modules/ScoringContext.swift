@@ -5,10 +5,13 @@ struct ScoringContext: Sendable {
     let lastUsedDates: [String: Date]
     let query: String
     let systemContext: SystemContext?
+    /// Reference "now" for every time-based term (usage recency, event imminence),
+    /// captured once per query so a single ranking pass is internally consistent.
+    var now: Date = .init()
 
     func recencyScore(for actionID: ActionID) -> Double {
         guard let lastUsed = lastUsedDates[actionID.rawValue] else { return 0 }
-        let elapsed = Date().timeIntervalSince(lastUsed)
+        let elapsed = now.timeIntervalSince(lastUsed)
         return exp(-elapsed / 3600.0)
     }
 

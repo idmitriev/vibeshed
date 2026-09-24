@@ -78,6 +78,17 @@ struct CalendarAction: Action {
         self.runner = runner
     }
 
+    /// All-day events have no meaningful start time to count down to — midnight
+    /// would otherwise read as "under way" for the whole day — so they opt out of
+    /// imminence ranking and fall back to their relevance score.
+    var scheduledStart: Date? {
+        isAllDay ? nil : startDate
+    }
+
+    var scheduledEnd: Date? {
+        isAllDay ? nil : endDate
+    }
+
     func run(with values: ParameterValues) async throws -> ActionResult {
         try await runner(values)
     }

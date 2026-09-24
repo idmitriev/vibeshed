@@ -59,6 +59,17 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
     /// and a history entry for the same URL). Default `nil` opts out of dedup.
     var deduplicationKey: String? { get }
 
+    /// Wall-clock start of the thing this action represents, when it has one
+    /// (a calendar event, a meeting to join). Actions that report it are ranked
+    /// to the top of the list as their start approaches — see `ImminenceScorer`.
+    /// Default `nil` opts out; so should anything without a real clock time
+    /// (all-day events, recurring templates).
+    var scheduledStart: Date? { get }
+
+    /// Wall-clock end paired with `scheduledStart`, used to tell an event that is
+    /// under way from one that has already finished. Default `nil`.
+    var scheduledEnd: Date? { get }
+
     @MainActor
     func makeListItemView() -> AnyView?
     @MainActor
@@ -87,6 +98,14 @@ extension Action {
     }
 
     var deduplicationKey: String? {
+        nil
+    }
+
+    var scheduledStart: Date? {
+        nil
+    }
+
+    var scheduledEnd: Date? {
         nil
     }
 
