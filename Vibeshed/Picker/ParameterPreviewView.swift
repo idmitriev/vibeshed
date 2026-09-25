@@ -20,7 +20,9 @@ struct ParameterPreviewView: View {
 
     var body: some View {
         Group {
-            if let action {
+            if let custom = selectedOption?.makePreview?() {
+                custom
+            } else if let action {
                 PreviewLayout(moduleName: moduleName) {
                     PreviewHeader(
                         title: selectedOption?.label ?? action.title,

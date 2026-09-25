@@ -21,8 +21,15 @@ final class PickerState {
 
     // MARK: - Mode state machine
 
-    var mode: PickerMode = .search
+    var mode: PickerMode = .search {
+        didSet { onLivePreviewContextChange?() }
+    }
+
     private var modeStack: [PickerMode] = []
+
+    /// Fired when anything a live parameter preview depends on changes (mode, highlighted
+    /// option). The coordinator uses it to start, advance, or end the preview.
+    @ObservationIgnored var onLivePreviewContextChange: (@MainActor () -> Void)?
 
     // MARK: - Parameter binding state
 
@@ -30,7 +37,10 @@ final class PickerState {
     var collectedValues: ParameterValues = [:]
     var currentParameter: ActionParameter?
     var parameterOptions: [ParameterOption] = []
-    var selectedParameterOptionID: String?
+    var selectedParameterOptionID: String? {
+        didSet { onLivePreviewContextChange?() }
+    }
+
     var isLoadingOptions: Bool = false
     var layoutCorrectionHint: LayoutCorrectionHint?
 

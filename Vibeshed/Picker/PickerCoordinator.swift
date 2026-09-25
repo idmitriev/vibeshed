@@ -5,9 +5,10 @@ import Foundation
 @MainActor
 @Observable
 final class PickerCoordinator {
-    private let pickerState: PickerState
-    private let moduleRegistry: ModuleRegistry
-    private let panelController: PanelController
+    // Internal (not private) for the live-preview extension in PickerCoordinator+LivePreview.
+    let pickerState: PickerState
+    let moduleRegistry: ModuleRegistry
+    let panelController: PanelController
     private let eventBus: EventBus
     var usageTracker: UsageTracker?
     var themeEngine: ThemeEngine?
@@ -36,6 +37,11 @@ final class PickerCoordinator {
     /// query can never overwrite a newer one's results.
     @ObservationIgnored private var queryGeneration = 0
     @ObservationIgnored private var runningQueryTask: Task<Void, Never>?
+
+    // MARK: - Live parameter preview (see PickerCoordinator+LivePreview)
+
+    @ObservationIgnored var livePreview: LivePreviewSession?
+    @ObservationIgnored var livePreviewTask: Task<Void, Never>?
 
     init(
         pickerState: PickerState,
@@ -70,6 +76,7 @@ final class PickerCoordinator {
         wireQueryToModules()
         wireParameterQuery()
         wireActionRefresh()
+        pickerState.onLivePreviewContextChange = { [weak self] in self?.syncLivePreview() }
     }
 
     // MARK: - Keyboard handlers
@@ -177,59 +184,16 @@ final class PickerCoordinator {
     private func executeActiveAction() {
         guard let action = pickerState.activeAction else { return }
         let values = pickerState.collectedValues
-        Task { await executeAction(action, values: values) }
-    }
-
-    private func executeAction(_ action: any Action, values: ParameterValues) async {
-        Log.picker.debug("Executing action '\(action.id, privacy: .public)'")
-        panelController.hideAndReset()
-        do {
-            let result = try await action.run(with: values)
-            usageTracker?.recordUsage(actionID: action.id)
-            handleActionResult(result)
-        } catch {
-            Log.picker
-                .error(
-                    "Action '\(action.id, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)"
-                )
-            postActionNotification(
-                title: action.title,
-                body: error.localizedDescription
-            )
+        // Close any live preview as committed *before* the reset in executeAction
+        // would end it as cancelled — the module must keep, not revert, the choice.
+        let previewEnded = endLivePreview(committed: true)
+        Task {
+            await previewEnded?.value
+            await executeAction(action, values: values)
         }
     }
 
-    private func handleActionResult(_ result: ActionResult) {
-        switch result {
-        case .dismiss:
-            break
-
-        case let .showResult(title, body):
-            postActionNotification(title: title, body: body)
-
-        case .keepOpen:
-            panelController.showRetainingState()
-
-        case let .pushActions(actions):
-            let items = actions.map(ActionItem.init(pushed:))
-            var cache: [ActionID: any Action] = [:]
-            for action in actions {
-                cache[action.id] = action
-            }
-            pickerState.pushMode(.pushedActions)
-            pickerState.updateActions(items, cache: cache)
-            panelController.showRetainingState()
-
-        case let .chain(actionID, chainValues):
-            Task {
-                guard let action = await moduleRegistry.findAction(id: actionID) else {
-                    Log.picker.error("Chained action '\(actionID, privacy: .public)' not found")
-                    return
-                }
-                await executeAction(action, values: chainValues)
-            }
-        }
-    }
+    // executeAction and its result handling live in PickerCoordinator+ActionExecution.
 
     // MARK: - Query wiring
 
@@ -409,7 +373,9 @@ extension PickerCoordinator {
             {
                 let filtered = query.isEmpty ? options : options.fuzzyFiltered(by: query)
                 pickerState.parameterOptions = filtered
-                pickerState.selectedParameterOptionID = filtered.first?.id
+                // Open on the value in effect so a live preview starts from "no change".
+                let current = query.isEmpty ? filtered.first(where: \.isCurrent) : nil
+                pickerState.selectedParameterOptionID = (current ?? filtered.first)?.id
                 pickerState.isLoadingOptions = false
             }
         }

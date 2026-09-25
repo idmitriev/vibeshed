@@ -4,7 +4,16 @@ import SwiftUI
 @MainActor
 @Observable
 final class ThemeEngine {
-    private(set) var theme: VibeTheme = .default
+    /// Picker styling. An applied (or live-previewed) palette theme wins; otherwise the
+    /// dynamic theme derived from album art / screen colors / time of day.
+    var theme: VibeTheme {
+        if let palette = ActiveTheme.shared.displayed?.palette {
+            return VibeTheme(palette: palette)
+        }
+        return dynamicTheme
+    }
+
+    private var dynamicTheme: VibeTheme = .default
 
     private let eventBus: EventBus
     private var lastArtworkURL: String?
@@ -21,6 +30,8 @@ final class ThemeEngine {
 
     /// Called when the picker opens. Gathers signals and recomputes theme.
     func refresh(context: SystemContext) async {
+        // A palette theme owns the styling — skip the artwork fetch and screen capture.
+        guard ActiveTheme.shared.committed == nil else { return }
         if context.isSpotifyRunning {
             await refreshMusicColors()
         } else {
@@ -118,9 +129,9 @@ final class ThemeEngine {
     }
 
     private func setTheme(_ newTheme: VibeTheme) {
-        guard newTheme != theme else { return }
+        guard newTheme != dynamicTheme else { return }
         withAnimation(.easeInOut(duration: 0.5)) {
-            theme = newTheme
+            dynamicTheme = newTheme
         }
     }
 

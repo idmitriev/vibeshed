@@ -128,10 +128,54 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Math** | Arithmetic, unit/currency conversion |
 | **Web Search** | Search the web when nothing else matches |
 | **Emoji** | Search and copy/paste emoji |
-| **Theme** | Dynamic appearance theming |
+| **Theme** | Palette themes applied across macOS and apps, with live preview |
 | **Self** | Open config, reload modules, view logs, quit |
 
 Modules load only when their config section is present. Each module declares required permissions (accessibility, automation, etc.) and the app guides you through granting them.
+
+## Theming
+
+One palette, applied everywhere at once. `theme/switch` lists the themes; moving the highlight applies each one live, Return keeps it, Esc puts everything back. Every theme is also a direct action (`theme/apply.tokyo-night`) you can bind or alias, plus `theme/next`, `theme/previous`, `theme/reapply` and `theme/fromWallpaper`, which derives a full palette from your current wallpaper.
+
+| Target | What changes | Live? |
+|--------|--------------|-------|
+| `appearance` | Light/dark mode | ✓ |
+| `accent` | Accent (nearest preset) + text highlight (exact color) | ✓ |
+| `folders` | "Icon, widget & folder color" (macOS 26+), tinted icons for listed folders | ✓ |
+| `pointer` | Pointer fill/outline (needs Full Disk Access) | best-effort |
+| `wallpaper` | Theme image, or one generated from the palette in one of 15 styles | ✓ |
+| `iterm` | Every open session, plus a "Vibeshed" profile (your default profile's settings, theme colours) made the default, so new windows and restarts keep the theme | ✓ |
+| `vscode` | VS Code, Insiders, Cursor, Windsurf, VSCodium via a generated theme extension | ✓* |
+| `zed` | Generated `themes/vibeshed.json`, selected in settings | ✓* |
+| `jetbrains` | Generated editor scheme; follows "Sync with OS" | on restart |
+| `claude` | Claude Code custom theme (`~/.claude/themes`) | ✓ |
+| `bat` / `lsd` / `micro` | Generated `Vibeshed.tmTheme` (+ cache rebuild), `colors.yaml`, `vibeshed.micro` | next run |
+| `btop` | Generated `vibeshed.theme`, selected in `btop.conf`; running btops reload via SIGUSR2 | ✓ |
+| `github` | github.com appearance via an open tab (opt-in) | ✓ |
+| `templates` / `hooks` | Your own `{{ key }}` templates and shell commands | ✓ |
+
+\* The very first time the generated theme is installed, the editor may need one reload to discover it; after that, switches apply live.
+
+The picker and the tiling focus border follow the theme's accent too. Terminal tools that use the 16 ANSI colours (e.g. fzf with `--color=hl:4,…`) need no target at all: they follow the iTerm palette live. For bat, select the generated theme once with `--theme=Vibeshed`.
+
+Themes use [Omarchy](https://omarchy.org)'s `colors.toml` key names (`background`, `accent`, `bright_blue`, `color0`…`color15`, …); only background, foreground and the six base hues are required. 64 built-ins: Catppuccin, Tokyo Night, Rosé Pine, Kanagawa, Gruvbox, Everforest, Nord, Solarized, GitHub, Ayu, Nightfox, Flexoki, Melange, One Dark/Light, Dracula, Monokai Pro, Night Owl, Poimandres, Vesper, Moonfly, Sonokai, Iceberg, Vague, plus Omarchy's own (Osaka Jade, Ristretto, Matte Black, Retro 82, Lumon, …) and classic desktops — BeOS, OS/2 Warp, OS/2 Text Mode and NeXTSTEP, with colors taken from the systems themselves. The community and Omarchy palettes are regenerated from their sources by `scripts/generate-builtin-themes.py`. Define your own in config (optionally `base:` another theme), or drop Omarchy theme folders into `~/.config/vibeshed/themes/`:
+
+```yaml
+modules:
+  theme:
+    themes:
+      - name: "Midnight"
+        base: "Tokyo Night"
+        colors: { background: "#0b0b12", accent: "#ff9e64" }
+    templates:   # Omarchy placeholder syntax: {{ accent }}, {{ red_rgb }}, {{ mix background green 15% }}
+      - source: "~/.config/vibeshed/templates/ghostty.conf.tpl"
+        target: "~/.config/ghostty/themes/vibeshed"
+        reload: "pkill -USR2 -x ghostty"
+```
+
+Generated wallpapers come in 15 styles: glow, mesh gradient, waves, ridges, bokeh, low poly, topographic, retro sunset, retro arcs, halftone, solid, and four from classic systems — Leaves (Haiku's screen saver, the BeOS theme's default), Polyhedra (NeXTSTEP BackSpace's module, which could run as the workspace background), Warp Speed (OS/2 Warp) and Text Mode. Any style works with any theme; the classic themes default to their own. `theme/wallpaperStyle` browses them on the current theme with live preview, and `theme/shuffleWallpaper` re-rolls the variation. They're painted at full display resolution in 16-bit colour and dithered, so soft gradients don't band.
+
+The resolved palette is also exported to `~/Library/Application Support/Vibeshed/Theme/current/` (`colors.toml`, `colors.json`) for scripts.
 
 ## Key Bindings
 

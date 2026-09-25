@@ -222,6 +222,16 @@ struct ParameterOptionRow: View, Equatable {
 
             Spacer()
 
+            if !option.swatches.isEmpty {
+                SwatchStrip(colors: option.swatches, isSelected: isSelected)
+            }
+
+            if option.isCurrent {
+                Image(systemName: "checkmark")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(secondaryTextColor)
+            }
+
             if let number = hotkeyNumber {
                 Text("\u{2318}\(number)")
                     .font(.caption)
@@ -234,15 +244,15 @@ struct ParameterOptionRow: View, Equatable {
     }
 
     private var iconColor: Color {
-        isSelected ? .white : .primary.opacity(0.65)
+        isSelected ? theme.accentForeground : .primary.opacity(0.65)
     }
 
     private var primaryTextColor: Color {
-        isSelected ? .white : .primary
+        isSelected ? theme.accentForeground : .primary
     }
 
     private var secondaryTextColor: Color {
-        isSelected ? Color.white.opacity(0.85) : .secondary
+        isSelected ? theme.accentForeground.opacity(0.85) : .secondary
     }
 
     @ViewBuilder
@@ -261,9 +271,31 @@ struct ParameterOptionRow: View, Equatable {
         var attributed = AttributedString(string)
         for range in ranges {
             guard let attrRange = Range(range, in: attributed) else { continue }
-            attributed[attrRange].foregroundColor = isSelected ? .white : theme.searchHighlight
+            attributed[attrRange].foregroundColor = isSelected ? theme.accentForeground : theme.searchHighlight
             attributed[attrRange].underlineStyle = .single
         }
         return attributed
+    }
+}
+
+/// Overlapping color chips — a palette at a glance.
+struct SwatchStrip: View {
+    let colors: [Color]
+    var isSelected = false
+    var size: CGFloat = 14
+
+    var body: some View {
+        HStack(spacing: -size * 0.3) {
+            ForEach(Array(colors.enumerated()), id: \.offset) { _, color in
+                Circle()
+                    .fill(color)
+                    .frame(width: size, height: size)
+                    .overlay(Circle().stroke(strokeColor, lineWidth: 1))
+            }
+        }
+    }
+
+    private var strokeColor: Color {
+        isSelected ? Color.white.opacity(0.7) : Color.primary.opacity(0.2)
     }
 }

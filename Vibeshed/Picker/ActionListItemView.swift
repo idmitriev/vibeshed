@@ -55,15 +55,15 @@ struct ActionListItemView: View, Equatable {
     }
 
     private var iconColor: Color {
-        isSelected ? .white : .primary.opacity(0.65)
+        isSelected ? theme.accentForeground : .primary.opacity(0.65)
     }
 
     private var primaryTextColor: Color {
-        isSelected ? .white : .primary
+        isSelected ? theme.accentForeground : .primary
     }
 
     private var secondaryTextColor: Color {
-        isSelected ? Color.white.opacity(0.85) : .secondary
+        isSelected ? theme.accentForeground.opacity(0.85) : .secondary
     }
 
     @ViewBuilder
@@ -82,7 +82,7 @@ struct ActionListItemView: View, Equatable {
         var attributed = AttributedString(string)
         for range in ranges {
             guard let attrRange = Range(range, in: attributed) else { continue }
-            attributed[attrRange].foregroundColor = isSelected ? .white : theme.searchHighlight
+            attributed[attrRange].foregroundColor = isSelected ? theme.accentForeground : theme.searchHighlight
             attributed[attrRange].underlineStyle = .single
         }
         return attributed

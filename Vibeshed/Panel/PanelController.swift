@@ -82,6 +82,7 @@ final class PanelController {
         deferredLoad = nil
         panel.animateHide()
         isVisible = false
+        coordinator?.syncLivePreview()
         Log.picker.debug("Panel hidden")
     }
 
@@ -150,6 +151,7 @@ final class PanelController {
         newPanel.onWillHide = { [weak self] in
             MainActor.assumeIsolated {
                 self?.isVisible = false
+                self?.coordinator?.syncLivePreview()
             }
         }
 

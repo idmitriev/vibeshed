@@ -1,6 +1,10 @@
+import AppKit
 import Foundation
 import OSLog
+import SwiftUI
 
+/// Palette themes applied across macOS and apps (see `ThemeApplier.targets`), browsed
+/// with live preview in `theme/switch`.
 actor ThemeModule: ModuleConfigurable {
     let id = "theme"
     let displayName = "Theme"
@@ -12,41 +16,106 @@ actor ThemeModule: ModuleConfigurable {
         .init()
     }
 
-    private var config: ThemeConfig = .init()
+    static let switchActionID = ActionID(module: "theme", name: "switch")
+    private static let generatedDefaultsKey = "theme.generated"
+
+    // Internal (not private) for the wallpaper actions in ThemeModule+Wallpaper.
+    private(set) var config = ThemeConfig()
+    private(set) var catalog = ThemeCatalog.Result(themes: [], errors: [])
+    private(set) var eventBus: EventBus?
+    let applier = ThemeApplier()
     private let log = Log.module("theme")
+    private var itermWatcher: AppLaunchWatcher?
 
     func initialize(context: ModuleContext) async throws {
-        log.info("Theme module initialized")
+        eventBus = context.eventBus
+        rebuildCatalog()
+        itermWatcher = await MainActor.run {
+            AppLaunchWatcher(bundleID: ITermTarget.bundleID) { [weak self] in
+                Task { await self?.recolorLaunchedITerm() }
+            }
+        }
+    }
+
+    func teardown() async {
+        await itermWatcher?.stop()
+    }
+
+    /// Windows iTerm restores keep the profile they were created with, so recolor
+    /// every session once iTerm has launched (new ones use the Vibeshed default profile).
+    private func recolorLaunchedITerm() async {
+        guard config.enabledTargets.contains(.iterm), let theme = await currentTheme() else { return }
+        try? await Task.sleep(for: .seconds(2.5))
+        let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: [.iterm])
+        _ = await applier.apply(theme, config: config, options: options)
     }
 
     func configDidUpdate(_ config: ThemeConfig) async {
         self.config = config
-        log.debug("Config updated")
+        rebuildCatalog()
+        await eventBus?.publish(.moduleActionsChanged(moduleID: id))
     }
 
     static func validate(_ config: ThemeConfig) -> ConfigValidationResult {
         var errors: [String] = []
-        if let presets = config.presets {
-            let names = presets.map(\.name)
-            if Set(names).count != names.count {
-                errors.append("Preset names must be unique")
+        let slugs = config.themes.map { ResolvedTheme.slug(for: $0.name) }
+        if slugs.contains(where: \.isEmpty) { errors.append("Theme names cannot be empty") }
+        if Set(slugs).count != slugs.count { errors.append("Theme names must be unique") }
+
+        for theme in config.themes {
+            for (key, value) in theme.colors where !ThemePalette.nonColorKeys.contains(key)
+                && ThemeColor(hex: value) == nil
+            {
+                errors.append("Theme '\(theme.name)': '\(key)' is not a hex color: '\(value)'")
             }
-            for preset in presets {
-                if preset.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    errors.append("Preset name cannot be empty")
-                }
-                if let appearance = preset.appearance,
-                   appearance != "dark", appearance != "light"
-                {
-                    errors.append("Preset '\(preset.name)' appearance must be 'dark' or 'light'")
-                }
+            for app in theme.apps.keys where !ThemeAppOverride.keys.contains(app) {
+                let known = ThemeAppOverride.keys.sorted().joined(separator: ", ")
+                errors.append("Theme '\(theme.name)': unknown app '\(app)' (known: \(known))")
             }
+            if let accent = theme.macosAccent, MacAccentColor.named(accent) == nil {
+                let known = MacAccentColor.allCases.map(\.rawValue).joined(separator: ", ")
+                errors.append("Theme '\(theme.name)': macosAccent must be one of \(known)")
+            }
+        }
+        // Palette completeness (after `base` inheritance) for the themes config defines.
+        let configNames = Set(config.themes.map(\.name))
+        errors += ThemeCatalog.build(config: config, generated: nil).errors.filter { error in
+            configNames.contains { error.hasPrefix("Theme '\($0)'") }
+        }
+
+        for target in config.targets ?? [] where ThemeTargetID(rawValue: target) == nil {
+            let known = ThemeTargetID.allCases.map(\.rawValue).joined(separator: ", ")
+            errors.append("Unknown target '\(target)' (known: \(known))")
+        }
+        for template in config.templates where template.source.isEmpty || template.target.isEmpty {
+            errors.append("Templates need both source and target")
+        }
+        let styles = WallpaperStyle.allCases.map(\.rawValue).joined(separator: ", ")
+        let styleNames = [("wallpaperStyle", config.wallpaperStyle)] + config.themes.compactMap { theme in
+            theme.wallpaperStyle.map { ("Theme '\(theme.name)': wallpaperStyle", $0) }
+        }
+        for (label, name) in styleNames where WallpaperStyle.resolve(name, slug: "") == nil {
+            errors.append("\(label) '\(name)' is not one of auto, \(styles)")
         }
         return errors.isEmpty ? .valid : .invalid(errors)
     }
 
+    // MARK: - Actions
+
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        buildActions(config: config)
+        let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
+        var actions: [ThemeAction] = [switchAction(), fromWallpaperAction()]
+        if !catalog.themes.isEmpty {
+            actions += [cycleAction(forward: true), cycleAction(forward: false), reapplyAction()]
+            actions += [wallpaperStyleAction(), shuffleWallpaperAction()]
+        }
+        actions += catalog.themes.map { applyAction($0, isCurrent: $0.slug == current) }
+
+        guard let enabled = config.enabledActions else { return actions }
+        return actions.filter { action in
+            let name = action.id.actionName
+            return enabled.contains(name) || enabled.contains(String(name.prefix { $0 != "." }))
+        }
     }
 
     func provideParameterOptions(
@@ -54,351 +123,190 @@ actor ThemeModule: ModuleConfigurable {
         in actionID: ActionID,
         query: String
     ) async -> [ParameterOption] {
-        switch parameterID {
-        case "color":
-            ThemeManager.accentColors.map { entry in
-                ParameterOption(id: entry.name, label: entry.name, iconName: "circle.fill")
-            }
-        case "theme" where actionID.actionName == "vscodeTheme":
-            vscodeThemeOptions()
-        case "theme" where actionID.actionName == "jetbrainsTheme":
-            ThemeManager.jetbrainsThemes.map { entry in
-                ParameterOption(id: entry.name, label: entry.name, iconName: "paintbrush")
-            }
-        case "preset":
-            itermPresetOptions()
-        case "mode":
-            githubThemeOptions()
-        default:
-            []
-        }
-    }
-
-    // MARK: - Build Actions
-
-    private func buildActions(config: ThemeConfig) -> [ThemeAction] {
-        let enabled = config.enabledActions
-        var actions: [ThemeAction] = []
-
-        actions.append(contentsOf: buildAppearanceActions())
-        actions.append(contentsOf: buildAccentColorAction())
-        actions.append(contentsOf: buildWallpaperAction())
-        actions.append(contentsOf: buildVSCodeActions())
-        actions.append(contentsOf: buildJetBrainsActions())
-        actions.append(contentsOf: buildITermActions())
-        actions.append(contentsOf: buildGitHubActions())
-        actions.append(contentsOf: buildPresetActions(config: config))
-
-        if let enabled {
-            return actions.filter { enabled.contains(actionName($0.id)) }
-        }
-        return actions
-    }
-
-    private func actionName(_ id: ActionID) -> String {
-        id.actionName
-    }
-
-    // MARK: - Appearance
-
-    private func buildAppearanceActions() -> [ThemeAction] {
-        [
-            ThemeAction(
-                id: ActionID(module: "theme", name: "setDark"),
-                title: "Set Dark Mode",
-                subtitle: "Switch system to dark appearance",
-                iconName: "moon.fill",
-                relevanceScore: 0.85,
-                keywords: ["dark", "mode", "appearance", "theme", "night"],
-                category: .system
-            ) { _ in
-                try ThemeManager.setDarkMode(true)
-                return .showResult(title: "Dark Mode", body: "System appearance set to dark")
-            },
-            ThemeAction(
-                id: ActionID(module: "theme", name: "setLight"),
-                title: "Set Light Mode",
-                subtitle: "Switch system to light appearance",
-                iconName: "sun.max.fill",
-                relevanceScore: 0.85,
-                keywords: ["light", "mode", "appearance", "theme", "day"],
-                category: .system
-            ) { _ in
-                try ThemeManager.setDarkMode(false)
-                return .showResult(title: "Light Mode", body: "System appearance set to light")
-            },
-        ]
-    }
-
-    // MARK: - Accent Color
-
-    private func buildAccentColorAction() -> [ThemeAction] {
-        [
-            ThemeAction(
-                id: ActionID(module: "theme", name: "setAccentColor"),
-                title: "Set Accent Color",
-                subtitle: "Change the system accent color",
-                iconName: "paintpalette.fill",
-                relevanceScore: 0.8,
-                keywords: ["accent", "color", "tint", "highlight", "theme"],
-                parameters: [
-                    ActionParameter(
-                        id: "color",
-                        label: "Color",
-                        type: .dynamicSelection(hint: "color"),
-                        isRequired: true
-                    ),
-                ],
-                category: .system
-            ) { values in
-                guard let color = values["color"] else {
-                    return .keepOpen
-                }
-                try ThemeManager.setAccentColor(color)
-                return .showResult(title: "Accent Color", body: "Set to \(color)")
-            },
-        ]
-    }
-
-    // MARK: - Wallpaper
-
-    private func buildWallpaperAction() -> [ThemeAction] {
-        [
-            ThemeAction(
-                id: ActionID(module: "theme", name: "setWallpaper"),
-                title: "Set Wallpaper",
-                subtitle: "Change the desktop wallpaper",
-                iconName: "photo.fill",
-                relevanceScore: 0.75,
-                keywords: ["wallpaper", "desktop", "background", "image", "theme"],
-                parameters: [
-                    ActionParameter(
-                        id: "path",
-                        label: "Image Path",
-                        type: .path(allowsDirectories: false),
-                        isRequired: true
-                    ),
-                ],
-                category: .system
-            ) { values in
-                guard let path = values["path"] else {
-                    return .keepOpen
-                }
-                try ThemeManager.setWallpaper(path: path)
-                return .showResult(title: "Wallpaper", body: "Desktop wallpaper updated")
-            },
-        ]
-    }
-
-    // MARK: - VSCode
-
-    private func buildVSCodeActions() -> [ThemeAction] {
-        [
-            ThemeAction(
-                id: ActionID(module: "theme", name: "vscodeTheme"),
-                title: "Set VS Code Theme",
-                subtitle: "Change the color theme in VS Code",
-                iconName: "chevron.left.forwardslash.chevron.right",
-                relevanceScore: 0.8,
-                keywords: ["vscode", "code", "editor", "color", "theme", "cursor", "windsurf"],
-                parameters: [
-                    ActionParameter(
-                        id: "theme",
-                        label: "Theme",
-                        type: .dynamicSelection(hint: "theme"),
-                        isRequired: true
-                    ),
-                ],
-                category: .vscode
-            ) { [config] values in
-                guard let themeName = values["theme"] else {
-                    return .keepOpen
-                }
-                let variants = resolveVSCodeVariants(config.vscodeVariants)
-                try ThemeManager.setVSCodeTheme(themeName, variants: variants)
-                return .showResult(title: "VS Code Theme", body: "Set to \(themeName)")
-            },
-        ]
-    }
-
-    // MARK: - JetBrains
-
-    private func buildJetBrainsActions() -> [ThemeAction] {
-        [
-            ThemeAction(
-                id: ActionID(module: "theme", name: "jetbrainsTheme"),
-                title: "Set JetBrains Theme",
-                subtitle: "Change the theme in JetBrains IDEs (restart required)",
-                iconName: "hammer.fill",
-                relevanceScore: 0.75,
-                keywords: ["jetbrains", "intellij", "idea", "pycharm", "webstorm", "theme", "darcula"],
-                parameters: [
-                    ActionParameter(
-                        id: "theme",
-                        label: "Theme",
-                        type: .dynamicSelection(hint: "theme"),
-                        isRequired: true
-                    ),
-                ],
-                category: .jetbrains
-            ) { [config] values in
-                guard let themeName = values["theme"] else {
-                    return .keepOpen
-                }
-                try ThemeManager.setJetBrainsTheme(themeName, enabledIDEs: config.jetbrainsIDEs)
-                return .showResult(title: "JetBrains Theme", body: "Set to \(themeName). Restart IDE to apply.")
-            },
-        ]
-    }
-}
-
-// MARK: - iTerm, GitHub & Presets
-
-extension ThemeModule {
-    private func buildITermActions() -> [ThemeAction] {
-        [
-            ThemeAction(
-                id: ActionID(module: "theme", name: "itermPreset"),
-                title: "Set iTerm Color Preset",
-                subtitle: "Change the color preset in iTerm",
-                iconName: "terminal.fill",
-                relevanceScore: 0.75,
-                keywords: ["iterm", "terminal", "color", "preset", "theme"],
-                parameters: [
-                    ActionParameter(
-                        id: "preset",
-                        label: "Preset",
-                        type: .dynamicSelection(hint: "preset"),
-                        isRequired: true
-                    ),
-                ],
-                category: .iterm
-            ) { values in
-                guard let presetName = values["preset"] else {
-                    return .keepOpen
-                }
-                try ThemeManager.setITermColorPreset(presetName)
-                return .showResult(title: "iTerm Preset", body: "Set to \(presetName)")
-            },
-        ]
-    }
-
-    // MARK: - GitHub
-
-    private func buildGitHubActions() -> [ThemeAction] {
-        [
-            ThemeAction(
-                id: ActionID(module: "theme", name: "githubTheme"),
-                title: "Set GitHub Theme",
-                subtitle: "Change appearance on github.com (requires open tab)",
-                iconName: "globe",
-                relevanceScore: 0.8,
-                keywords: ["github", "theme", "dark", "light", "auto", "appearance"],
-                parameters: [
-                    ActionParameter(
-                        id: "mode",
-                        label: "Theme",
-                        type: .dynamicSelection(hint: "mode"),
-                        isRequired: true
-                    ),
-                ],
-                category: .github
-            ) { values in
-                guard let mode = values["mode"] else {
-                    return .keepOpen
-                }
-                let result = try ThemeManager.setGitHubTheme(mode)
-                switch result {
-                case "ok":
-                    return .showResult(title: "GitHub Theme", body: "Set to \(mode)")
-                case "no_tab":
-                    return .showResult(title: "GitHub Theme", body: "Open github.com in a browser first")
-                case "no_token":
-                    return .showResult(title: "GitHub Theme", body: "Not logged in to GitHub in this tab")
-                default:
-                    return .showResult(title: "GitHub Theme", body: "Failed: \(result)")
-                }
-            },
-        ]
-    }
-
-    // MARK: - Presets
-
-    private func buildPresetActions(config: ThemeConfig) -> [ThemeAction] {
-        let presets = config.presets ?? ThemeConfig.defaultPresets
-        let vscodeVariants = config.vscodeVariants
-        let jetbrainsIDEs = config.jetbrainsIDEs
-
-        return presets.map { preset in
-            let stableID = preset.name.lowercased()
-                .replacingOccurrences(of: " ", with: "")
-            return ThemeAction(
-                id: ActionID(module: "theme", name: "preset.\(stableID)"),
-                title: preset.name,
-                subtitle: preset.subtitle ?? "Apply theme preset",
-                iconName: preset.icon ?? "paintpalette",
-                relevanceScore: 0.9,
-                keywords: ["preset", "theme"] + (preset.keywords ?? []),
-                category: .preset(preset)
-            ) { _ in
-                let variants = resolveVSCodeVariants(vscodeVariants)
-                let applied = try await ThemeManager.applyPreset(
-                    preset,
-                    vscodeVariants: variants,
-                    jetbrainsIDEs: jetbrainsIDEs
-                )
-                let summary = applied.joined(separator: ", ")
-                return .showResult(title: preset.name, body: summary)
-            }
-        }
-    }
-
-    // MARK: - Parameter Options
-
-    private func vscodeThemeOptions() -> [ParameterOption] {
-        let themes = config.vscodeThemes ?? ThemeConfig.defaultVSCodeThemes
-        return themes.map { name in
-            ParameterOption(
-                id: name,
-                label: name,
-                iconName: "chevron.left.forwardslash.chevron.right"
+        if parameterID == "style" { return await wallpaperStyleOptions() }
+        guard parameterID == "theme" else { return [] }
+        let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
+        return catalog.themes.map { theme in
+            let wallpaper = previewWallpaper(for: theme)
+            return ParameterOption(
+                id: theme.slug,
+                label: theme.name,
+                subtitle: Self.describe(theme),
+                iconName: theme.icon,
+                isCurrent: theme.slug == current,
+                swatches: theme.palette.signature.dropFirst(2).prefix(6).map(\.color),
+                makePreview: { AnyView(ThemePreviewView(theme: theme, wallpaper: wallpaper)) }
             )
         }
     }
 
-    private func itermPresetOptions() -> [ParameterOption] {
-        let presets = config.itermPresets ?? ThemeConfig.defaultITermPresets
-        return presets.map { name in
-            ParameterOption(id: name, label: name, iconName: "terminal")
+    func previewParameterOption(_ optionID: String, parameterID: String, actionID: ActionID) async {
+        guard config.livePreview else { return }
+        if actionID == Self.wallpaperStyleActionID {
+            return await previewWallpaperStyle(optionID)
+        }
+        guard actionID == Self.switchActionID, let theme = catalog.theme(slug: optionID) else { return }
+        let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
+        let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: nil)
+        await applier.preview(theme, config: config, options: options, isCurrent: theme.slug == current)
+    }
+
+    func endParameterPreview(parameterID: String, actionID: ActionID, committed: Bool) async {
+        guard actionID == Self.switchActionID || actionID == Self.wallpaperStyleActionID else { return }
+        await applier.endPreview(committed: committed)
+    }
+
+    // MARK: - Applying
+
+    private func apply(slug: String) async -> ActionResult {
+        guard let theme = catalog.theme(slug: slug) else {
+            return .showResult(title: "Theme", body: "No theme named '\(slug)'")
+        }
+        let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: nil)
+        return Self.summary(theme, await applier.apply(theme, config: config, options: options))
+    }
+
+    private func applyCycled(forward: Bool) async -> ActionResult {
+        let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
+        let themes = catalog.themes
+        guard !themes.isEmpty else { return .dismiss }
+        let index = themes.firstIndex { $0.slug == current }
+        let next = index.map { (themes.count + $0 + (forward ? 1 : -1)) % themes.count } ?? 0
+        return await apply(slug: themes[next].slug)
+    }
+
+    private func generateFromWallpaper() async -> ActionResult {
+        let generated = await MainActor.run { () -> (colors: [String: String], wallpaper: String?)? in
+            guard let image = ThemeGenerator.currentWallpaperImage(),
+                  let colors = ThemeGenerator.palette(from: image)
+            else { return nil }
+            let path = NSScreen.main.flatMap { NSWorkspace.shared.desktopImageURL(for: $0)?.path }
+            return (colors, path)
+        }
+        guard let generated else {
+            return .showResult(title: "Theme", body: "Couldn't read the current wallpaper")
+        }
+        // Kept across launches, so the generated theme stays in the list.
+        UserDefaults.standard.set(generated.colors, forKey: Self.generatedDefaultsKey)
+        UserDefaults.standard.set(generated.wallpaper, forKey: Self.generatedDefaultsKey + ".wallpaper")
+        rebuildCatalog()
+        await eventBus?.publish(.moduleActionsChanged(moduleID: id))
+        return await apply(slug: ResolvedTheme.slug(for: ThemeGenerator.generatedName))
+    }
+
+    private func rebuildCatalog() {
+        catalog = ThemeCatalog.build(config: config, generated: storedGeneratedTheme())
+        for error in catalog.errors {
+            log.error("\(error, privacy: .public)")
         }
     }
 
-    private func githubThemeOptions() -> [ParameterOption] {
-        ThemeConfig.defaultGitHubThemes.map { name in
-            let icon = switch name.lowercased() {
-            case "auto": "circle.lefthalf.filled"
-            case "light": "sun.max"
-            case "dark": "moon.fill"
-            case "dark dimmed": "moon"
-            default: "globe"
-            }
-            return ParameterOption(id: name.lowercased(), label: name, iconName: icon)
+    private func storedGeneratedTheme() -> ThemeDefinition? {
+        guard let colors = UserDefaults.standard.dictionary(forKey: Self.generatedDefaultsKey) as? [String: String]
+        else { return nil }
+        return ThemeDefinition(
+            name: ThemeGenerator.generatedName, colors: colors,
+            wallpaper: UserDefaults.standard.string(forKey: Self.generatedDefaultsKey + ".wallpaper"),
+            icon: "wand.and.stars", subtitle: "Generated from the current wallpaper",
+            keywords: ["wallpaper", "generate", "aether"]
+        )
+    }
+
+    /// Stay quiet on success — the desktop changing is the feedback. Surface failures.
+    static func summary(_ theme: ResolvedTheme, _ results: [ThemeApplier.Result]) -> ActionResult {
+        let failures = results.compactMap { result -> String? in
+            if case let .failed(reason) = result.outcome { return "\(result.target): \(reason)" }
+            return nil
         }
+        guard !failures.isEmpty else { return .dismiss }
+        return .showResult(title: "\(theme.name) applied with errors", body: failures.joined(separator: "\n"))
+    }
+
+    static func describe(_ theme: ResolvedTheme) -> String {
+        if let subtitle = theme.subtitle { return subtitle }
+        let mode = theme.palette.mode == .dark ? "Dark" : "Light"
+        return theme.source == .builtIn ? "\(mode) theme" : "\(mode) theme · \(theme.source.rawValue)"
     }
 }
 
-// MARK: - VSCode Variant Resolution
+// MARK: - Action builders
 
-private func resolveVSCodeVariants(
-    _ configured: [String: String]?
-) -> [(name: String, dir: String)] {
-    if let configured {
-        return configured.map { (name: $0.key, dir: $0.value) }
+private extension ThemeModule {
+    func switchAction() -> ThemeAction {
+        ThemeAction(
+            id: Self.switchActionID,
+            title: "Switch Theme…",
+            subtitle: "Browse themes — each one previews live as you move; Return applies, Esc reverts",
+            iconName: "paintpalette.fill",
+            relevanceScore: 0.9,
+            keywords: ["theme", "palette", "colors", "appearance", "scheme", "dark", "light", "switch"],
+            parameters: [
+                ActionParameter(
+                    id: "theme", label: "Theme", type: .dynamicSelection(hint: "theme"),
+                    isRequired: true, livePreview: true
+                ),
+            ]
+        ) { values in
+            guard let slug = values["theme"] else { return .keepOpen }
+            return await self.apply(slug: slug)
+        }
     }
-    return [
-        (name: "VS Code", dir: "Code"),
-        (name: "VS Code Insiders", dir: "Code - Insiders"),
-        (name: "Cursor", dir: "Cursor"),
-        (name: "Windsurf", dir: "Windsurf"),
-    ]
+
+    func applyAction(_ theme: ResolvedTheme, isCurrent: Bool) -> ThemeAction {
+        let words = theme.name.lowercased().split(separator: " ").map(String.init)
+        return ThemeAction(
+            id: ActionID(module: "theme", name: "apply.\(theme.slug)"),
+            title: theme.name,
+            subtitle: isCurrent ? "Current theme · \(Self.describe(theme))" : Self.describe(theme),
+            iconName: theme.icon,
+            relevanceScore: 0.8,
+            keywords: ["theme", "palette", theme.palette.mode.rawValue] + words + theme.keywords,
+            theme: theme,
+            wallpaper: previewWallpaper(for: theme)
+        ) { _ in
+            await self.apply(slug: theme.slug)
+        }
+    }
+
+    func cycleAction(forward: Bool) -> ThemeAction {
+        ThemeAction(
+            id: ActionID(module: "theme", name: forward ? "next" : "previous"),
+            title: forward ? "Next Theme" : "Previous Theme",
+            subtitle: "Apply the \(forward ? "next" : "previous") theme in the list",
+            iconName: forward ? "arrow.right.circle" : "arrow.left.circle",
+            relevanceScore: 0.7,
+            keywords: ["theme", "cycle", forward ? "next" : "previous"]
+        ) { _ in
+            await self.applyCycled(forward: forward)
+        }
+    }
+
+    func reapplyAction() -> ThemeAction {
+        ThemeAction(
+            id: ActionID(module: "theme", name: "reapply"),
+            title: "Reapply Theme",
+            subtitle: "Re-sync the current theme, e.g. after opening new terminal windows",
+            iconName: "arrow.clockwise.circle",
+            relevanceScore: 0.65,
+            keywords: ["theme", "reapply", "refresh", "sync"]
+        ) { _ in
+            guard let slug = await MainActor.run(body: { ActiveTheme.shared.committed?.slug }) else {
+                return .showResult(title: "Theme", body: "No theme applied yet")
+            }
+            return await self.apply(slug: slug)
+        }
+    }
+
+    func fromWallpaperAction() -> ThemeAction {
+        ThemeAction(
+            id: ActionID(module: "theme", name: "fromWallpaper"),
+            title: "Generate Theme from Wallpaper",
+            subtitle: "Derive a full palette from the current wallpaper and apply it everywhere",
+            iconName: "wand.and.stars",
+            relevanceScore: 0.75,
+            keywords: ["theme", "wallpaper", "generate", "palette", "extract", "aether"]
+        ) { _ in
+            await self.generateFromWallpaper()
+        }
+    }
 }

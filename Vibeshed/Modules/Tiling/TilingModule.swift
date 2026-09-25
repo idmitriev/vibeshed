@@ -104,9 +104,6 @@ actor TilingModule: ModuleConfigurable {
 
     private static func validateFocusBorder(_ focusBorder: FocusBorderConfig) -> [String] {
         var errors: [String] = []
-        if Color(tilingHex: focusBorder.color) == nil {
-            errors.append("focusBorder.color must be a valid hex color (e.g. \"#0A84FF\")")
-        }
         if focusBorder.width <= 0 {
             errors.append("focusBorder.width must be positive")
         }
@@ -313,7 +310,6 @@ extension TilingModule {
         let borderConfig = config.focusBorder ?? FocusBorderConfig()
         await FocusBorderController.shared.show(
             cgFrame: focused.frame,
-            colorHex: borderConfig.color,
             width: borderConfig.width,
             cornerRadius: borderConfig.cornerRadius
         )

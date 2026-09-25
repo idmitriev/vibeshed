@@ -96,7 +96,7 @@ struct ActionListView: View {
            let customView = action.makeListItemView()
         {
             customView
-                .foregroundStyle(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
+                .foregroundStyle(isSelected ? AnyShapeStyle(theme.accentForeground) : AnyShapeStyle(.primary))
         } else {
             ActionListItemView(
                 item: item,
