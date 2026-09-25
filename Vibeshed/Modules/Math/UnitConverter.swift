@@ -19,13 +19,12 @@ enum UnitConverter {
         let fullName: String
     }
 
-    // swiftlint:disable function_body_length
     private static let units: [String: UnitInfo] = {
-        var u: [String: UnitInfo] = [:]
+        var table: [String: UnitInfo] = [:]
 
         func add(_ names: [String], cat: String, factor: Double, full: String) {
             for name in names {
-                u[name] = UnitInfo(category: cat, factor: factor, fullName: full)
+                table[name] = UnitInfo(category: cat, factor: factor, fullName: full)
             }
         }
 
@@ -106,10 +105,8 @@ enum UnitConverter {
         add(["f", "fahrenheit", "\u{00B0}f"], cat: "Temperature", factor: 0, full: "Fahrenheit")
         add(["k", "kelvin"], cat: "Temperature", factor: 0, full: "Kelvin")
 
-        return u
+        return table
     }()
-
-    // swiftlint:enable function_body_length
 
     // MARK: - Parsing
 
@@ -146,10 +143,10 @@ enum UnitConverter {
 
         let result: Double
         if fromUnit.category == "Temperature" {
-            guard let r = convertTemperature(value, from: fromKey, to: toKey) else {
+            guard let converted = convertTemperature(value, from: fromKey, to: toKey) else {
                 return nil
             }
-            result = r
+            result = converted
         } else {
             result = value * fromUnit.factor / toUnit.factor
         }

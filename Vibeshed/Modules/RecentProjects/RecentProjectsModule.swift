@@ -38,10 +38,10 @@ actor RecentProjectsModule<Provider: RecentProjectsProvider>: ModuleConfigurable
     func initialize(context: ModuleContext) async throws {
         refreshCache()
         provider.applySideEffects(config: config)
-        log
-            .info(
-                "\(self.displayName, privacy: .public) module initialized (\(self.cache.value?.count ?? 0, privacy: .public) items found)"
-            )
+        let itemCount = cache.value?.count ?? 0
+        log.info(
+            "\(self.displayName, privacy: .public) module initialized (\(itemCount, privacy: .public) items found)"
+        )
     }
 
     func teardown() async {

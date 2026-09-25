@@ -25,14 +25,14 @@ actor TilingModule: ModuleConfigurable {
 
     /// Runtime-only; always starts disabled on launch and is toggled via
     /// `tiling/toggleAutoTile` — not persisted config.
-    private var autoTileEnabled = false
+    private(set) var autoTileEnabled = false
     private var seenWindowIDs: Set<Int> = []
     private var lastKnownFrames: [Int: CGRect] = [:]
     private var pollTask: Task<Void, Never>?
 
     /// Runtime-only; always starts disabled on launch and is toggled via
     /// `tiling/toggleFocusBorder` — not persisted config.
-    private var focusBorderEnabled = false
+    private(set) var focusBorderEnabled = false
     private var focusBorderPollTask: Task<Void, Never>?
 
     func initialize(context: ModuleContext) async throws {
@@ -60,6 +60,29 @@ actor TilingModule: ModuleConfigurable {
     }
 
     static func validate(_ config: TilingConfig) -> ConfigValidationResult {
+        var errors = validateGrids(config)
+        if config.padding.top < 0 || config.padding.bottom < 0
+            || config.padding.left < 0 || config.padding.right < 0
+        {
+            errors.append("Padding values must be non-negative")
+        }
+        if config.padding.gap < 0 {
+            errors.append("Gap must be non-negative")
+        }
+        if config.autoTile.pollingInterval <= 0 {
+            errors.append("autoTile.pollingInterval must be positive")
+        }
+        if config.autoTile.minimumSize < 0 {
+            errors.append("autoTile.minimumSize must be non-negative")
+        }
+        if let focusBorder = config.focusBorder {
+            errors.append(contentsOf: validateFocusBorder(focusBorder))
+        }
+        return errors.isEmpty ? .valid : .invalid(errors)
+    }
+
+    /// Per-display grids (unique, non-empty `match`) and the default grid.
+    private static func validateGrids(_ config: TilingConfig) -> [String] {
         var errors: [String] = []
         var seenMatches: Set<String> = []
         for grid in config.displays {
@@ -76,32 +99,21 @@ actor TilingModule: ModuleConfigurable {
         if let defaultGrid = config.defaultGrid {
             errors.append(contentsOf: validateGrid(defaultGrid, label: "defaultGrid"))
         }
-        if config.padding.top < 0 || config.padding.bottom < 0
-            || config.padding.left < 0 || config.padding.right < 0
-        {
-            errors.append("Padding values must be non-negative")
+        return errors
+    }
+
+    private static func validateFocusBorder(_ focusBorder: FocusBorderConfig) -> [String] {
+        var errors: [String] = []
+        if focusBorder.width <= 0 {
+            errors.append("focusBorder.width must be positive")
         }
-        if config.padding.gap < 0 {
-            errors.append("Gap must be non-negative")
+        if focusBorder.cornerRadius < 0 {
+            errors.append("focusBorder.cornerRadius must be non-negative")
         }
-        if config.autoTile.pollingInterval <= 0 {
-            errors.append("autoTile.pollingInterval must be positive")
+        if focusBorder.pollingInterval <= 0 {
+            errors.append("focusBorder.pollingInterval must be positive")
         }
-        if config.autoTile.minimumSize < 0 {
-            errors.append("autoTile.minimumSize must be non-negative")
-        }
-        if let focusBorder = config.focusBorder {
-            if focusBorder.width <= 0 {
-                errors.append("focusBorder.width must be positive")
-            }
-            if focusBorder.cornerRadius < 0 {
-                errors.append("focusBorder.cornerRadius must be non-negative")
-            }
-            if focusBorder.pollingInterval <= 0 {
-                errors.append("focusBorder.pollingInterval must be positive")
-            }
-        }
-        return errors.isEmpty ? .valid : .invalid(errors)
+        return errors
     }
 
     private static func validateGrid(_ grid: DisplayGridConfig, label: String) -> [String] {
@@ -180,140 +192,6 @@ actor TilingModule: ModuleConfigurable {
         return actions
     }
 
-    private func makeAttachAction(mgr: TilingManager, cfg: TilingConfig) -> TilingAction {
-        TilingAction(
-            id: ActionID(module: "tiling", name: "attach"),
-            title: "Attach Window to Grid",
-            subtitle: "Snap the focused window into its nearest grid region",
-            iconName: "square.grid.3x2.fill",
-            keywords: ["tiling", "grid", "attach", "snap"]
-        ) { [weak self] _ in
-            guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
-                return .showResult(title: "No Window", body: "No focused window found")
-            }
-            guard let resolved = await MainActor.run(body: {
-                mgr.resolveGrid(for: focused.frame, config: cfg)
-            }) else {
-                return .showResult(title: "No Grid", body: "No grid configured for this display")
-            }
-            let cell = TilingGrid.nearestCell(for: focused.frame, in: resolved.area, grid: resolved.grid)
-            let frame = TilingGrid.cellRect(
-                row: cell.row, col: cell.col, in: resolved.area, grid: resolved.grid, gap: resolved.gap
-            )
-            try mgr.setFrame(focused, frame: frame)
-            await self?.setAssignment(
-                windowID: focused.id, displayKey: resolved.displayKey, row: cell.row, col: cell.col
-            )
-            return .dismiss
-        }
-    }
-
-    private func makeAttachAllAction(mgr: TilingManager) -> TilingAction {
-        TilingAction(
-            id: ActionID(module: "tiling", name: "attachAll"),
-            title: "Attach All Windows to Grid",
-            subtitle: "Snap every open window into its display's grid",
-            iconName: "square.stack.3d.up.fill",
-            keywords: ["tiling", "grid", "attach", "all", "snap"]
-        ) { [weak self] _ in
-            let windows = await MainActor.run { mgr.listWindows(includeMinimized: false) }
-            guard !windows.isEmpty else {
-                return .showResult(title: "No Windows", body: "No open windows to attach")
-            }
-            await self?.runAutoTile(reason: "manual: attachAll")
-            return .dismiss
-        }
-    }
-
-    private func makeToggleAutoTileAction() -> TilingAction {
-        let enabled = autoTileEnabled
-        return TilingAction(
-            id: ActionID(module: "tiling", name: "toggleAutoTile"),
-            title: enabled ? "Disable Auto-Tile" : "Enable Auto-Tile",
-            subtitle: enabled
-                ? "Stop automatically tiling windows"
-                : "Automatically tile new, moved, and resized windows",
-            iconName: enabled ? "xmark.circle" : "wand.and.stars",
-            keywords: ["tiling", "grid", "auto", "toggle", "enable", "disable", "start", "stop"]
-        ) { [weak self] _ in
-            await self?.toggleAutoTile()
-            return .dismiss
-        }
-    }
-
-    private func makeToggleFocusBorderAction() -> TilingAction {
-        let enabled = focusBorderEnabled
-        return TilingAction(
-            id: ActionID(module: "tiling", name: "toggleFocusBorder"),
-            title: enabled ? "Disable Focus Border" : "Enable Focus Border",
-            subtitle: enabled
-                ? "Stop drawing the focus border"
-                : "Draw a contrast border around the focused tiled window",
-            iconName: enabled ? "xmark.circle" : "viewfinder",
-            keywords: ["tiling", "grid", "border", "highlight", "focus", "toggle", "enable", "disable"]
-        ) { [weak self] _ in
-            await self?.toggleFocusBorder()
-            return .dismiss
-        }
-    }
-
-    private func makeDetachAction(mgr: TilingManager) -> TilingAction {
-        TilingAction(
-            id: ActionID(module: "tiling", name: "detach"),
-            title: "Detach Window from Grid",
-            subtitle: "Stop grid-managing the focused window",
-            iconName: "square.dashed",
-            keywords: ["tiling", "grid", "detach", "float", "release"]
-        ) { [weak self] _ in
-            guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
-                return .showResult(title: "No Window", body: "No focused window found")
-            }
-            await self?.removeAssignment(windowID: focused.id)
-            return .dismiss
-        }
-    }
-
-    private func makeMoveAction(direction: GridDirection, mgr: TilingManager, cfg: TilingConfig) -> TilingAction {
-        let (name, title, icon): (String, String, String) = switch direction {
-        case .left: ("moveLeft", "Move Window Left", "arrow.left.square")
-        case .right: ("moveRight", "Move Window Right", "arrow.right.square")
-        case .up: ("moveUp", "Move Window Up", "arrow.up.square")
-        case .down: ("moveDown", "Move Window Down", "arrow.down.square")
-        }
-        return TilingAction(
-            id: ActionID(module: "tiling", name: name),
-            title: title,
-            subtitle: "Move the focused window to the \(direction.rawValue) grid region",
-            iconName: icon,
-            keywords: ["tiling", "grid", "move", direction.rawValue]
-        ) { [weak self] _ in
-            guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
-                return .showResult(title: "No Window", body: "No focused window found")
-            }
-            guard let resolved = await MainActor.run(body: {
-                mgr.resolveGrid(for: focused.frame, config: cfg)
-            }) else {
-                return .showResult(title: "No Grid", body: "No grid configured for this display")
-            }
-            // Always derive the current cell from the window's live frame (not a stored
-            // assignment) so moves stay correct even if something else — window/cycle*,
-            // a manual drag, another tool — repositioned the window since the last tiling
-            // action.
-            let currentCell = TilingGrid.nearestCell(for: focused.frame, in: resolved.area, grid: resolved.grid)
-            guard let nextCell = TilingGrid.neighborCell(from: currentCell, direction: direction, grid: resolved.grid) else {
-                return .dismiss
-            }
-            let frame = TilingGrid.cellRect(
-                row: nextCell.row, col: nextCell.col, in: resolved.area, grid: resolved.grid, gap: resolved.gap
-            )
-            try mgr.setFrame(focused, frame: frame)
-            await self?.setAssignment(
-                windowID: focused.id, displayKey: resolved.displayKey, row: nextCell.row, col: nextCell.col
-            )
-            return .dismiss
-        }
-    }
-
     // MARK: - Auto Tile
 
     private func startPolling() {
@@ -364,7 +242,9 @@ actor TilingModule: ModuleConfigurable {
         }
     }
 
-    private func toggleAutoTile() async {
+    /// Internal (not private), as are `toggleFocusBorder` and `runAutoTile`: called
+    /// from the actions in TilingModule+GridActions.swift.
+    func toggleAutoTile() async {
         if autoTileEnabled {
             disableAutoTile()
         } else {
@@ -386,9 +266,11 @@ actor TilingModule: ModuleConfigurable {
     private func disableAutoTile() {
         autoTileEnabled = false
     }
+}
 
-    // MARK: - Focus Border
+// MARK: - Focus Border
 
+extension TilingModule {
     private func startFocusBorderPolling() {
         focusBorderPollTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -433,7 +315,7 @@ actor TilingModule: ModuleConfigurable {
         )
     }
 
-    private func toggleFocusBorder() async {
+    func toggleFocusBorder() async {
         if focusBorderEnabled {
             await disableFocusBorder()
         } else {
@@ -477,7 +359,7 @@ actor TilingModule: ModuleConfigurable {
             && abs(previous.height - current.height) <= tolerance
     }
 
-    private func runAutoTile(reason: String) async {
+    func runAutoTile(reason: String) async {
         let windows = await MainActor.run { manager.listWindows(includeMinimized: false) }
         log.info("Auto-tiling on \(reason, privacy: .public): \(windows.count, privacy: .public) window(s)")
         for window in windows {

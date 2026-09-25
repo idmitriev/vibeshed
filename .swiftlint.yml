@@ -31,6 +31,30 @@ identifier_name:
     - x
     - y
 
+# Match SwiftFormat's output so the two tools don't fight: its
+# wrapMultilineStatementBraces rule puts `{` on its own line after a wrapped
+# condition or signature, and its modifierOrder puts access control before
+# isolation (`private nonisolated`).
+opening_brace:
+  ignore_multiline_type_headers: true
+  ignore_multiline_statement_conditions: true
+  ignore_multiline_function_signatures: true
+
+modifier_order:
+  preferred_modifier_order:
+    - override
+    - acl
+    - setterACL
+    - isolation
+    - dynamic
+    - mutators
+    - lazy
+    - final
+    - required
+    - convenience
+    - typeMethods
+    - owned
+
 disabled_rules:
   - trailing_comma
   - large_tuple

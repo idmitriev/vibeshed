@@ -170,11 +170,7 @@ actor TimerModule: ModuleConfigurable {
                         id: entryID
                     )
                 }
-                Task {
-                    await eventBus?.publish(
-                        .moduleActionsChanged(moduleID: "timer")
-                    )
-                }
+                Self.publishActionsChanged(eventBus)
                 return .showResult(
                     title: "Timer Cancelled",
                     body: "The timer has been cancelled."
@@ -182,8 +178,25 @@ actor TimerModule: ModuleConfigurable {
             }
         }
     }
+}
 
-    // MARK: - Set Timer Action
+// MARK: - Utility Actions
+
+extension TimerModule {
+    /// Tells the picker to re-query this module so a timer change shows up.
+    private static func publishActionsChanged(_ eventBus: EventBus?) {
+        Task {
+            await eventBus?.publish(.moduleActionsChanged(moduleID: "timer"))
+        }
+    }
+
+    /// Optional free-text label shared by the set-timer and set-reminder actions.
+    private static let labelParameter = ActionParameter(
+        id: "label",
+        label: "Label",
+        type: .text(placeholder: "Optional label"),
+        isRequired: false
+    )
 
     private func buildSetTimerAction() -> TimerAction {
         let currentStore = store
@@ -209,12 +222,7 @@ actor TimerModule: ModuleConfigurable {
                     ),
                     isRequired: true
                 ),
-                ActionParameter(
-                    id: "label",
-                    label: "Label",
-                    type: .text(placeholder: "Optional label"),
-                    isRequired: false
-                ),
+                Self.labelParameter,
             ],
             timerItemType: .utility
         ) { values in
@@ -237,11 +245,7 @@ actor TimerModule: ModuleConfigurable {
                     sound: defaultSound
                 )
             }
-            Task {
-                await eventBus?.publish(
-                    .moduleActionsChanged(moduleID: "timer")
-                )
-            }
+            Self.publishActionsChanged(eventBus)
 
             let formatted = TimerParser.formatDurationLong(seconds)
             return .showResult(
@@ -288,11 +292,7 @@ actor TimerModule: ModuleConfigurable {
                         sound: defaultSound
                     )
                 }
-                Task {
-                    await eventBus?.publish(
-                        .moduleActionsChanged(moduleID: "timer")
-                    )
-                }
+                Self.publishActionsChanged(eventBus)
                 return .showResult(
                     title: "Timer Set",
                     body: "Timer set for \(label)"
@@ -327,12 +327,7 @@ actor TimerModule: ModuleConfigurable {
                     ),
                     isRequired: true
                 ),
-                ActionParameter(
-                    id: "label",
-                    label: "Label",
-                    type: .text(placeholder: "Optional label"),
-                    isRequired: false
-                ),
+                Self.labelParameter,
             ],
             timerItemType: .utility
         ) { values in
@@ -355,11 +350,7 @@ actor TimerModule: ModuleConfigurable {
                     sound: defaultSound
                 )
             }
-            Task {
-                await eventBus?.publish(
-                    .moduleActionsChanged(moduleID: "timer")
-                )
-            }
+            Self.publishActionsChanged(eventBus)
 
             let formatter = DateFormatter()
             formatter.dateFormat = "h:mm a"
@@ -406,11 +397,7 @@ actor TimerModule: ModuleConfigurable {
                     )
                 }
             }
-            Task {
-                await eventBus?.publish(
-                    .moduleActionsChanged(moduleID: "timer")
-                )
-            }
+            Self.publishActionsChanged(eventBus)
             return .showResult(
                 title: "All Cancelled",
                 body: "All active timers and reminders have been cancelled."
@@ -442,11 +429,7 @@ actor TimerModule: ModuleConfigurable {
             await MainActor.run {
                 currentStore?.removeCompleted()
             }
-            Task {
-                await eventBus?.publish(
-                    .moduleActionsChanged(moduleID: "timer")
-                )
-            }
+            Self.publishActionsChanged(eventBus)
             return .showResult(
                 title: "Cleared",
                 body: "Completed timers have been removed."

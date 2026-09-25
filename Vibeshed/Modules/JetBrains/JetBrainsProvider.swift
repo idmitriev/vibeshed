@@ -85,36 +85,25 @@ struct JetBrainsProvider: RecentProjectsProvider {
     }
 }
 
+/// SF Symbol and accent per IDE tag.
+private let ideStyles: [String: (icon: String, accent: ProjectAccent)] = [
+    "idea": ("lightbulb", .purple),
+    "pycharm": ("atom", .green),
+    "webstorm": ("globe", .cyan),
+    "datagrip": ("cylinder.split.1x2", .purple),
+    "goland": ("g.circle", .blue),
+    "rustrover": ("gearshape.2", .orange),
+    "clion": ("memorychip", .green),
+    "rider": ("bolt", .blue),
+    "phpstorm": ("server.rack", .purple),
+    "rubymine": ("diamond", .red),
+    "studio": ("iphone", .green),
+]
+
 private func iconForIDE(_ tag: String) -> String {
-    switch tag {
-    case "idea": "lightbulb"
-    case "pycharm": "atom"
-    case "webstorm": "globe"
-    case "datagrip": "cylinder.split.1x2"
-    case "goland": "g.circle"
-    case "rustrover": "gearshape.2"
-    case "clion": "memorychip"
-    case "rider": "bolt"
-    case "phpstorm": "server.rack"
-    case "rubymine": "diamond"
-    case "studio": "iphone"
-    default: "hammer"
-    }
+    ideStyles[tag]?.icon ?? "hammer"
 }
 
 private func accentForIDE(_ tag: String) -> ProjectAccent {
-    switch tag {
-    case "idea": .purple
-    case "pycharm": .green
-    case "webstorm": .cyan
-    case "datagrip": .purple
-    case "goland": .blue
-    case "rustrover": .orange
-    case "clion": .green
-    case "rider": .blue
-    case "phpstorm": .purple
-    case "rubymine": .red
-    case "studio": .green
-    default: .secondary
-    }
+    ideStyles[tag]?.accent ?? .secondary
 }

@@ -74,29 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             togglePicker: { panel.toggle() },
             showURLChooser: { _, actions in
-                NSApp.activate(ignoringOtherApps: true)
-                panel.show()
-                panel.setStaysOpenOnResignKey(true)
-                picker.query = ""
-                let items = actions.map { action in
-                    ActionItem(
-                        id: action.id,
-                        title: action.title,
-                        subtitle: action.subtitle,
-                        iconSystemName: action.iconName,
-                        appIconPath: action.appIconPath,
-                        score: action.relevanceScore,
-                        moduleID: "url",
-                        hasParameters: false,
-                        keywords: action.keywords
-                    )
-                }
-                var cache: [ActionID: any Action] = [:]
-                for action in actions {
-                    cache[action.id] = action
-                }
-                picker.pushMode(.pushedActions)
-                picker.updateActions(items, cache: cache)
+                Self.showURLChooser(actions, panel: panel, picker: picker)
             }
         )
         super.init()
@@ -154,8 +132,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard let existing = others.first else { return true }
 
+        let pid = existing.processIdentifier
         Log.app.warning(
-            "Another Vibeshed instance already running (PID \(existing.processIdentifier, privacy: .public)). Terminating."
+            "Another Vibeshed instance already running (PID \(pid, privacy: .public)). Terminating."
         )
         existing.activate()
         DispatchQueue.main.async {
@@ -348,5 +327,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     {
         panelController.show()
         return false
+    }
+}
+
+// MARK: - URL Chooser
+
+extension AppDelegate {
+    /// Shows the picker listing browser choices for a URL that no routing rule claimed.
+    private static func showURLChooser(_ actions: [any Action], panel: PanelController, picker: PickerState) {
+        NSApp.activate(ignoringOtherApps: true)
+        panel.show()
+        panel.setStaysOpenOnResignKey(true)
+        picker.query = ""
+        let items = actions.map { action in
+            ActionItem(
+                id: action.id,
+                title: action.title,
+                subtitle: action.subtitle,
+                iconSystemName: action.iconName,
+                appIconPath: action.appIconPath,
+                score: action.relevanceScore,
+                moduleID: "url",
+                hasParameters: false,
+                keywords: action.keywords
+            )
+        }
+        var cache: [ActionID: any Action] = [:]
+        for action in actions {
+            cache[action.id] = action
+        }
+        picker.pushMode(.pushedActions)
+        picker.updateActions(items, cache: cache)
     }
 }

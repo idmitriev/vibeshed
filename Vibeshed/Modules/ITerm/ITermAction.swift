@@ -7,6 +7,12 @@ enum ITermItemType: String, Sendable {
     case command
 }
 
+/// What a session's shell is doing: idle at its prompt, or running a job.
+enum ITermShellState: Sendable {
+    case atPrompt
+    case runningJob
+}
+
 struct ITermAction: Action {
     let id: ActionID
     let title: String
@@ -20,7 +26,8 @@ struct ITermAction: Action {
     let sessionPath: String?
     let jobName: String?
     let profileName: String?
-    let isAtPrompt: Bool?
+    /// Set for session rows only.
+    let shellState: ITermShellState?
 
     private let runner: @Sendable (
         ParameterValues
@@ -38,7 +45,7 @@ struct ITermAction: Action {
         sessionPath: String? = nil,
         jobName: String? = nil,
         profileName: String? = nil,
-        isAtPrompt: Bool? = nil,
+        shellState: ITermShellState? = nil,
         runner: @escaping @Sendable (
             ParameterValues
         ) async throws -> ActionResult
@@ -54,7 +61,7 @@ struct ITermAction: Action {
         self.sessionPath = sessionPath
         self.jobName = jobName
         self.profileName = profileName
-        self.isAtPrompt = isAtPrompt
+        self.shellState = shellState
         self.runner = runner
     }
 

@@ -36,13 +36,13 @@ final class ParameterValuesTests: XCTestCase {
         XCTAssertNil(values.int("text"))
         XCTAssertNil(values.double("text"))
         XCTAssertNil(values.int("missing"))
-        XCTAssertNil(values.bool("missing"))
     }
 
     func testBoolTreatsNonTrueAsFalse() {
         let values: ParameterValues = ["x": "TRUE"]
         // Only the exact lowercase "true" is true.
         XCTAssertEqual(values.bool("x"), false)
+        XCTAssertEqual(values.bool("missing"), false)
     }
 
     func testRawRoundTrip() {

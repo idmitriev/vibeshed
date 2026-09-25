@@ -92,9 +92,8 @@ final class KeyComboManager {
         for entry in entries {
             let scope = entry.app ?? "global"
             let target = entry.action ?? entry.remap ?? "?"
-            Log.keybindings.debug(
-                "  entry: '\(entry.combo, privacy: .public)' → '\(target, privacy: .public)' [\(scope, privacy: .public)]"
-            )
+            let mapping = "'\(entry.combo)' → '\(target)' [\(scope)]"
+            Log.keybindings.debug("  entry: \(mapping, privacy: .public)")
         }
         currentEntries = entries
         currentExclusions = exclusions
@@ -130,16 +129,18 @@ final class KeyComboManager {
         currentExclusions = newExclusions
         rebindAll()
     }
+}
 
+// MARK: - Rebinding
+
+extension KeyComboManager {
     private func handlePermissionChanged(
         permission: Permission, granted: Bool
     ) {
         let status = granted ? "granted" : "denied"
         let name = permission.displayName
-        let tapState = eventTapRunning
-        Log.keybindings.info(
-            "Permission changed: \(name, privacy: .public) → \(status, privacy: .public) (tapRunning=\(tapState, privacy: .public))"
-        )
+        let change = "\(name) → \(status) (tapRunning=\(eventTapRunning))"
+        Log.keybindings.info("Permission changed: \(change, privacy: .public)")
         switch permission {
         case .accessibility:
             // Retry event tap when accessibility changes — the
@@ -182,9 +183,8 @@ final class KeyComboManager {
                 guard let self else { return }
                 if await moduleRegistry.findAction(id: actionID) == nil {
                     bindingErrors[errorKey] = "Action '\(action)' not found in module '\(moduleID)'"
-                    Log.keybindings.warning(
-                        "Action '\(action, privacy: .public)' for combo '\(entry.combo, privacy: .public)' not available"
-                    )
+                    let subject = "Action '\(action)' for combo '\(entry.combo)'"
+                    Log.keybindings.warning("\(subject, privacy: .public) not available")
                 } else {
                     bindingErrors.removeValue(forKey: errorKey)
                 }
@@ -192,7 +192,6 @@ final class KeyComboManager {
         }
     }
 
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
     private func rebindAll() {
         let entryCount = currentEntries.count
         Log.keybindings.info("rebindAll: processing \(entryCount, privacy: .public) entries")
@@ -210,16 +209,60 @@ final class KeyComboManager {
         }
 
         bindingErrors = [:]
+        let resolved = resolveEntries()
 
-        // Categorize unified entries into bindings and remaps
-        var standard: [ResolvedBinding] = []
-        var capsLock: [ResolvedBinding] = []
-        var space: [ResolvedBinding] = []
-        var tab: [ResolvedBinding] = []
-        var mouse: [ResolvedBinding] = []
-        var resolvedRemaps: [ResolvedRemap] = []
-        var resolvedTabRemaps: [ResolvedRemap] = []
-        var resolvedMouseRemaps: [ResolvedMouseRemap] = []
+        // Update bindings on the handler (thread-safe)
+        eventTapHandler.updateBindings(resolved, excluded: Set(currentExclusions))
+
+        // Start event tap if we have any bindings or remaps
+        let std = resolved.standard.count
+        let caps = resolved.capsLock.count
+        let spc = resolved.space.count
+        let tb = resolved.tab.count
+        let mse = resolved.mouse.count
+        let totalBindings = std + caps + spc + tb + mse
+        let totalRemaps = resolved.remaps.count + resolved.tabRemaps.count + resolved.mouseRemaps.count
+        guard totalBindings + totalRemaps > 0 else {
+            Log.keybindings.info("No keybindings or remaps configured — skipping event tap")
+            Log.stderr("  ⚠ keybindings: none configured")
+            return
+        }
+
+        let summary = "\(std)/\(caps)/\(spc)/\(tb)/\(mse) std/caps/spc/tab/mouse + \(totalRemaps) remaps"
+        let total = totalBindings + totalRemaps
+        Log.keybindings.info(
+            "Starting event tap: \(total, privacy: .public) bindings+remaps (\(summary, privacy: .public))"
+        )
+
+        // Try to create the event tap (needs Accessibility permission).
+        // We skip preflight checks — CGEvent.tapCreate is the real test.
+        guard eventTapHandler.start() else {
+            let message =
+                "Event tap failed — grant Accessibility permission"
+            Log.keybindings.error(
+                "Event tap creation failed — all \(total, privacy: .public) bindings+remaps inactive"
+            )
+            for entry in currentEntries
+                where bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] == nil
+            {
+                bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
+            }
+            return
+        }
+        eventTapRunning = true
+        Log.keybindings.info(
+            "Applied \(total, privacy: .public) keybinding(s)+remap(s) (\(summary, privacy: .public))"
+        )
+        Log.stderr("  ✓ keybindings: \(totalBindings) applied + \(totalRemaps) remaps")
+
+        // CapsLockMonitor needs Input Monitoring — manage separately
+        manageCapsLockMonitor(hasCapsLockBindings: caps > 0)
+    }
+
+    /// Categorizes the unified entries into bindings and remaps by trigger kind.
+    /// Invalid, ambiguous and duplicate entries are left out and recorded in `bindingErrors`.
+    private func resolveEntries() -> ResolvedBindingSet {
+        var resolved = ResolvedBindingSet()
         var seenCombos: Set<String> = []
 
         for entry in currentEntries {
@@ -245,50 +288,10 @@ final class KeyComboManager {
 
             do {
                 let comboType = try KeyComboParser.parse(entry.combo)
-
                 if let action = entry.action {
-                    // Action binding
-                    let binding = ResolvedBinding(
-                        comboType: comboType,
-                        actionID: ActionID(action),
-                        rawCombo: entry.combo,
-                        app: entry.app
-                    )
-                    switch comboType {
-                    case .standard: standard.append(binding)
-                    case .capsLockModifier: capsLock.append(binding)
-                    case .spaceModifier: space.append(binding)
-                    case .tabModifier: tab.append(binding)
-                    case .mouseButton: mouse.append(binding)
-                    }
+                    addBinding(entry, action: action, comboType: comboType, to: &resolved)
                 } else if let remap = entry.remap {
-                    // Remap entry
-                    switch comboType {
-                    case let .mouseButton(button, modifiers):
-                        let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap)
-                        resolvedMouseRemaps.append(ResolvedMouseRemap(
-                            button: button, modifiers: modifiers,
-                            toKeyCode: toKeyCode, toModifiers: toModifiers,
-                            rawFrom: entry.combo, rawTo: remap
-                        ))
-                    case .standard, .tabModifier:
-                        let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap)
-                        let resolved = ResolvedRemap(
-                            fromType: comboType, toKeyCode: toKeyCode, toModifiers: toModifiers,
-                            app: entry.app, rawFrom: entry.combo, rawTo: remap
-                        )
-                        if case .tabModifier = comboType {
-                            resolvedTabRemaps.append(resolved)
-                        } else {
-                            resolvedRemaps.append(resolved)
-                        }
-                    default:
-                        let err = KeyComboError.invalidRemap(
-                            from: entry.combo, to: remap,
-                            reason: "remap source must be standard, tab, or mouse combo (not capslock/space)"
-                        )
-                        bindingErrors[errorKey] = err.localizedDescription
-                    }
+                    try addRemap(entry, remap: remap, comboType: comboType, errorKey: errorKey, to: &resolved)
                 }
             } catch {
                 let message = error.localizedDescription
@@ -296,62 +299,65 @@ final class KeyComboManager {
                 Log.keybindings.error("Invalid entry '\(entry.combo, privacy: .public)': \(message, privacy: .public)")
             }
         }
+        return resolved
+    }
 
-        // Update bindings on the handler (thread-safe)
-        eventTapHandler.updateBindings(
-            standard: standard,
-            capsLock: capsLock,
-            space: space,
-            tab: tab,
-            mouse: mouse,
-            remaps: resolvedRemaps,
-            tabRemapList: resolvedTabRemaps,
-            mouseRemapList: resolvedMouseRemaps,
-            excluded: Set(currentExclusions)
+    private func addBinding(
+        _ entry: KeyBindingEntry,
+        action: String,
+        comboType: KeyComboType,
+        to resolved: inout ResolvedBindingSet
+    ) {
+        let binding = ResolvedBinding(
+            comboType: comboType,
+            actionID: ActionID(action),
+            rawCombo: entry.combo,
+            app: entry.app
         )
-
-        // Start event tap if we have any bindings or remaps
-        let totalBindings = standard.count + capsLock.count + space.count + tab.count + mouse.count
-        let totalRemaps = resolvedRemaps.count + resolvedTabRemaps.count + resolvedMouseRemaps.count
-        guard totalBindings + totalRemaps > 0 else {
-            Log.keybindings.info("No keybindings or remaps configured — skipping event tap")
-            Log.stderr("  ⚠ keybindings: none configured")
-            return
+        switch comboType {
+        case .standard: resolved.standard.append(binding)
+        case .capsLockModifier: resolved.capsLock.append(binding)
+        case .spaceModifier: resolved.space.append(binding)
+        case .tabModifier: resolved.tab.append(binding)
+        case .mouseButton: resolved.mouse.append(binding)
         }
+    }
 
-        let std = standard.count
-        let caps = capsLock.count
-        let spc = space.count
-        let tb = tab.count
-        let mse = mouse.count
-        let summary = "\(std)/\(caps)/\(spc)/\(tb)/\(mse) std/caps/spc/tab/mouse + \(totalRemaps) remaps"
-        Log.keybindings.info(
-            "Starting event tap: \(totalBindings + totalRemaps, privacy: .public) bindings+remaps (\(summary, privacy: .public))"
-        )
-
-        // Try to create the event tap (needs Accessibility permission).
-        // We skip preflight checks — CGEvent.tapCreate is the real test.
-        guard eventTapHandler.start() else {
-            let message =
-                "Event tap failed — grant Accessibility permission"
-            Log.keybindings.error(
-                "Event tap creation failed — all \(totalBindings + totalRemaps, privacy: .public) bindings+remaps inactive"
+    /// Remap sources must be standard, tab or mouse combos; any other kind is recorded
+    /// in `bindingErrors` under `errorKey`. Throws when the remap target doesn't parse.
+    private func addRemap(
+        _ entry: KeyBindingEntry,
+        remap: String,
+        comboType: KeyComboType,
+        errorKey: String,
+        to resolved: inout ResolvedBindingSet
+    ) throws {
+        switch comboType {
+        case let .mouseButton(button, modifiers):
+            let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap)
+            resolved.mouseRemaps.append(ResolvedMouseRemap(
+                button: button, modifiers: modifiers,
+                toKeyCode: toKeyCode, toModifiers: toModifiers,
+                rawFrom: entry.combo, rawTo: remap
+            ))
+        case .standard, .tabModifier:
+            let (toKeyCode, toModifiers) = try KeyComboParser.parseStandard(remap)
+            let remapEntry = ResolvedRemap(
+                fromType: comboType, toKeyCode: toKeyCode, toModifiers: toModifiers,
+                app: entry.app, rawFrom: entry.combo, rawTo: remap
             )
-            for entry in currentEntries
-                where bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] == nil
-            {
-                bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
+            if case .tabModifier = comboType {
+                resolved.tabRemaps.append(remapEntry)
+            } else {
+                resolved.remaps.append(remapEntry)
             }
-            return
+        default:
+            let err = KeyComboError.invalidRemap(
+                from: entry.combo, to: remap,
+                reason: "remap source must be standard, tab, or mouse combo (not capslock/space)"
+            )
+            bindingErrors[errorKey] = err.localizedDescription
         }
-        eventTapRunning = true
-        Log.keybindings.info(
-            "Applied \(totalBindings + totalRemaps, privacy: .public) keybinding(s)+remap(s) (\(summary, privacy: .public))"
-        )
-        Log.stderr("  ✓ keybindings: \(totalBindings) applied + \(totalRemaps) remaps")
-
-        // CapsLockMonitor needs Input Monitoring — manage separately
-        manageCapsLockMonitor(hasCapsLockBindings: !capsLock.isEmpty)
     }
 
     private func needsEventTap() -> Bool {
@@ -451,9 +457,8 @@ final class KeyComboManager {
                 return
             }
 
-            Log.keybindings.info(
-                "Chaining \(currentID, privacy: .public) → \(nextID, privacy: .public) (depth \(depth, privacy: .public))"
-            )
+            let hop = "\(currentID) → \(nextID)"
+            Log.keybindings.info("Chaining \(hop, privacy: .public) (depth \(depth, privacy: .public))")
             currentID = nextID
             currentValues = stringValues
         }

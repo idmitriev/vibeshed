@@ -116,9 +116,8 @@ struct TimerActionListItemView: View {
     }
 
     private var progressColor: Color {
-        let p = progress
-        if p > 0.5 { return .green }
-        if p > 0.1 { return .orange }
+        if progress > 0.5 { return .green }
+        if progress > 0.1 { return .orange }
         return .red
     }
 }

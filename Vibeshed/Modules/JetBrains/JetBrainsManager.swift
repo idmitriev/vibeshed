@@ -230,13 +230,11 @@ enum JetBrainsManager {
     private static func matchIDE(
         _ dirName: String
     ) -> JetBrainsIDEInfo? {
-        for info in JetBrainsIDEInfo.known {
-            if dirName.hasPrefix(info.dirPrefix) {
-                let suffix = String(dirName.dropFirst(info.dirPrefix.count))
-                // Must be followed by version number or empty
-                if suffix.isEmpty || suffix.first?.isNumber == true {
-                    return info
-                }
+        for info in JetBrainsIDEInfo.known where dirName.hasPrefix(info.dirPrefix) {
+            let suffix = String(dirName.dropFirst(info.dirPrefix.count))
+            // Must be followed by version number or empty
+            if suffix.isEmpty || suffix.first?.isNumber == true {
+                return info
             }
         }
         return nil

@@ -115,16 +115,16 @@ final class ActionScorerTests: XCTestCase {
     }
 
     func testActionsWithDistinctKeysAreNotDeduped() {
-        let a = BrowserAction(
+        let first = BrowserAction(
             id: ActionID("browser/a"), title: "A", subtitle: "",
             relevanceScore: 0.8, tabURL: "https://a.com"
         ) { _ in .dismiss }
-        let b = BrowserAction(
+        let second = BrowserAction(
             id: ActionID("browser/b"), title: "B", subtitle: "",
             relevanceScore: 0.7, tabURL: "https://b.com"
         ) { _ in .dismiss }
         let (items, _) = ActionScorer.scoreAndRank(
-            allActions: [a, b], enrichments: [:], query: "", scoring: scoring("")
+            allActions: [first, second], enrichments: [:], query: "", scoring: scoring("")
         )
         XCTAssertEqual(items.count, 2)
     }

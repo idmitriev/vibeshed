@@ -13,17 +13,7 @@ enum KeyComboParser {
 
         // Mouse button binding: any component starting with "mouse"
         if let mouseIndex = components.firstIndex(where: { $0.hasPrefix("mouse") }) {
-            let mouseStr = components[mouseIndex]
-            guard let buttonNum = Int(mouseStr.dropFirst(5)), buttonNum >= 1 else {
-                throw KeyComboError.invalidCombo(combo, reason: "invalid mouse button '\(mouseStr)'")
-            }
-            // mouse1=0(left), mouse2=1(right), mouse3=2(middle), mouse4=3(back), mouse5=4(forward)
-            let cgButton = buttonNum - 1
-            var modifiers = CGEventFlags()
-            for (i, comp) in components.enumerated() where i != mouseIndex {
-                try modifiers.insert(modifierFlag(for: comp))
-            }
-            return .mouseButton(button: cgButton, modifiers: modifiers)
+            return try parseMouseButton(components, mouseIndex: mouseIndex, combo: combo)
         }
 
         // Caps-lock as modifier
@@ -42,24 +32,13 @@ enum KeyComboParser {
         }
 
         // Space as modifier: "space" + another key
-        if components.contains("space"), components.count == 2,
-           let otherKey = components.first(where: { $0 != "space" })
-        {
-            // Check if the other component is a regular key (not a modifier name)
-            if modifierNames[otherKey] == nil {
-                let keyCode = try carbonKeyCode(for: otherKey)
-                return .spaceModifier(carbonKeyCode: keyCode)
-            }
+        if let keyCode = try heldKeyCode(in: components, modifierKey: "space") {
+            return .spaceModifier(carbonKeyCode: keyCode)
         }
 
         // Tab as modifier: "tab" + another key
-        if components.contains("tab"), components.count == 2,
-           let otherKey = components.first(where: { $0 != "tab" })
-        {
-            if modifierNames[otherKey] == nil {
-                let keyCode = try carbonKeyCode(for: otherKey)
-                return .tabModifier(carbonKeyCode: keyCode)
-            }
+        if let keyCode = try heldKeyCode(in: components, modifierKey: "tab") {
+            return .tabModifier(carbonKeyCode: keyCode)
         }
 
         // Standard combo: modifiers + key (last component is the key)
@@ -72,6 +51,36 @@ enum KeyComboParser {
             try modifiers.insert(modifierFlag(for: comp))
         }
         return .standard(carbonKeyCode: keyCode, modifiers: modifiers)
+    }
+
+    private static func parseMouseButton(
+        _ components: [String],
+        mouseIndex: Int,
+        combo: String
+    ) throws -> KeyComboType {
+        let mouseStr = components[mouseIndex]
+        guard let buttonNum = Int(mouseStr.dropFirst(5)), buttonNum >= 1 else {
+            throw KeyComboError.invalidCombo(combo, reason: "invalid mouse button '\(mouseStr)'")
+        }
+        // mouse1=0(left), mouse2=1(right), mouse3=2(middle), mouse4=3(back), mouse5=4(forward)
+        let cgButton = buttonNum - 1
+        var modifiers = CGEventFlags()
+        for (index, comp) in components.enumerated() where index != mouseIndex {
+            try modifiers.insert(modifierFlag(for: comp))
+        }
+        return .mouseButton(button: cgButton, modifiers: modifiers)
+    }
+
+    /// Key code of the other key in a two-part `modifierKey` + key combo (e.g. "space+h"),
+    /// or nil when the combo isn't that shape or the other part is a modifier name.
+    private static func heldKeyCode(in components: [String], modifierKey: String) throws -> UInt16? {
+        guard components.contains(modifierKey), components.count == 2,
+              let otherKey = components.first(where: { $0 != modifierKey }),
+              modifierNames[otherKey] == nil
+        else {
+            return nil
+        }
+        return try carbonKeyCode(for: otherKey)
     }
 
     /// Parse a combo string and extract keyCode + modifiers for standard combos only.

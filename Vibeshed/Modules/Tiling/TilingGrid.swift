@@ -138,8 +138,8 @@ enum TilingGrid {
 
     private static func bucketIndex(_ fraction: Double, in bounds: [Double]) -> Int {
         let clamped = min(max(fraction, 0), 1)
-        for i in 0 ..< (bounds.count - 1) where clamped >= bounds[i] && clamped <= bounds[i + 1] {
-            return i
+        for index in 0 ..< (bounds.count - 1) where clamped >= bounds[index] && clamped <= bounds[index + 1] {
+            return index
         }
         return max(bounds.count - 2, 0)
     }

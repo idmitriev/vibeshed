@@ -20,8 +20,8 @@ struct ActionListView: View {
     private var hotkeyMap: [ActionID: Int] {
         var map = [ActionID: Int]()
         map.reserveCapacity(min(actions.count, 9))
-        for i in 0 ..< min(actions.count, 9) {
-            map[actions[i].id] = i + 1
+        for index in 0 ..< min(actions.count, 9) {
+            map[actions[index].id] = index + 1
         }
         return map
     }

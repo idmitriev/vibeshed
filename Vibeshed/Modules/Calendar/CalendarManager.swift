@@ -63,28 +63,30 @@ enum CalendarManager {
         case none
     }
 
+    struct EventQuery: Sendable {
+        var lookaheadHours: Int
+        var lookbehindMinutes: Int
+        var excludedCalendars: [String]?
+        var includedCalendars: [String]?
+        var showAllDay = false
+        var showDeclined = false
+    }
+
     // MARK: - Fetch Events
 
     @CalendarStoreActor
-    static func fetchEvents(
-        lookaheadHours: Int,
-        lookbehindMinutes: Int,
-        excludedCalendars: [String]?,
-        includedCalendars: [String]?,
-        showAllDay: Bool,
-        showDeclined: Bool
-    ) -> [CalendarEvent] {
+    static func fetchEvents(_ query: EventQuery) -> [CalendarEvent] {
         let now = Date()
         let startDate = now.addingTimeInterval(
-            -Double(lookbehindMinutes) * 60
+            -Double(query.lookbehindMinutes) * 60
         )
         let endDate = now.addingTimeInterval(
-            Double(lookaheadHours) * 3600
+            Double(query.lookaheadHours) * 3600
         )
 
         let calendars = resolveCalendars(
-            excluded: excludedCalendars,
-            included: includedCalendars
+            excluded: query.excludedCalendars,
+            included: query.includedCalendars
         )
 
         let predicate = store.predicateForEvents(
@@ -96,10 +98,10 @@ enum CalendarManager {
         let ekEvents = store.events(matching: predicate)
 
         return ekEvents.compactMap { event in
-            if event.isAllDay, !showAllDay { return nil }
+            if event.isAllDay, !query.showAllDay { return nil }
 
             let status = mapStatus(event)
-            if status == .declined, !showDeclined { return nil }
+            if status == .declined, !query.showDeclined { return nil }
 
             let attendees = (event.attendees ?? [])
                 .filter { !$0.isCurrentUser }
@@ -292,10 +294,10 @@ enum CalendarManager {
         else {
             return "#808080"
         }
-        let r = Int(components[0] * 255)
-        let g = Int(components[1] * 255)
-        let b = Int(components[2] * 255)
-        return String(format: "#%02X%02X%02X", r, g, b)
+        let red = Int(components[0] * 255)
+        let green = Int(components[1] * 255)
+        let blue = Int(components[2] * 255)
+        return String(format: "#%02X%02X%02X", red, green, blue)
     }
 
     private static func truncateNotes(_ notes: String?) -> String? {

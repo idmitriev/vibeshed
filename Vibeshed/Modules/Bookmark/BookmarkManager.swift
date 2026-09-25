@@ -231,15 +231,6 @@ enum BookmarkManager {
             return []
         }
 
-        // Safari locks the DB while running; use READONLY + immutable to avoid WAL issues
-        let uri = "file:\(dbPath)?immutable=1"
-        var db: OpaquePointer?
-        guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK else {
-            log.debug("Cannot open Safari History.db")
-            return []
-        }
-        defer { sqlite3_close(db) }
-
         let sql = """
         SELECT h.url, v.title, h.visit_count
         FROM history_items h
@@ -250,36 +241,20 @@ enum BookmarkManager {
         LIMIT 500
         """
 
-        var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-            log.debug("Safari History.db prepare failed")
-            return []
-        }
-        defer { sqlite3_finalize(stmt) }
-
-        sqlite3_bind_int(stmt, 1, Int32(minVisitCount))
-
-        var results: [VisitedSite] = []
-        while sqlite3_step(stmt) == SQLITE_ROW {
-            guard let urlPtr = sqlite3_column_text(stmt, 0) else { continue }
-            let url = String(cString: urlPtr)
-            let title: String = if let titlePtr = sqlite3_column_text(stmt, 1) {
-                String(cString: titlePtr)
-            } else {
-                url
+        return HistoryDatabase.rows(
+            at: dbPath, label: "Safari History.db", sql: sql, minVisitCount: minVisitCount
+        ) { stmt in
+            HistoryDatabase.site(stmt).map { site in
+                VisitedSite(
+                    title: site.title,
+                    url: site.url,
+                    visitCount: site.visitCount,
+                    lastVisited: nil,
+                    browserBundleID: "com.apple.Safari",
+                    browserName: browserName
+                )
             }
-            let visitCount = Int(sqlite3_column_int(stmt, 2))
-
-            results.append(VisitedSite(
-                title: title.isEmpty ? url : title,
-                url: url,
-                visitCount: visitCount,
-                lastVisited: nil,
-                browserBundleID: "com.apple.Safari",
-                browserName: browserName
-            ))
         }
-        return results
     }
 
     // MARK: - Chromium History
@@ -305,15 +280,6 @@ enum BookmarkManager {
             return []
         }
 
-        // Use immutable mode to avoid locking issues with running browser
-        let uri = "file:\(dbPath)?immutable=1"
-        var db: OpaquePointer?
-        guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK else {
-            log.debug("Cannot open Chromium History at \(dbPath, privacy: .public)")
-            return []
-        }
-        defer { sqlite3_close(db) }
-
         let sql = """
         SELECT url, title, visit_count, last_visit_time
         FROM urls
@@ -322,25 +288,10 @@ enum BookmarkManager {
         LIMIT 500
         """
 
-        var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-            log.debug("Chromium History prepare failed")
-            return []
-        }
-        defer { sqlite3_finalize(stmt) }
-
-        sqlite3_bind_int(stmt, 1, Int32(minVisitCount))
-
-        var results: [VisitedSite] = []
-        while sqlite3_step(stmt) == SQLITE_ROW {
-            guard let urlPtr = sqlite3_column_text(stmt, 0) else { continue }
-            let url = String(cString: urlPtr)
-            let title: String = if let titlePtr = sqlite3_column_text(stmt, 1) {
-                String(cString: titlePtr)
-            } else {
-                url
-            }
-            let visitCount = Int(sqlite3_column_int(stmt, 2))
+        return HistoryDatabase.rows(
+            at: dbPath, label: "Chromium History at \(dbPath)", sql: sql, minVisitCount: minVisitCount
+        ) { stmt in
+            guard let site = HistoryDatabase.site(stmt) else { return nil }
 
             // Chrome timestamps: microseconds since 1601-01-01
             let chromeTime = sqlite3_column_int64(stmt, 3)
@@ -352,16 +303,15 @@ enum BookmarkManager {
                 lastVisited = nil
             }
 
-            results.append(VisitedSite(
-                title: title.isEmpty ? url : title,
-                url: url,
-                visitCount: visitCount,
+            return VisitedSite(
+                title: site.title,
+                url: site.url,
+                visitCount: site.visitCount,
                 lastVisited: lastVisited,
                 browserBundleID: bundleID,
                 browserName: browserName
-            ))
+            )
         }
-        return results
     }
 
     // MARK: - Helpers
@@ -384,5 +334,56 @@ enum BookmarkManager {
             return ["Default"]
         }
         return profiles.map(\.directoryName)
+    }
+}
+
+// MARK: - History Database
+
+/// Read-only access to a browser's SQLite history file. Browsers keep the DB
+/// locked while running, so it's opened READONLY + immutable to avoid WAL issues.
+private enum HistoryDatabase {
+    /// Runs `sql` with `?1` bound to `minVisitCount`, keeping each row `map` returns
+    /// non-nil. `label` names the database in debug logs. Empty if it can't be read.
+    static func rows<Row>(
+        at dbPath: String,
+        label: String,
+        sql: String,
+        minVisitCount: Int,
+        map: (OpaquePointer) -> Row?
+    ) -> [Row] {
+        let uri = "file:\(dbPath)?immutable=1"
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil) == SQLITE_OK else {
+            log.debug("Cannot open \(label, privacy: .public)")
+            return []
+        }
+        defer { sqlite3_close(db) }
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK, let stmt else {
+            log.debug("\(label, privacy: .public) prepare failed")
+            return []
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_int(stmt, 1, Int32(minVisitCount))
+
+        var results: [Row] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            if let row = map(stmt) {
+                results.append(row)
+            }
+        }
+        return results
+    }
+
+    /// url, title and visit count from columns 0–2. The title falls back to the url
+    /// when it's missing or empty; rows without a url are skipped.
+    static func site(_ stmt: OpaquePointer) -> (url: String, title: String, visitCount: Int)? {
+        guard let urlPtr = sqlite3_column_text(stmt, 0) else { return nil }
+        let url = String(cString: urlPtr)
+        let title = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+        let visitCount = Int(sqlite3_column_int(stmt, 2))
+        return (url: url, title: title.isEmpty ? url : title, visitCount: visitCount)
     }
 }
