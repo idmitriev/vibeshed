@@ -8,16 +8,9 @@ struct ThemeAction: Action {
     let relevanceScore: Double
     let keywords: [String]
     let parameters: [ActionParameter]
-    let category: Category?
-
-    enum Category: Sendable {
-        case system
-        case vscode
-        case jetbrains
-        case iterm
-        case github
-        case preset(ThemePreset)
-    }
+    /// Set for `apply.<slug>` actions: drives the palette preview.
+    let theme: ResolvedTheme?
+    let wallpaper: ThemeWallpaperPreview?
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
@@ -29,7 +22,8 @@ struct ThemeAction: Action {
         relevanceScore: Double = 0.8,
         keywords: [String] = [],
         parameters: [ActionParameter] = [],
-        category: Category? = nil,
+        theme: ResolvedTheme? = nil,
+        wallpaper: ThemeWallpaperPreview? = nil,
         runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
@@ -39,7 +33,8 @@ struct ThemeAction: Action {
         self.relevanceScore = relevanceScore
         self.keywords = keywords
         self.parameters = parameters
-        self.category = category
+        self.theme = theme
+        self.wallpaper = wallpaper
         self.runner = runner
     }
 
@@ -48,12 +43,8 @@ struct ThemeAction: Action {
     }
 
     @MainActor
-    func makeListItemView() -> AnyView? {
-        AnyView(ThemeActionListItemView(action: self))
-    }
-
-    @MainActor
     func makePreviewView() -> AnyView? {
-        AnyView(ThemeActionPreviewView(action: self))
+        guard let theme else { return nil }
+        return AnyView(ThemePreviewView(theme: theme, wallpaper: wallpaper))
     }
 }

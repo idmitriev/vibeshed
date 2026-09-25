@@ -91,9 +91,6 @@ actor TilingModule: ModuleConfigurable {
             errors.append("autoTile.minimumSize must be non-negative")
         }
         if let focusBorder = config.focusBorder {
-            if Color(tilingHex: focusBorder.color) == nil {
-                errors.append("focusBorder.color must be a valid hex color (e.g. \"#0A84FF\")")
-            }
             if focusBorder.width <= 0 {
                 errors.append("focusBorder.width must be positive")
             }
@@ -431,7 +428,6 @@ actor TilingModule: ModuleConfigurable {
         let borderConfig = config.focusBorder ?? FocusBorderConfig()
         await FocusBorderController.shared.show(
             cgFrame: focused.frame,
-            colorHex: borderConfig.color,
             width: borderConfig.width,
             cornerRadius: borderConfig.cornerRadius
         )

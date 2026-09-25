@@ -69,9 +69,9 @@ struct AutoTileConfig: Codable, Sendable, Equatable {
     }
 }
 
+/// The border is always drawn in the active theme's accent (the system accent when no
+/// theme is applied), so it has no color setting of its own.
 struct FocusBorderConfig: Codable, Sendable, Equatable {
-    /// "#RRGGBB" hex string. Validated in `TilingModule.validate` via `Color(tilingHex:)`.
-    var color: String = "#0A84FF"
     var width: Double = 3.0
     /// Corner radius (points) of the border's rounded rect. 0 = sharp corners.
     var cornerRadius: Double = 8.0
@@ -79,12 +79,10 @@ struct FocusBorderConfig: Codable, Sendable, Equatable {
     var pollingInterval: Double = 0.15
 
     init(
-        color: String = "#0A84FF",
         width: Double = 3.0,
         cornerRadius: Double = 8.0,
         pollingInterval: Double = 0.15
     ) {
-        self.color = color
         self.width = width
         self.cornerRadius = cornerRadius
         self.pollingInterval = pollingInterval
@@ -92,13 +90,13 @@ struct FocusBorderConfig: Codable, Sendable, Equatable {
 
     // Same reasoning as AutoTileConfig's custom decoder: missing keys fall back to their
     // default instead of throwing keyNotFound and discarding the whole TilingConfig.
+    // A leftover `color` key from older configs is simply ignored.
     enum CodingKeys: String, CodingKey {
-        case color, width, cornerRadius, pollingInterval
+        case width, cornerRadius, pollingInterval
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#0A84FF"
         width = try container.decodeIfPresent(Double.self, forKey: .width) ?? 3.0
         cornerRadius = try container.decodeIfPresent(Double.self, forKey: .cornerRadius) ?? 8.0
         pollingInterval = try container.decodeIfPresent(Double.self, forKey: .pollingInterval) ?? 0.15

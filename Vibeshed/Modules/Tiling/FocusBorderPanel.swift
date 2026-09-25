@@ -44,19 +44,6 @@ private struct FocusBorderShape: View {
     }
 }
 
-extension Color {
-    /// Parses a "#RRGGBB" or "RRGGBB" hex string. Returns nil if malformed (used both to
-    /// render the border and to validate `FocusBorderConfig.color` in `TilingModule.validate`).
-    init?(tilingHex hex: String) {
-        let cleaned = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
-        guard cleaned.count == 6, let intValue = UInt64(cleaned, radix: 16) else { return nil }
-        let red = Double((intValue >> 16) & 0xFF) / 255.0
-        let green = Double((intValue >> 8) & 0xFF) / 255.0
-        let blue = Double(intValue & 0xFF) / 255.0
-        self.init(red: red, green: green, blue: blue)
-    }
-}
-
 /// Owns the single shared `FocusBorderPanel` instance. `@MainActor` singleton (mirrors
 /// `WebAuthContextProvider` in the Spotify module) so actor-isolated `TilingModule` can
 /// drive AppKit window state via `await FocusBorderController.shared.show(...)`.
@@ -70,8 +57,10 @@ final class FocusBorderController {
 
     /// Shows (or moves) the border to surround `cgFrame` — the panel is outset by `width` on
     /// every side so the stroke sits entirely outside the target window, not overlapping it.
-    func show(cgFrame: CGRect, colorHex: String, width: Double, cornerRadius: Double) {
-        let color = Color(tilingHex: colorHex) ?? .accentColor
+    /// Drawn in the active theme's accent, re-read on every show so theme switches (and
+    /// live previews) retint the border immediately.
+    func show(cgFrame: CGRect, width: Double, cornerRadius: Double) {
+        let color = ActiveTheme.shared.displayed?.palette.accent.color ?? Color(nsColor: .controlAccentColor)
         let outsetFrame = cgFrame.insetBy(dx: -width, dy: -width)
         let panel = getOrCreatePanel()
         panel.setSwiftUIContent(FocusBorderShape(color: color, width: width, cornerRadius: cornerRadius))

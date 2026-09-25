@@ -326,11 +326,10 @@ modules:
       pollingInterval: 1.0         # seconds between checks (also affects move/resize latency)
       excludedBundleIDs: []        # e.g. ["com.apple.systempreferences"]
       minimumSize: 120             # skip windows narrower/shorter than this (tooltips, HUDs, etc.)
-    # Tuning for the focus border (a contrast-colored outline drawn around the focused
+    # Tuning for the focus border (an outline in the theme's accent color around the focused
     # window, only while it's tiled). Also NOT a config flag - off by default on every
     # launch, toggled at runtime via tiling/toggleFocusBorder.
     focusBorder:
-      color: "#0A84FF"       # "#RRGGBB" hex
       width: 3.0              # points
       cornerRadius: 18.0       # points, 0 = sharp corners
       pollingInterval: 0.1   # seconds between checks for focus changes
@@ -390,80 +389,82 @@ modules:
     # customPanes:
     #   "Game Center": "com.apple.Game-Center-Settings.extension"
 
-  # --- Theme / Appearance ---
+  # --- Theme ---
+  # Palette themes applied across macOS and apps in one go: appearance, accent +
+  # text highlight, folder color, pointer, wallpaper, the Vibeshed picker, iTerm,
+  # VS Code/Cursor/Windsurf, Zed, JetBrains, Claude Code, plus your own templates.
+  #   theme/switch        browse themes; each previews live as you move, Return applies, Esc reverts
+  #   theme/apply.<slug>  apply one directly (e.g. theme/apply.tokyo-night — bind it or alias it)
+  #   theme/next, theme/previous, theme/reapply, theme/fromWallpaper
+  # 64 built-ins: Catppuccin, Tokyo Night, Rosé Pine, Kanagawa, Gruvbox, Everforest, Nord,
+  # Solarized, GitHub, Ayu, Nightfox, Flexoki, Melange, One, Dracula, Monokai Pro, Night Owl,
+  # Poimandres, Vesper, Moonfly, Sonokai, Iceberg, Vague + Omarchy's (Osaka Jade, Ristretto, …)
+  # + classic desktops: BeOS, OS/2 Warp, OS/2 Text Mode, NeXTSTEP.
   theme:
-    # Uncomment to restrict which actions appear:
-    # enabledActions:
-    #   - setDark
-    #   - setLight
-    #   - setAccentColor
-    #   - setWallpaper
-    #   - vscodeTheme
-    #   - jetbrainsTheme
-    #   - itermPreset
+    # livePreview: true               # apply the highlighted theme while browsing theme/switch
+    # includeBuiltInThemes: true
+    # generateWallpapers: true        # generate a wallpaper from the palette when a theme has no image
+    # wallpaperStyle: glow            # glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset,
+    #                                 # arcs, halftone, leaves, warp, textmode, polyhedra, solid,
+    #                                 # or auto (a stable pick per theme).
+    #                                 # A style chosen with theme/wallpaperStyle overrides this;
+    #                                 # a theme can set its own with `wallpaperStyle:`.
+    # wallpaperGrain: true            # fine film grain on generated wallpapers
 
-    # VSCode variants to manage (nil = Code, Code - Insiders, Cursor, Windsurf)
+    # What a theme is applied to (default: all but github, which changes an account setting):
+    # targets: [appearance, accent, folders, pointer, wallpaper, iterm, vscode, zed,
+    #           jetbrains, claude, bat, lsd, micro, btop, github, templates, hooks]
+    # bat/lsd/micro get generated themes on each switch (bat: select once with --theme=Vibeshed).
+    # fzf needs nothing: configured with ANSI colour slots it follows the terminal palette.
+
+    # Omarchy-style theme folders: <dir>/<name>/colors.toml (+ backgrounds/, light.mode).
+    # Omarchy themes can be dropped in as-is.
+    # themesDirectory: "~/.config/vibeshed/themes"
+
+    # iTerm: the "Vibeshed" profile (your default profile + theme colors) becomes iTerm's
+    # default so new windows and restarts keep the theme; false gives the default back.
+    # itermDefaultProfile: true
+
+    # Folders that also get a palette-tinted custom icon (on top of the system folder color).
+    # folders:
+    #   - "~/Projects"
+
+    # Your own palettes. Keys follow Omarchy's colors.toml; only background, foreground
+    # and red/green/yellow/blue/magenta/cyan are required — the rest is derived.
+    # A theme named like a built-in replaces it; `base:` inherits and overrides.
+    # themes:
+    #   - name: "Midnight"
+    #     base: "Tokyo Night"
+    #     colors:
+    #       background: "#0b0b12"
+    #       accent: "#ff9e64"
+    #       pointer_fill: "#ff9e64"     # optional extras: pointer_fill, pointer_outline, folder, highlight
+    #     wallpaper: "~/Pictures/Walls/midnight"   # image, or a folder (first image is used)
+    #     macosAccent: "Orange"                     # default: nearest to the accent color
+    #     apps:                                     # use existing app themes instead of generated ones
+    #       vscode: "Tokyo Night"
+    #       jetbrains: "_@user_Tokyo Night"
+    #       github: "dark_dimmed"                   # also opts this theme into the github target
+
+    # Templates for any other app, in Omarchy's placeholder syntax:
+    # {{ background }}, {{ accent_strip }}, {{ red_rgb }}, {{ mix background green 15% }}, {{ mode }}
+    # templates:
+    #   - source: "~/.config/vibeshed/templates/ghostty.conf.tpl"
+    #     target: "~/.config/ghostty/themes/vibeshed"
+    #     reload: "pkill -USR2 -x ghostty"
+    #     preview: true                  # also render during live preview
+
+    # Commands run after each apply, with VIBESHED_THEME, VIBESHED_THEME_MODE,
+    # VIBESHED_THEME_DIR and VIBESHED_COLOR_<KEY> (e.g. VIBESHED_COLOR_ACCENT) set.
+    # hooks:
+    #   - "sketchybar --reload"
+
+    # VS Code-family editors (display name: Application Support folder); default: all detected
     # vscodeVariants:
-    #   "VS Code": "Code"
     #   "Cursor": "Cursor"
-    #   "Windsurf": "Windsurf"
 
-    # JetBrains IDEs to manage (nil = all detected)
-    # jetbrainsIDEs:
-    #   - idea
-    #   - webstorm
-    #   - goland
-
-    # Custom VSCode theme names for the picker
-    # vscodeThemes:
-    #   - "One Dark Pro"
-    #   - "Dracula"
-    #   - "Solarized Dark"
-    #   - "Solarized Light"
-    #   - "GitHub Dark"
-    #   - "Monokai"
-
-    # Custom iTerm color presets
-    # itermPresets:
-    #   - "Solarized Dark"
-    #   - "Tango Dark"
-    #   - "Light Background"
-
-    # Theme presets (nil = 3 defaults: Dark Focus, Light Clean, Warm Night)
-    # Each preset can set any combination of: appearance, accentColor, wallpaper,
-    # vscodeTheme, jetbrainsTheme, itermPreset, githubTheme.
-    # githubTheme options: "auto" (follows system), "light", "dark", "dark_dimmed"
-    # Requires a github.com tab open in a browser for GitHub theme to apply.
-    # presets:
-    #   - name: "Dark Focus"
-    #     icon: "moon.stars"
-    #     subtitle: "Dark mode with muted accent"
-    #     appearance: "dark"
-    #     accentColor: "Graphite"
-    #     vscodeTheme: "Default Dark Modern"
-    #     jetbrainsTheme: "Darcula"
-    #     itermPreset: "Solarized Dark"
-    #     githubTheme: "auto"
-    #
-    #   - name: "Light Clean"
-    #     icon: "sun.max"
-    #     subtitle: "Light mode with blue accent"
-    #     appearance: "light"
-    #     accentColor: "Blue"
-    #     vscodeTheme: "Default Light Modern"
-    #     jetbrainsTheme: "IntelliJ Light"
-    #     itermPreset: "Light Background"
-    #     githubTheme: "auto"
-    #
-    #   - name: "Warm Night"
-    #     icon: "flame"
-    #     subtitle: "Warm dark theme for night coding"
-    #     appearance: "dark"
-    #     accentColor: "Orange"
-    #     vscodeTheme: "Monokai"
-    #     jetbrainsTheme: "Darcula"
-    #     itermPreset: "Tango Dark"
-    #     githubTheme: "auto"
+    # JetBrains IDEs to theme (default: all detected)
+    # jetbrainsIDEs: [idea, webstorm]
 
   # --- Audio Control ---
   audio:

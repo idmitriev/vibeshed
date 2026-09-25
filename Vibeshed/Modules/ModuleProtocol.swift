@@ -40,6 +40,15 @@ protocol Module: Actor {
         in actionID: ActionID,
         query: String
     ) async -> [ParameterOption]
+
+    /// Live preview for parameters declared with `livePreview: true`: called (debounced)
+    /// each time the highlighted option changes while the picker collects `parameterID`.
+    func previewParameterOption(_ optionID: String, parameterID: String, actionID: ActionID) async
+
+    /// Ends a live preview. `committed == false` (Escape, picker dismissed) means undo
+    /// everything the previews changed; `true` means the action is about to run with the
+    /// chosen value, so keep it.
+    func endParameterPreview(parameterID: String, actionID: ActionID, committed: Bool) async
 }
 
 extension Module {
@@ -70,4 +79,8 @@ extension Module {
     ) async -> [ParameterOption] {
         []
     }
+
+    func previewParameterOption(_: String, parameterID _: String, actionID _: ActionID) async {}
+
+    func endParameterPreview(parameterID _: String, actionID _: ActionID, committed _: Bool) async {}
 }
