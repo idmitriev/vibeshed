@@ -4,7 +4,7 @@ cask "vibeshed" do
 
   url "https://github.com/idmitriev/vibeshed/releases/download/v#{version}/Vibeshed-#{version}.zip"
   name "Vibeshed"
-  desc "Keyboard-driven macOS launcher"
+  desc "Keyboard-driven launcher"
   homepage "https://github.com/idmitriev/vibeshed"
 
   livecheck do
@@ -12,15 +12,15 @@ cask "vibeshed" do
     strategy :github_latest
   end
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "Vibeshed.app"
 
   zap trash: [
     "~/.config/vibeshed",
-    "~/Library/Preferences/com.ivandmitriev.Vibeshed.plist",
     "~/Library/Application Support/com.ivandmitriev.Vibeshed",
     "~/Library/Caches/com.ivandmitriev.Vibeshed",
+    "~/Library/Preferences/com.ivandmitriev.Vibeshed.plist",
     "~/Library/Saved Application State/com.ivandmitriev.Vibeshed.savedState",
   ]
 end
