@@ -130,11 +130,11 @@ enum ActionScorer {
     }
 
     static func normalizeURL(_ url: String) -> String {
-        var s = url.lowercased()
-        if let i = s.firstIndex(of: "#") { s = String(s[..<i]) }
-        while s.hasSuffix("/") {
-            s.removeLast()
+        var normalized = url.lowercased()
+        if let fragment = normalized.firstIndex(of: "#") { normalized = String(normalized[..<fragment]) }
+        while normalized.hasSuffix("/") {
+            normalized.removeLast()
         }
-        return s
+        return normalized
     }
 }

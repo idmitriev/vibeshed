@@ -67,9 +67,8 @@ struct ModuleConfigDecoder: Sendable {
                 // the decode error.
                 if let defaultConfig = M.defaultConfig {
                     let reason = String(describing: error)
-                    Log.config.error(
-                        "Module '\(moduleID, privacy: .public)' config failed to decode, falling back to defaults: \(reason, privacy: .public)"
-                    )
+                    let message = "Module '\(moduleID)' config failed to decode, falling back to defaults: \(reason)"
+                    Log.config.error("\(message, privacy: .public)")
                     return defaultConfig
                 }
                 throw ModuleConfigError.decodingFailed(

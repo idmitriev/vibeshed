@@ -29,9 +29,9 @@ final class ActionIDTests: XCTestCase {
     }
 
     func testEquatableAndHashable() {
-        let a = ActionID(module: "m", name: "n")
-        let b = ActionID("m/n")
-        XCTAssertEqual(a, b)
-        XCTAssertEqual(Set([a, b]).count, 1)
+        let fromParts = ActionID(module: "m", name: "n")
+        let fromString = ActionID("m/n")
+        XCTAssertEqual(fromParts, fromString)
+        XCTAssertEqual(Set([fromParts, fromString]).count, 1)
     }
 }

@@ -80,9 +80,8 @@ final class LayoutTransliterator {
         guard correctedQuery != query else { return nil }
 
         let layoutName = sourceNames[sourceID] ?? "Unknown"
-        Log.layout.debug(
-            "Layout correction: '\(query, privacy: .public)' → '\(correctedQuery, privacy: .public)' (\(layoutName, privacy: .public))"
-        )
+        let correction = "'\(query)' → '\(correctedQuery)' (\(layoutName))"
+        Log.layout.debug("Layout correction: \(correction, privacy: .public)")
 
         return LayoutCorrectionHint(
             originalQuery: query,

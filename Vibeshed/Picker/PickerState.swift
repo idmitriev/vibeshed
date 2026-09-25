@@ -184,15 +184,15 @@ final class PickerState {
     func advanceToNextParameter(startingFrom index: Int) {
         guard let action = activeAction else { return }
         let params = action.parameters
-        for i in index ..< params.count {
-            let param = params[i]
+        for paramIndex in index ..< params.count {
+            let param = params[paramIndex]
             if param.isRequired, collectedValues[param.id] == nil {
                 currentParameter = param
                 parameterQuery = ""
                 parameterOptions = []
                 selectedParameterOptionID = nil
                 isLoadingOptions = false
-                pushMode(.parameterInput(actionID: action.id, parameterIndex: i))
+                pushMode(.parameterInput(actionID: action.id, parameterIndex: paramIndex))
 
                 // Pre-populate static selection options
                 if case let .selection(options) = param.type {
@@ -226,13 +226,7 @@ final class PickerState {
 
     var nextUnfilledParameterIndex: Int? {
         guard let action = activeAction else { return nil }
-        let params = action.parameters
-        for (i, param) in params.enumerated() {
-            if param.isRequired, collectedValues[param.id] == nil {
-                return i
-            }
-        }
-        return nil
+        return action.parameters.firstIndex { $0.isRequired && collectedValues[$0.id] == nil }
     }
 
     // MARK: - Page navigation

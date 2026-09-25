@@ -45,19 +45,30 @@ enum ExpressionParser {
 
     // MARK: - Tokenizer
 
-    private static let functions = Set([
-        "sqrt", "sin", "cos", "tan",
-        "asin", "acos", "atan",
-        "log", "ln", "abs",
-        "ceil", "floor", "round", "exp",
-    ])
+    /// Supported unary functions. An implementation returns nil when the argument
+    /// is outside the function's domain.
+    private static let functions: [String: @Sendable (Double) -> Double?] = [
+        "sqrt": { $0 >= 0 ? sqrt($0) : nil },
+        "sin": { sin($0) },
+        "cos": { cos($0) },
+        "tan": { tan($0) },
+        "asin": { $0 >= -1 && $0 <= 1 ? asin($0) : nil },
+        "acos": { $0 >= -1 && $0 <= 1 ? acos($0) : nil },
+        "atan": { atan($0) },
+        "log": { $0 > 0 ? log10($0) : nil },
+        "ln": { $0 > 0 ? log($0) : nil },
+        "abs": { abs($0) },
+        "ceil": { ceil($0) },
+        "floor": { floor($0) },
+        "round": { $0.rounded() },
+        "exp": { exp($0) },
+    ]
 
     private static let constants: [String: Double] = [
         "pi": .pi,
         "e": Darwin.M_E,
     ]
 
-    // swiftlint:disable cyclomatic_complexity
     private static func tokenize(_ input: String) -> [Token]? {
         var tokens: [Token] = []
         var idx = input.startIndex
@@ -86,33 +97,40 @@ enum ExpressionParser {
                 continue
             }
 
-            switch ch {
-            case "(":
-                tokens.append(.leftParen)
-            case ")":
-                tokens.append(.rightParen)
-                let next = input.index(after: idx)
-                if next < input.endIndex, input[next] == "!" {
-                    tokens.append(.factorial)
-                    idx = input.index(after: next)
-                    continue
-                }
-            case "+", "*", "/", "^", "%":
-                tokens.append(.op(ch))
-            case "-":
-                let isUnary = tokens.isEmpty || isUnaryContext(tokens.last)
-                tokens.append(isUnary ? .unaryMinus : .op(ch))
-            case "!":
-                tokens.append(.factorial)
-            default:
-                return nil
-            }
-            idx = input.index(after: idx)
+            guard let nextIdx = scanSymbol(input, at: idx, into: &tokens) else { return nil }
+            idx = nextIdx
         }
         return tokens
     }
 
-    // swiftlint:enable cyclomatic_complexity
+    /// Appends the token(s) for the operator or parenthesis at `idx` and returns the
+    /// index after what it consumed, or nil for an unexpected character.
+    private static func scanSymbol(
+        _ input: String, at idx: String.Index, into tokens: inout [Token]
+    ) -> String.Index? {
+        let ch = input[idx]
+        let next = input.index(after: idx)
+        switch ch {
+        case "(":
+            tokens.append(.leftParen)
+        case ")":
+            tokens.append(.rightParen)
+            if next < input.endIndex, input[next] == "!" {
+                tokens.append(.factorial)
+                return input.index(after: next)
+            }
+        case "+", "*", "/", "^", "%":
+            tokens.append(.op(ch))
+        case "-":
+            let isUnary = tokens.isEmpty || isUnaryContext(tokens.last)
+            tokens.append(isUnary ? .unaryMinus : .op(ch))
+        case "!":
+            tokens.append(.factorial)
+        default:
+            return nil
+        }
+        return next
+    }
 
     private static func scanNumber(
         _ input: String, from start: String.Index
@@ -140,7 +158,7 @@ enum ExpressionParser {
         }
         if let val = constants[word] {
             return (.number(val), idx)
-        } else if functions.contains(word) {
+        } else if functions[word] != nil {
             return (.function(word), idx)
         }
         return nil
@@ -186,23 +204,7 @@ enum ExpressionParser {
     private static func applyFunction(
         _ name: String, _ val: Double
     ) -> Double? {
-        switch name {
-        case "sqrt": val >= 0 ? sqrt(val) : nil
-        case "sin": sin(val)
-        case "cos": cos(val)
-        case "tan": tan(val)
-        case "asin": val >= -1 && val <= 1 ? asin(val) : nil
-        case "acos": val >= -1 && val <= 1 ? acos(val) : nil
-        case "atan": atan(val)
-        case "log": val > 0 ? log10(val) : nil
-        case "ln": val > 0 ? log(val) : nil
-        case "abs": abs(val)
-        case "ceil": ceil(val)
-        case "floor": floor(val)
-        case "round": val.rounded()
-        case "exp": exp(val)
-        default: nil
-        }
+        functions[name].flatMap { $0(val) }
     }
 
     private static func factorial(_ num: Double) -> Double? {
@@ -221,9 +223,7 @@ enum ExpressionParser {
         var opStack: [Token] = []
 
         for token in tokens {
-            if !processToken(token, output: &output, opStack: &opStack) {
-                return nil
-            }
+            guard processToken(token, output: &output, opStack: &opStack) else { return nil }
         }
 
         // Drain remaining operators
@@ -238,7 +238,6 @@ enum ExpressionParser {
         return result
     }
 
-    // swiftlint:disable cyclomatic_complexity
     private static func processToken(
         _ token: Token,
         output: inout [Double],
@@ -271,8 +270,6 @@ enum ExpressionParser {
         }
         return true
     }
-
-    // swiftlint:enable cyclomatic_complexity
 
     private static func handleRightParen(
         _ output: inout [Double], _ opStack: inout [Token]

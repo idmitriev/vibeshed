@@ -210,9 +210,8 @@ final class ModuleRegistry {
         guard let module = modules[moduleID] else {
             // Check if it's pending (permissions not granted)
             if pendingModules[moduleID] != nil {
-                Log.modules.warning(
-                    "Action '\(id, privacy: .public)' not available: module '\(moduleID, privacy: .public)' waiting for permissions"
-                )
+                let message = "Action '\(id)' not available: module '\(moduleID)' waiting for permissions"
+                Log.modules.warning("\(message, privacy: .public)")
             } else {
                 Log.modules.warning(
                     "Action '\(id, privacy: .public)' not found: module '\(moduleID, privacy: .public)' not registered"
@@ -237,8 +236,8 @@ final class ModuleRegistry {
         for module: any Module,
         id: String
     ) -> ModuleConfigDecoder? {
-        func open(_ m: some ModuleConfigurable, id: String) -> ModuleConfigDecoder {
-            ModuleConfigDecoder.make(for: m, moduleID: id)
+        func open(_ configurable: some ModuleConfigurable, id: String) -> ModuleConfigDecoder {
+            ModuleConfigDecoder.make(for: configurable, moduleID: id)
         }
         guard let configurable = module as? any ModuleConfigurable else {
             return nil
@@ -276,10 +275,9 @@ final class ModuleRegistry {
                     try await register(module)
                     Log.stderr("  ✓ module: \(id) — loaded")
                 } catch {
-                    Log.stderr("  ✗ module: \(id) — retry failed: \(error.localizedDescription)")
-                    Log.modules.error(
-                        "Retry failed for module '\(id, privacy: .public)': \(error.localizedDescription, privacy: .public)"
-                    )
+                    let reason = error.localizedDescription
+                    Log.stderr("  ✗ module: \(id) — retry failed: \(reason)")
+                    Log.modules.error("Retry failed for module '\(id, privacy: .public)': \(reason, privacy: .public)")
                 }
             }
         }

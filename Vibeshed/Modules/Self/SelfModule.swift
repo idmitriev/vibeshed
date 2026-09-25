@@ -3,16 +3,16 @@ import Foundation
 import OSLog
 
 struct ModuleStatusInfo: Sendable {
+    enum Status: Sendable {
+        case loaded
+        case configError
+        case permissionError
+    }
+
     struct Entry: Sendable {
         let id: String
         let status: Status
         let message: String?
-
-        enum Status: Sendable {
-            case loaded
-            case configError
-            case permissionError
-        }
     }
 
     let entries: [Entry]

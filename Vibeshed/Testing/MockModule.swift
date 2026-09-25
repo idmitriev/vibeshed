@@ -15,97 +15,99 @@ actor MockModule: Module {
     ]
 
     func initialize(context: ModuleContext) async throws {
-        actions = [
-            MockAction(
-                id: ActionID(module: "mock", name: "safari"),
-                title: "Open Safari",
-                subtitle: "Launch Safari browser",
-                iconName: "safari",
-                relevanceScore: 1.0,
-                keywords: ["safari", "browser", "web"]
-            ),
-            MockAction(
-                id: ActionID(module: "mock", name: "calculator"),
-                title: "Calculator",
-                subtitle: "Open Calculator app",
-                iconName: "plus.forwardslash.minus",
-                relevanceScore: 0.9,
-                keywords: ["calculator", "math"]
-            ),
-            MockAction(
-                id: ActionID(module: "mock", name: "notes"),
-                title: "Notes",
-                subtitle: "Open Notes app",
-                iconName: "note.text",
-                relevanceScore: 0.8,
-                keywords: ["notes", "text", "write"]
-            ),
-            MockAction(
-                id: ActionID(module: "mock", name: "terminal"),
-                title: "Terminal",
-                subtitle: "Open Terminal app",
-                iconName: "terminal",
-                relevanceScore: 0.7,
-                keywords: ["terminal", "shell", "command"]
-            ),
-            MockAction(
-                id: ActionID(module: "mock", name: "activity"),
-                title: "Activity Monitor",
-                subtitle: "Open Activity Monitor",
-                iconName: "chart.bar",
-                relevanceScore: 0.6,
-                keywords: ["activity", "monitor", "cpu", "memory"]
-            ),
-            // Action that dismisses on execution
-            MockAction(
-                id: ActionID(module: "mock", name: "showResult"),
-                title: "Show Result",
-                subtitle: "Dismisses the picker",
-                iconName: "checkmark.seal",
-                relevanceScore: 0.55,
-                keywords: ["result", "test"],
-                result: .dismiss
-            ),
-            // Action with a static selection parameter
-            MockAction(
-                id: ActionID(module: "mock", name: "theme"),
-                title: "Set Theme",
-                subtitle: "Change the app theme",
-                iconName: "paintbrush",
-                relevanceScore: 0.5,
-                keywords: ["theme", "color", "appearance"],
-                parameters: [
-                    ActionParameter(
-                        id: "theme",
-                        label: "Theme",
-                        type: .selection([
-                            ParameterOption(id: "light", label: "Light", iconName: "sun.max"),
-                            ParameterOption(id: "dark", label: "Dark", iconName: "moon"),
-                            ParameterOption(id: "auto", label: "Auto", iconName: "circle.lefthalf.filled"),
-                        ]),
-                        isRequired: true
-                    ),
-                ]
-            ),
-            // Action with a dynamic selection parameter
-            MockAction(
-                id: ActionID(module: "mock", name: "focusWindow"),
-                title: "Focus Window",
-                subtitle: "Focus a specific window",
-                iconName: "macwindow",
-                relevanceScore: 0.5,
-                keywords: ["focus", "window", "switch"],
-                parameters: [
-                    ActionParameter(
-                        id: "window",
-                        label: "Select a window",
-                        type: .dynamicSelection(hint: "window"),
-                        isRequired: true
-                    ),
-                ]
-            ),
-        ]
+        actions = Self.fixtureActions
     }
+
+    private static let fixtureActions: [MockAction] = [
+        MockAction(
+            id: ActionID(module: "mock", name: "safari"),
+            title: "Open Safari",
+            subtitle: "Launch Safari browser",
+            iconName: "safari",
+            relevanceScore: 1.0,
+            keywords: ["safari", "browser", "web"]
+        ),
+        MockAction(
+            id: ActionID(module: "mock", name: "calculator"),
+            title: "Calculator",
+            subtitle: "Open Calculator app",
+            iconName: "plus.forwardslash.minus",
+            relevanceScore: 0.9,
+            keywords: ["calculator", "math"]
+        ),
+        MockAction(
+            id: ActionID(module: "mock", name: "notes"),
+            title: "Notes",
+            subtitle: "Open Notes app",
+            iconName: "note.text",
+            relevanceScore: 0.8,
+            keywords: ["notes", "text", "write"]
+        ),
+        MockAction(
+            id: ActionID(module: "mock", name: "terminal"),
+            title: "Terminal",
+            subtitle: "Open Terminal app",
+            iconName: "terminal",
+            relevanceScore: 0.7,
+            keywords: ["terminal", "shell", "command"]
+        ),
+        MockAction(
+            id: ActionID(module: "mock", name: "activity"),
+            title: "Activity Monitor",
+            subtitle: "Open Activity Monitor",
+            iconName: "chart.bar",
+            relevanceScore: 0.6,
+            keywords: ["activity", "monitor", "cpu", "memory"]
+        ),
+        // Action that dismisses on execution
+        MockAction(
+            id: ActionID(module: "mock", name: "showResult"),
+            title: "Show Result",
+            subtitle: "Dismisses the picker",
+            iconName: "checkmark.seal",
+            relevanceScore: 0.55,
+            keywords: ["result", "test"],
+            result: .dismiss
+        ),
+        // Action with a static selection parameter
+        MockAction(
+            id: ActionID(module: "mock", name: "theme"),
+            title: "Set Theme",
+            subtitle: "Change the app theme",
+            iconName: "paintbrush",
+            relevanceScore: 0.5,
+            keywords: ["theme", "color", "appearance"],
+            parameters: [
+                ActionParameter(
+                    id: "theme",
+                    label: "Theme",
+                    type: .selection([
+                        ParameterOption(id: "light", label: "Light", iconName: "sun.max"),
+                        ParameterOption(id: "dark", label: "Dark", iconName: "moon"),
+                        ParameterOption(id: "auto", label: "Auto", iconName: "circle.lefthalf.filled"),
+                    ]),
+                    isRequired: true
+                ),
+            ]
+        ),
+        // Action with a dynamic selection parameter
+        MockAction(
+            id: ActionID(module: "mock", name: "focusWindow"),
+            title: "Focus Window",
+            subtitle: "Focus a specific window",
+            iconName: "macwindow",
+            relevanceScore: 0.5,
+            keywords: ["focus", "window", "switch"],
+            parameters: [
+                ActionParameter(
+                    id: "window",
+                    label: "Select a window",
+                    type: .dynamicSelection(hint: "window"),
+                    isRequired: true
+                ),
+            ]
+        ),
+    ]
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
         guard !query.isEmpty else { return actions }

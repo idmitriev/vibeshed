@@ -250,9 +250,11 @@ actor ThemeModule: ModuleConfigurable {
             },
         ]
     }
+}
 
-    // MARK: - iTerm
+// MARK: - iTerm, GitHub & Presets
 
+extension ThemeModule {
     private func buildITermActions() -> [ThemeAction] {
         [
             ThemeAction(

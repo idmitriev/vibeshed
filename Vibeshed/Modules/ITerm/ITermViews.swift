@@ -24,8 +24,8 @@ struct ITermActionListItemView: View {
             Spacer()
 
             HStack(spacing: 4) {
-                if let isAtPrompt = action.isAtPrompt {
-                    promptIndicator(isAtPrompt)
+                if let shellState = action.shellState {
+                    promptIndicator(shellState == .atPrompt)
                 }
                 if let itemType = action.itermItemType {
                     typeLabel(itemType)
@@ -84,7 +84,8 @@ struct ITermActionPreviewView: View {
                 iconColor: previewColor
             )
 
-            if let isAtPrompt = action.isAtPrompt {
+            if let shellState = action.shellState {
+                let isAtPrompt = shellState == .atPrompt
                 PreviewPill(
                     text: isAtPrompt ? "At shell prompt" : "Running job",
                     icon: isAtPrompt ? "checkmark.circle" : "play.circle",

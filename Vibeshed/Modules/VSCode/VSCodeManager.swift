@@ -36,10 +36,8 @@ enum VSCodeManager {
     ) -> [VSCodeProject] {
         var allVariants = defaultVariants
         if let extra = extraVariants {
-            for (name, dir) in extra {
-                if !allVariants.contains(where: { $0.dir == dir }) {
-                    allVariants.append((name, dir))
-                }
+            for (name, dir) in extra where !allVariants.contains(where: { $0.dir == dir }) {
+                allVariants.append((name, dir))
             }
         }
 

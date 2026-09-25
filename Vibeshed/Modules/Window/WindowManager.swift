@@ -57,16 +57,20 @@ struct WindowManager: Sendable {
         )
     }
 
+    /// The window's AX element; logs and throws `.windowNotFound` when it can't be resolved.
+    private func axElement(for window: WindowInfo, caller: String) throws -> AXUIElement {
+        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
+            let ids = "windowID=\(window.id) pid=\(window.pid)"
+            log.error("\(caller, privacy: .public): could not resolve \(ids, privacy: .public)")
+            throw WindowManagerError.windowNotFound
+        }
+        return axWindow
+    }
+
     // MARK: - Focus Window
 
     func focusWindow(_ window: WindowInfo) throws {
-        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log
-                .error(
-                    "focusWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)"
-                )
-            throw WindowManagerError.windowNotFound
-        }
+        let axWindow = try axElement(for: window, caller: "focusWindow")
         if AXWindowHelper.isMinimized(axWindow) {
             AXWindowHelper.deminiaturize(axWindow)
         }
@@ -79,13 +83,7 @@ struct WindowManager: Sendable {
     // MARK: - Set Frame
 
     func setFrame(_ window: WindowInfo, frame: CGRect) throws {
-        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log
-                .error(
-                    "setFrame: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)"
-                )
-            throw WindowManagerError.windowNotFound
-        }
+        let axWindow = try axElement(for: window, caller: "setFrame")
 
         // Set position first, then size (order matters for anchoring)
         var origin = frame.origin
@@ -110,13 +108,7 @@ struct WindowManager: Sendable {
     // MARK: - Minimize
 
     func minimizeWindow(_ window: WindowInfo) throws {
-        guard let axWindow = AXWindowHelper.resolve(windowID: window.id, pid: window.pid, frame: window.frame) else {
-            log
-                .error(
-                    "minimizeWindow: could not resolve windowID=\(window.id, privacy: .public) pid=\(window.pid, privacy: .public)"
-                )
-            throw WindowManagerError.windowNotFound
-        }
+        let axWindow = try axElement(for: window, caller: "minimizeWindow")
         AXUIElementSetAttributeValue(
             axWindow,
             kAXMinimizedAttribute as CFString,

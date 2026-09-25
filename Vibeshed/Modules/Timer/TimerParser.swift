@@ -14,16 +14,7 @@ enum TimerParser {
            !trimmed.contains("h"), !trimmed.contains("m"),
            !trimmed.contains("s")
         {
-            let minStr = String(trimmed[..<colonIndex])
-            let secStr = String(
-                trimmed[trimmed.index(after: colonIndex)...]
-            )
-            if let mins = Int(minStr), let secs = Int(secStr),
-               mins >= 0, secs >= 0, secs < 60
-            {
-                return TimeInterval(mins * 60 + secs)
-            }
-            return nil
+            return parseMinutesSeconds(trimmed, colonIndex: colonIndex)
         }
 
         // "1h30m", "5m", "90s", "1h"
@@ -34,19 +25,9 @@ enum TimerParser {
         for char in trimmed {
             if char.isNumber || char == "." {
                 current += String(char)
-            } else if char == "h" {
+            } else if let unitSeconds = durationUnits[char] {
                 guard let val = Double(current) else { return nil }
-                total += val * 3600
-                current = ""
-                hasUnit = true
-            } else if char == "m" {
-                guard let val = Double(current) else { return nil }
-                total += val * 60
-                current = ""
-                hasUnit = true
-            } else if char == "s" {
-                guard let val = Double(current) else { return nil }
-                total += val
+                total += val * unitSeconds
                 current = ""
                 hasUnit = true
             } else if !char.isWhitespace {
@@ -62,6 +43,21 @@ enum TimerParser {
 
         guard hasUnit || !current.isEmpty else { return nil }
         return total > 0 ? total : nil
+    }
+
+    /// Seconds per unit letter in compact durations like "1h30m".
+    private static let durationUnits: [Character: TimeInterval] = ["h": 3600, "m": 60, "s": 1]
+
+    /// "1:30" → 90 seconds; nil unless both parts are whole numbers and seconds < 60.
+    private static func parseMinutesSeconds(_ input: String, colonIndex: String.Index) -> TimeInterval? {
+        let minStr = String(input[..<colonIndex])
+        let secStr = String(input[input.index(after: colonIndex)...])
+        guard let mins = Int(minStr), let secs = Int(secStr),
+              mins >= 0, secs >= 0, secs < 60
+        else {
+            return nil
+        }
+        return TimeInterval(mins * 60 + secs)
     }
 
     // MARK: - Time Parsing
@@ -104,20 +100,10 @@ enum TimerParser {
                         )
                     )...]
                 ).trimmingCharacters(in: .whitespaces)
-                if !current.isEmpty, let val = Double(current) {
-                    if rest.hasPrefix("hour") || rest.hasPrefix("hr") {
-                        total += val * 3600
-                    } else if rest.hasPrefix("min") {
-                        total += val * 60
-                    } else if rest.hasPrefix("sec") {
-                        total += val
-                    } else if rest.hasPrefix("h") {
-                        total += val * 3600
-                    } else if rest.hasPrefix("m") {
-                        total += val * 60
-                    } else if rest.hasPrefix("s") {
-                        total += val
-                    }
+                if !current.isEmpty, let val = Double(current),
+                   let unit = relativeUnits.first(where: { rest.hasPrefix($0.prefix) })
+                {
+                    total += val * unit.seconds
                 }
                 break
             }
@@ -130,6 +116,12 @@ enum TimerParser {
 
         return total > 0 ? Date().addingTimeInterval(total) : nil
     }
+
+    /// Unit words for "in 2 hours"-style input, matched by prefix in this order.
+    private static let relativeUnits: [(prefix: String, seconds: TimeInterval)] = [
+        ("hour", 3600), ("hr", 3600), ("min", 60), ("sec", 1),
+        ("h", 3600), ("m", 60), ("s", 1),
+    ]
 
     private static func parseAbsoluteTime(
         _ input: String

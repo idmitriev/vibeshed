@@ -71,14 +71,14 @@ actor MeetingPrepModule: ModuleConfigurable {
             return
         }
 
-        cachedEvents = await CalendarManager.fetchEvents(
+        cachedEvents = await CalendarManager.fetchEvents(.init(
             lookaheadHours: 2,
             lookbehindMinutes: 5,
             excludedCalendars: nil,
             includedCalendars: nil,
             showAllDay: false,
             showDeclined: false
-        )
+        ))
         cacheTimestamp = now
     }
 
@@ -182,23 +182,20 @@ actor MeetingPrepModule: ModuleConfigurable {
         let cfg = config
         let autoJoin = cfg.autoJoinVideo
         let videoURL = meta.videoURL
-        let videoType = meta.videoType
-        let eventTitle = meta.eventTitle
-        let stableID = meta.stableID
 
         return MeetingPrepAction(
-            id: ActionID(module: "meetingPrep", name: "prep.\(stableID)"),
-            title: "Prepare: \(eventTitle)",
+            id: ActionID(module: "meetingPrep", name: "prep.\(meta.stableID)"),
+            title: "Prepare: \(meta.eventTitle)",
             subtitle: "Hide distractions\(videoURL != nil ? " & join call" : "") \u{2022} \(meta.timeLabel)",
             iconName: "clock.badge.checkmark",
             relevanceScore: meta.relevance,
             keywords: buildKeywords(event: event, extra: ["prepare", "meeting", "focus", "prep"]),
             actionType: .prepForMeeting,
-            meetingTitle: eventTitle,
+            meetingTitle: meta.eventTitle,
             startDate: meta.startDate,
             endDate: meta.endDate,
             attendeeNames: meta.attendees,
-            videoLinkType: videoType,
+            videoLinkType: meta.videoType,
             videoURL: videoURL,
             calendarName: meta.calendarTitle,
             calendarColorHex: meta.calendarColorHex
@@ -207,22 +204,17 @@ actor MeetingPrepModule: ModuleConfigurable {
             if autoJoin, let videoURL {
                 DispatchQueue.main.async { CalendarManager.openVideoLink(videoURL) }
             }
-            return await self?.buildPrepResult(
-                hiddenCount: hiddenCount, autoJoin: autoJoin,
-                eventTitle: eventTitle, stableID: stableID,
-                videoURL: videoURL, videoType: videoType
-            ) ?? .dismiss
+            return await self?.buildPrepResult(meta: meta, hiddenCount: hiddenCount, autoJoin: autoJoin) ?? .dismiss
         }
     }
 
-    private func buildPrepResult(
-        hiddenCount: Int, autoJoin: Bool,
-        eventTitle: String, stableID: String,
-        videoURL: URL?, videoType: VideoLinkType?
-    ) -> ActionResult {
+    private func buildPrepResult(meta: EventMeta, hiddenCount: Int, autoJoin: Bool) -> ActionResult {
+        let eventTitle = meta.eventTitle
+        let stableID = meta.stableID
+        let videoType = meta.videoType
         var resultActions: [any Action] = []
 
-        if !autoJoin, let videoURL {
+        if !autoJoin, let videoURL = meta.videoURL {
             resultActions.append(MeetingPrepAction(
                 id: ActionID(module: "meetingPrep", name: "join.\(stableID)"),
                 title: "Join: \(eventTitle)",
@@ -292,9 +284,11 @@ actor MeetingPrepModule: ModuleConfigurable {
             return .dismiss
         }
     }
+}
 
-    // MARK: - Hide Distractions Action
+// MARK: - Hide Distractions Action
 
+extension MeetingPrepModule {
     private func buildHideDistractionsAction() -> MeetingPrepAction {
         let cfg = config
         return MeetingPrepAction(
@@ -391,9 +385,8 @@ actor MeetingPrepModule: ModuleConfigurable {
                 try windowManager.minimizeWindow(window)
                 hiddenIDs.append(window.id)
             } catch {
-                log.warning(
-                    "Failed to minimize window \(window.id, privacy: .public): \(error.localizedDescription, privacy: .public)"
-                )
+                let reason = error.localizedDescription
+                log.warning("Failed to minimize window \(window.id, privacy: .public): \(reason, privacy: .public)")
             }
         }
 

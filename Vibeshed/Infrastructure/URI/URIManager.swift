@@ -129,11 +129,9 @@ final class URIManager {
             return
         }
 
-        for rule in currentConfig.rules {
-            if URLPatternMatcher.matches(url: url, pattern: rule.pattern) {
-                applyRule(rule, for: url)
-                return
-            }
+        if let rule = currentConfig.rules.first(where: { URLPatternMatcher.matches(url: url, pattern: $0.pattern) }) {
+            applyRule(rule, for: url)
+            return
         }
         showBrowserChooser(for: url)
     }
@@ -237,7 +235,7 @@ final class URIManager {
     // MARK: - Browser Chooser
 
     private func showBrowserChooser(for url: URL) {
-        let actions = buildChooserActions(for: url)
+        let actions = BrowserChooserBuilder(url: url, defaultBundleID: resolveDefaultBundleID()).actions()
         if actions.isEmpty {
             Log.uri.warning("No browsers found for chooser, falling back")
             openInDefaultBrowser(url)
@@ -245,91 +243,6 @@ final class URIManager {
         }
         showURLChooser(url, actions)
         Log.uri.info("Showing browser chooser for \(url, privacy: .public)")
-    }
-
-    private func buildChooserActions(for url: URL) -> [any Action] {
-        let installed = BrowserRegistry.all.filter {
-            BrowserRegistry.isInstalled($0.bundleID)
-        }
-        let defaultBundleID = resolveDefaultBundleID()
-        let sorted = installed.sorted { a, b in
-            let aDefault = a.bundleID == defaultBundleID
-            let bDefault = b.bundleID == defaultBundleID
-            if aDefault != bDefault { return aDefault }
-            return a.name < b.name
-        }
-
-        var actions: [any Action] = []
-        var counter = 0
-        for browser in sorted {
-            let isDefault = browser.bundleID == defaultBundleID
-            let profiles = browser.isChromium
-                ? ChromiumProfileDiscovery.discoverProfiles(bundleID: browser.bundleID)
-                : []
-            if profiles.count > 1 {
-                buildProfileActions(
-                    for: url, browser: browser, profiles: profiles,
-                    isDefault: isDefault, counter: &counter, into: &actions
-                )
-            } else {
-                buildSingleAction(
-                    for: url, browser: browser, profile: profiles.first,
-                    isDefault: isDefault, counter: &counter, into: &actions
-                )
-            }
-        }
-        return actions
-    }
-
-    private func buildProfileActions(
-        for url: URL, browser: BrowserEntry,
-        profiles: [ChromiumProfile], isDefault: Bool,
-        counter: inout Int, into actions: inout [any Action]
-    ) {
-        for profile in profiles {
-            let relevance = (isDefault ? 0.95 : 0.8) - Double(counter) * 0.001
-            let bundleID = browser.bundleID
-            let dir = profile.directoryName
-            actions.append(URLChooserAction(
-                id: ActionID(module: "url", name: "open.\(counter)"),
-                title: "\(browser.name) — \(profile.displayName)",
-                subtitle: url.absoluteString,
-                iconName: "globe",
-                relevanceScore: relevance,
-                keywords: [browser.name.lowercased(), profile.displayName.lowercased()],
-                browserBundleID: bundleID,
-                profileDirectory: dir
-            ) { _ in
-                try BrowserRegistry.open(url: url, browser: bundleID, profile: dir)
-                return .dismiss
-            })
-            counter += 1
-        }
-    }
-
-    private func buildSingleAction(
-        for url: URL, browser: BrowserEntry,
-        profile: ChromiumProfile?, isDefault: Bool,
-        counter: inout Int, into actions: inout [any Action]
-    ) {
-        let title = profile.map { "\(browser.name) — \($0.displayName)" } ?? browser.name
-        let relevance = (isDefault ? 0.95 : 0.8) - Double(counter) * 0.001
-        let bundleID = browser.bundleID
-        let dir = profile?.directoryName
-        actions.append(URLChooserAction(
-            id: ActionID(module: "url", name: "open.\(counter)"),
-            title: title,
-            subtitle: url.absoluteString,
-            iconName: "globe",
-            relevanceScore: relevance,
-            keywords: [browser.name.lowercased()],
-            browserBundleID: bundleID,
-            profileDirectory: dir
-        ) { _ in
-            try BrowserRegistry.open(url: url, browser: bundleID, profile: dir)
-            return .dismiss
-        })
-        counter += 1
     }
 
     private func resolveDefaultBundleID() -> String? {
@@ -354,9 +267,11 @@ final class URIManager {
 
         Log.uri.info("URL routing config reloaded with \(self.currentConfig.rules.count, privacy: .public) rule(s)")
     }
+}
 
-    // MARK: - Validation
+// MARK: - Validation
 
+extension URIManager {
     private func validateRules() {
         routingErrors = [:]
         for (index, rule) in currentConfig.rules.enumerated() {
@@ -373,10 +288,8 @@ final class URIManager {
             if rule.browser == nil, rule.action == nil {
                 let message = "Rule must specify either 'browser' or 'action'"
                 routingErrors[key] = message
-                Log.uri
-                    .error(
-                        "Invalid routing rule #\(index, privacy: .public) '\(rule.pattern, privacy: .public)': \(message, privacy: .public)"
-                    )
+                let ruleLabel = "#\(index) '\(rule.pattern)'"
+                Log.uri.error("Invalid routing rule \(ruleLabel, privacy: .public): \(message, privacy: .public)")
                 continue
             }
 
@@ -384,21 +297,20 @@ final class URIManager {
                 let bundleID = BrowserRegistry.resolveBundleID(browser)
                 if !BrowserRegistry.isInstalled(bundleID) {
                     let pat = rule.pattern
+                    let target = "'\(browser)' (bundle: \(bundleID))"
                     Log.uri.warning(
-                        "Browser '\(browser, privacy: .public)' (bundle: \(bundleID, privacy: .public)) not found for rule '\(pat, privacy: .public)'"
+                        "Browser \(target, privacy: .public) not found for rule '\(pat, privacy: .public)'"
                     )
                 }
             }
 
             if let action = rule.action, action != "picker" {
                 let actionID = ActionID(action)
+                let subject = "Action '\(action)' for rule '\(rule.pattern)'"
                 Task { [weak self] in
                     guard let self else { return }
                     if await moduleRegistry.findAction(id: actionID) == nil {
-                        Log.uri
-                            .warning(
-                                "Action '\(action, privacy: .public)' for rule '\(rule.pattern, privacy: .public)' not currently available"
-                            )
+                        Log.uri.warning("\(subject, privacy: .public) not currently available")
                     }
                 }
             }
@@ -462,6 +374,69 @@ final class URIManager {
         } catch {
             Log.uri
                 .error("Action \(actionID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+}
+
+// MARK: - Browser Chooser Rows
+
+/// Builds the browser-chooser rows for a URL: one per installed browser, or one per
+/// profile for a Chromium browser that has several. The default browser sorts first.
+private struct BrowserChooserBuilder {
+    let url: URL
+    let defaultBundleID: String?
+
+    func actions() -> [any Action] {
+        let installed = BrowserRegistry.all.filter {
+            BrowserRegistry.isInstalled($0.bundleID)
+        }
+        let sorted = installed.sorted { lhs, rhs in
+            let lhsDefault = lhs.bundleID == defaultBundleID
+            let rhsDefault = rhs.bundleID == defaultBundleID
+            if lhsDefault != rhsDefault { return lhsDefault }
+            return lhs.name < rhs.name
+        }
+
+        var actions: [any Action] = []
+        for browser in sorted {
+            let profiles = browser.isChromium
+                ? ChromiumProfileDiscovery.discoverProfiles(bundleID: browser.bundleID)
+                : []
+            if profiles.count > 1 {
+                for profile in profiles {
+                    let keywords = [browser.name.lowercased(), profile.displayName.lowercased()]
+                    actions.append(action(for: browser, profile: profile, keywords: keywords, index: actions.count))
+                }
+            } else {
+                let keywords = [browser.name.lowercased()]
+                actions.append(action(for: browser, profile: profiles.first, keywords: keywords, index: actions.count))
+            }
+        }
+        return actions
+    }
+
+    private func action(
+        for browser: BrowserEntry,
+        profile: ChromiumProfile?,
+        keywords: [String],
+        index: Int
+    ) -> URLChooserAction {
+        let isDefault = browser.bundleID == defaultBundleID
+        let url = url
+        let bundleID = browser.bundleID
+        let dir = profile?.directoryName
+        return URLChooserAction(
+            id: ActionID(module: "url", name: "open.\(index)"),
+            title: profile.map { "\(browser.name) — \($0.displayName)" } ?? browser.name,
+            subtitle: url.absoluteString,
+            iconName: "globe",
+            relevanceScore: (isDefault ? 0.95 : 0.8) - Double(index) * 0.001,
+            keywords: keywords,
+            browserBundleID: bundleID,
+            profileDirectory: dir
+        ) { _ in
+            try BrowserRegistry.open(url: url, browser: bundleID, profile: dir)
+            return .dismiss
         }
     }
 }

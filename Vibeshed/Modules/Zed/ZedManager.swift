@@ -107,7 +107,7 @@ enum ZedManager {
         }
 
         var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK, let stmt else {
             log.error("SQLite prepare failed")
             return []
         }
@@ -121,41 +121,51 @@ enum ZedManager {
 
         var workspaces: [ZedWorkspace] = []
         while sqlite3_step(stmt) == SQLITE_ROW {
-            guard let pathsPtr = sqlite3_column_text(stmt, 0) else { continue }
-            let paths = String(cString: pathsPtr)
-            guard !paths.isEmpty else { continue }
-
-            let timestampStr = sqlite3_column_text(stmt, 1)
-                .map { String(cString: $0) }
-            let lastOpened = timestampStr.flatMap {
-                parseTimestamp($0, formatter: formatter, fallback: fallbackFormatter)
-            } ?? .distantPast
-
-            let kind = sqlite3_column_text(stmt, 2).map { String(cString: $0) }
-            let host = sqlite3_column_text(stmt, 3).map { String(cString: $0) }
-            let user = sqlite3_column_text(stmt, 4).map { String(cString: $0) }
-
-            let isRemote = kind != nil
-
-            let remoteHost: String? = if let host {
-                user != nil ? "\(user!)@\(host)" : host
-            } else {
-                nil
+            if let workspace = workspace(from: stmt, formatter: formatter, fallback: fallbackFormatter) {
+                workspaces.append(workspace)
             }
-
-            let name = projectName(from: paths)
-
-            workspaces.append(ZedWorkspace(
-                name: name,
-                path: paths,
-                isRemote: isRemote,
-                remoteHost: remoteHost,
-                lastOpened: lastOpened,
-                isOpen: false
-            ))
         }
 
         return workspaces
+    }
+
+    /// One row of the workspaces query (paths, timestamp, remote kind/host/user).
+    /// Nil when the row has no paths.
+    private static func workspace(
+        from stmt: OpaquePointer,
+        formatter: ISO8601DateFormatter,
+        fallback fallbackFormatter: ISO8601DateFormatter
+    ) -> ZedWorkspace? {
+        guard let pathsPtr = sqlite3_column_text(stmt, 0) else { return nil }
+        let paths = String(cString: pathsPtr)
+        guard !paths.isEmpty else { return nil }
+
+        let timestampStr = sqlite3_column_text(stmt, 1)
+            .map { String(cString: $0) }
+        let lastOpened = timestampStr.flatMap {
+            parseTimestamp($0, formatter: formatter, fallback: fallbackFormatter)
+        } ?? .distantPast
+
+        let kind = sqlite3_column_text(stmt, 2).map { String(cString: $0) }
+        let host = sqlite3_column_text(stmt, 3).map { String(cString: $0) }
+        let user = sqlite3_column_text(stmt, 4).map { String(cString: $0) }
+
+        let isRemote = kind != nil
+
+        let remoteHost: String? = if let host {
+            user != nil ? "\(user!)@\(host)" : host
+        } else {
+            nil
+        }
+
+        return ZedWorkspace(
+            name: projectName(from: paths),
+            path: paths,
+            isRemote: isRemote,
+            remoteHost: remoteHost,
+            lastOpened: lastOpened,
+            isOpen: false
+        )
     }
 
     private static func parseTimestamp(

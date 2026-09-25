@@ -38,30 +38,7 @@ enum FuzzyMatcher {
             guard qIdx < queryChars.count else { break }
             if tChar == queryChars[qIdx] {
                 matchedIndices.append(tIdx)
-
-                // Bonus: match at start of target
-                if tIdx == 0 {
-                    totalScore += 0.2
-                }
-
-                // Bonus: match at start of word (after space, dash, dot, etc.)
-                if tIdx > 0 {
-                    let prevChar = targetChars[tIdx - 1]
-                    if prevChar == " " || prevChar == "-" || prevChar == "." || prevChar == "_" {
-                        totalScore += 0.15
-                    }
-                }
-
-                // Bonus: consecutive match
-                if matchedIndices.count >= 2,
-                   matchedIndices[matchedIndices.count - 1] == matchedIndices[matchedIndices.count - 2] + 1
-                {
-                    totalScore += 0.1
-                }
-
-                // Base score for matching
-                totalScore += 0.05
-
+                addMatchScore(to: &totalScore, at: tIdx, in: targetChars, matchedIndices: matchedIndices)
                 qIdx += 1
             }
         }
@@ -83,6 +60,37 @@ enum FuzzyMatcher {
         let matchedRanges = buildRanges(from: matchedIndices, in: original)
 
         return MatchResult(score: normalizedScore, matchedRanges: matchedRanges)
+    }
+
+    /// Scores one query character matched at `tIdx`; `matchedIndices` already includes it.
+    private static func addMatchScore(
+        to totalScore: inout Double,
+        at tIdx: Int,
+        in targetChars: [Character],
+        matchedIndices: [Int]
+    ) {
+        // Bonus: match at start of target
+        if tIdx == 0 {
+            totalScore += 0.2
+        }
+
+        // Bonus: match at start of word (after space, dash, dot, etc.)
+        if tIdx > 0 {
+            let prevChar = targetChars[tIdx - 1]
+            if prevChar == " " || prevChar == "-" || prevChar == "." || prevChar == "_" {
+                totalScore += 0.15
+            }
+        }
+
+        // Bonus: consecutive match
+        if matchedIndices.count >= 2,
+           matchedIndices[matchedIndices.count - 1] == matchedIndices[matchedIndices.count - 2] + 1
+        {
+            totalScore += 0.1
+        }
+
+        // Base score for matching
+        totalScore += 0.05
     }
 
     /// Precomputed lowercase forms of one action's searchable fields. Built once
@@ -110,22 +118,14 @@ enum FuzzyMatcher {
     /// Returns nil if the action doesn't match at all.
     static func score(
         query: String,
-        title: String,
-        subtitle: String,
-        keywords: [String],
-        relevanceScore: Double,
+        target: ScoreTarget,
         usageBoost: Double
     ) -> (score: Double, titleRanges: [Range<String.Index>])? {
         let queryLower = query.lowercased()
         return score(
             queryLower: queryLower,
             queryChars: Array(queryLower),
-            target: ScoreTarget(
-                title: title,
-                subtitle: subtitle,
-                keywords: keywords,
-                relevanceScore: relevanceScore
-            ),
+            target: target,
             usageBoost: usageBoost
         )
     }
@@ -195,15 +195,15 @@ enum FuzzyMatcher {
         var rangeStartInt = indices[0]
         var rangeEndInt = indices[0]
 
-        for i in 1 ..< indices.count {
-            if indices[i] == rangeEndInt + 1 {
-                rangeEndInt = indices[i]
+        for index in indices.dropFirst() {
+            if index == rangeEndInt + 1 {
+                rangeEndInt = index
             } else {
                 let start = advance(to: rangeStartInt)
                 let end = advance(to: rangeEndInt + 1)
                 ranges.append(start ..< end)
-                rangeStartInt = indices[i]
-                rangeEndInt = indices[i]
+                rangeStartInt = index
+                rangeEndInt = index
             }
         }
 

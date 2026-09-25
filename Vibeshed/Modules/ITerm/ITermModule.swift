@@ -263,7 +263,7 @@ actor ITermModule: ModuleConfigurable {
             sessionPath: session.cwd,
             jobName: session.jobName,
             profileName: session.profileName,
-            isAtPrompt: session.isAtPrompt
+            shellState: session.isAtPrompt ? .atPrompt : .runningJob
         ) { _ in
             try await ITermManager.focusSession(id: sid)
             return .dismiss

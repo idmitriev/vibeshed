@@ -21,8 +21,8 @@ struct ScoringContext: Sendable {
     }
 
     func usageBoost(for actionID: ActionID, recencyWeight: Double = 0.6) -> Double {
-        let r = recencyScore(for: actionID)
-        let f = frequencyScore(for: actionID)
-        return r * recencyWeight + f * (1.0 - recencyWeight)
+        let recency = recencyScore(for: actionID)
+        let frequency = frequencyScore(for: actionID)
+        return recency * recencyWeight + frequency * (1.0 - recencyWeight)
     }
 }

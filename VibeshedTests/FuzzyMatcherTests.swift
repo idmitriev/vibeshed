@@ -52,8 +52,8 @@ final class FuzzyMatcherTests: XCTestCase {
 
     func testScoreEmptyQueryUsesRelevanceAndUsage() {
         let result = FuzzyMatcher.score(
-            query: "", title: "t", subtitle: "s", keywords: [],
-            relevanceScore: 0.5, usageBoost: 0.2
+            query: "", target: .init(title: "t", subtitle: "s", keywords: [], relevanceScore: 0.5),
+            usageBoost: 0.2
         )
         // relevanceScore * 0.4 + usageBoost * 0.6
         XCTAssertEqual(result?.score ?? -1, 0.32, accuracy: acc)
@@ -62,8 +62,8 @@ final class FuzzyMatcherTests: XCTestCase {
 
     func testScoreKeywordOnlyMatch() {
         let result = FuzzyMatcher.score(
-            query: "kw", title: "x", subtitle: "y", keywords: ["kw"],
-            relevanceScore: 0, usageBoost: 0
+            query: "kw", target: .init(title: "x", subtitle: "y", keywords: ["kw"], relevanceScore: 0),
+            usageBoost: 0
         )
         // Only the keyword bonus contributes.
         XCTAssertEqual(result?.score ?? -1, 0.1, accuracy: acc)
@@ -72,16 +72,16 @@ final class FuzzyMatcherTests: XCTestCase {
 
     func testScoreReturnsNilWhenNothingMatches() {
         let result = FuzzyMatcher.score(
-            query: "zzz", title: "a", subtitle: "b", keywords: ["c"],
-            relevanceScore: 0, usageBoost: 0
+            query: "zzz", target: .init(title: "a", subtitle: "b", keywords: ["c"], relevanceScore: 0),
+            usageBoost: 0
         )
         XCTAssertNil(result)
     }
 
     func testScoreTitleMatchPopulatesRanges() {
         let result = FuzzyMatcher.score(
-            query: "set", title: "settings", subtitle: "", keywords: [],
-            relevanceScore: 0, usageBoost: 0
+            query: "set", target: .init(title: "settings", subtitle: "", keywords: [], relevanceScore: 0),
+            usageBoost: 0
         )
         XCTAssertNotNil(result)
         XCTAssertFalse(result?.titleRanges.isEmpty ?? true)
@@ -91,8 +91,8 @@ final class FuzzyMatcherTests: XCTestCase {
     func testScoreIncreasesWithUsageBoost() {
         func score(usage: Double) -> Double {
             FuzzyMatcher.score(
-                query: "set", title: "settings", subtitle: "", keywords: [],
-                relevanceScore: 0, usageBoost: usage
+                query: "set", target: .init(title: "settings", subtitle: "", keywords: [], relevanceScore: 0),
+                usageBoost: usage
             )!.score
         }
         XCTAssertGreaterThan(score(usage: 0.5), score(usage: 0.0))

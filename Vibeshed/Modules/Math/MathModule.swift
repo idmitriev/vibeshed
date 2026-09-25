@@ -114,9 +114,11 @@ actor MathModule: ModuleConfigurable {
                 conv: conv, query: query, config: config
             )
         case let .currencyConversion(value, fromCurrency, toCurrency, converted):
+            let request = CurrencyConverter.ConversionRequest(
+                value: value, fromCurrency: fromCurrency, toCurrency: toCurrency
+            )
             return buildCurrencyAction(
-                value: value, fromCurrency: fromCurrency,
-                toCurrency: toCurrency, converted: converted,
+                request: request, converted: converted,
                 query: query, config: config
             )
         case let .percentage(pctValue, ofValue, pctResult):
@@ -200,10 +202,12 @@ actor MathModule: ModuleConfigurable {
     }
 
     private func buildCurrencyAction(
-        value: Double, fromCurrency: String,
-        toCurrency: String, converted: Double,
+        request: CurrencyConverter.ConversionRequest, converted: Double,
         query: String, config: MathConfig
     ) -> MathAction {
+        let value = request.value
+        let fromCurrency = request.fromCurrency
+        let toCurrency = request.toCurrency
         let copyOnSelect = config.copyOnSelect
         let formattedResult = MathParser.formatNumber(converted, decimalPlaces: 2)
         let formattedValue = MathParser.formatNumber(value, decimalPlaces: 2)

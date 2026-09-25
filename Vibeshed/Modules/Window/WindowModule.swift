@@ -2,19 +2,9 @@ import AppKit
 import Foundation
 import OSLog
 
-// MARK: - Helper Types
-
-private struct TileFunctions: Sendable {
-    let primary: @Sendable (CGRect, PaddingConfig) -> CGRect
-    let opposite: @Sendable (CGRect, PaddingConfig) -> CGRect
-}
-
-private struct OppositeTileInfo {
-    let name: String
-    let icon: String
-}
-
-private struct TileActionMetadata {
+/// Display fields for one generated window action (cycle, tile, resize). Internal
+/// because the tile actions live in WindowModule+TileActions.swift.
+struct WindowActionMetadata {
     let id: String
     let title: String
     let subtitle: String
@@ -47,9 +37,8 @@ actor WindowModule: ModuleConfigurable {
 
     func configDidUpdate(_ config: WindowConfig) async {
         self.config = config
-        log.debug(
-            "Config updated: \(config.horizontalStops.count, privacy: .public) h-stops, \(config.verticalStops.count, privacy: .public) v-stops"
-        )
+        let stops = "\(config.horizontalStops.count) h-stops, \(config.verticalStops.count) v-stops"
+        log.debug("Config updated: \(stops, privacy: .public)")
     }
 
     static func validate(_ config: WindowConfig) -> ConfigValidationResult {
@@ -142,43 +131,56 @@ actor WindowModule: ModuleConfigurable {
     }
 
     private func buildCycleActions(mgr: WindowManager, cfg: WindowConfig) -> [WindowAction] {
-        [
+        let horizontalKeywords = ["cycle", "horizontal", "resize", "size"]
+        let verticalKeywords = ["cycle", "vertical", "resize", "size"]
+        return [
             makeCycleAction(
-                id: "cycleLeft", title: "Cycle Width (Left)",
-                subtitle: "Cycle through width stops anchored to left edge",
-                icon: "rectangle.lefthalf.inset.filled.arrow.left",
+                meta: WindowActionMetadata(
+                    id: "cycleLeft", title: "Cycle Width (Left)",
+                    subtitle: "Cycle through width stops anchored to left edge",
+                    icon: "rectangle.lefthalf.inset.filled.arrow.left",
+                    keywords: horizontalKeywords
+                ),
                 anchor: Anchor.left, horizontal: true, mgr: mgr, cfg: cfg
             ),
             makeCycleAction(
-                id: "cycleRight", title: "Cycle Width (Right)",
-                subtitle: "Cycle through width stops anchored to right edge",
-                icon: "rectangle.righthalf.inset.filled.arrow.right",
+                meta: WindowActionMetadata(
+                    id: "cycleRight", title: "Cycle Width (Right)",
+                    subtitle: "Cycle through width stops anchored to right edge",
+                    icon: "rectangle.righthalf.inset.filled.arrow.right",
+                    keywords: horizontalKeywords
+                ),
                 anchor: Anchor.right, horizontal: true, mgr: mgr, cfg: cfg
             ),
             makeCycleAction(
-                id: "cycleTop", title: "Cycle Height (Top)",
-                subtitle: "Cycle through height stops anchored to top edge",
-                icon: "rectangle.tophalf.inset.filled",
+                meta: WindowActionMetadata(
+                    id: "cycleTop", title: "Cycle Height (Top)",
+                    subtitle: "Cycle through height stops anchored to top edge",
+                    icon: "rectangle.tophalf.inset.filled",
+                    keywords: verticalKeywords
+                ),
                 anchor: Anchor.top, horizontal: false, mgr: mgr, cfg: cfg
             ),
             makeCycleAction(
-                id: "cycleBottom", title: "Cycle Height (Bottom)",
-                subtitle: "Cycle through height stops anchored to bottom edge",
-                icon: "rectangle.bottomhalf.inset.filled",
+                meta: WindowActionMetadata(
+                    id: "cycleBottom", title: "Cycle Height (Bottom)",
+                    subtitle: "Cycle through height stops anchored to bottom edge",
+                    icon: "rectangle.bottomhalf.inset.filled",
+                    keywords: verticalKeywords
+                ),
                 anchor: Anchor.bottom, horizontal: false, mgr: mgr, cfg: cfg
             ),
         ]
     }
 
     private func makeCycleAction(
-        id: String, title: String, subtitle: String, icon: String,
+        meta: WindowActionMetadata,
         anchor: Anchor, horizontal: Bool,
         mgr: WindowManager, cfg: WindowConfig
     ) -> WindowAction {
-        let keywords = ["cycle", horizontal ? "horizontal" : "vertical", "resize", "size"]
-        return WindowAction(
-            id: ActionID(module: "window", name: id),
-            title: title, subtitle: subtitle, iconName: icon, keywords: keywords
+        WindowAction(
+            id: ActionID(module: "window", name: meta.id),
+            title: meta.title, subtitle: meta.subtitle, iconName: meta.icon, keywords: meta.keywords
         ) { _ in
             guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
                 return .showResult(title: "No Window", body: "No focused window found")
@@ -205,7 +207,11 @@ actor WindowModule: ModuleConfigurable {
             return .dismiss
         }
     }
+}
 
+// MARK: - Position Actions
+
+extension WindowModule {
     private func buildPositionActions(mgr: WindowManager, cfg: WindowConfig) -> [WindowAction] {
         [
             WindowAction(
@@ -244,6 +250,14 @@ actor WindowModule: ModuleConfigurable {
                 try mgr.setFrame(focused, frame: newFrame)
                 return .dismiss
             },
+        ] + buildMinimizeActions(mgr: mgr) + [
+            makeFocusWindowAction(mgr: mgr),
+            makeToggleMaximizeAction(mgr: mgr, cfg: cfg),
+        ]
+    }
+
+    private func buildMinimizeActions(mgr: WindowManager) -> [WindowAction] {
+        [
             WindowAction(
                 id: ActionID(module: "window", name: "minimize"),
                 title: "Minimize Window",
@@ -270,8 +284,6 @@ actor WindowModule: ModuleConfigurable {
                 }
                 return .dismiss
             },
-            makeFocusWindowAction(mgr: mgr),
-            makeToggleMaximizeAction(mgr: mgr, cfg: cfg),
         ]
     }
 
@@ -330,140 +342,60 @@ actor WindowModule: ModuleConfigurable {
             return .dismiss
         }
     }
+}
 
-    private func buildTileActions(mgr: WindowManager, cfg: WindowConfig) -> [WindowAction] {
-        [
-            makeTileAction(
-                meta: TileActionMetadata(
-                    id: "tileLeft", title: "Tile Left Half",
-                    subtitle: "Move focused window to left half of screen",
-                    icon: "rectangle.lefthalf.filled",
-                    keywords: ["tile", "left", "half", "split"]
-                ),
-                tileFuncs: TileFunctions(primary: WindowSizing.tileLeft, opposite: WindowSizing.tileRight),
-                opposite: OppositeTileInfo(name: "Right", icon: "rectangle.righthalf.filled"),
-                mgr: mgr, cfg: cfg
-            ),
-            makeTileAction(
-                meta: TileActionMetadata(
-                    id: "tileRight", title: "Tile Right Half",
-                    subtitle: "Move focused window to right half of screen",
-                    icon: "rectangle.righthalf.filled",
-                    keywords: ["tile", "right", "half", "split"]
-                ),
-                tileFuncs: TileFunctions(primary: WindowSizing.tileRight, opposite: WindowSizing.tileLeft),
-                opposite: OppositeTileInfo(name: "Left", icon: "rectangle.lefthalf.filled"),
-                mgr: mgr, cfg: cfg
-            ),
-            makeTileAction(
-                meta: TileActionMetadata(
-                    id: "tileTop", title: "Tile Top Half",
-                    subtitle: "Move focused window to top half of screen",
-                    icon: "rectangle.tophalf.filled",
-                    keywords: ["tile", "top", "half", "split"]
-                ),
-                tileFuncs: TileFunctions(primary: WindowSizing.tileTop, opposite: WindowSizing.tileBottom),
-                opposite: OppositeTileInfo(name: "Bottom", icon: "rectangle.bottomhalf.filled"),
-                mgr: mgr, cfg: cfg
-            ),
-            makeTileAction(
-                meta: TileActionMetadata(
-                    id: "tileBottom", title: "Tile Bottom Half",
-                    subtitle: "Move focused window to bottom half of screen",
-                    icon: "rectangle.bottomhalf.filled",
-                    keywords: ["tile", "bottom", "half", "split"]
-                ),
-                tileFuncs: TileFunctions(primary: WindowSizing.tileBottom, opposite: WindowSizing.tileTop),
-                opposite: OppositeTileInfo(name: "Top", icon: "rectangle.tophalf.filled"),
-                mgr: mgr, cfg: cfg
-            ),
-        ]
-    }
+// MARK: - Resize Actions
 
-    private func makeTileAction(
-        meta: TileActionMetadata,
-        tileFuncs: TileFunctions,
-        opposite: OppositeTileInfo,
-        mgr: WindowManager, cfg: WindowConfig
-    ) -> WindowAction {
-        WindowAction(
-            id: ActionID(module: "window", name: meta.id),
-            title: meta.title, subtitle: meta.subtitle, iconName: meta.icon, keywords: meta.keywords
-        ) { _ in
-            guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
-                return .showResult(title: "No Window", body: "No focused window found")
-            }
-            let newFrame = tileFuncs.primary(focused.screenFrame, cfg.padding)
-            try mgr.setFrame(focused, frame: newFrame)
-
-            let windows = await MainActor.run {
-                mgr.listWindows(includeMinimized: false)
-            }
-            let others = windows.filter { $0.id != focused.id }
-            guard !others.isEmpty else { return .dismiss }
-
-            let tileActions = others.map { window in
-                WindowAction(
-                    id: ActionID(module: "window", name: "tile\(opposite.name)For.\(window.id)"),
-                    title: "Tile \(opposite.name): \(window.displayLabel)",
-                    subtitle: "Move to \(opposite.name.lowercased()) half of screen",
-                    iconName: opposite.icon,
-                    relevanceScore: 0.9,
-                    keywords: ["tile", opposite.name.lowercased()],
-                    windowID: window.id,
-                    appBundleID: window.bundleID
-                ) { _ in
-                    let oppFrame = tileFuncs.opposite(focused.screenFrame, cfg.padding)
-                    try mgr.setFrame(window, frame: oppFrame)
-                    try mgr.focusWindow(window)
-                    return .dismiss
-                }
-            }
-            return .pushActions(tileActions)
-        }
-    }
-
+extension WindowModule {
     private func buildResizeActions(mgr: WindowManager, cfg: WindowConfig) -> [WindowAction] {
         [
             makeResizeAction(
-                id: "enlargeWidth", title: "Enlarge Width",
-                subtitle: "Increase window width while keeping anchor position",
-                icon: "arrow.right.and.line.vertical.and.arrow.left",
-                keywords: ["enlarge", "width", "expand", "horizontal", "grow", "bigger"],
+                meta: WindowActionMetadata(
+                    id: "enlargeWidth", title: "Enlarge Width",
+                    subtitle: "Increase window width while keeping anchor position",
+                    icon: "arrow.right.and.line.vertical.and.arrow.left",
+                    keywords: ["enlarge", "width", "expand", "horizontal", "grow", "bigger"]
+                ),
                 resizeFunc: WindowSizing.enlargeHorizontal, mgr: mgr, cfg: cfg
             ),
             makeResizeAction(
-                id: "shrinkWidth", title: "Shrink Width",
-                subtitle: "Decrease window width while keeping anchor position",
-                icon: "arrow.left.and.line.vertical.and.arrow.right",
-                keywords: ["shrink", "width", "reduce", "horizontal", "smaller", "narrow"],
+                meta: WindowActionMetadata(
+                    id: "shrinkWidth", title: "Shrink Width",
+                    subtitle: "Decrease window width while keeping anchor position",
+                    icon: "arrow.left.and.line.vertical.and.arrow.right",
+                    keywords: ["shrink", "width", "reduce", "horizontal", "smaller", "narrow"]
+                ),
                 resizeFunc: WindowSizing.shrinkHorizontal, mgr: mgr, cfg: cfg
             ),
             makeResizeAction(
-                id: "enlargeHeight", title: "Enlarge Height",
-                subtitle: "Increase window height while keeping anchor position",
-                icon: "arrow.down.and.line.horizontal.and.arrow.up",
-                keywords: ["enlarge", "height", "expand", "vertical", "grow", "bigger", "taller"],
+                meta: WindowActionMetadata(
+                    id: "enlargeHeight", title: "Enlarge Height",
+                    subtitle: "Increase window height while keeping anchor position",
+                    icon: "arrow.down.and.line.horizontal.and.arrow.up",
+                    keywords: ["enlarge", "height", "expand", "vertical", "grow", "bigger", "taller"]
+                ),
                 resizeFunc: WindowSizing.enlargeVertical, mgr: mgr, cfg: cfg
             ),
             makeResizeAction(
-                id: "shrinkHeight", title: "Shrink Height",
-                subtitle: "Decrease window height while keeping anchor position",
-                icon: "arrow.up.and.line.horizontal.and.arrow.down",
-                keywords: ["shrink", "height", "reduce", "vertical", "smaller", "shorter"],
+                meta: WindowActionMetadata(
+                    id: "shrinkHeight", title: "Shrink Height",
+                    subtitle: "Decrease window height while keeping anchor position",
+                    icon: "arrow.up.and.line.horizontal.and.arrow.down",
+                    keywords: ["shrink", "height", "reduce", "vertical", "smaller", "shorter"]
+                ),
                 resizeFunc: WindowSizing.shrinkVertical, mgr: mgr, cfg: cfg
             ),
         ]
     }
 
     private func makeResizeAction(
-        id: String, title: String, subtitle: String, icon: String, keywords: [String],
+        meta: WindowActionMetadata,
         resizeFunc: @escaping @Sendable (CGRect, CGRect, PaddingConfig, SizeStop) -> CGRect,
         mgr: WindowManager, cfg: WindowConfig
     ) -> WindowAction {
         WindowAction(
-            id: ActionID(module: "window", name: id),
-            title: title, subtitle: subtitle, iconName: icon, keywords: keywords
+            id: ActionID(module: "window", name: meta.id),
+            title: meta.title, subtitle: meta.subtitle, iconName: meta.icon, keywords: meta.keywords
         ) { _ in
             guard let focused = await MainActor.run(body: { mgr.getFocusedWindow() }) else {
                 return .showResult(title: "No Window", body: "No focused window found")
