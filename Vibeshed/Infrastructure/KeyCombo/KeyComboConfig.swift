@@ -49,3 +49,17 @@ struct ResolvedRemap: Sendable, Equatable {
     let rawFrom: String
     let rawTo: String
 }
+
+/// Every valid keybinding entry, grouped by trigger kind — what `KeyComboManager`
+/// hands `EventTapHandler.updateBindings` on each rebind.
+struct ResolvedBindingSet: Sendable {
+    var standard: [ResolvedBinding] = []
+    var capsLock: [ResolvedBinding] = []
+    var space: [ResolvedBinding] = []
+    var tab: [ResolvedBinding] = []
+    var mouse: [ResolvedBinding] = []
+    /// Standard-combo remaps.
+    var remaps: [ResolvedRemap] = []
+    var tabRemaps: [ResolvedRemap] = []
+    var mouseRemaps: [ResolvedMouseRemap] = []
+}

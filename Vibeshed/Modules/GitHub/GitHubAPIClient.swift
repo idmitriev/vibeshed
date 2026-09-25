@@ -104,13 +104,13 @@ final class GitHubAPIClient: @unchecked Sendable {
         defaultOwner: String?,
         limit: Int
     ) async throws -> [GitHubRepo] {
-        let q = scopedQuery(query, defaultOwner: defaultOwner)
+        let searchQuery = scopedQuery(query, defaultOwner: defaultOwner)
         let request = try makeRequest(
             path: "/search/repositories",
-            queryItems: [("q", q), ("per_page", "\(limit)"), ("sort", "stars")]
+            queryItems: [("q", searchQuery), ("per_page", "\(limit)"), ("sort", "stars")]
         )
         let json = try await performRequest(request)
-        return parseRepos(json)
+        return GitHubResponseParser.parseRepos(json)
     }
 
     func searchIssues(
@@ -118,13 +118,13 @@ final class GitHubAPIClient: @unchecked Sendable {
         defaultOwner: String?,
         limit: Int
     ) async throws -> [GitHubIssue] {
-        let q = scopedQuery(query, defaultOwner: defaultOwner) + " is:issue"
+        let searchQuery = scopedQuery(query, defaultOwner: defaultOwner) + " is:issue"
         let request = try makeRequest(
             path: "/search/issues",
-            queryItems: [("q", q), ("per_page", "\(limit)"), ("sort", "updated")]
+            queryItems: [("q", searchQuery), ("per_page", "\(limit)"), ("sort", "updated")]
         )
         let json = try await performRequest(request)
-        return parseIssues(json)
+        return GitHubResponseParser.parseIssues(json)
     }
 
     func searchPRs(
@@ -132,13 +132,13 @@ final class GitHubAPIClient: @unchecked Sendable {
         defaultOwner: String?,
         limit: Int
     ) async throws -> [GitHubPR] {
-        let q = scopedQuery(query, defaultOwner: defaultOwner) + " is:pr"
+        let searchQuery = scopedQuery(query, defaultOwner: defaultOwner) + " is:pr"
         let request = try makeRequest(
             path: "/search/issues",
-            queryItems: [("q", q), ("per_page", "\(limit)"), ("sort", "updated")]
+            queryItems: [("q", searchQuery), ("per_page", "\(limit)"), ("sort", "updated")]
         )
         let json = try await performRequest(request)
-        return parsePRs(json)
+        return GitHubResponseParser.parsePRs(json)
     }
 
     func listRepos(owner: String?, limit: Int) async throws -> [GitHubRepo] {
@@ -169,7 +169,7 @@ final class GitHubAPIClient: @unchecked Sendable {
             queryItems: [("per_page", "\(limit)"), ("sort", "pushed")]
         )
         let json = try await performRequest(request)
-        return parseRepoList(json)
+        return GitHubResponseParser.parseRepoList(json)
     }
 
     func listNotifications(limit: Int) async throws -> [GitHubNotification] {
@@ -182,7 +182,7 @@ final class GitHubAPIClient: @unchecked Sendable {
             queryItems: [("per_page", "\(limit)"), ("all", "false")]
         )
         let json = try await performRequest(request)
-        return parseNotifications(json)
+        return GitHubResponseParser.parseNotifications(json)
     }
 
     // MARK: - Private: Request Building
@@ -232,10 +232,9 @@ final class GitHubAPIClient: @unchecked Sendable {
     }
 
     private func performRequest(_ request: URLRequest) async throws -> Any {
-        log
-            .debug(
-                "GitHub API: \(request.httpMethod ?? "GET", privacy: .public) \(request.url?.path ?? "", privacy: .public)"
-            )
+        let method = request.httpMethod ?? "GET"
+        let path = request.url?.path ?? ""
+        log.debug("GitHub API: \(method, privacy: .public) \(path, privacy: .public)")
         let data: Data
         let response: URLResponse
         do {
@@ -302,26 +301,29 @@ final class GitHubAPIClient: @unchecked Sendable {
         }
         return message
     }
+}
 
-    // MARK: - Private: Parsing
+// MARK: - Parsing
 
-    private func parseSearchItems(_ json: Any) -> [[String: Any]] {
+/// Maps GitHub REST JSON onto the response structs, skipping items that lack required fields.
+private enum GitHubResponseParser {
+    private static func parseSearchItems(_ json: Any) -> [[String: Any]] {
         guard let dict = json as? [String: Any],
               let items = dict["items"] as? [[String: Any]]
         else { return [] }
         return items
     }
 
-    private func parseRepos(_ json: Any) -> [GitHubRepo] {
+    static func parseRepos(_ json: Any) -> [GitHubRepo] {
         parseSearchItems(json).compactMap(parseRepo)
     }
 
-    private func parseRepoList(_ json: Any) -> [GitHubRepo] {
+    static func parseRepoList(_ json: Any) -> [GitHubRepo] {
         guard let items = json as? [[String: Any]] else { return [] }
         return items.compactMap(parseRepo)
     }
 
-    private func parseRepo(_ item: [String: Any]) -> GitHubRepo? {
+    private static func parseRepo(_ item: [String: Any]) -> GitHubRepo? {
         guard let id = item["id"] as? Int,
               let fullName = item["full_name"] as? String,
               let htmlURL = item["html_url"] as? String
@@ -339,11 +341,11 @@ final class GitHubAPIClient: @unchecked Sendable {
         )
     }
 
-    private func parseIssues(_ json: Any) -> [GitHubIssue] {
+    static func parseIssues(_ json: Any) -> [GitHubIssue] {
         parseSearchItems(json).compactMap(parseIssue)
     }
 
-    private func parseIssue(_ item: [String: Any]) -> GitHubIssue? {
+    private static func parseIssue(_ item: [String: Any]) -> GitHubIssue? {
         guard let id = item["id"] as? Int,
               let number = item["number"] as? Int,
               let title = item["title"] as? String,
@@ -368,11 +370,11 @@ final class GitHubAPIClient: @unchecked Sendable {
         )
     }
 
-    private func parsePRs(_ json: Any) -> [GitHubPR] {
+    static func parsePRs(_ json: Any) -> [GitHubPR] {
         parseSearchItems(json).compactMap(parsePR)
     }
 
-    private func parsePR(_ item: [String: Any]) -> GitHubPR? {
+    private static func parsePR(_ item: [String: Any]) -> GitHubPR? {
         guard let id = item["id"] as? Int,
               let number = item["number"] as? Int,
               let title = item["title"] as? String,
@@ -397,12 +399,12 @@ final class GitHubAPIClient: @unchecked Sendable {
         )
     }
 
-    private func parseNotifications(_ json: Any) -> [GitHubNotification] {
+    static func parseNotifications(_ json: Any) -> [GitHubNotification] {
         guard let items = json as? [[String: Any]] else { return [] }
         return items.compactMap(parseNotification)
     }
 
-    private func parseNotification(
+    private static func parseNotification(
         _ item: [String: Any]
     ) -> GitHubNotification? {
         guard let id = item["id"] as? String,
@@ -427,9 +429,9 @@ final class GitHubAPIClient: @unchecked Sendable {
         )
     }
 
-    // MARK: - Private: Helpers
+    // MARK: - Helpers
 
-    private func repoFullName(from item: [String: Any]) -> String {
+    private static func repoFullName(from item: [String: Any]) -> String {
         if let repoURL = item["repository_url"] as? String {
             let prefix = "https://api.github.com/repos/"
             if repoURL.hasPrefix(prefix) {
@@ -439,7 +441,7 @@ final class GitHubAPIClient: @unchecked Sendable {
         return ""
     }
 
-    private func reconstructHTMLURL(
+    private static func reconstructHTMLURL(
         from apiURL: String?,
         repoFullName: String
     ) -> String? {

@@ -24,10 +24,8 @@ actor GitHubModule: ModuleConfigurable {
         self.context = context
         updateAPIClient()
         await fetchRepos()
-        log
-            .info(
-                "GitHub module initialized (token: \(self.config.token != nil ? "configured" : "none", privacy: .public))"
-            )
+        let tokenState = config.token != nil ? "configured" : "none"
+        log.info("GitHub module initialized (token: \(tokenState, privacy: .public))")
     }
 
     func configDidUpdate(_ config: GitHubConfig) async {
@@ -61,19 +59,17 @@ actor GitHubModule: ModuleConfigurable {
             errors.append("maxResults must be between 1 and 100")
         }
         let validTypes: Set<String> = ["repo", "issue", "pr"]
-        for searchType in config.searchTypes {
-            if !validTypes.contains(searchType) {
-                let valid = validTypes.sorted().joined(separator: ", ")
-                errors.append(
-                    "Invalid search type: '\(searchType)'. Valid: \(valid)"
-                )
-            }
+        for searchType in config.searchTypes where !validTypes.contains(searchType) {
+            let valid = validTypes.sorted().joined(separator: ", ")
+            errors.append(
+                "Invalid search type: '\(searchType)'. Valid: \(valid)"
+            )
         }
         if let owners = config.repoOwners {
-            for (index, owner) in owners.enumerated() {
-                if owner.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    errors.append("repoOwners[\(index)] must not be empty")
-                }
+            for (index, owner) in owners.enumerated()
+                where owner.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            {
+                errors.append("repoOwners[\(index)] must not be empty")
             }
             if Set(owners).count < owners.count {
                 errors.append("repoOwners contains duplicate entries")
@@ -129,18 +125,14 @@ actor GitHubModule: ModuleConfigurable {
                 }
             } catch {
                 let label = owner ?? "authenticated-user"
-                log
-                    .error(
-                        "Failed to fetch repos for '\(label, privacy: .public)': \(error.localizedDescription, privacy: .public)"
-                    )
+                let reason = error.localizedDescription
+                log.error("Failed to fetch repos for '\(label, privacy: .public)': \(reason, privacy: .public)")
             }
         }
 
         cachedRepos = Array(allRepos.prefix(config.maxResults))
-        log
-            .info(
-                "Fetched \(self.cachedRepos.count, privacy: .public) repos from \(owners.count, privacy: .public) owner(s)"
-            )
+        let repoCount = cachedRepos.count
+        log.info("Fetched \(repoCount, privacy: .public) repos from \(owners.count, privacy: .public) owner(s)")
     }
 
     private func actionName(_ id: ActionID) -> String {
@@ -178,9 +170,11 @@ actor GitHubModule: ModuleConfigurable {
 
         return actions
     }
+}
 
-    // MARK: - Search Actions
+// MARK: - Search Actions
 
+extension GitHubModule {
     private func buildSearchAction() -> GitHubAction {
         let client = apiClient
         let config = self.config
@@ -211,36 +205,9 @@ actor GitHubModule: ModuleConfigurable {
                     body: "Please enter a search query"
                 )
             }
-            let owner = config.defaultOwner
-            let typeCount = max(1, config.searchTypes.count)
-            let limit = max(1, config.maxResults / typeCount)
-            var resultActions: [GitHubAction] = []
-
-            if config.searchTypes.contains("repo") {
-                let repos = try await client.searchRepos(
-                    query: query, defaultOwner: owner, limit: limit
-                )
-                resultActions.append(
-                    contentsOf: Self.buildRepoResults(repos, eventBus: eventBus)
-                )
-            }
-            if config.searchTypes.contains("issue") {
-                let issues = try await client.searchIssues(
-                    query: query, defaultOwner: owner, limit: limit
-                )
-                resultActions.append(
-                    contentsOf: Self.buildIssueResults(issues, eventBus: eventBus)
-                )
-            }
-            if config.searchTypes.contains("pr") {
-                let prs = try await client.searchPRs(
-                    query: query, defaultOwner: owner, limit: limit
-                )
-                resultActions.append(
-                    contentsOf: Self.buildPRResults(prs, eventBus: eventBus)
-                )
-            }
-
+            let resultActions = try await Self.searchAllTypes(
+                query: query, client: client, config: config, eventBus: eventBus
+            )
             if resultActions.isEmpty {
                 return .showResult(
                     title: "No Results",
@@ -249,6 +216,45 @@ actor GitHubModule: ModuleConfigurable {
             }
             return .pushActions(resultActions)
         }
+    }
+
+    /// Runs one search per configured type, splitting `maxResults` evenly between them.
+    private static func searchAllTypes(
+        query: String,
+        client: GitHubAPIClient,
+        config: GitHubConfig,
+        eventBus: EventBus?
+    ) async throws -> [GitHubAction] {
+        let owner = config.defaultOwner
+        let typeCount = max(1, config.searchTypes.count)
+        let limit = max(1, config.maxResults / typeCount)
+        var resultActions: [GitHubAction] = []
+
+        if config.searchTypes.contains("repo") {
+            let repos = try await client.searchRepos(
+                query: query, defaultOwner: owner, limit: limit
+            )
+            resultActions.append(
+                contentsOf: buildRepoResults(repos, eventBus: eventBus)
+            )
+        }
+        if config.searchTypes.contains("issue") {
+            let issues = try await client.searchIssues(
+                query: query, defaultOwner: owner, limit: limit
+            )
+            resultActions.append(
+                contentsOf: buildIssueResults(issues, eventBus: eventBus)
+            )
+        }
+        if config.searchTypes.contains("pr") {
+            let prs = try await client.searchPRs(
+                query: query, defaultOwner: owner, limit: limit
+            )
+            resultActions.append(
+                contentsOf: buildPRResults(prs, eventBus: eventBus)
+            )
+        }
+        return resultActions
     }
 
     private func buildSearchReposAction() -> GitHubAction {
@@ -409,209 +415,6 @@ actor GitHubModule: ModuleConfigurable {
                 )
             }
             return .pushActions(results)
-        }
-    }
-}
-
-// MARK: - Result Builders & Helpers
-
-extension GitHubModule {
-    static func buildRepoResults(
-        _ repos: [GitHubRepo],
-        eventBus: EventBus?
-    ) -> [GitHubAction] {
-        repos.enumerated().map { index, repo in
-            let subtitle = repoSubtitle(repo)
-            return GitHubAction(
-                id: ActionID(
-                    module: "github",
-                    name: "result.repo.\(repo.id)"
-                ),
-                title: repo.fullName,
-                subtitle: subtitle,
-                iconName: "folder",
-                relevanceScore: rankedScore(index: index, step: 0.03),
-                keywords: [
-                    "repo", repo.fullName.lowercased(),
-                    repo.language?.lowercased(),
-                ].compactMap { $0 },
-                avatarURL: repo.avatarURL,
-                githubItemType: .repo,
-                htmlURL: repo.htmlURL,
-                itemDescription: repo.description,
-                repoStars: repo.stars,
-                repoLanguage: repo.language
-            ) { [eventBus] _ in
-                await openURL(repo.htmlURL, via: eventBus)
-                return .dismiss
-            }
-        }
-    }
-
-    static func buildIssueResults(
-        _ issues: [GitHubIssue],
-        eventBus: EventBus?
-    ) -> [GitHubAction] {
-        issues.enumerated().map { index, issue in
-            let (icon, color) = issueStateVisuals(issue.state)
-            return GitHubAction(
-                id: ActionID(
-                    module: "github",
-                    name: "result.issue.\(issue.id)"
-                ),
-                title: "#\(issue.number) \(issue.title)",
-                subtitle: "\(issue.repoFullName) by \(issue.author)",
-                iconName: "exclamationmark.circle",
-                relevanceScore: rankedScore(index: index, step: 0.03),
-                keywords: [
-                    "issue", issue.title.lowercased(),
-                    issue.repoFullName.lowercased(),
-                ],
-                avatarURL: issue.avatarURL,
-                githubItemType: .issue,
-                htmlURL: issue.htmlURL,
-                stateIcon: icon,
-                stateColor: color,
-                itemDescription: issue.body.map { String($0.prefix(200)) },
-                labels: issue.labels.isEmpty ? nil : issue.labels,
-                createdAt: issue.createdAt
-            ) { [eventBus] _ in
-                await openURL(issue.htmlURL, via: eventBus)
-                return .dismiss
-            }
-        }
-    }
-
-    static func buildPRResults(
-        _ prs: [GitHubPR],
-        eventBus: EventBus?
-    ) -> [GitHubAction] {
-        prs.enumerated().map { index, pr in
-            let (icon, color) = prStateVisuals(pr)
-            return GitHubAction(
-                id: ActionID(
-                    module: "github",
-                    name: "result.pr.\(pr.id)"
-                ),
-                title: "#\(pr.number) \(pr.title)",
-                subtitle: "\(pr.repoFullName) by \(pr.author)",
-                iconName: "arrow.triangle.pull",
-                relevanceScore: rankedScore(index: index, step: 0.03),
-                keywords: [
-                    "pr", "pull", pr.title.lowercased(),
-                    pr.repoFullName.lowercased(),
-                ],
-                avatarURL: pr.avatarURL,
-                githubItemType: .pr,
-                htmlURL: pr.htmlURL,
-                stateIcon: icon,
-                stateColor: color,
-                itemDescription: pr.body.map { String($0.prefix(200)) },
-                createdAt: pr.createdAt
-            ) { [eventBus] _ in
-                await openURL(pr.htmlURL, via: eventBus)
-                return .dismiss
-            }
-        }
-    }
-
-    static func buildNotificationResults(
-        _ notifications: [GitHubNotification],
-        eventBus: EventBus?
-    ) -> [GitHubAction] {
-        notifications.enumerated().map { index, note in
-            let icon = notificationIcon(note.type)
-            return GitHubAction(
-                id: ActionID(
-                    module: "github",
-                    name: "result.notification.\(note.id)"
-                ),
-                title: note.title,
-                subtitle: "\(note.repoFullName) · \(note.reason)",
-                iconName: icon,
-                relevanceScore: rankedScore(index: index, step: 0.03),
-                keywords: [
-                    "notification", note.title.lowercased(),
-                    note.repoFullName.lowercased(),
-                ],
-                githubItemType: .notification,
-                htmlURL: note.htmlURL
-            ) { [eventBus] _ in
-                if let htmlURL = note.htmlURL {
-                    await openURL(htmlURL, via: eventBus)
-                }
-                return .dismiss
-            }
-        }
-    }
-
-    static func openURL(_ urlString: String, via eventBus: EventBus?) async {
-        guard let url = URL(string: urlString) else { return }
-        if let eventBus {
-            await eventBus.publish(.openURL(url))
-        } else {
-            await MainActor.run { _ = NSWorkspace.shared.open(url) }
-        }
-    }
-
-    static func repoSubtitle(_ repo: GitHubRepo) -> String {
-        var parts: [String] = []
-        if let desc = repo.description, !desc.isEmpty {
-            let truncated = desc.prefix(60)
-            parts.append(
-                truncated.count < desc.count
-                    ? "\(truncated)..." : String(truncated)
-            )
-        }
-        if let lang = repo.language {
-            parts.append(lang)
-        }
-        if repo.stars > 0 {
-            parts.append("\(formatCount(repo.stars)) stars")
-        }
-        return parts.joined(separator: " · ")
-    }
-
-    static func formatCount(_ count: Int) -> String {
-        if count >= 1000 {
-            let k = Double(count) / 1000.0
-            return String(format: "%.1fk", k)
-        }
-        return "\(count)"
-    }
-
-    static func issueStateVisuals(
-        _ state: String
-    ) -> (String, Color) {
-        switch state {
-        case "open": ("circle.fill", .green)
-        case "closed": ("checkmark.circle.fill", .purple)
-        default: ("circle", .secondary)
-        }
-    }
-
-    static func prStateVisuals(
-        _ pr: GitHubPR
-    ) -> (String, Color) {
-        if pr.mergedAt != nil {
-            return ("arrow.triangle.merge", .purple)
-        }
-        if pr.state == "closed" {
-            return ("xmark.circle.fill", .red)
-        }
-        if pr.draft {
-            return ("doc", .gray)
-        }
-        return ("arrow.triangle.pull", .green)
-    }
-
-    static func notificationIcon(_ type: String) -> String {
-        switch type {
-        case "PullRequest": "arrow.triangle.pull"
-        case "Issue": "exclamationmark.circle"
-        case "Release": "tag"
-        case "Discussion": "bubble.left.and.bubble.right"
-        default: "bell"
         }
     }
 }

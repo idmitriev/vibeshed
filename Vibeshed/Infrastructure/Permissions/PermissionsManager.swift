@@ -189,8 +189,9 @@ final class PermissionsManager {
         let previous = statuses[permission] ?? false
         statuses[permission] = granted
         if previous != granted {
+            let change = "\(previous) -> \(granted)"
             Log.permissions.info(
-                "Permission \(permission.displayName, privacy: .public) changed: \(previous, privacy: .public) -> \(granted, privacy: .public)"
+                "Permission \(permission.displayName, privacy: .public) changed: \(change, privacy: .public)"
             )
             Task {
                 await eventBus.publish(.permissionChanged(permission, granted: granted))
@@ -199,8 +200,8 @@ final class PermissionsManager {
     }
 
     private var statusSummary: String {
-        Permission.allCases.map { p in
-            "\(p.rawValue)=\(statuses[p] ?? false)"
+        Permission.allCases.map { permission in
+            "\(permission.rawValue)=\(statuses[permission] ?? false)"
         }.joined(separator: ", ")
     }
 }

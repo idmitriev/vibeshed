@@ -36,10 +36,10 @@ struct BrowserManager: Sendable {
                     do {
                         return try await self.listTabs(for: browser.bundleID, browserName: browser.name)
                     } catch {
-                        log
-                            .warning(
-                                "listAllTabs: failed for \(browser.name, privacy: .public): \(error.localizedDescription, privacy: .public)"
-                            )
+                        let reason = error.localizedDescription
+                        log.warning(
+                            "listAllTabs: failed for \(browser.name, privacy: .public): \(reason, privacy: .public)"
+                        )
                         return []
                     }
                 }

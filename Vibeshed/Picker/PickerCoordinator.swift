@@ -1,7 +1,6 @@
 import Combine
 import CoreFoundation
 import Foundation
-import UserNotifications
 
 @MainActor
 @Observable
@@ -148,32 +147,13 @@ final class PickerCoordinator {
     }
 
     private func handleReturnInParameterMode() {
-        guard let param = pickerState.currentParameter else { return }
-
-        switch param.type {
-        case .selection, .dynamicSelection:
-            guard let selectedID = pickerState.selectedParameterOptionID else { return }
-            pickerState.confirmParameterValue(selectedID, forParameterID: param.id)
-
-        case .text, .path:
-            let value = pickerState.parameterQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !value.isEmpty || !param.isRequired else { return }
-            pickerState.confirmParameterValue(value, forParameterID: param.id)
-
-        case .number:
-            let value = pickerState.parameterQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !value.isEmpty else { return }
-            guard let number = Double(value) else { return }
-            if case let .number(min, max) = param.type {
-                if let min, number < min { return }
-                if let max, number > max { return }
-            }
-            pickerState.confirmParameterValue(value, forParameterID: param.id)
-
-        case .toggle:
-            guard let selectedID = pickerState.selectedParameterOptionID else { return }
-            pickerState.confirmParameterValue(selectedID, forParameterID: param.id)
-        }
+        guard let param = pickerState.currentParameter,
+              let value = param.confirmableValue(
+                  typed: pickerState.parameterQuery.trimmingCharacters(in: .whitespacesAndNewlines),
+                  selectedOptionID: pickerState.selectedParameterOptionID
+              )
+        else { return }
+        pickerState.confirmParameterValue(value, forParameterID: param.id)
 
         // Check if all required params are filled
         if pickerState.allRequiredParametersFilled {
@@ -231,19 +211,7 @@ final class PickerCoordinator {
             panelController.showRetainingState()
 
         case let .pushActions(actions):
-            let items = actions.map { action in
-                ActionItem(
-                    id: action.id,
-                    title: action.title,
-                    subtitle: action.subtitle,
-                    iconSystemName: action.iconName,
-                    appIconPath: action.appIconPath,
-                    score: action.relevanceScore,
-                    moduleID: action.id.moduleID,
-                    hasParameters: !action.parameters.filter(\.isRequired).isEmpty,
-                    keywords: action.keywords
-                )
-            }
+            let items = actions.map(ActionItem.init(pushed:))
             var cache: [ActionID: any Action] = [:]
             for action in actions {
                 cache[action.id] = action
@@ -275,15 +243,7 @@ final class PickerCoordinator {
                 runningQueryTask = Task { @MainActor [weak self] in
                     guard let self else { return }
                     // Capture context lazily — only on the first query of a session.
-                    await runQuery(
-                        query,
-                        captureContext: currentContext == nil,
-                        refreshCorpus: false,
-                        preservingSelection: true,
-                        layoutCorrectionFallback: true,
-                        clearsLoading: true,
-                        updatesEmptyCacheWhenEmpty: false
-                    )
+                    await runQuery(query, options: .keystroke(captureContext: currentContext == nil))
                 }
             }
     }
@@ -337,26 +297,9 @@ final class PickerCoordinator {
     }
 
     /// Single query → score → display pipeline shared by all four entry points
-    /// (debounced typing, initial load, refresh-in-place, dynamic refresh). The flags
-    /// capture the only differences between them.
-    ///
-    /// - Parameters:
-    ///   - captureContext: capture a fresh `SystemContext` and refresh the theme first.
-    ///   - refreshCorpus: re-fetch the catalog corpus from modules instead of reusing
-    ///     the cached one. Keystrokes pass `false`; show/refresh paths pass `true`.
-    ///   - preservingSelection: keep the current selection across the list update.
-    ///   - layoutCorrectionFallback: on empty results, retry via keyboard transliteration.
-    ///   - clearsLoading: set `isLoading = false` when finished.
-    ///   - updatesEmptyCacheWhenEmpty: refresh the empty-query cache when `query` is empty.
-    private func runQuery(
-        _ query: String,
-        captureContext: Bool,
-        refreshCorpus: Bool,
-        preservingSelection: Bool,
-        layoutCorrectionFallback: Bool,
-        clearsLoading: Bool,
-        updatesEmptyCacheWhenEmpty: Bool
-    ) async {
+    /// (debounced typing, initial load, refresh-in-place, dynamic refresh).
+    /// `options` captures the only differences between them.
+    private func runQuery(_ query: String, options: QueryOptions) async {
         let pipelineState = Log.signposter.beginInterval("QueryPipeline")
         defer { Log.signposter.endInterval("QueryPipeline", pipelineState) }
 
@@ -370,7 +313,7 @@ final class PickerCoordinator {
             return true
         }
 
-        if captureContext {
+        if options.captureContext {
             currentContext = SystemContext.capture()
             if let ctx = currentContext {
                 await themeEngine?.refresh(context: ctx)
@@ -379,9 +322,9 @@ final class PickerCoordinator {
         let ctx = currentContext
 
         func finish(_ items: [ActionItem], _ cache: [ActionID: any Action]) {
-            pickerState.updateActions(items, cache: cache, preservingSelection: preservingSelection)
-            if clearsLoading { pickerState.isLoading = false }
-            if updatesEmptyCacheWhenEmpty, query.isEmpty {
+            pickerState.updateActions(items, cache: cache, preservingSelection: options.preservingSelection)
+            if options.clearsLoading { pickerState.isLoading = false }
+            if options.updatesEmptyCacheWhenEmpty, query.isEmpty {
                 cachedEmptyQueryItems = items
                 cachedEmptyQueryActionCache = cache
             }
@@ -390,7 +333,7 @@ final class PickerCoordinator {
         let scoring = makeScoring(query: query, context: ctx)
 
         let corpus: [ScorableAction]
-        if refreshCorpus || catalogCorpus == nil {
+        if options.refreshCorpus || catalogCorpus == nil {
             corpus = await fetchCatalogCorpus(scoring: scoring)
         } else {
             corpus = catalogCorpus ?? []
@@ -402,7 +345,7 @@ final class PickerCoordinator {
 
         // Layout correction fallback: if no results and query is non-empty,
         // try transliterating from the current keyboard layout.
-        if layoutCorrectionFallback, !query.isEmpty, items.isEmpty,
+        if options.layoutCorrectionFallback, !query.isEmpty, items.isEmpty,
            let correction = layoutTransliterator?.transliterate(query)
         {
             let correctedScoring = makeScoring(query: correction.correctedQuery, context: ctx)
@@ -417,14 +360,16 @@ final class PickerCoordinator {
             }
         }
 
-        if layoutCorrectionFallback {
+        if options.layoutCorrectionFallback {
             pickerState.layoutCorrectionHint = nil
         }
         finish(items, cache)
     }
+}
 
-    // MARK: - Parameter option fetching
+// MARK: - Parameter option fetching
 
+extension PickerCoordinator {
     private func wireParameterQuery() {
         parameterQuerySubscription = pickerState.debouncedParameterQuery
             .sink { [weak self] query in
@@ -440,7 +385,7 @@ final class PickerCoordinator {
                     if query.isEmpty {
                         pickerState.parameterOptions = options
                     } else {
-                        pickerState.parameterOptions = fuzzyFilterOptions(options, query: query)
+                        pickerState.parameterOptions = options.fuzzyFiltered(by: query)
                     }
                     pickerState.selectedParameterOptionID = pickerState.parameterOptions.first?.id
                 default:
@@ -462,28 +407,18 @@ final class PickerCoordinator {
                currentActionID == actionID,
                pickerState.currentParameter?.id == param.id
             {
-                let filtered = query.isEmpty ? options : fuzzyFilterOptions(options, query: query)
+                let filtered = query.isEmpty ? options : options.fuzzyFiltered(by: query)
                 pickerState.parameterOptions = filtered
                 pickerState.selectedParameterOptionID = filtered.first?.id
                 pickerState.isLoadingOptions = false
             }
         }
     }
+}
 
-    private func fuzzyFilterOptions(_ options: [ParameterOption], query: String) -> [ParameterOption] {
-        var scored: [(option: ParameterOption, score: Double)] = []
-        for option in options {
-            guard let result = FuzzyMatcher.match(query: query, against: option.label) else { continue }
-            var opt = option
-            opt.labelHighlightRanges = result.matchedRanges.isEmpty ? nil : result.matchedRanges
-            scored.append((option: opt, score: result.score))
-        }
-        scored.sort { $0.score > $1.score }
-        return scored.map(\.option)
-    }
+// MARK: - Dynamic action refresh
 
-    // MARK: - Dynamic action refresh
-
+extension PickerCoordinator {
     private func wireActionRefresh() {
         actionRefreshTask = Task { [weak self] in
             guard let self else { return }
@@ -531,15 +466,7 @@ final class PickerCoordinator {
 
         Task { @MainActor [weak self] in
             guard let self else { return }
-            await runQuery(
-                "",
-                captureContext: true,
-                refreshCorpus: true,
-                preservingSelection: true,
-                layoutCorrectionFallback: false,
-                clearsLoading: true,
-                updatesEmptyCacheWhenEmpty: true
-            )
+            await runQuery("", options: .initialLoad)
         }
     }
 
@@ -548,15 +475,7 @@ final class PickerCoordinator {
     func refreshInPlace() {
         Task { @MainActor [weak self] in
             guard let self else { return }
-            await runQuery(
-                pickerState.query,
-                captureContext: true,
-                refreshCorpus: true,
-                preservingSelection: true,
-                layoutCorrectionFallback: false,
-                clearsLoading: false,
-                updatesEmptyCacheWhenEmpty: true
-            )
+            await runQuery(pickerState.query, options: .refreshInPlace)
         }
     }
 
@@ -569,33 +488,6 @@ final class PickerCoordinator {
     }
 
     func refreshActions() async {
-        await runQuery(
-            pickerState.query,
-            captureContext: false,
-            refreshCorpus: true,
-            preservingSelection: true,
-            layoutCorrectionFallback: true,
-            clearsLoading: false,
-            updatesEmptyCacheWhenEmpty: false
-        )
-    }
-}
-
-// MARK: - Notifications
-
-private func postActionNotification(title: String, body: String) {
-    let content = UNMutableNotificationContent()
-    content.title = title
-    content.body = body
-    content.sound = .default
-    let request = UNNotificationRequest(
-        identifier: "vibeshed.action.result.\(UUID().uuidString)",
-        content: content,
-        trigger: nil
-    )
-    UNUserNotificationCenter.current().add(request) { error in
-        if let error {
-            Log.picker.error("Failed to post notification: \(error.localizedDescription, privacy: .public)")
-        }
+        await runQuery(pickerState.query, options: .dynamicRefresh)
     }
 }

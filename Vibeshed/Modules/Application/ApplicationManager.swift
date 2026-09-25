@@ -10,7 +10,6 @@ struct ApplicationManager: Sendable {
 
     @MainActor
     func listInstalledApplications() -> [AppInfo] {
-        let fileManager = FileManager.default
         let appDirs = [
             "/Applications",
             "/System/Applications",
@@ -33,35 +32,12 @@ struct ApplicationManager: Sendable {
         let windowCounts = WindowListHelper.countWindowsByPID()
 
         for dir in appDirs {
-            guard let contents = try? fileManager.contentsOfDirectory(atPath: dir) else {
-                continue
-            }
-            for item in contents where item.hasSuffix(".app") {
-                let path = (dir as NSString).appendingPathComponent(item)
-                let url = URL(fileURLWithPath: path)
-                guard let bundle = Bundle(url: url),
-                      let bundleID = bundle.bundleIdentifier,
-                      !seen.contains(bundleID)
-                else {
-                    continue
-                }
-                seen.insert(bundleID)
-
-                let name = fileManager.displayName(atPath: path)
-                    .replacingOccurrences(of: ".app", with: "")
-                let running = runningByBundleID[bundleID]
-                let windowCount = running
-                    .map { windowCounts[$0.processIdentifier] ?? 0 } ?? 0
-
-                apps.append(AppInfo(
-                    id: bundleID,
-                    name: name,
-                    bundleURL: url,
-                    isRunning: running != nil,
-                    pid: running?.processIdentifier,
-                    windowCount: windowCount
-                ))
-            }
+            apps += installedApps(
+                in: dir,
+                runningByBundleID: runningByBundleID,
+                windowCounts: windowCounts,
+                seen: &seen
+            )
         }
 
         // Add running apps not found in standard directories
@@ -86,6 +62,48 @@ struct ApplicationManager: Sendable {
         }
 
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// `.app` bundles directly inside `dir` whose bundle ID isn't in `seen` yet; adds each one it returns to `seen`.
+    @MainActor
+    private func installedApps(
+        in dir: String,
+        runningByBundleID: [String: NSRunningApplication],
+        windowCounts: [pid_t: Int],
+        seen: inout Set<String>
+    ) -> [AppInfo] {
+        let fileManager = FileManager.default
+        guard let contents = try? fileManager.contentsOfDirectory(atPath: dir) else {
+            return []
+        }
+        var apps: [AppInfo] = []
+        for item in contents where item.hasSuffix(".app") {
+            let path = (dir as NSString).appendingPathComponent(item)
+            let url = URL(fileURLWithPath: path)
+            guard let bundle = Bundle(url: url),
+                  let bundleID = bundle.bundleIdentifier,
+                  !seen.contains(bundleID)
+            else {
+                continue
+            }
+            seen.insert(bundleID)
+
+            let name = fileManager.displayName(atPath: path)
+                .replacingOccurrences(of: ".app", with: "")
+            let running = runningByBundleID[bundleID]
+            let windowCount = running
+                .map { windowCounts[$0.processIdentifier] ?? 0 } ?? 0
+
+            apps.append(AppInfo(
+                id: bundleID,
+                name: name,
+                bundleURL: url,
+                isRunning: running != nil,
+                pid: running?.processIdentifier,
+                windowCount: windowCount
+            ))
+        }
+        return apps
     }
 
     // MARK: - List Running Applications
@@ -178,9 +196,9 @@ struct ApplicationManager: Sendable {
         if let focused = AXWindowHelper.focusedWindow(for: pid),
            let focusedID = AXWindowHelper.windowID(for: focused)
         {
-            for (i, axWindow) in axWindows.enumerated() {
+            for (index, axWindow) in axWindows.enumerated() {
                 if let windowID = AXWindowHelper.windowID(for: axWindow), windowID == focusedID {
-                    let nextIndex = (i + 1) % axWindows.count
+                    let nextIndex = (index + 1) % axWindows.count
                     let next = axWindows[nextIndex]
                     if AXWindowHelper.isMinimized(next) {
                         AXWindowHelper.deminiaturize(next)

@@ -52,56 +52,63 @@ struct ParameterInputView: View {
             )
             .padding(.top, topInset)
         } else {
-            ScrollViewReader { proxy in
-                let hotkeys: [String: Int] = {
-                    var map = [String: Int]()
-                    for i in 0 ..< min(state.parameterOptions.count, 9) {
-                        map[state.parameterOptions[i].id] = i + 1
-                    }
-                    return map
-                }()
-                ScrollView {
-                    LazyVStack(spacing: 2) {
-                        ForEach(state.parameterOptions) { option in
-                            let isSelected = state.selectedParameterOptionID == option.id
-                            ParameterOptionRow(
-                                option: option,
-                                hotkeyNumber: hotkeys[option.id],
-                                rowHeight: rowHeight,
-                                isSelected: isSelected
-                            )
-                            .padding(.horizontal, 12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(isSelected ? theme.accent : Color.clear)
-                            )
-                            .padding(.horizontal, 8)
-                            .contentShape(Rectangle())
-                            .onTapGesture(count: 2) {
-                                state.selectedParameterOptionID = option.id
-                                onConfirm?()
-                            }
-                            .onTapGesture(count: 1) {
-                                state.selectedParameterOptionID = option.id
-                            }
-                            .id(option.id)
+            optionList
+        }
+    }
+
+    /// Number-key shortcuts (1–9) for the first nine options.
+    private var optionHotkeys: [String: Int] {
+        var map = [String: Int]()
+        for (index, option) in state.parameterOptions.prefix(9).enumerated() {
+            map[option.id] = index + 1
+        }
+        return map
+    }
+
+    private var optionList: some View {
+        ScrollViewReader { proxy in
+            let hotkeys = optionHotkeys
+            ScrollView {
+                LazyVStack(spacing: 2) {
+                    ForEach(state.parameterOptions) { option in
+                        let isSelected = state.selectedParameterOptionID == option.id
+                        ParameterOptionRow(
+                            option: option,
+                            hotkeyNumber: hotkeys[option.id],
+                            rowHeight: rowHeight,
+                            isSelected: isSelected
+                        )
+                        .padding(.horizontal, 12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(isSelected ? theme.accent : Color.clear)
+                        )
+                        .padding(.horizontal, 8)
+                        .contentShape(Rectangle())
+                        .onTapGesture(count: 2) {
+                            state.selectedParameterOptionID = option.id
+                            onConfirm?()
                         }
+                        .onTapGesture(count: 1) {
+                            state.selectedParameterOptionID = option.id
+                        }
+                        .id(option.id)
                     }
-                    .padding(.top, 4)
-                    .padding(.bottom, 16)
                 }
-                .scrollContentBackground(.hidden)
-                .scrollIndicators(.hidden)
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    Color.clear.frame(height: topInset + 6)
-                }
-                .scrollEdgeFade(top: 8, bottom: 12)
-                .accessibilityIdentifier("parameterOptionList")
-                .onChange(of: state.selectedParameterOptionID) { _, newID in
-                    if let newID {
-                        proxy.scrollTo(newID, anchor: nil)
-                    }
+                .padding(.top, 4)
+                .padding(.bottom, 16)
+            }
+            .scrollContentBackground(.hidden)
+            .scrollIndicators(.hidden)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                Color.clear.frame(height: topInset + 6)
+            }
+            .scrollEdgeFade(top: 8, bottom: 12)
+            .accessibilityIdentifier("parameterOptionList")
+            .onChange(of: state.selectedParameterOptionID) { _, newID in
+                if let newID {
+                    proxy.scrollTo(newID, anchor: nil)
                 }
             }
         }

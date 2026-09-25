@@ -67,30 +67,33 @@ enum MathParser {
         }
 
         // 5. Expression evaluation (skip if already matched as conversion/base)
-        let hasConversion = results.contains { r in
-            switch r {
+        results += expressionResults(trimmed, alongside: results)
+
+        return results
+    }
+
+    private static func expressionResults(_ trimmed: String, alongside existing: [ParseResult]) -> [ParseResult] {
+        let hasConversion = existing.contains { result in
+            switch result {
             case .unitConversion, .currencyConversion: true
             default: false
             }
         }
-        if !hasConversion, let val = ExpressionParser.evaluate(trimmed) {
-            results.append(.expression(expression: trimmed, result: val))
+        guard !hasConversion, let val = ExpressionParser.evaluate(trimmed) else { return [] }
+        var results: [ParseResult] = [.expression(expression: trimmed, result: val)]
 
-            // For integer results, offer base conversions
-            if val == val.rounded(), val >= 0, val <= Double(Int.max / 2),
-               !results.contains(where: { if case .baseConversion = $0 { return true }; return false }),
-               ExpressionParser.isNonTrivial(trimmed)
-            {
-                if let base = BaseConverter.convertInteger(Int(val)) {
-                    results.append(.baseConversion(
-                        original: formatNumber(val, decimalPlaces: 0),
-                        fromBase: base.fromBase,
-                        results: base.results
-                    ))
-                }
-            }
+        // For integer results, offer base conversions
+        if val == val.rounded(), val >= 0, val <= Double(Int.max / 2),
+           !existing.contains(where: { if case .baseConversion = $0 { return true }; return false }),
+           ExpressionParser.isNonTrivial(trimmed),
+           let base = BaseConverter.convertInteger(Int(val))
+        {
+            results.append(.baseConversion(
+                original: formatNumber(val, decimalPlaces: 0),
+                fromBase: base.fromBase,
+                results: base.results
+            ))
         }
-
         return results
     }
 

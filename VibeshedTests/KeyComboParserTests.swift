@@ -12,18 +12,21 @@ final class KeyComboParserTests: XCTestCase {
     }
 
     func testStandardComboWithMultipleModifiers() throws {
-        let p = try KeyComboParser.carbonKeyCode(for: "p")
+        let pKey = try KeyComboParser.carbonKeyCode(for: "p")
         XCTAssertEqual(
             try KeyComboParser.parse("cmd+shift+p"),
-            .standard(carbonKeyCode: p, modifiers: [.maskCommand, .maskShift])
+            .standard(carbonKeyCode: pKey, modifiers: [.maskCommand, .maskShift])
         )
     }
 
     func testModifierAliases() throws {
-        let a = try KeyComboParser.carbonKeyCode(for: "a")
-        XCTAssertEqual(try KeyComboParser.parse("alt+a"), .standard(carbonKeyCode: a, modifiers: [.maskAlternate]))
-        XCTAssertEqual(try KeyComboParser.parse("option+a"), .standard(carbonKeyCode: a, modifiers: [.maskAlternate]))
-        XCTAssertEqual(try KeyComboParser.parse("ctrl+a"), .standard(carbonKeyCode: a, modifiers: [.maskControl]))
+        let aKey = try KeyComboParser.carbonKeyCode(for: "a")
+        XCTAssertEqual(try KeyComboParser.parse("alt+a"), .standard(carbonKeyCode: aKey, modifiers: [.maskAlternate]))
+        XCTAssertEqual(
+            try KeyComboParser.parse("option+a"),
+            .standard(carbonKeyCode: aKey, modifiers: [.maskAlternate])
+        )
+        XCTAssertEqual(try KeyComboParser.parse("ctrl+a"), .standard(carbonKeyCode: aKey, modifiers: [.maskControl]))
     }
 
     func testCaseInsensitive() throws {

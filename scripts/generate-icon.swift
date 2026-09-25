@@ -66,11 +66,11 @@ func drawSparkle(
 
     let path = CGMutablePath()
     // 4-pointed star: alternating outer and inner points
-    for i in 0 ..< 8 {
-        let angle = CGFloat(i) * .pi / 4 - .pi / 2
-        let r = i % 2 == 0 ? outerRadius : innerRadius
-        let pt = CGPoint(x: r * cos(angle), y: r * sin(angle))
-        if i == 0 {
+    for point in 0 ..< 8 {
+        let angle = CGFloat(point) * .pi / 4 - .pi / 2
+        let radius = point % 2 == 0 ? outerRadius : innerRadius
+        let pt = CGPoint(x: radius * cos(angle), y: radius * sin(angle))
+        if point == 0 {
             path.move(to: pt)
         } else {
             path.addLine(to: pt)

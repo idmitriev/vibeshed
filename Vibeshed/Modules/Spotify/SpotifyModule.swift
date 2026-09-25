@@ -18,10 +18,8 @@ actor SpotifyModule: ModuleConfigurable {
 
     func initialize(context: ModuleContext) async throws {
         updateSearchClient()
-        log
-            .info(
-                "Spotify module initialized (searchClient: \(self.searchClient != nil ? "enabled" : "disabled", privacy: .public))"
-            )
+        let clientState = searchClient != nil ? "enabled" : "disabled"
+        log.info("Spotify module initialized (searchClient: \(clientState, privacy: .public))")
     }
 
     func configDidUpdate(_ config: SpotifyConfig) async {
@@ -45,10 +43,8 @@ actor SpotifyModule: ModuleConfigurable {
             errors.append("maxSearchResults must be between 1 and 50")
         }
         let validTypes: Set<String> = ["track", "album", "artist", "playlist"]
-        for searchType in config.searchTypes {
-            if !validTypes.contains(searchType) {
-                errors.append("Invalid search type: '\(searchType)'. Valid: track, album, artist, playlist")
-            }
+        for searchType in config.searchTypes where !validTypes.contains(searchType) {
+            errors.append("Invalid search type: '\(searchType)'. Valid: track, album, artist, playlist")
         }
         return errors.isEmpty ? .valid : .invalid(errors)
     }
@@ -165,68 +161,20 @@ actor SpotifyModule: ModuleConfigurable {
     // MARK: - Playback Actions
 
     private func buildPlaybackActions() -> [SpotifyAction] {
-        [
+        PlaybackControl.all.map { control in
             SpotifyAction(
-                id: ActionID(module: "spotify", name: "playPause"),
-                title: "Play / Pause",
-                subtitle: "Toggle Spotify playback",
-                iconName: "playpause",
-                relevanceScore: 0.9,
-                keywords: ["spotify", "play", "pause", "music", "media"],
+                id: ActionID(module: "spotify", name: control.name),
+                title: control.title,
+                subtitle: control.subtitle,
+                iconName: control.iconName,
+                relevanceScore: control.relevanceScore,
+                keywords: control.keywords,
                 spotifyItemType: .control
             ) { _ in
-                try await SpotifyManager.playPause()
+                try await control.command()
                 return .dismiss
-            },
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "next"),
-                title: "Next Track",
-                subtitle: "Skip to next track in Spotify",
-                iconName: "forward.end",
-                relevanceScore: 0.85,
-                keywords: ["spotify", "next", "skip", "forward", "track"],
-                spotifyItemType: .control
-            ) { _ in
-                try await SpotifyManager.nextTrack()
-                return .dismiss
-            },
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "previous"),
-                title: "Previous Track",
-                subtitle: "Go to previous track in Spotify",
-                iconName: "backward.end",
-                relevanceScore: 0.85,
-                keywords: ["spotify", "previous", "back", "rewind", "track"],
-                spotifyItemType: .control
-            ) { _ in
-                try await SpotifyManager.previousTrack()
-                return .dismiss
-            },
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "shuffle"),
-                title: "Toggle Shuffle",
-                subtitle: "Toggle shuffle mode in Spotify",
-                iconName: "shuffle",
-                relevanceScore: 0.7,
-                keywords: ["spotify", "shuffle", "random"],
-                spotifyItemType: .control
-            ) { _ in
-                try await SpotifyManager.toggleShuffle()
-                return .dismiss
-            },
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "repeat"),
-                title: "Toggle Repeat",
-                subtitle: "Toggle repeat mode in Spotify",
-                iconName: "repeat",
-                relevanceScore: 0.7,
-                keywords: ["spotify", "repeat", "loop"],
-                spotifyItemType: .control
-            ) { _ in
-                try await SpotifyManager.toggleRepeat()
-                return .dismiss
-            },
-        ]
+            }
+        }
     }
 
     // MARK: - Search Actions
@@ -294,9 +242,11 @@ actor SpotifyModule: ModuleConfigurable {
 
         return actions
     }
+}
 
-    // MARK: - Search Result Actions
+// MARK: - Search Result Actions
 
+extension SpotifyModule {
     private static func buildSearchResultActions(
         _ results: SpotifySearchResults
     ) -> [SpotifyAction] {
@@ -380,4 +330,65 @@ actor SpotifyModule: ModuleConfigurable {
             }
         }
     }
+}
+
+// MARK: - Playback Controls
+
+/// Transport controls offered while Spotify is running.
+private struct PlaybackControl: Sendable {
+    let name: String
+    let title: String
+    let subtitle: String
+    let iconName: String
+    let relevanceScore: Double
+    let keywords: [String]
+    let command: @Sendable () async throws -> Void
+
+    static let all: [PlaybackControl] = [
+        PlaybackControl(
+            name: "playPause",
+            title: "Play / Pause",
+            subtitle: "Toggle Spotify playback",
+            iconName: "playpause",
+            relevanceScore: 0.9,
+            keywords: ["spotify", "play", "pause", "music", "media"],
+            command: { try await SpotifyManager.playPause() }
+        ),
+        PlaybackControl(
+            name: "next",
+            title: "Next Track",
+            subtitle: "Skip to next track in Spotify",
+            iconName: "forward.end",
+            relevanceScore: 0.85,
+            keywords: ["spotify", "next", "skip", "forward", "track"],
+            command: { try await SpotifyManager.nextTrack() }
+        ),
+        PlaybackControl(
+            name: "previous",
+            title: "Previous Track",
+            subtitle: "Go to previous track in Spotify",
+            iconName: "backward.end",
+            relevanceScore: 0.85,
+            keywords: ["spotify", "previous", "back", "rewind", "track"],
+            command: { try await SpotifyManager.previousTrack() }
+        ),
+        PlaybackControl(
+            name: "shuffle",
+            title: "Toggle Shuffle",
+            subtitle: "Toggle shuffle mode in Spotify",
+            iconName: "shuffle",
+            relevanceScore: 0.7,
+            keywords: ["spotify", "shuffle", "random"],
+            command: { try await SpotifyManager.toggleShuffle() }
+        ),
+        PlaybackControl(
+            name: "repeat",
+            title: "Toggle Repeat",
+            subtitle: "Toggle repeat mode in Spotify",
+            iconName: "repeat",
+            relevanceScore: 0.7,
+            keywords: ["spotify", "repeat", "loop"],
+            command: { try await SpotifyManager.toggleRepeat() }
+        ),
+    ]
 }

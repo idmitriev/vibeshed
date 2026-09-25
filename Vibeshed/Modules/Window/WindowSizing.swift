@@ -61,11 +61,11 @@ enum WindowSizing {
     ) -> Int? {
         var bestIndex: Int?
         var bestDelta = Double.greatestFiniteMagnitude
-        for (i, stop) in resolvedStops.enumerated() {
+        for (index, stop) in resolvedStops.enumerated() {
             let delta = abs(currentValue - stop)
             if delta < bestDelta {
                 bestDelta = delta
-                bestIndex = i
+                bestIndex = index
             }
         }
         guard let index = bestIndex, bestDelta <= tolerance else { return nil }

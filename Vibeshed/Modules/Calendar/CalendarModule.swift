@@ -76,14 +76,14 @@ actor CalendarModule: ModuleConfigurable {
             return
         }
 
-        cachedEvents = await CalendarManager.fetchEvents(
+        cachedEvents = await CalendarManager.fetchEvents(.init(
             lookaheadHours: config.lookaheadHours,
             lookbehindMinutes: config.lookbehindMinutes,
             excludedCalendars: config.excludedCalendars,
             includedCalendars: config.includedCalendars,
             showAllDay: config.showAllDayEvents,
             showDeclined: config.showDeclinedEvents
-        )
+        ))
         cacheTimestamp = now
     }
 

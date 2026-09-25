@@ -36,13 +36,13 @@ enum WindowListHelper {
             guard let boundsDict = entry[kCGWindowBounds] as? [String: Double],
                   let x = boundsDict["X"],
                   let y = boundsDict["Y"],
-                  let w = boundsDict["Width"],
-                  let h = boundsDict["Height"]
+                  let width = boundsDict["Width"],
+                  let height = boundsDict["Height"]
             else {
                 continue
             }
 
-            let frame = CGRect(x: x, y: y, width: w, height: h)
+            let frame = CGRect(x: x, y: y, width: width, height: height)
             let screenFrame = screenForFrame(frame)
 
             let bundleID = NSRunningApplication(processIdentifier: ownerPID)?

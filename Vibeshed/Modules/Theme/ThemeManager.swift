@@ -129,10 +129,10 @@ enum ThemeManager {
                 applied += 1
                 log.info("Set \(variant.name, privacy: .public) theme to \(themeName, privacy: .public)")
             } catch {
-                log
-                    .warning(
-                        "Failed to update \(variant.name, privacy: .public) settings: \(error.localizedDescription, privacy: .public)"
-                    )
+                let reason = error.localizedDescription
+                log.warning(
+                    "Failed to update \(variant.name, privacy: .public) settings: \(reason, privacy: .public)"
+                )
             }
         }
 
@@ -177,10 +177,10 @@ enum ThemeManager {
                 applied += 1
                 log.info("Set \(ideInfo.displayName, privacy: .public) theme to \(themeName, privacy: .public)")
             } catch {
-                log
-                    .warning(
-                        "Failed to update \(ideInfo.displayName, privacy: .public) laf.xml: \(error.localizedDescription, privacy: .public)"
-                    )
+                let reason = error.localizedDescription
+                log.warning(
+                    "Failed to update \(ideInfo.displayName, privacy: .public) laf.xml: \(reason, privacy: .public)"
+                )
             }
         }
 
@@ -208,9 +208,11 @@ enum ThemeManager {
         """
         try runAppleScript(script)
     }
+}
 
-    // MARK: - GitHub Theme
+// MARK: - GitHub Theme
 
+extension ThemeManager {
     /// Set GitHub's appearance theme by injecting JavaScript into an open github.com tab.
     /// Returns a human-readable result: "ok", "no_tab", or error detail.
     static func setGitHubTheme(_ theme: String) throws -> String {
@@ -295,9 +297,11 @@ enum ThemeManager {
         return "missing value"
         """
     }
+}
 
-    // MARK: - Apply Preset
+// MARK: - Apply Preset
 
+extension ThemeManager {
     static func applyPreset(
         _ preset: ThemePreset,
         vscodeVariants: [(name: String, dir: String)],
@@ -338,19 +342,19 @@ enum ThemeManager {
 
         if let github = preset.githubTheme {
             let result = try setGitHubTheme(github)
-            switch result {
-            case "ok":
-                applied.append("GitHub: \(github)")
-            case "no_tab":
-                applied.append("GitHub: skipped (no tab open)")
-            case "no_token":
-                applied.append("GitHub: skipped (not logged in)")
-            default:
-                applied.append("GitHub: \(result)")
-            }
+            applied.append(githubSummary(result, theme: github))
         }
 
         return applied
+    }
+
+    private static func githubSummary(_ result: String, theme: String) -> String {
+        switch result {
+        case "ok": "GitHub: \(theme)"
+        case "no_tab": "GitHub: skipped (no tab open)"
+        case "no_token": "GitHub: skipped (not logged in)"
+        default: "GitHub: \(result)"
+        }
     }
 
     // MARK: - Private Helpers
@@ -368,12 +372,10 @@ enum ThemeManager {
     }
 
     private static func matchJetBrainsIDE(_ dirName: String) -> JetBrainsIDEInfo? {
-        for info in JetBrainsIDEInfo.known {
-            if dirName.hasPrefix(info.dirPrefix) {
-                let suffix = String(dirName.dropFirst(info.dirPrefix.count))
-                if suffix.isEmpty || suffix.first?.isNumber == true {
-                    return info
-                }
+        for info in JetBrainsIDEInfo.known where dirName.hasPrefix(info.dirPrefix) {
+            let suffix = String(dirName.dropFirst(info.dirPrefix.count))
+            if suffix.isEmpty || suffix.first?.isNumber == true {
+                return info
             }
         }
         return nil

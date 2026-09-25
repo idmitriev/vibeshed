@@ -51,9 +51,9 @@ struct ParameterValues: Sendable, Equatable, Codable, ExpressibleByDictionaryLit
         storage[id].flatMap(Int.init)
     }
 
-    func bool(_ id: String) -> Bool? {
-        guard let value = storage[id] else { return nil }
-        return value == "true"
+    /// Only the exact string "true" is true; a missing value reads as false.
+    func bool(_ id: String) -> Bool {
+        storage[id] == "true"
     }
 
     mutating func set(_ value: String, for id: String) {
