@@ -119,18 +119,43 @@ extension ActionItem {
 }
 
 func postActionNotification(title: String, body: String) {
-    let content = UNMutableNotificationContent()
-    content.title = title
-    content.body = body
-    content.sound = .default
-    let request = UNNotificationRequest(
-        identifier: "vibeshed.action.result.\(UUID().uuidString)",
-        content: content,
-        trigger: nil
-    )
-    UNUserNotificationCenter.current().add(request) { error in
-        if let error {
+    Task {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: "vibeshed.action.result.\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+        let center = UNUserNotificationCenter.current()
+        center.delegate = ForegroundNotificationPresenter.shared
+        do {
+            // Only prompts while permission is undetermined; afterwards it just reports the
+            // stored answer. Without it, results posted before anything else (e.g. the timer
+            // module) asked for permission are silently dropped.
+            guard try await center.requestAuthorization(options: [.alert, .sound]) else {
+                Log.picker.warning("Not posting notification: permission denied")
+                return
+            }
+            try await center.add(request)
+        } catch {
             Log.picker.error("Failed to post notification: \(error.localizedDescription, privacy: .public)")
         }
+    }
+}
+
+/// Shows banners even while Vibeshed is the active app — it usually still is right
+/// after the picker hides, and macOS suppresses foreground notifications by default.
+/// Held as a singleton because `UNUserNotificationCenter.delegate` is weak.
+private final class ForegroundNotificationPresenter: NSObject, UNUserNotificationCenterDelegate, Sendable {
+    static let shared = ForegroundNotificationPresenter()
+
+    func userNotificationCenter(
+        _: UNUserNotificationCenter,
+        willPresent _: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound]
     }
 }
