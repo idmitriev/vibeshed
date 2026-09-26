@@ -393,6 +393,19 @@
 - [ ] pasteOnSelect: true also pastes into the frontmost app
 - [ ] maxResults caps the number of emoji rows
 
+### 43. Menu Module
+
+- [ ] Module stays pending until Accessibility is granted
+- [ ] Typing an item's title (e.g. "new private" in Safari) lists it with its menu and shortcut ("File · ⇧⌘N")
+- [ ] An exact title match ranks above the web-search fallbacks
+- [ ] Selecting an item clicks it in the frontmost app
+- [ ] Disabled items, the Apple menu, and submenus over maxSubmenuItems (Safari's per-day history) are not listed
+- [ ] Toggles that are on show a checkmark icon
+- [ ] menu/search lists only menu items, labelled with the app's name, and filters as you type
+- [ ] showInSearch: false keeps items out of the main search (menu/search still works)
+- [ ] excludedBundleIDs apps list no items
+- [ ] A keybinding or `vibeshed://menu/View%20%3E%20Scientific` URI clicks the item in whatever app is in front; lowercase and a missing "…" still match
+
 ---
 
 ## Edge Cases

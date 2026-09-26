@@ -153,6 +153,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 WindowModule(),
                 TilingModule(),
                 ApplicationModule(),
+                MenuModule(),
                 SystemModule(),
                 ProcessesModule(),
                 SettingsModule(),
