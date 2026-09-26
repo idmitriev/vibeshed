@@ -98,7 +98,7 @@ struct BindingSlot {
     }
 }
 
-struct RemapTarget {
+struct RemapTarget: Equatable, Sendable {
     let keyCode: UInt16
     let modifiers: CGEventFlags
 }

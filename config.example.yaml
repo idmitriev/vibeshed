@@ -691,6 +691,7 @@ modules:
       - reloadConfig
       - moduleStatus
       - openLogs
+      - toggleKeystrokeVisualizer
       - quit
 
 # ---------------------------------------------------------------------------
