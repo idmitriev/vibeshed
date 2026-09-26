@@ -93,7 +93,7 @@ actor HomebrewModule: ModuleConfigurable {
                     return .showResult(title: "Error", body: "No formula specified")
                 }
                 let output = try await HomebrewManager.installFormula(name, brewPath: brewPath)
-                return .showResult(title: "Installed \(name)", body: output)
+                return .showResult(title: "Installed \(name)", body: HomebrewManager.installSummary(output))
             },
             HomebrewAction(
                 id: ActionID(module: "homebrew", name: "installCask"),
@@ -114,8 +114,16 @@ actor HomebrewModule: ModuleConfigurable {
                 guard let name = values["package"], !name.isEmpty else {
                     return .showResult(title: "Error", body: "No cask specified")
                 }
-                let output = try await HomebrewManager.installCask(name, brewPath: brewPath)
-                return .showResult(title: "Installed \(name)", body: output)
+                let summary = try await HomebrewManager.installSummary(
+                    HomebrewManager.installCask(name, brewPath: brewPath)
+                )
+                // The install already succeeded; a failed app lookup or launch shouldn't turn it into an error.
+                let appPaths = await (try? HomebrewManager.caskAppPaths(name, brewPath: brewPath)) ?? []
+                guard let launched = await HomebrewManager.launchFirstApp(at: appPaths) else {
+                    return .showResult(title: "Installed \(name)", body: summary)
+                }
+                let appName = URL(fileURLWithPath: launched).deletingPathExtension().lastPathComponent
+                return .showResult(title: "Installed \(name)", body: "Launched \(appName)\n\(summary)")
             },
         ]
     }

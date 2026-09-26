@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import OSLog
 
 private let log = Log.module("homebrew")
@@ -33,6 +33,14 @@ enum HomebrewManager {
         try await runBrew(brewPath, "install", "--cask", name)
     }
 
+    /// Brew's one-line install summary (the `🍺` line, e.g. `/opt/homebrew/Cellar/jq/1.7.1: 19 files, 1.3MB`),
+    /// falling back to the last output line. Full install output is too noisy for a notification.
+    static func installSummary(_ output: String) -> String {
+        let lines = output.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+        let summary = lines.last { $0.hasPrefix("🍺") } ?? lines.last { !$0.isEmpty } ?? ""
+        return summary.drop { $0 == "🍺" || $0.isWhitespace }.description
+    }
+
     static func uninstallFormula(_ name: String, brewPath: String) async throws -> String {
         try await runBrew(brewPath, "uninstall", "--formula", name)
     }
@@ -58,6 +66,45 @@ enum HomebrewManager {
     static func info(_ name: String, isCask: Bool, brewPath: String) async throws -> String {
         let flag = isCask ? "--cask" : "--formula"
         return try await runBrew(brewPath, "info", flag, name)
+    }
+
+    /// Installed locations of a cask's `app` artifacts (e.g. `/Applications/Foo.app`).
+    /// Empty for casks that ship no app bundle (fonts, pkg installers, CLI tools).
+    static func caskAppPaths(_ name: String, brewPath: String) async throws -> [String] {
+        let output = try await runBrew(brewPath, "info", "--cask", "--json=v2", name)
+        return parseCaskAppPaths(Data(output.utf8))
+    }
+
+    static func parseCaskAppPaths(_ json: Data) -> [String] {
+        guard let root = try? JSONSerialization.jsonObject(with: json) as? [String: Any],
+              let casks = root["casks"] as? [[String: Any]]
+        else { return [] }
+        return casks.flatMap { cask -> [String] in
+            let artifacts = cask["artifacts"] as? [[String: Any]] ?? []
+            return artifacts.compactMap { artifact in
+                guard artifact["app"] != nil else { return nil }
+                return artifact["target"] as? String
+            }
+        }
+    }
+
+    // MARK: - Launch
+
+    /// Opens the first of `paths` that exists on disk. Returns the launched app's path.
+    static func launchFirstApp(at paths: [String]) async -> String? {
+        guard let path = paths.first(where: { FileManager.default.fileExists(atPath: $0) }) else {
+            return nil
+        }
+        do {
+            _ = try await NSWorkspace.shared.openApplication(
+                at: URL(fileURLWithPath: path),
+                configuration: .init()
+            )
+            return path
+        } catch {
+            log.warning("Failed to launch \(path, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     // MARK: - Update / Upgrade
