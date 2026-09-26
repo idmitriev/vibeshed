@@ -11,7 +11,7 @@ make build
 make run-debug   # logs in this terminal
 ```
 
-Config lives at `~/.config/vibeshed/config.yaml`. Copy `config.example.yaml` to get started.
+Config lives at `~/.config/vibeshed/config.yaml`; a minimal one is written on first launch. See `config.example.yaml` for every option.
 
 Requirements: macOS 14+, Swift 5.9+, Xcode command-line tools.
 

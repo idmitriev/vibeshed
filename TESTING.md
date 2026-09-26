@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - macOS 14+ (Sonoma)
-- Config file at `~/.config/vibeshed/config.yaml` (copy from `config.example.yaml`)
+- Config file at `~/.config/vibeshed/config.yaml` (a minimal one is written on first launch; copy from `config.example.yaml` for full coverage)
 - Accessibility permission granted
 - Input Monitoring permission granted
 - Automation permission granted (for browser/Spotify/iTerm modules)
