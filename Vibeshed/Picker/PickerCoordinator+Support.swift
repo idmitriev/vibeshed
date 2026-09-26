@@ -8,7 +8,10 @@ import UserNotifications
 
 /// How one `PickerCoordinator.runQuery` call differs from the others. The four
 /// entry points (debounced typing, initial load, refresh-in-place, dynamic
-/// refresh) each use one of the presets below.
+/// refresh) each use one of the presets below. A preset changes how fresh the
+/// inputs are, never what is ranked: every run scores the search field's text,
+/// with the same keyboard-layout fallback, because whichever run claims the
+/// newest generation is the one left on screen.
 struct QueryOptions {
     /// Capture a fresh `SystemContext` and refresh the theme first.
     var captureContext: Bool
@@ -17,8 +20,6 @@ struct QueryOptions {
     var refreshCorpus: Bool
     /// Keep the current selection across the list update.
     var preservingSelection = true
-    /// On empty results, retry via keyboard transliteration.
-    var layoutCorrectionFallback: Bool
     /// Set `isLoading = false` when finished.
     var clearsLoading: Bool
     /// Refresh the empty-query cache when the query is empty.
@@ -29,17 +30,16 @@ struct QueryOptions {
         QueryOptions(
             captureContext: captureContext,
             refreshCorpus: false,
-            layoutCorrectionFallback: true,
             clearsLoading: true,
             updatesEmptyCacheWhenEmpty: false
         )
     }
 
-    /// Panel just shown: fresh context and corpus, fills the empty-query cache.
+    /// Panel just shown: fresh context and corpus. Fills the empty-query cache
+    /// unless the field already holds text.
     static let initialLoad = QueryOptions(
         captureContext: true,
         refreshCorpus: true,
-        layoutCorrectionFallback: false,
         clearsLoading: true,
         updatesEmptyCacheWhenEmpty: true
     )
@@ -48,7 +48,6 @@ struct QueryOptions {
     static let refreshInPlace = QueryOptions(
         captureContext: true,
         refreshCorpus: true,
-        layoutCorrectionFallback: false,
         clearsLoading: false,
         updatesEmptyCacheWhenEmpty: true
     )
@@ -57,7 +56,6 @@ struct QueryOptions {
     static let dynamicRefresh = QueryOptions(
         captureContext: false,
         refreshCorpus: true,
-        layoutCorrectionFallback: true,
         clearsLoading: false,
         updatesEmptyCacheWhenEmpty: false
     )

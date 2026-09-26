@@ -11,6 +11,8 @@ enum ActionListDebugDump {
     /// Writes the dump in the background. No-op outside DEBUG builds.
     static func schedule(query: String, displayed: [ActionItem], corpus: [ScorableAction], scoring: ScoringContext) {
         #if DEBUG
+        // Unit tests drive the query pipeline too; keep them out of the user's config dir.
+        guard NSClassFromString("XCTestCase") == nil else { return }
         let correctedQuery = scoring.query == query ? nil : scoring.query
         Task.detached(priority: .utility) {
             write(query: query, correctedQuery: correctedQuery, displayed: displayed, corpus: corpus, scoring: scoring)
