@@ -18,7 +18,10 @@ final class EventTapHandler: @unchecked Sendable {
     private var tables = BindingTables()
 
     /// Apps that opt out of every binding and remap. Owns its own lock.
-    private let exclusions = AppExclusionList()
+    private let exclusions: AppExclusionList
+
+    /// Sends a held capslock into excluded apps as F18. Owns its own lock.
+    private let capsLockForwarder: CapsLockForwarder
 
     /// Feeds the keystroke visualizer. Owns its own lock.
     private let keystrokes = KeystrokeReporter()
@@ -35,6 +38,9 @@ final class EventTapHandler: @unchecked Sendable {
     ) {
         self.focusedAppTracker = focusedAppTracker
         self.executor = executor
+        let exclusions = AppExclusionList()
+        self.exclusions = exclusions
+        capsLockForwarder = CapsLockForwarder(exclusions: exclusions, focusedAppTracker: focusedAppTracker)
     }
 
     deinit {
@@ -93,6 +99,7 @@ final class EventTapHandler: @unchecked Sendable {
         tapThread.qualityOfService = .userInteractive
         tapThread.start()
         thread = tapThread
+        capsLockForwarder.start()
 
         Log.keybindings.info("Event tap started (thread: \(tapThread.name ?? "unnamed", privacy: .public))")
         Log.stderr("  ✓ event tap: created and running on dedicated thread")
@@ -100,6 +107,7 @@ final class EventTapHandler: @unchecked Sendable {
     }
 
     func stop() {
+        capsLockForwarder.stop()
         if let runLoop = tapRunLoop {
             CFRunLoopStop(runLoop)
         }
@@ -125,6 +133,7 @@ final class EventTapHandler: @unchecked Sendable {
         Log.keybindings.debug("Bindings: \(newTables.summary, privacy: .public)")
 
         exclusions.update(excluded)
+        capsLockForwarder.setEnabled(!newTables.capsLock.isEmpty)
 
         os_unfair_lock_lock(&lock)
         tables = newTables
@@ -176,16 +185,7 @@ extension EventTapHandler {
         }
 
         if exclusions.excludes(focusedAppTracker.focusedBundleIDLowercased) {
-            // Hands off entirely: no bindings, no remaps, no capslock/space/tab
-            // interception. Clear any half-finished modifier hold so the next
-            // non-excluded app doesn't inherit stale state.
-            spaceHeld = false
-            tabHeld = false
-            if type == .keyDown, !isInjected(event) {
-                let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
-                keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .passedThrough)
-            }
-            return Unmanaged.passUnretained(event)
+            return handleExcludedEvent(type: type, event: event)
         }
 
         switch type {
@@ -209,6 +209,27 @@ extension EventTapHandler {
         }
     }
 
+    /// Hands off entirely: no bindings, no remaps, no capslock/space/tab
+    /// interception — except a bound capslock, which CapsLockForwarder sends as F18.
+    private func handleExcludedEvent(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+        // Clear any half-finished modifier hold so the next non-excluded app
+        // doesn't inherit stale state.
+        spaceHeld = false
+        tabHeld = false
+        if type == .flagsChanged, !currentTables().capsLock.isEmpty,
+           event.getIntegerValueField(.keyboardEventKeycode) == kVK_CapsLock
+        {
+            // The toggle itself would only flip the app's (or VM guest's) CapsLock.
+            SystemCapsLock.turnOff()
+            return nil
+        }
+        if type == .keyDown, !isInjected(event) {
+            let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+            keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .passedThrough)
+        }
+        return Unmanaged.passUnretained(event)
+    }
+
     private func handleFlagsChanged(event: CGEvent) -> Unmanaged<CGEvent>? {
         // CapsLock state is tracked via IOKit HID (CapsLockMonitor).
         // Suppress the capslock flagsChanged event when we have
@@ -218,7 +239,10 @@ extension EventTapHandler {
                 event.getIntegerValueField(.keyboardEventKeycode)
             )
             if keyCode == UInt16(kVK_CapsLock) {
-                return nil // Suppress LED toggle
+                // Keep the system toggle off so excluded apps (e.g. UTM, which
+                // syncs its guest to it) start from a known state.
+                SystemCapsLock.turnOff()
+                return nil
             }
             // Also strip alphaShift from other modifier events
             // so held capslock doesn't affect letter case.
@@ -241,6 +265,12 @@ extension EventTapHandler {
         // Read focused app and tables once for all lookups in this event
         let focusedApp = focusedAppTracker.focusedBundleID
         let tables = currentTables()
+
+        // F18 is capslock forwarded from a host Vibeshed (see CapsLockForwarder);
+        // CapsLockMonitor already counts it as held, so keep it from apps.
+        if keyCode == CapsLockForwarder.keyCode, !tables.capsLock.isEmpty {
+            return nil
+        }
 
         // Strip alphaShift so held capslock doesn't uppercase letters
         if !tables.capsLock.isEmpty, event.flags.contains(.maskAlphaShift) {
@@ -378,6 +408,10 @@ extension EventTapHandler {
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
 
+        if keyCode == CapsLockForwarder.keyCode, !currentTables().capsLock.isEmpty {
+            return nil
+        }
+
         // Strip alphaShift so held capslock doesn't uppercase letters
         if !currentTables().capsLock.isEmpty, event.flags.contains(.maskAlphaShift) {
             event.flags = event.flags.subtracting(.maskAlphaShift)
@@ -445,30 +479,8 @@ extension EventTapHandler {
 
     // MARK: - Helpers
 
-    /// Marker value set on `eventSourceUserData` so the tap recognises
-    /// injected events and passes them through untouched.
-    private static let injectedMarker: Int64 = 0x5649_4245 // "VIBE"
-
     private static let spaceKeyCode = UInt16(kVK_Space)
     private static let tabKeyCode = UInt16(kVK_Tab)
-
-    private func isInjected(_ event: CGEvent) -> Bool {
-        event.getIntegerValueField(.eventSourceUserData) == Self.injectedMarker
-    }
-
-    private func injectKeyPress(keyCode: UInt16, modifiers: CGEventFlags) {
-        let source = CGEventSource(stateID: .combinedSessionState)
-        if let down = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true),
-           let up = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false)
-        {
-            down.flags = modifiers
-            up.flags = modifiers
-            down.setIntegerValueField(.eventSourceUserData, value: Self.injectedMarker)
-            up.setIntegerValueField(.eventSourceUserData, value: Self.injectedMarker)
-            down.post(tap: .cgSessionEventTap)
-            up.post(tap: .cgSessionEventTap)
-        }
-    }
 }
 
 // MARK: - C Callback

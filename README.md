@@ -203,6 +203,8 @@ keybindingExclusions:
 
 While one of those apps is focused, every key and mouse event passes straight through: no bindings (including the picker toggle), no remaps, and no capslock/space/tab modifier interception.
 
+The one exception is a bound capslock. VM consoles such as UTM's macOS VMs only mirror the host's CapsLock toggle into the guest, never a press and release, so a Vibeshed running inside the VM could never see capslock held. Instead, while an excluded app is focused, holding capslock is sent as holding F18, and Vibeshed treats a held F18 as capslock. Capslock combos then work inside the VM as long as the guest runs Vibeshed too.
+
 ## Architecture
 
 - **Swift Package Manager** with `Package.swift` — no Xcode project required

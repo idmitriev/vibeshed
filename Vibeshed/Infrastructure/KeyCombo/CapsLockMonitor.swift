@@ -11,10 +11,14 @@ final class CapsLockMonitor: @unchecked Sendable {
 
     private var hidManager: IOHIDManager?
     private var _isPressed = false
+    /// Which of `capsLockUsages` are down. HID callback (main run loop) only.
+    private var pressedUsages: Set<UInt32> = []
     private let lock = NSLock()
 
-    /// HID usage code for CapsLock (keyboard page 0x07, usage 0x39 = 57)
-    private let capsLockHIDUsage: UInt32 = 0x39
+    /// Keyboard page 0x07 usages that count as capslock: CapsLock itself (0x39)
+    /// and F18 (0x6D), which is what CapsLockForwarder on a host Vibeshed sends
+    /// into a VM in place of a held capslock.
+    private let capsLockUsages: Set<UInt32> = [0x39, 0x6D]
 
     var isPressed: Bool {
         lock.lock()
@@ -113,6 +117,7 @@ final class CapsLockMonitor: @unchecked Sendable {
         lock.lock()
         _isPressed = false
         lock.unlock()
+        pressedUsages = []
 
         Log.keybindings.info("CapsLockMonitor stopped")
     }
@@ -123,9 +128,14 @@ final class CapsLockMonitor: @unchecked Sendable {
         let usage = IOHIDElementGetUsage(element)
 
         guard usagePage == kHIDPage_KeyboardOrKeypad else { return }
-        guard usage == capsLockHIDUsage else { return }
+        guard capsLockUsages.contains(usage) else { return }
 
-        let pressed = IOHIDValueGetIntegerValue(value) != 0
+        if IOHIDValueGetIntegerValue(value) != 0 {
+            pressedUsages.insert(usage)
+        } else {
+            pressedUsages.remove(usage)
+        }
+        let pressed = !pressedUsages.isEmpty
 
         lock.lock()
         let wasPressed = _isPressed
