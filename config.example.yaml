@@ -343,6 +343,17 @@ modules:
       - "com.apple.Dock"
       - "com.apple.loginwindow"
 
+  # --- Menu Items (needs Accessibility) ---
+  # The menu bar of the app you're in, as actions. Every enabled item shows up in
+  # search, and menu/search lists only menu items. An item's ID is its path —
+  # "menu/File > New Tab" — and it clicks that item in whichever app is in front,
+  # so it can be bound or aliased (add `app:` to a keybinding to scope it).
+  menu:
+    showInSearch: true         # false: only through menu/search
+    maxSubmenuItems: 100       # skip bigger submenus (per-day history, bookmark lists)
+    cacheTTLSeconds: 3.0
+    excludedBundleIDs: []      # apps whose menus are never listed
+
   # --- Browser Tabs ---
   browser:
     browsers: []               # empty = all running supported browsers

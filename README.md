@@ -104,6 +104,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Window** | Resize, move, tile, cycle, maximize/restore, focus windows |
 | **Tiling** | Per-display grid tiling, auto-tile, directional moves, focus border |
 | **Application** | Launch, focus, quit applications |
+| **Menu** | Search and click the frontmost app's menu bar items |
 | **Processes** | List and kill running processes |
 | **Browser** | Search/focus/close tabs in Safari and Chromium browsers |
 | **Bookmark** | Browser bookmarks and most-visited URLs |
