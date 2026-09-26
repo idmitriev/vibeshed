@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let autostartManager: AutostartManager
     let aliasManager: AliasManager
     let layoutTransliterator: LayoutTransliterator
+    let keystrokeVisualizer: KeystrokeVisualizer
 
     override init() {
         self.eventBus = EventBus()
@@ -61,6 +62,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showParameterInput: { action in
                 coordinator.showForParameterInput(action: action)
             }
+        )
+        self.keystrokeVisualizer = Self.makeKeystrokeVisualizer(
+            keyComboManager: keyComboManager, themeEngine: themeEngine, moduleRegistry: moduleRegistry
         )
         self.uriManager = URIManager(
             eventBus: eventBus,
@@ -267,6 +271,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildSelfModule() -> SelfModule {
         let cfgManager = configManager
         let registry = moduleRegistry
+        let visualizer = keystrokeVisualizer
 
         return SelfModule(
             configFileURL: cfgManager.configFileURL,
@@ -298,6 +303,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return ModuleStatusInfo(
                     entries: entries.sorted { $0.id < $1.id }
                 )
+            },
+            toggleKeystrokeVisualizer: { @MainActor in
+                visualizer.toggle()
             }
         )
     }
@@ -327,6 +335,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     {
         panelController.show()
         return false
+    }
+}
+
+// MARK: - Keystroke Visualizer
+
+extension AppDelegate {
+    private static func makeKeystrokeVisualizer(
+        keyComboManager: KeyComboManager,
+        themeEngine: ThemeEngine,
+        moduleRegistry: ModuleRegistry
+    ) -> KeystrokeVisualizer {
+        KeystrokeVisualizer(keyComboManager: keyComboManager, themeEngine: themeEngine) { actionID in
+            // Built-in action with no module behind it (see KeyComboManager).
+            if actionID.rawValue == "app/togglePicker" {
+                return "Toggle Picker"
+            }
+            return await moduleRegistry.findAction(id: actionID)?.title
+        }
     }
 }
 

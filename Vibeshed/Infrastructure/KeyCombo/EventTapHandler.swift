@@ -20,6 +20,9 @@ final class EventTapHandler: @unchecked Sendable {
     /// Apps that opt out of every binding and remap. Owns its own lock.
     private let exclusions = AppExclusionList()
 
+    /// Feeds the keystroke visualizer. Owns its own lock.
+    private let keystrokes = KeystrokeReporter()
+
     // Modifier hold state — only accessed from tap callback thread
     private var spaceHeld = false
     private var spaceUsedAsModifier = false
@@ -128,6 +131,10 @@ final class EventTapHandler: @unchecked Sendable {
         os_unfair_lock_unlock(&lock)
     }
 
+    func setKeystrokeSink(_ sink: (@Sendable (KeystrokeEvent) -> Void)?) {
+        keystrokes.setSink(sink)
+    }
+
     // MARK: - Lookup Helpers (called from tap callback thread)
 
     /// The tables as of now, for one event's lookups. Copying is cheap (the
@@ -174,6 +181,10 @@ extension EventTapHandler {
             // non-excluded app doesn't inherit stale state.
             spaceHeld = false
             tabHeld = false
+            if type == .keyDown, !isInjected(event) {
+                let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+                keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .passedThrough)
+            }
             return Unmanaged.passUnretained(event)
         }
 
@@ -221,7 +232,7 @@ extension EventTapHandler {
 
     private func handleKeyDown(event: CGEvent) -> Unmanaged<CGEvent>? {
         // Pass through events we injected ourselves (e.g. mouse remaps)
-        if event.getIntegerValueField(.eventSourceUserData) == Self.injectedMarker {
+        if isInjected(event) {
             return Unmanaged.passUnretained(event)
         }
 
@@ -239,7 +250,7 @@ extension EventTapHandler {
         if beginModifierHold(keyCode: keyCode, tables: tables) {
             return nil // Suppress space/tab until we know if it's a modifier
         }
-        if handleModifierCombo(keyCode: keyCode, focusedApp: focusedApp, tables: tables) {
+        if handleModifierCombo(event: event, keyCode: keyCode, focusedApp: focusedApp, tables: tables) {
             return nil
         }
         return handleStandardCombo(event: event, keyCode: keyCode, focusedApp: focusedApp, tables: tables)
@@ -262,7 +273,12 @@ extension EventTapHandler {
     }
 
     /// CapsLock / Space / Tab + key combos. True when the key press was consumed.
-    private func handleModifierCombo(keyCode: UInt16, focusedApp: String, tables: BindingTables) -> Bool {
+    private func handleModifierCombo(
+        event: CGEvent,
+        keyCode: UInt16,
+        focusedApp: String,
+        tables: BindingTables
+    ) -> Bool {
         // Caps-lock modifier combos (state from IOKit HID)
         if CapsLockMonitor.shared.isPressed,
            let actionID = tables.capsLock[keyCode]?.resolve(focusedApp: focusedApp)
@@ -270,6 +286,7 @@ extension EventTapHandler {
             Log.keybindings.info(
                 "CapsLock+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)"
             )
+            keystrokes.reportKeyDown(event, keyCode: keyCode, heldKey: .capsLock, outcome: .binding(actionID))
             executor(actionID)
             return true
         }
@@ -282,6 +299,7 @@ extension EventTapHandler {
             Log.keybindings.info(
                 "Space+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)"
             )
+            keystrokes.reportKeyDown(event, keyCode: keyCode, heldKey: .space, outcome: .binding(actionID))
             executor(actionID)
             return true
         }
@@ -290,6 +308,7 @@ extension EventTapHandler {
         guard tabHeld, keyCode != Self.tabKeyCode else { return false }
         if let remap = tables.tabRemaps[keyCode]?[focusedApp] ?? tables.tabRemaps[keyCode]?[""] {
             tabUsedAsModifier = true
+            keystrokes.reportKeyDown(event, keyCode: keyCode, heldKey: .tab, outcome: .remap(remap))
             injectKeyPress(keyCode: remap.keyCode, modifiers: remap.modifiers)
             return true
         }
@@ -298,6 +317,7 @@ extension EventTapHandler {
             Log.keybindings.info(
                 "Tab+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)"
             )
+            keystrokes.reportKeyDown(event, keyCode: keyCode, heldKey: .tab, outcome: .binding(actionID))
             executor(actionID)
             return true
         }
@@ -320,6 +340,7 @@ extension EventTapHandler {
             Log.keybindings.info(
                 "Remap key=\(keyCode) → key=\(remap.keyCode) [\(focusedApp, privacy: .public)]"
             )
+            keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .remap(remap))
             event.setIntegerValueField(.keyboardEventKeycode, value: Int64(remap.keyCode))
             // Set target modifiers, preserving non-relevant flags (e.g. alphaShift)
             let preserved = event.flags.subtracting(Self.relevantModifiers)
@@ -332,9 +353,12 @@ extension EventTapHandler {
             Log.keybindings.info(
                 "Key \(keyCode) flags=\(flags.rawValue) → \(actionID.rawValue, privacy: .public)"
             )
+            keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .binding(actionID))
             executor(actionID)
             return nil
         }
+
+        keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .passedThrough)
 
         // Log unmatched events when modifiers are held (skip plain typing)
         if flags.rawValue != 0 {
@@ -348,7 +372,7 @@ extension EventTapHandler {
 
     private func handleKeyUp(event: CGEvent) -> Unmanaged<CGEvent>? {
         // Pass through events we injected ourselves
-        if event.getIntegerValueField(.eventSourceUserData) == Self.injectedMarker {
+        if isInjected(event) {
             return Unmanaged.passUnretained(event)
         }
 
@@ -359,10 +383,12 @@ extension EventTapHandler {
             event.flags = event.flags.subtracting(.maskAlphaShift)
         }
 
+        // The replacement press injected below isn't reported by keyDown, so a plain tap is reported here.
         if keyCode == Self.spaceKeyCode, spaceHeld {
             spaceHeld = false
             if !spaceUsedAsModifier {
                 // Space was tapped, not used as modifier — inject space keypress
+                keystrokes.reportTap(keyCode: keyCode, characters: " ")
                 injectKeyPress(keyCode: Self.spaceKeyCode, modifiers: [])
             }
             return nil
@@ -372,6 +398,7 @@ extension EventTapHandler {
             tabHeld = false
             if !tabUsedAsModifier {
                 // Tab was tapped, not used as modifier — inject tab keypress
+                keystrokes.reportTap(keyCode: keyCode, characters: "\t")
                 injectKeyPress(keyCode: Self.tabKeyCode, modifiers: [])
             }
             return nil
@@ -394,6 +421,7 @@ extension EventTapHandler {
             Log.keybindings.info(
                 "MouseRemap btn=\(button, privacy: .public) → key=\(remap.keyCode, privacy: .public)"
             )
+            keystrokes.reportMouse(button: button, modifiers: flags, outcome: .remap(remap))
             injectKeyPress(keyCode: remap.keyCode, modifiers: remap.modifiers)
             return nil
         }
@@ -403,6 +431,7 @@ extension EventTapHandler {
             Log.keybindings.info(
                 "Mouse \(button) flags=\(flagBits) → \(actionID.rawValue, privacy: .public)"
             )
+            keystrokes.reportMouse(button: button, modifiers: flags, outcome: .binding(actionID))
             executor(actionID)
             return nil
         }
@@ -423,6 +452,10 @@ extension EventTapHandler {
     private static let spaceKeyCode = UInt16(kVK_Space)
     private static let tabKeyCode = UInt16(kVK_Tab)
 
+    private func isInjected(_ event: CGEvent) -> Bool {
+        event.getIntegerValueField(.eventSourceUserData) == Self.injectedMarker
+    }
+
     private func injectKeyPress(keyCode: UInt16, modifiers: CGEventFlags) {
         let source = CGEventSource(stateID: .combinedSessionState)
         if let down = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true),
@@ -435,47 +468,6 @@ extension EventTapHandler {
             down.post(tap: .cgSessionEventTap)
             up.post(tap: .cgSessionEventTap)
         }
-    }
-}
-
-// MARK: - File-Private Types
-
-/// Bundle IDs whose events the tap forwards untouched. Written from the main
-/// actor on config reload, read from the tap callback thread on every event.
-private final class AppExclusionList: @unchecked Sendable {
-    private var lock = os_unfair_lock()
-    private var bundleIDs: Set<String> = []
-    /// Last app an exclusion was logged for, so entering an excluded app logs
-    /// once rather than on every event. Tap callback thread only.
-    private var lastLogged: String?
-
-    func update(_ newValue: Set<String>) {
-        let folded = Set(newValue.map { $0.lowercased() })
-        os_unfair_lock_lock(&lock)
-        bundleIDs = folded
-        os_unfair_lock_unlock(&lock)
-        guard !folded.isEmpty else { return }
-        let list = folded.sorted().joined(separator: ", ")
-        Log.keybindings.info("Keybindings disabled in: \(list, privacy: .public)")
-    }
-
-    /// `focusedApp` must already be lowercased.
-    func excludes(_ focusedApp: String) -> Bool {
-        os_unfair_lock_lock(&lock)
-        let matched = bundleIDs.contains(focusedApp)
-        os_unfair_lock_unlock(&lock)
-
-        guard matched else {
-            lastLogged = nil
-            return false
-        }
-        if lastLogged != focusedApp {
-            lastLogged = focusedApp
-            Log.keybindings.info(
-                "Passing input through — keybindings disabled for \(focusedApp, privacy: .public)"
-            )
-        }
-        return true
     }
 }
 

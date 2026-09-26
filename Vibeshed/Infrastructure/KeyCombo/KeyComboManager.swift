@@ -18,6 +18,10 @@ final class KeyComboManager {
     private var currentExclusions: [String] = []
     private var eventTapRunning = false
     private var capsLockMonitorRunning = false
+    /// Whether the last rebind found any binding or remap to apply.
+    private var hasActiveBindings = false
+    /// A keystroke sink needs the event tap even when nothing is bound.
+    private var hasKeystrokeSink = false
 
     init(
         eventBus: EventBus,
@@ -98,6 +102,16 @@ final class KeyComboManager {
         currentEntries = entries
         currentExclusions = exclusions
         rebindAll()
+    }
+
+    /// Reports every key press, and every bound mouse press, to `sink` — on the
+    /// event tap thread — until called again with nil.
+    func setKeystrokeSink(_ sink: (@Sendable (KeystrokeEvent) -> Void)?) {
+        eventTapHandler.setKeystrokeSink(sink)
+        hasKeystrokeSink = sink != nil
+        if eventTapRunning != (hasActiveBindings || hasKeystrokeSink) {
+            rebindAll()
+        }
     }
 
     func stop() {
@@ -222,7 +236,8 @@ extension KeyComboManager {
         let mse = resolved.mouse.count
         let totalBindings = std + caps + spc + tb + mse
         let totalRemaps = resolved.remaps.count + resolved.tabRemaps.count + resolved.mouseRemaps.count
-        guard totalBindings + totalRemaps > 0 else {
+        hasActiveBindings = totalBindings + totalRemaps > 0
+        guard hasActiveBindings || hasKeystrokeSink else {
             Log.keybindings.info("No keybindings or remaps configured — skipping event tap")
             Log.stderr("  ⚠ keybindings: none configured")
             return

@@ -35,17 +35,20 @@ actor SelfModule: ModuleConfigurable {
     private let configDirURL: URL
     private let reloadConfig: @Sendable () async -> Void
     private let getModuleStatus: @Sendable () async -> ModuleStatusInfo
+    private let toggleKeystrokeVisualizer: @Sendable () async -> Void
 
     init(
         configFileURL: URL,
         configDirURL: URL,
         reloadConfig: @escaping @Sendable () async -> Void,
-        getModuleStatus: @escaping @Sendable () async -> ModuleStatusInfo
+        getModuleStatus: @escaping @Sendable () async -> ModuleStatusInfo,
+        toggleKeystrokeVisualizer: @escaping @Sendable () async -> Void
     ) {
         self.configFileURL = configFileURL
         self.configDirURL = configDirURL
         self.reloadConfig = reloadConfig
         self.getModuleStatus = getModuleStatus
+        self.toggleKeystrokeVisualizer = toggleKeystrokeVisualizer
     }
 
     func initialize(context: ModuleContext) async throws {
@@ -77,6 +80,7 @@ actor SelfModule: ModuleConfigurable {
         actions.append(contentsOf: buildConfigActions())
         actions.append(contentsOf: buildStatusActions())
         actions.append(contentsOf: buildUtilityActions())
+        actions.append(buildKeystrokeVisualizerAction())
 
         if let enabled {
             return actions.filter { enabled.contains(actionName($0.id)) }
@@ -190,6 +194,25 @@ actor SelfModule: ModuleConfigurable {
         case .permissionError:
             let msg = entry.message ?? "Missing permissions"
             return ("exclamationmark.triangle.fill", msg)
+        }
+    }
+
+    private func buildKeystrokeVisualizerAction() -> SelfAction {
+        let toggle = toggleKeystrokeVisualizer
+
+        return SelfAction(
+            id: ActionID(module: "self", name: "toggleKeystrokeVisualizer"),
+            title: "Toggle Keystroke Visualizer",
+            subtitle: "Show keys on screen as you press them, highlighting Vibeshed keybindings",
+            iconName: "keyboard",
+            relevanceScore: 0.65,
+            keywords: [
+                "keystroke", "keys", "keyboard", "visualizer", "show",
+                "cast", "keycastr", "screencast", "demo", "record", "vibeshed",
+            ]
+        ) { _ in
+            await toggle()
+            return .dismiss
         }
     }
 

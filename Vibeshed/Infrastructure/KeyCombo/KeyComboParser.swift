@@ -110,6 +110,19 @@ enum KeyComboParser {
         return flag
     }
 
+    /// Shortest config name for a key code ("-" over "minus", "enter" over "return"), for display.
+    static func keyName(for keyCode: UInt16) -> String? {
+        keyNames[keyCode]
+    }
+
+    private static let keyNames: [UInt16: String] = keyCodes.reduce(into: [:]) { names, entry in
+        let (name, code) = entry
+        if let current = names[code], (current.count, current) <= (name.count, name) {
+            return
+        }
+        names[code] = name
+    }
+
     // MARK: - Key Code Dictionary
 
     private static let keyCodes: [String: UInt16] = {
