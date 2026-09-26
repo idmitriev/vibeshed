@@ -20,6 +20,14 @@ final class AppExclusionList: @unchecked Sendable {
         Log.keybindings.info("Keybindings disabled in: \(list, privacy: .public)")
     }
 
+    /// Side-effect-free check for use off the tap thread. `focusedApp` must
+    /// already be lowercased.
+    func contains(_ focusedApp: String) -> Bool {
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
+        return bundleIDs.contains(focusedApp)
+    }
+
     /// `focusedApp` must already be lowercased.
     func excludes(_ focusedApp: String) -> Bool {
         os_unfair_lock_lock(&lock)
