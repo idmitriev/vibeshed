@@ -5,25 +5,33 @@ import IOKit.hid
 /// Monitors the physical press/release state of CapsLock using IOKit HID.
 /// CGEvent flagsChanged is unreliable for capslock when the key is remapped
 /// at the system level; IOKit HID reads the raw hardware state directly.
+///
+/// Also counts a capslock hold forwarded from a host Vibeshed as F18 (see
+/// CapsLockForwarder). That arrives through a VM's virtual keyboard, which
+/// IOKit HID clients don't see, so the event tap reports it instead.
 final class CapsLockMonitor: @unchecked Sendable {
     static let shared = CapsLockMonitor()
     static let stateChanged = Notification.Name("CapsLockMonitorStateChanged")
 
     private var hidManager: IOHIDManager?
-    private var _isPressed = false
-    /// Which of `capsLockUsages` are down. HID callback (main run loop) only.
-    private var pressedUsages: Set<UInt32> = []
+    // Guarded by `lock`
+    private var hidPressed = false
+    private var forwardedPressed = false
     private let lock = NSLock()
 
-    /// Keyboard page 0x07 usages that count as capslock: CapsLock itself (0x39)
-    /// and F18 (0x6D), which is what CapsLockForwarder on a host Vibeshed sends
-    /// into a VM in place of a held capslock.
-    private let capsLockUsages: Set<UInt32> = [0x39, 0x6D]
+    /// HID usage code for CapsLock (keyboard page 0x07, usage 0x39 = 57)
+    private let capsLockHIDUsage: UInt32 = 0x39
 
     var isPressed: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return _isPressed
+        return hidPressed || forwardedPressed
+    }
+
+    /// Called from the event tap on a forwarded F18 down/up. Takes effect before
+    /// the tap sees the next key, so a combo typed right after still matches.
+    func setForwardedPressed(_ pressed: Bool) {
+        update { $0.forwardedPressed = pressed }
     }
 
     private init() {}
@@ -115,9 +123,9 @@ final class CapsLockMonitor: @unchecked Sendable {
         hidManager = nil
 
         lock.lock()
-        _isPressed = false
+        hidPressed = false
+        forwardedPressed = false
         lock.unlock()
-        pressedUsages = []
 
         Log.keybindings.info("CapsLockMonitor stopped")
     }
@@ -128,25 +136,32 @@ final class CapsLockMonitor: @unchecked Sendable {
         let usage = IOHIDElementGetUsage(element)
 
         guard usagePage == kHIDPage_KeyboardOrKeypad else { return }
-        guard capsLockUsages.contains(usage) else { return }
+        guard usage == capsLockHIDUsage else { return }
 
-        if IOHIDValueGetIntegerValue(value) != 0 {
-            pressedUsages.insert(usage)
-        } else {
-            pressedUsages.remove(usage)
-        }
-        let pressed = !pressedUsages.isEmpty
+        let pressed = IOHIDValueGetIntegerValue(value) != 0
+        update { $0.hidPressed = pressed }
+    }
 
+    /// Applies `change` under the lock and, if the combined state flipped,
+    /// logs it and posts `stateChanged` on the main thread.
+    private func update(_ change: (CapsLockMonitor) -> Void) {
         lock.lock()
-        let wasPressed = _isPressed
-        _isPressed = pressed
+        let wasPressed = hidPressed || forwardedPressed
+        change(self)
+        let pressed = hidPressed || forwardedPressed
+        let source = forwardedPressed ? "forwarded F18" : "HID"
         lock.unlock()
 
-        if pressed != wasPressed {
-            Log.keybindings.info(
-                "CapsLock HID: \(pressed ? "DOWN" : "UP", privacy: .public)"
-            )
+        guard pressed != wasPressed else { return }
+        Log.keybindings.info(
+            "CapsLock: \(pressed ? "DOWN" : "UP", privacy: .public) (\(source, privacy: .public))"
+        )
+        if Thread.isMainThread {
             NotificationCenter.default.post(name: Self.stateChanged, object: nil)
+        } else {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Self.stateChanged, object: nil)
+            }
         }
     }
 }

@@ -266,9 +266,10 @@ extension EventTapHandler {
         let focusedApp = focusedAppTracker.focusedBundleID
         let tables = currentTables()
 
-        // F18 is capslock forwarded from a host Vibeshed (see CapsLockForwarder);
-        // CapsLockMonitor already counts it as held, so keep it from apps.
+        // F18 is capslock forwarded from a host Vibeshed (see CapsLockForwarder):
+        // count it as held capslock and keep it from apps.
         if keyCode == CapsLockForwarder.keyCode, !tables.capsLock.isEmpty {
+            CapsLockMonitor.shared.setForwardedPressed(true)
             return nil
         }
 
@@ -409,6 +410,7 @@ extension EventTapHandler {
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
 
         if keyCode == CapsLockForwarder.keyCode, !currentTables().capsLock.isEmpty {
+            CapsLockMonitor.shared.setForwardedPressed(false)
             return nil
         }
 

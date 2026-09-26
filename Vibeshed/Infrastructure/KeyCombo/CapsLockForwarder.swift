@@ -59,25 +59,30 @@ final class CapsLockForwarder: @unchecked Sendable {
             os_unfair_lock_lock(&lock)
             let enabled = enabled
             os_unfair_lock_unlock(&lock)
-            guard enabled, !isForwarding,
-                  exclusions.contains(focusedAppTracker.focusedBundleIDLowercased)
-            else { return }
+            let focusedApp = focusedAppTracker.focusedBundleIDLowercased
+            guard enabled, !isForwarding, exclusions.contains(focusedApp) else { return }
             isForwarding = true
-            post(keyDown: true)
+            let posted = post(keyDown: true)
+            Log.keybindings.info(
+                "CapsLock held in \(focusedApp, privacy: .public) → F18 down (posted: \(posted, privacy: .public))"
+            )
         } else if isForwarding {
             // Released even if focus has since left the excluded app, so the
             // guest never sees F18 stuck down.
             isForwarding = false
-            post(keyDown: false)
+            let posted = post(keyDown: false)
+            Log.keybindings.info("CapsLock released → F18 up (posted: \(posted, privacy: .public))")
         }
     }
 
-    private func post(keyDown: Bool) {
+    @discardableResult
+    private func post(keyDown: Bool) -> Bool {
         let source = CGEventSource(stateID: .combinedSessionState)
         guard let event = CGEvent(keyboardEventSource: source, virtualKey: Self.keyCode, keyDown: keyDown)
-        else { return }
+        else { return false }
         event.flags = []
         event.setIntegerValueField(.eventSourceUserData, value: EventTapHandler.injectedMarker)
         event.post(tap: .cgSessionEventTap)
+        return true
     }
 }
