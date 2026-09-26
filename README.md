@@ -87,11 +87,7 @@ The app runs as a menu bar item (no Dock icon). Use `make run-debug` to see logs
 
 ## Configuration
 
-Configuration lives at `~/.config/vibeshed/config.yaml`. Copy the example to get started:
-
-```bash
-cp config.example.yaml ~/.config/vibeshed/config.yaml
-```
+Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshed writes a minimal config there: `option+space` toggles the picker, only modules backed by macOS itself are enabled (apps, system actions, settings panes, audio, processes, math, timers, emoji, web search), and the default browser is left alone.
 
 See [config.example.yaml](config.example.yaml) for all available options including keybindings, module settings, URL routing rules, and action aliases.
 

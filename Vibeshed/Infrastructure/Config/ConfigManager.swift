@@ -21,6 +21,7 @@ final class ConfigManager {
 
     func start() {
         ensureConfigDirectory()
+        writeDefaultConfigIfMissing()
         loadConfig()
         startMonitoring()
     }
@@ -35,6 +36,18 @@ final class ConfigManager {
             at: configDirectoryURL,
             withIntermediateDirectories: true
         )
+    }
+
+    /// First launch: seed a minimal config so the picker hotkey and built-in
+    /// modules work out of the box (and so the file exists to be watched).
+    private func writeDefaultConfigIfMissing() {
+        guard !FileManager.default.fileExists(atPath: configFileURL.path) else { return }
+        do {
+            try Data(DefaultConfig.yaml.utf8).write(to: configFileURL, options: .withoutOverwriting)
+            Log.config.info("Wrote default config to \(self.configFileURL.path, privacy: .public)")
+        } catch {
+            Log.config.error("Failed to write default config: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     func reload() {
