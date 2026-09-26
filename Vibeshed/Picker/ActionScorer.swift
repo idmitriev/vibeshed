@@ -36,7 +36,59 @@ struct ScorableAction: Sendable {
 /// scoring off the main thread during typing.
 enum ActionScorer {
     /// Maximum rendered results — nobody scrolls past 200 in a launcher.
-    private static let maxResults = 200
+    static let maxResults = 200
+
+    /// One action's score, split into its terms. `final` is what ranking sorts by.
+    struct Evaluation {
+        /// Fuzzy match incl. weighted relevance and usage (see `FuzzyMatcher.score`).
+        let fuzzy: Double
+        /// Raw usage boost fed into `fuzzy`.
+        let usage: Double
+        let context: Double
+        let imminence: Double
+        let titleRanges: [Range<String.Index>]
+
+        var final: Double { fuzzy + context + imminence }
+    }
+
+    /// Scores one action; nil when it doesn't match the query at all.
+    static func evaluate(
+        _ scorable: ScorableAction,
+        queryLower: String,
+        queryChars: [Character],
+        scoring: ScoringContext
+    ) -> Evaluation? {
+        let action = scorable.action
+        let usageBoost = scoring.usageBoost(for: action.id)
+        guard let result = FuzzyMatcher.score(
+            queryLower: queryLower,
+            queryChars: queryChars,
+            target: scorable.target,
+            usageBoost: usageBoost
+        ) else { return nil }
+
+        let contextBoost: Double = if let ctx = scoring.systemContext {
+            ContextualScorer.boost(
+                actionID: action.id, moduleID: action.id.moduleID, context: ctx
+            )
+        } else {
+            0
+        }
+        // Deliberately unclamped and applied on top: an event about to start
+        // outranks even an exact match elsewhere in the list.
+        let imminenceBoost = ImminenceScorer.boost(
+            scheduledStart: scorable.scheduledStart,
+            scheduledEnd: scorable.scheduledEnd,
+            now: scoring.now
+        )
+        return Evaluation(
+            fuzzy: result.score,
+            usage: usageBoost,
+            context: contextBoost,
+            imminence: imminenceBoost,
+            titleRanges: result.titleRanges
+        )
+    }
 
     /// Scores the precomputed corpus against `query`, ranks it, dedups browser tabs vs
     /// bookmark/history entries by URL, and caps the result.
@@ -52,32 +104,11 @@ enum ActionScorer {
         var cache: [ActionID: any Action] = [:]
 
         for scorable in corpus {
-            let action = scorable.action
-            let usageBoost = scoring.usageBoost(for: action.id)
-            guard let result = FuzzyMatcher.score(
-                queryLower: queryLower,
-                queryChars: queryChars,
-                target: scorable.target,
-                usageBoost: usageBoost
+            guard let eval = evaluate(
+                scorable, queryLower: queryLower, queryChars: queryChars, scoring: scoring
             ) else { continue }
-
-            let moduleID = action.id.moduleID
-            let contextBoost: Double = if let ctx = scoring.systemContext {
-                ContextualScorer.boost(
-                    actionID: action.id, moduleID: moduleID, context: ctx
-                )
-            } else {
-                0
-            }
-            // Deliberately unclamped and applied on top: an event about to start
-            // outranks even an exact match elsewhere in the list.
-            let imminenceBoost = ImminenceScorer.boost(
-                scheduledStart: scorable.scheduledStart,
-                scheduledEnd: scorable.scheduledEnd,
-                now: scoring.now
-            )
-            let finalScore = result.score + contextBoost + imminenceBoost
-
+            let action = scorable.action
+            let finalScore = eval.final
             let item = ActionItem(
                 id: action.id,
                 title: action.title,
@@ -85,10 +116,10 @@ enum ActionScorer {
                 iconSystemName: action.iconName,
                 appIconPath: action.appIconPath,
                 score: finalScore,
-                moduleID: moduleID,
+                moduleID: action.id.moduleID,
                 hasParameters: !action.parameters.filter(\.isRequired).isEmpty,
                 keywords: scorable.keywords,
-                titleHighlightRanges: result.titleRanges.isEmpty ? nil : result.titleRanges
+                titleHighlightRanges: eval.titleRanges.isEmpty ? nil : eval.titleRanges
             )
             scored.append((item: item, action: action, score: finalScore))
             cache[action.id] = action
