@@ -151,6 +151,7 @@ keybindingExclusions:
   # - "com.microsoft.rdc.macos"    # Microsoft Remote Desktop
   # - "com.vmware.fusion"          # VMware Fusion
   # - "com.parallels.desktop.console"  # Parallels Desktop
+  # - "com.utmapp.UTM"             # UTM
 
 # ---------------------------------------------------------------------------
 # Aliases (action shortcuts with optional pre-filled parameters)
