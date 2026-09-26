@@ -238,18 +238,20 @@ final class PickerCoordinator {
 
     /// Queries query-dependent modules (e.g. math), merges with the cached corpus,
     /// and scores/ranks off the main actor — the per-keystroke hot path.
+    /// `combined` is everything that was scored (the debug dump re-ranks it uncapped).
     private func scoreQuery(
         _ query: String,
         corpus: [ScorableAction],
         scoring: ScoringContext
-    ) async -> ([ActionItem], [ActionID: any Action]) {
+    ) async -> (items: [ActionItem], cache: [ActionID: any Action], combined: [ScorableAction]) {
         let buildState = Log.signposter.beginInterval("BuildActionItems")
         defer { Log.signposter.endInterval("BuildActionItems", buildState) }
 
         let searchResults = await moduleRegistry.searchActions(query: query, scoring: scoring)
         return await Task.detached {
             let combined = corpus + searchResults.map { ScorableAction(action: $0) }
-            return ActionScorer.scoreAndRank(corpus: combined, query: query, scoring: scoring)
+            let (items, cache) = ActionScorer.scoreAndRank(corpus: combined, query: query, scoring: scoring)
+            return (items, cache, combined)
         }.value
     }
 
@@ -285,8 +287,14 @@ final class PickerCoordinator {
         }
         let ctx = currentContext
 
-        func finish(_ items: [ActionItem], _ cache: [ActionID: any Action]) {
+        func finish(
+            _ items: [ActionItem],
+            _ cache: [ActionID: any Action],
+            scored combined: [ScorableAction],
+            _ scoring: ScoringContext
+        ) {
             pickerState.updateActions(items, cache: cache, preservingSelection: options.preservingSelection)
+            ActionListDebugDump.schedule(query: query, displayed: items, corpus: combined, scoring: scoring)
             if options.clearsLoading { pickerState.isLoading = false }
             if options.updatesEmptyCacheWhenEmpty, query.isEmpty {
                 cachedEmptyQueryItems = items
@@ -304,7 +312,7 @@ final class PickerCoordinator {
         }
         guard isCurrent() else { return }
 
-        let (items, cache) = await scoreQuery(query, corpus: corpus, scoring: scoring)
+        let (items, cache, combined) = await scoreQuery(query, corpus: corpus, scoring: scoring)
         guard isCurrent() else { return }
 
         // Layout correction fallback: if no results and query is non-empty,
@@ -313,13 +321,13 @@ final class PickerCoordinator {
            let correction = layoutTransliterator?.transliterate(query)
         {
             let correctedScoring = makeScoring(query: correction.correctedQuery, context: ctx)
-            let (correctedItems, correctedCache) = await scoreQuery(
+            let (correctedItems, correctedCache, correctedCombined) = await scoreQuery(
                 correction.correctedQuery, corpus: corpus, scoring: correctedScoring
             )
             guard isCurrent() else { return }
             if !correctedItems.isEmpty {
                 pickerState.layoutCorrectionHint = correction
-                finish(correctedItems, correctedCache)
+                finish(correctedItems, correctedCache, scored: correctedCombined, correctedScoring)
                 return
             }
         }
@@ -327,7 +335,7 @@ final class PickerCoordinator {
         if options.layoutCorrectionFallback {
             pickerState.layoutCorrectionHint = nil
         }
-        finish(items, cache)
+        finish(items, cache, scored: combined, scoring)
     }
 }
 
