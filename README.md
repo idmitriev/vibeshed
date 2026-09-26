@@ -113,6 +113,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **VSCode** | Search and open recent projects |
 | **JetBrains** | Search and open IDE projects |
 | **ITerm** | Session listing, command execution, new tabs |
+| **Ghostty** | Focus open terminals, new windows/tabs, quick commands, config reload (Ghostty 1.3+) |
 | **Claude** | Resume Claude Code/Desktop sessions, start new ones, jump to sessions awaiting input |
 | **Codex** | Resume Codex threads with project/branch/model context, start new sessions |
 | **Zed** | Search and open recent workspaces |
@@ -142,6 +143,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 | `pointer` | Pointer fill/outline (needs Full Disk Access) | best-effort |
 | `wallpaper` | Theme image, or one generated from the palette in one of 15 styles | ✓ |
 | `iterm` | Every open session, plus a "Vibeshed" profile (your default profile's settings, theme colours) made the default, so new windows and restarts keep the theme | ✓ |
+| `ghostty` | Generated `themes/Vibeshed`, selected with `theme =` in your config; open terminals reload on SIGUSR2 (Ghostty 1.2+) | ✓ |
 | `vscode` | VS Code, Insiders, Cursor, Windsurf, VSCodium via a generated theme extension | ✓* |
 | `zed` | Generated `themes/vibeshed.json`, selected in settings | ✓* |
 | `jetbrains` | Generated editor scheme; follows "Sync with OS" | on restart |
@@ -153,7 +155,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 
 \* The very first time the generated theme is installed, the editor may need one reload to discover it; after that, switches apply live.
 
-The picker and the tiling focus border follow the theme's accent too. Terminal tools that use the 16 ANSI colours (e.g. fzf with `--color=hl:4,…`) need no target at all: they follow the iTerm palette live. For bat, select the generated theme once with `--theme=Vibeshed`.
+The picker and the tiling focus border follow the theme's accent too. Terminal tools that use the 16 ANSI colours (e.g. fzf with `--color=hl:4,…`) need no target at all: they follow the terminal palette (iTerm, Ghostty) live. For bat, select the generated theme once with `--theme=Vibeshed`.
 
 Themes use [Omarchy](https://omarchy.org)'s `colors.toml` key names (`background`, `accent`, `bright_blue`, `color0`…`color15`, …); only background, foreground and the six base hues are required. 64 built-ins: Catppuccin, Tokyo Night, Rosé Pine, Kanagawa, Gruvbox, Everforest, Nord, Solarized, GitHub, Ayu, Nightfox, Flexoki, Melange, One Dark/Light, Dracula, Monokai Pro, Night Owl, Poimandres, Vesper, Moonfly, Sonokai, Iceberg, Vague, plus Omarchy's own (Osaka Jade, Ristretto, Matte Black, Retro 82, Lumon, …) and classic desktops — BeOS, OS/2 Warp, OS/2 Text Mode and NeXTSTEP, with colors taken from the systems themselves. The community and Omarchy palettes are regenerated from their sources by `scripts/generate-builtin-themes.py`. Define your own in config (optionally `base:` another theme), or drop Omarchy theme folders into `~/.config/vibeshed/themes/`:
 
@@ -165,9 +167,9 @@ modules:
         base: "Tokyo Night"
         colors: { background: "#0b0b12", accent: "#ff9e64" }
     templates:   # Omarchy placeholder syntax: {{ accent }}, {{ red_rgb }}, {{ mix background green 15% }}
-      - source: "~/.config/vibeshed/templates/ghostty.conf.tpl"
-        target: "~/.config/ghostty/themes/vibeshed"
-        reload: "pkill -USR2 -x ghostty"
+      - source: "~/.config/vibeshed/templates/kitty.conf.tpl"
+        target: "~/.config/kitty/current-theme.conf"
+        reload: "pkill -USR1 -x kitty"
 ```
 
 Generated wallpapers come in 15 styles: glow, mesh gradient, waves, ridges, bokeh, low poly, topographic, retro sunset, retro arcs, halftone, solid, and four from classic systems — Leaves (Haiku's screen saver, the BeOS theme's default), Polyhedra (NeXTSTEP BackSpace's module, which could run as the workspace background), Warp Speed (OS/2 Warp) and Text Mode. Any style works with any theme; the classic themes default to their own. `theme/wallpaperStyle` browses them on the current theme with live preview, and `theme/shuffleWallpaper` re-rolls the variation. They're painted at full display resolution in 16-bit colour and dithered, so soft gradients don't band.

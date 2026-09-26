@@ -168,6 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 RecentProjectsModule<JetBrainsProvider>(),
                 RecentProjectsModule<ZedProvider>(),
                 ITermModule(),
+                GhosttyModule(),
                 AISessionsModule<AnthropicProvider>(),
                 AISessionsModule<OpenAIProvider>(),
                 TelegramModule(),
