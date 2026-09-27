@@ -18,6 +18,10 @@ final class FloatingPanel: NSPanel {
     /// Whether the show animation is currently in flight.
     private(set) var isAnimatingShow = false
 
+    /// Bumped by every show/hide so a superseded animation's completion does nothing —
+    /// otherwise a hide cut short by a quick re-show would still order the panel out.
+    private var animationGeneration = 0
+
     /// When true, losing key focus does not auto-hide the panel.
     /// Used for externally-triggered shows (e.g. browser chooser on URL open)
     /// where focus may briefly bounce back to the source app.
@@ -88,6 +92,8 @@ final class FloatingPanel: NSPanel {
     func animateShow() {
         isHiding = false
         isAnimatingShow = true
+        animationGeneration += 1
+        let generation = animationGeneration
 
         guard let layer = contentView?.layer else {
             alphaValue = 1
@@ -99,6 +105,9 @@ final class FloatingPanel: NSPanel {
         // Suppress implicit animations from any pending property changes
         CATransaction.begin()
         CATransaction.setDisableActions(true)
+
+        // An interrupted hide: drop it (its completion sees the stale generation).
+        layer.removeAnimation(forKey: "hideGroup")
 
         // Window surface fully visible — layer opacity handles the visual fade
         alphaValue = 1
@@ -132,7 +141,7 @@ final class FloatingPanel: NSPanel {
 
         CATransaction.begin()
         CATransaction.setCompletionBlock { [weak self] in
-            guard let self else { return }
+            guard let self, self.animationGeneration == generation else { return }
             self.isAnimatingShow = false
             self.onShowAnimationComplete?()
         }
@@ -153,6 +162,8 @@ final class FloatingPanel: NSPanel {
         isHiding = true
         isAnimatingShow = false
         staysOpenOnResignKey = false
+        animationGeneration += 1
+        let generation = animationGeneration
 
         onWillHide?()
 
@@ -184,7 +195,7 @@ final class FloatingPanel: NSPanel {
 
         CATransaction.begin()
         CATransaction.setCompletionBlock { [weak self] in
-            guard let self else { return }
+            guard let self, self.animationGeneration == generation else { return }
             self.orderOut(nil)
             layer.removeAllAnimations()
             layer.transform = CATransform3DIdentity
@@ -204,6 +215,8 @@ final class FloatingPanel: NSPanel {
         guard !isHiding else { return }
         isHiding = true
         isAnimatingShow = false
+        animationGeneration += 1
+        let generation = animationGeneration
 
         onWillHide?()
 
@@ -235,7 +248,7 @@ final class FloatingPanel: NSPanel {
 
         CATransaction.begin()
         CATransaction.setCompletionBlock { [weak self] in
-            guard let self else { return }
+            guard let self, self.animationGeneration == generation else { return }
             self.close()
             layer.removeAllAnimations()
             layer.transform = CATransform3DIdentity
