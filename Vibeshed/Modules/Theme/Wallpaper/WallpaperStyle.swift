@@ -3,7 +3,9 @@ import Foundation
 /// Procedural wallpaper algorithms, each painting purely from a theme palette.
 enum WallpaperStyle: String, CaseIterable, Sendable {
     case glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset, arcs, halftone
-    case leaves, warp, textmode, polyhedra
+    case pulsar, guilloche, sashiko, attractor
+    case bauhaus, destijl, truchet, terrazzo, circles, isometric, penrose
+    case leaves, warp, textmode, polyhedra, maze, dither, pipes
     case solid
 
     /// Config value that picks a style per theme (stable, so each theme keeps its look).
@@ -24,10 +26,24 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .sunset: "Retro Sunset"
         case .arcs: "Retro Arcs"
         case .halftone: "Halftone"
+        case .pulsar: "Pulsar"
+        case .guilloche: "Guilloché"
+        case .sashiko: "Sashiko"
+        case .attractor: "Attractor"
+        case .bauhaus: "Bauhaus"
+        case .destijl: "De Stijl"
+        case .truchet: "Truchet"
+        case .terrazzo: "Terrazzo"
+        case .circles: "Circle Packing"
+        case .isometric: "Isometric Terraces"
+        case .penrose: "Penrose"
         case .leaves: "Leaves"
         case .warp: "Warp Speed"
         case .textmode: "Text Mode"
         case .polyhedra: "Polyhedra"
+        case .maze: "10 PRINT"
+        case .dither: "Dither"
+        case .pipes: "Pipes"
         case .solid: "Solid"
         }
     }
@@ -44,10 +60,24 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .sunset: "Striped sun over a perspective grid"
         case .arcs: "Seventies rainbow bands from a corner"
         case .halftone: "Dot grid swelling toward the accent"
+        case .pulsar: "Stacked line plots peaking in the middle, after the Unknown Pleasures cover"
+        case .guilloche: "Hairline rosettes braided from sine-modulated rings, like a banknote"
+        case .sashiko: "Hitomezashi running stitches, with the shapes they close off tinted"
+        case .attractor: "A Clifford strange attractor, shaded by how often each spot is visited"
+        case .bauhaus: "Tiles of quarter circles, half circles, triangles, lenses and stripes"
+        case .destijl: "Mondrian's rectangles: heavy rules and a few red, blue and yellow panels"
+        case .truchet: "Quarter-circle tiles in random turns, two-colored so regions alternate"
+        case .terrazzo: "Stone chips of every size scattered over a mottled ground"
+        case .circles: "Circles grown until they touch: solid, ringed and outlined"
+        case .isometric: "Isometric blocks stacked to a noise heightmap, shaded on three faces"
+        case .penrose: "Penrose's thin and thick rhombs, a tiling that never repeats"
         case .leaves: "Haiku's Leaves screen saver: gradient leaves piling up on the desktop"
         case .warp: "Star streaks at warp speed, after OS/2 Warp"
         case .textmode: "A text-mode screen: shaded desktop, menus and boxed dialogs"
         case .polyhedra: "NeXTSTEP BackSpace's Polyhedra: a regular solid in perspective on black"
+        case .maze: "The Commodore 64's one-line maze, its sealed-off rooms tinted"
+        case .dither: "A banded planet in four tones, Bayer-dithered into chunky pixels"
+        case .pipes: "Shiny pipes wandering a 3D grid, after the Windows NT screen saver"
         case .solid: "Just the background color"
         }
     }
@@ -64,10 +94,24 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .sunset: "sunset"
         case .arcs: "rainbow"
         case .halftone: "circle.grid.3x3"
+        case .pulsar: "waveform.path.ecg"
+        case .guilloche: "seal"
+        case .sashiko: "square.dashed"
+        case .attractor: "hurricane"
+        case .bauhaus: "square.on.circle"
+        case .destijl: "square.split.bottomrightquarter"
+        case .truchet: "point.topleft.down.curvedto.point.bottomright.up"
+        case .terrazzo: "aqi.medium"
+        case .circles: "circles.hexagonpath"
+        case .isometric: "square.stack.3d.up"
+        case .penrose: "rhombus"
         case .leaves: "leaf"
         case .warp: "sparkles"
         case .textmode: "terminal"
         case .polyhedra: "cube.transparent"
+        case .maze: "chevron.left.forwardslash.chevron.right"
+        case .dither: "checkerboard.rectangle"
+        case .pipes: "pipe.and.drop"
         case .solid: "square.fill"
         }
     }
@@ -125,6 +169,15 @@ struct SeededGenerator: RandomNumberGenerator {
 
     mutating func between(_ low: Double, _ high: Double) -> Double {
         low + (high - low) * unit()
+    }
+
+    /// An integer in `0 ..< count`.
+    mutating func int(below count: Int) -> Int {
+        min(Int(unit() * Double(count)), count - 1)
+    }
+
+    mutating func pick<Element>(_ elements: [Element]) -> Element {
+        elements[int(below: elements.count)]
     }
 }
 

@@ -37,7 +37,10 @@ enum WallpaperRenderer {
 
     static func draw(_ palette: ThemePalette, size: CGSize, choice: WallpaperChoice) -> CGImage? {
         guard var canvas = WallpaperCanvas(size: size, palette: palette, seed: choice.seed) else { return nil }
+        // Styles may change the transform (unit space) or blend mode; grain goes on untouched.
+        canvas.context.saveGState()
         painters[choice.style]?(&canvas)
+        canvas.context.restoreGState()
         if choice.grain { canvas.addGrain() }
         return canvas.ditheredImage()
     }
@@ -46,9 +49,13 @@ enum WallpaperRenderer {
         .glow: { $0.paintGlow() }, .mesh: { $0.paintMesh() }, .waves: { $0.paintWaves() },
         .ridges: { $0.paintRidges() }, .bokeh: { $0.paintBokeh() }, .lowpoly: { $0.paintLowPoly() },
         .topographic: { $0.paintTopographic() }, .sunset: { $0.paintSunset() }, .arcs: { $0.paintArcs() },
-        .halftone: { $0.paintHalftone() }, .leaves: { $0.paintLeaves() }, .warp: { $0.paintWarp() },
-        .textmode: { $0.paintTextMode() }, .polyhedra: { $0.paintPolyhedra() },
-        .solid: { $0.fill($0.palette.background) },
+        .halftone: { $0.paintHalftone() }, .pulsar: { $0.paintPulsar() }, .guilloche: { $0.paintGuilloche() },
+        .sashiko: { $0.paintSashiko() }, .attractor: { $0.paintAttractor() }, .bauhaus: { $0.paintBauhaus() },
+        .destijl: { $0.paintDeStijl() }, .truchet: { $0.paintTruchet() }, .terrazzo: { $0.paintTerrazzo() },
+        .circles: { $0.paintCircles() }, .isometric: { $0.paintIsometric() }, .penrose: { $0.paintPenrose() },
+        .leaves: { $0.paintLeaves() }, .warp: { $0.paintWarp() }, .textmode: { $0.paintTextMode() },
+        .polyhedra: { $0.paintPolyhedra() }, .maze: { $0.paintMaze() }, .dither: { $0.paintDither() },
+        .pipes: { $0.paintPipes() }, .solid: { $0.fill($0.palette.background) },
     ]
 
     /// Deletes all but the most recent generated wallpapers, sparing any on screen.
@@ -157,9 +164,10 @@ struct WallpaperCanvas {
 
     // MARK: - Primitives
 
+    /// Covers the whole canvas, in whatever coordinate space is current.
     func fill(_ color: ThemeColor) {
         context.setFillColor(color.cgColor)
-        context.fill(rect)
+        context.fill(context.boundingBoxOfClipPath)
     }
 
     func linear(_ colors: [ThemeColor], from start: CGPoint, to end: CGPoint) {

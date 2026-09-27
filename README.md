@@ -142,7 +142,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 | `accent` | Accent (nearest preset) + text highlight (exact color) | ✓ |
 | `folders` | "Icon, widget & folder color" (macOS 26+), tinted icons for listed folders | ✓ |
 | `pointer` | Pointer fill/outline (needs Full Disk Access) | best-effort |
-| `wallpaper` | Theme image, or one generated from the palette in one of 15 styles | ✓ |
+| `wallpaper` | Theme image, or one generated from the palette in one of 29 styles | ✓ |
 | `iterm` | Every open session, plus a "Vibeshed" profile (your default profile's settings, theme colours) made the default, so new windows and restarts keep the theme | ✓ |
 | `ghostty` | Generated `themes/Vibeshed`, selected with `theme =` in your config; open terminals reload on SIGUSR2 (Ghostty 1.2+) | ✓ |
 | `vscode` | VS Code, Insiders, Cursor, Windsurf, VSCodium via a generated theme extension | ✓* |
@@ -173,7 +173,7 @@ modules:
         reload: "pkill -USR1 -x kitty"
 ```
 
-Generated wallpapers come in 15 styles: glow, mesh gradient, waves, ridges, bokeh, low poly, topographic, retro sunset, retro arcs, halftone, solid, and four from classic systems — Leaves (Haiku's screen saver, the BeOS theme's default), Polyhedra (NeXTSTEP BackSpace's module, which could run as the workspace background), Warp Speed (OS/2 Warp) and Text Mode. Any style works with any theme; the classic themes default to their own. `theme/wallpaperStyle` browses them on the current theme with live preview, and `theme/shuffleWallpaper` re-rolls the variation. They're painted at full display resolution in 16-bit colour and dithered, so soft gradients don't band.
+Generated wallpapers come in 29 styles: glow, mesh gradient, waves, ridges, bokeh, low poly, topographic, retro sunset, retro arcs, halftone and solid; eleven from the generative-art canon — Pulsar (after the Unknown Pleasures cover), Guilloché, Sashiko (hitomezashi stitching), a Clifford attractor, Bauhaus, De Stijl, Truchet tiles, Terrazzo, circle packing, isometric terraces and Penrose tiling; and seven from classic systems — Leaves (Haiku's screen saver, the BeOS theme's default), Polyhedra (NeXTSTEP BackSpace's module, which could run as the workspace background), Warp Speed (OS/2 Warp), Text Mode, 10 PRINT (the Commodore 64 one-line maze), Dither (a Bayer-dithered planet) and Pipes (the Windows NT screen saver). Any style works with any theme; the classic themes default to their own. `theme/wallpaperStyle` browses them on the current theme with live preview, and `theme/shuffleWallpaper` re-rolls the variation. They're painted at full display resolution in 16-bit colour and dithered, so soft gradients don't band.
 
 The resolved palette is also exported to `~/Library/Application Support/Vibeshed/Theme/current/` (`colors.toml`, `colors.json`) for scripts.
 

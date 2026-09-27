@@ -1,8 +1,9 @@
 import CoreGraphics
 import Foundation
 
-/// Stills of classic screen savers that doubled as desktop backgrounds, following the
-/// originals' drawing code with the palette's colors.
+/// Stills of classic screen savers, in the palette's colors: Leaves and Polyhedra follow
+/// the originals' drawing code (they doubled as desktop backgrounds), Pipes recreates the
+/// Windows NT saver's look.
 extension WallpaperCanvas {
     // MARK: - Leaves (Haiku)
 
@@ -243,5 +244,154 @@ private struct Rotation3 {
         let x1 = point.x * cy - point.z * sy, z1 = point.x * sy + point.z * cy
         let y2 = point.y * cp - z1 * sp, z2 = point.y * sp + z1 * cp
         return SIMD3(x1 * cr - y2 * sr, x1 * sr + y2 * cr, z2)
+    }
+}
+
+// MARK: - Pipes (Windows NT)
+
+extension WallpaperCanvas {
+    private static let pipeDirections = [
+        SIMD3(1, 0, 0), SIMD3(-1, 0, 0), SIMD3(0, 1, 0), SIMD3(0, -1, 0), SIMD3(0, 0, 1), SIMD3(0, 0, -1),
+    ]
+
+    /// The Windows NT 3D Pipes screen saver as a still (in unit space): pipes wander a
+    /// 20×12×20 lattice, turning at random and never crossing, seen isometrically and painted
+    /// back to front as shaded strokes with ball joints.
+    mutating func paintPipes() {
+        enterUnitSpace()
+        fill(isDark ? base : surface)
+        let bounds = SIMD3(20, 12, 20), spacing: CGFloat = 48
+        let hues = [palette.red, palette.green, palette.blue, palette.yellow, palette.magenta, palette.cyan]
+            + [palette.orange]
+        var occupied = Set<SIMD3<Int>>(), pieces: [PipePiece] = []
+        for pipe in 0 ..< 11 {
+            pieces += layPipe(color: hues[pipe % hues.count], bounds: bounds, occupied: &occupied)
+        }
+        let projection = PipeProjection(
+            spacing: spacing, bounds: bounds, center: CGPoint(x: unitWidth / 2, y: unitHeight / 2)
+        )
+        let thickness = spacing * 0.34
+        for piece in pieces.sorted(by: { $0.depth < $1.depth }) {
+            switch piece {
+            case let .segment(start, end, color):
+                drawPipe(from: projection.point(start), to: projection.point(end), thickness: thickness, color: color)
+            case let .joint(point, color):
+                drawJoint(at: projection.point(point), radius: thickness * 0.66, color: color)
+            }
+        }
+    }
+
+    /// One pipe's random walk: mostly straight, turning at random or when blocked, stopping
+    /// when boxed in. Joints mark both ends and every turn.
+    private mutating func layPipe(
+        color: ThemeColor, bounds: SIMD3<Int>, occupied: inout Set<SIMD3<Int>>
+    ) -> [PipePiece] {
+        func isFree(_ point: SIMD3<Int>) -> Bool {
+            point.x >= 0 && point.y >= 0 && point.z >= 0 && point.x < bounds.x && point.y < bounds.y
+                && point.z < bounds.z && !occupied.contains(point)
+        }
+        var start: SIMD3<Int>?
+        for _ in 0 ..< 60 where start == nil {
+            let candidate = SIMD3(rng.int(below: bounds.x), 2 + rng.int(below: bounds.y - 4), rng.int(below: bounds.z))
+            if isFree(candidate) { start = candidate }
+        }
+        guard var position = start else { return [] }
+        occupied.insert(position)
+        var pieces: [PipePiece] = [.joint(position, color: color)]
+        var direction = rng.pick(Self.pipeDirections)
+        for _ in 0 ..< 30 + rng.int(below: 50) {
+            var turns = Self.pipeDirections.filter { ($0 &* direction).wrappedSum() == 0 }
+            for index in stride(from: turns.count - 1, to: 0, by: -1) {
+                turns.swapAt(index, rng.int(below: index + 1))
+            }
+            let options = rng.unit() < 0.22 ? turns + [direction] : [direction] + turns
+            guard let next = options.first(where: { isFree(position &+ $0) }) else { break }
+            if next != direction { pieces.append(.joint(position, color: color)) }
+            pieces.append(.segment(position, position &+ next, color: color))
+            position &+= next
+            occupied.insert(position)
+            direction = next
+        }
+        pieces.append(.joint(position, color: color))
+        return pieces
+    }
+
+    /// A lit cylinder seen side-on: a dark body, then narrower, lighter strokes shifted
+    /// toward the light in the upper left.
+    private func drawPipe(from start: CGPoint, to end: CGPoint, thickness: CGFloat, color: ThemeColor) {
+        let length = max(hypot(end.x - start.x, end.y - start.y), 0.001)
+        var toward = CGPoint(x: -(end.y - start.y) / length, y: (end.x - start.x) / length)
+        if toward.x + toward.y > 0 { toward = CGPoint(x: -toward.x, y: -toward.y) }
+        let layers: [(shade: ThemeColor, share: CGFloat, shift: CGFloat)] = [
+            (color.mix(.black, 0.45), 1, 0), (color, 0.62, 0.12),
+            (color.mix(.white, 0.3), 0.28, 0.22), (color.mix(.white, 0.8), 0.08, 0.28),
+        ]
+        context.setLineCap(.butt)
+        for layer in layers {
+            let offset = CGPoint(x: toward.x * thickness * layer.shift, y: toward.y * thickness * layer.shift)
+            context.move(to: CGPoint(x: start.x + offset.x, y: start.y + offset.y))
+            context.addLine(to: CGPoint(x: end.x + offset.x, y: end.y + offset.y))
+            context.setLineWidth(thickness * layer.share)
+            context.setStrokeColor(layer.shade.cgColor)
+            context.strokePath()
+        }
+    }
+
+    /// A ball joint: a radial gradient with its highlight toward the upper left.
+    private func drawJoint(at center: CGPoint, radius: CGFloat, color: ThemeColor) {
+        let stops = [color.mix(.white, 0.8), color.mix(.white, 0.3), color, color.mix(.black, 0.45)].map(\.cgColor)
+        guard let gradient = CGGradient(colorsSpace: space, colors: stops as CFArray, locations: [0, 0.3, 0.72, 1])
+        else { return }
+        let highlight = CGPoint(x: center.x - radius * 0.35, y: center.y - radius * 0.4)
+        context.drawRadialGradient(
+            gradient, startCenter: highlight, startRadius: 0, endCenter: center, endRadius: radius, options: []
+        )
+    }
+}
+
+/// A piece of a pipe, in lattice coordinates.
+private enum PipePiece {
+    case segment(SIMD3<Int>, SIMD3<Int>, color: ThemeColor)
+    case joint(SIMD3<Int>, color: ThemeColor)
+
+    /// Nearness along the isometric view axis (1, 1, 1), for painting back to front. A joint
+    /// goes on after the segments that meet at it.
+    var depth: Double {
+        switch self {
+        case let .segment(start, end, _): Double((start &+ end).wrappedSum()) / 2
+        case let .joint(point, _): Double(point.wrappedSum()) + 0.6
+        }
+    }
+}
+
+/// Isometric view of the pipe lattice, centered on the canvas: +x runs down-right, +z
+/// down-left and +y up.
+private struct PipeProjection {
+    let spacing: CGFloat
+    let shift: CGPoint
+
+    init(spacing: CGFloat, bounds: SIMD3<Int>, center: CGPoint) {
+        self.spacing = spacing
+        let corners = (0 ..< 8).map { corner in
+            Self.flat(SIMD3(
+                corner & 1 == 0 ? 0 : bounds.x, corner & 2 == 0 ? 0 : bounds.y, corner & 4 == 0 ? 0 : bounds.z
+            ), spacing: spacing)
+        }
+        let xs = corners.map(\.x), ys = corners.map(\.y)
+        shift = CGPoint(
+            x: center.x - ((xs.min() ?? 0) + (xs.max() ?? 0)) / 2, y: center.y - ((ys.min() ?? 0) + (ys.max() ?? 0)) / 2
+        )
+    }
+
+    func point(_ lattice: SIMD3<Int>) -> CGPoint {
+        let flat = Self.flat(lattice, spacing: spacing)
+        return CGPoint(x: flat.x + shift.x, y: flat.y + shift.y)
+    }
+
+    private static func flat(_ lattice: SIMD3<Int>, spacing: CGFloat) -> CGPoint {
+        CGPoint(
+            x: CGFloat(lattice.x - lattice.z) * spacing * 0.866,
+            y: CGFloat(lattice.x + lattice.z) * spacing * 0.5 - CGFloat(lattice.y) * spacing
+        )
     }
 }
