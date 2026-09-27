@@ -394,7 +394,11 @@ final class WallpaperStyleTests: XCTestCase {
 
     func testSeedChangesVariation() throws {
         let size = CGSize(width: 160, height: 100)
-        for style in [WallpaperStyle.mesh, .ridges, .bokeh, .lowpoly, .topographic] {
+        let styles: [WallpaperStyle] = [
+            .mesh, .ridges, .bokeh, .lowpoly, .topographic, .pulsar, .guilloche, .sashiko, .attractor, .bauhaus,
+            .destijl, .truchet, .terrazzo, .circles, .isometric, .penrose, .maze, .dither, .pipes,
+        ]
+        for style in styles {
             let one = WallpaperRenderer.draw(palette, size: size, choice: .init(style: style, seed: 1, grain: false))
             let two = WallpaperRenderer.draw(palette, size: size, choice: .init(style: style, seed: 2, grain: false))
             let first = try XCTUnwrap(one), second = try XCTUnwrap(two)
@@ -418,6 +422,57 @@ final class WallpaperStyleTests: XCTestCase {
             }
             XCTAssertTrue(edges.values.allSatisfy { $0 == 2 }, "\(solid.vertices.count)-vertex solid")
         }
+    }
+
+    func testHitomezashiRegionsAlternateExactlyAcrossStitches() {
+        var rng = SeededGenerator(seed: 3)
+        let (columns, rows) = (23, 17)
+        let pattern = Hitomezashi(
+            rowBits: (0 ... rows).map { _ in rng.int(below: 2) == 1 },
+            columnBits: (0 ... columns).map { _ in rng.int(below: 2) == 1 }
+        )
+        let colors = pattern.regions(columns: columns, rows: rows)
+        for row in 0 ..< rows {
+            for column in 0 ..< columns {
+                let color = colors[row * columns + column]
+                if column + 1 < columns {
+                    XCTAssertEqual(color != colors[row * columns + column + 1], pattern.down(column + 1, row))
+                }
+                if row + 1 < rows {
+                    XCTAssertEqual(color != colors[(row + 1) * columns + column], pattern.across(column, row + 1))
+                }
+            }
+        }
+    }
+
+    func testPenroseDeflationTilesTheWheel() {
+        func area(_ triangle: RobinsonTriangle) -> Double {
+            let (apex, left, right) = (triangle.apex, triangle.left, triangle.right)
+            return abs(Double((left.x - apex.x) * (right.y - apex.y) - (right.x - apex.x) * (left.y - apex.y))) / 2
+        }
+        let wheel = RobinsonTriangle.wheel(center: CGPoint(x: 10, y: -4), radius: 100, rotation: 0.3)
+        let tiles = RobinsonTriangle.deflate(wheel, times: 5)
+        // Deflation splits triangles without gaps or overlaps…
+        XCTAssertEqual(tiles.map(area).reduce(0, +), wheel.map(area).reduce(0, +), accuracy: 1e-6)
+        // …into two congruent kinds, thick halves outnumbering thin ones by about φ.
+        for kind in [true, false] {
+            let areas = tiles.filter { $0.thin == kind }.map(area)
+            XCTAssertEqual((areas.max() ?? 0) - (areas.min() ?? 0), 0, accuracy: 1e-9)
+        }
+        let ratio = Double(tiles.filter { !$0.thin }.count) / Double(tiles.filter(\.thin).count)
+        XCTAssertEqual(ratio, RobinsonTriangle.goldenRatio, accuracy: 0.05)
+    }
+
+    func testMazeFindsSealedRooms() {
+        // ╱╲ over ╲╱ closes a diamond: the four halves inside it are one sealed room.
+        let diamond = DiagonalMaze(columns: 2, rows: 2, rising: [true, false, false, true])
+        let rooms = diamond.rooms()
+        let sealed = rooms.indices.filter { rooms[$0] != nil }
+        XCTAssertEqual(sealed, [1, 3, 4, 6])
+        XCTAssertEqual(Set(sealed.compactMap { rooms[$0] }).count, 1)
+        // Parallel diagonals only make strips that run off the edge.
+        let strips = DiagonalMaze(columns: 4, rows: 3, rising: Array(repeating: true, count: 12))
+        XCTAssertTrue(strips.rooms().allSatisfy { $0 == nil })
     }
 
     func testStyleResolution() {

@@ -417,7 +417,9 @@ modules:
     # includeBuiltInThemes: true
     # generateWallpapers: true        # generate a wallpaper from the palette when a theme has no image
     # wallpaperStyle: glow            # glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset,
-    #                                 # arcs, halftone, leaves, warp, textmode, polyhedra, solid,
+    #                                 # arcs, halftone, pulsar, guilloche, sashiko, attractor, bauhaus,
+    #                                 # destijl, truchet, terrazzo, circles, isometric, penrose, leaves,
+    #                                 # warp, textmode, polyhedra, maze, dither, pipes, solid,
     #                                 # or auto (a stable pick per theme).
     #                                 # A style chosen with theme/wallpaperStyle overrides this;
     #                                 # a theme can set its own with `wallpaperStyle:`.
