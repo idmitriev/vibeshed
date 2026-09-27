@@ -26,9 +26,21 @@ final class PanelController {
 
     private var deferredLoad: DeferredLoad?
 
+    /// Backdrop behind the picker (`appearance.overlay`), shown and hidden with it.
+    private let overlay = PickerOverlay()
+    /// Invalidates older overlay-style observations when a new one starts.
+    @ObservationIgnored private var overlayStyleWatch = 0
+
     init(pickerState: PickerState, configManager: ConfigManager) {
         self.pickerState = pickerState
         self.configManager = configManager
+        // A click on the overlay is a click outside the picker: close it as losing focus
+        // would (the next open starts fresh), and take the overlay down even if the
+        // panel is somehow already gone.
+        overlay.onClick = { [weak self] in
+            self?.panel?.animateHide()
+            self?.overlay.hide()
+        }
     }
 
     deinit {
@@ -62,16 +74,8 @@ final class PanelController {
         }
         isHiddenWithState = false
 
-        // Layout + shadow before animation (unavoidable sync work)
-        if let screen = NSScreen.main {
-            let screenFrame = screen.visibleFrame
-            let x = screenFrame.midX - panel.frame.width / 2
-            let y = screenFrame.midY - panel.frame.height / 2
-            panel.setFrameOrigin(NSPoint(x: x, y: y))
-        }
-
         // Start animation — heavy work fires in onShowAnimationDidComplete
-        panel.animateShow()
+        present(panel)
         isVisible = true
         Log.picker.debug("Panel shown")
     }
@@ -91,15 +95,7 @@ final class PanelController {
     func showRetainingState() {
         let panel = getOrCreatePanel()
         deferredLoad = nil
-
-        if let screen = NSScreen.main {
-            let screenFrame = screen.visibleFrame
-            let x = screenFrame.midX - panel.frame.width / 2
-            let y = screenFrame.midY - panel.frame.height / 2
-            panel.setFrameOrigin(NSPoint(x: x, y: y))
-        }
-
-        panel.animateShow()
+        present(panel)
         isVisible = true
         isHiddenWithState = false
     }
@@ -116,7 +112,86 @@ final class PanelController {
         Log.picker.debug("Panel hidden (state reset)")
     }
 
+    /// Fades the overlay out while a live preview (e.g. `theme/switch`) is changing the
+    /// desktop behind it, and back in after.
+    func setOverlaySuspended(_ suspended: Bool) {
+        overlay.setSuspended(suspended)
+    }
+
+    /// Readies the overlay ahead of its first show, now and after every config change
+    /// (see `PickerOverlay.prewarm`). Call once the config has loaded.
+    func startOverlay() {
+        let config = withObservationTracking {
+            configManager.config.appearance.activeOverlay
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.startOverlay() }
+        }
+        guard let config, let screen = NSScreen.main else { return }
+        overlay.prewarm(config, style: overlayStyle(for: config), pickerScreen: screen)
+    }
+
     // MARK: - Private
+
+    /// Centres the panel on the active screen, puts the overlay behind it, and animates
+    /// both in (layout is unavoidable sync work before the animation).
+    private func present(_ panel: FloatingPanel) {
+        let screen = NSScreen.main
+        if let screen {
+            let screenFrame = screen.visibleFrame
+            let x = screenFrame.midX - panel.frame.width / 2
+            let y = screenFrame.midY - panel.frame.height / 2
+            panel.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+        presentOverlay(behind: panel, on: screen)
+        panel.animateShow()
+    }
+
+    private func presentOverlay(behind panel: FloatingPanel, on screen: NSScreen?) {
+        guard let config = configManager.config.appearance.activeOverlay, let screen else {
+            panel.level = .floating
+            overlay.hide()
+            return
+        }
+        // The overlay covers the menu bar and Dock, so the picker has to sit above it.
+        panel.level = .pickerAboveOverlay
+        overlay.show(config, style: overlayStyle(for: config), pickerFrame: panel.frame, on: screen)
+        watchOverlayStyle()
+    }
+
+    private func overlayStyle(for config: AppConfig.OverlayConfig) -> OverlayStyle {
+        let accent = themeEngine.flatMap { ThemeColor(nsColor: NSColor($0.theme.accent)) }
+            ?? ThemeColor(nsColor: .controlAccentColor)
+            ?? .black
+        let tint = OverlayStyle.tint(
+            for: config.color,
+            palette: ActiveTheme.shared.displayed?.palette,
+            accent: accent,
+            isDarkAppearance: NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        )
+        return OverlayStyle(
+            config: config,
+            tint: tint,
+            reduceTransparency: NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
+        )
+    }
+
+    /// Restyles the overlay while it's up when what it's drawn from changes: a theme
+    /// applied or live-previewed, the dynamic accent, the config.
+    private func watchOverlayStyle() {
+        overlayStyleWatch += 1
+        let watch = overlayStyleWatch
+        withObservationTracking {
+            _ = configManager.config.appearance.activeOverlay.map(overlayStyle(for:))
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                guard let self, self.overlayStyleWatch == watch, self.overlay.isShown else { return }
+                if let config = self.configManager.config.appearance.activeOverlay {
+                    self.overlay.restyle(self.overlayStyle(for: config))
+                }
+                self.watchOverlayStyle()
+            }
+        }
+    }
 
     private func onShowAnimationDidComplete() {
         guard let load = deferredLoad else { return }
@@ -150,6 +225,8 @@ final class PanelController {
 
         newPanel.onWillHide = { [weak self] in
             MainActor.assumeIsolated {
+                // Every way the panel hides (Escape, focus loss, an action) passes here.
+                self?.overlay.hide()
                 self?.isVisible = false
                 self?.coordinator?.syncLivePreview()
             }

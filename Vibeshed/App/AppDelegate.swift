@@ -108,6 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             permissionsManager.request(.fullDiskAccess)
         }
         themeEngine.start()
+        panelController.startOverlay()
         layoutTransliterator.start()
         pickerCoordinator.start()
         keyComboManager.startListening()

@@ -11,6 +11,29 @@ appearance:
   rowHeight: 52
   searchBarHeight: 56
 
+  # Backdrop over the whole screen behind the open picker. On when present:
+  # `overlay:` alone (or `overlay: true`) uses the defaults shown here. It steps
+  # aside while a live preview (theme/switch) is changing the desktop.
+  # overlay:
+  #   blur: 24              # blur radius in points; 0 leaves the screen sharp
+  #   saturation: 1.4       # of what shows through: 0 greyscale, 1 unchanged, 2 vivid
+  #   color: theme          # theme (the palette theme's darkest background; black or
+  #                         # white by Dark/Light Mode without one), accent, or "#rrggbb"
+  #   opacity: 0.25         # how strongly `color` covers the screen, 0–1
+  #   vignette: 0.3         # extra `color` toward the screen edges, 0–1
+  #   grain: 0              # film grain, 0–1
+  #   material: none        # a system material's tint over the blur: hud, fullScreen,
+  #                         # popover, menu, sidebar, underWindow
+  #   allScreens: false     # cover every display, not just the picker's
+  #   clickThrough: false   # true: clicks reach the app underneath (still closing the
+  #                         # picker); false: a click on the overlay just closes it
+  #   showAnimation: fade   # fade, blur (focus pull), iris (opens out from the picker), none
+  #   showDuration: 0.3     # seconds
+  #   hideAnimation: fade
+  #   hideDuration: 0.2
+  #   enabled: true         # false turns it off but keeps the settings
+  # Reduce Motion turns blur/iris into a fade; Reduce Transparency drops the blur.
+
 # ---------------------------------------------------------------------------
 # Keybindings & Remaps
 # ---------------------------------------------------------------------------

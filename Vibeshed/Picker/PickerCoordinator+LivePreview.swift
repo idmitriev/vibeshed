@@ -19,6 +19,8 @@ extension PickerCoordinator {
     /// Re-evaluates the preview after a mode, selection, or visibility change.
     func syncLivePreview() {
         let target = livePreviewTarget()
+        // The picker's overlay would blur the very desktop being previewed.
+        panelController.setOverlaySuspended(target != nil)
         if let session = livePreview,
            target?.actionID != session.actionID || target?.parameter.id != session.parameterID
         {

@@ -49,8 +49,7 @@ final class ConfigParsingTests: XCTestCase {
     }
 
     func testParsesAppearance() throws {
-        // NOTE: AppearanceConfig is Codable with defaulted properties, but Codable
-        // synthesis ignores Swift defaults, so YAMLDecoder requires every key.
+        // Every key is optional (partial sections: OverlayConfigTests).
         let yaml = """
         appearance:
           panelWidth: 900
