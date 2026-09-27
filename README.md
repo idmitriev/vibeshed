@@ -30,6 +30,7 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 - Usage-aware sorting that adapts to how you work
 - Context-sensitive action boosting based on focused app, time of day, audio state
 - Dynamic theming that shifts with your system appearance and vibe
+- Optional backdrop behind the picker — blur, tint, vignette, grain — with fade, focus-pull and iris animations
 
 **Window Management**
 - Cycle window sizes anchored to screen edges, tile halves, maximize/restore
