@@ -33,12 +33,6 @@ extension WallpaperCanvas {
     }
 }
 
-extension ThemeColor {
-    func cgColor(alpha: Double) -> CGColor {
-        CGColor(srgbRed: red, green: green, blue: blue, alpha: alpha)
-    }
-}
-
 extension CGPoint {
     /// The point `amount` of the way toward `other`.
     func interpolated(to other: CGPoint, _ amount: CGFloat) -> CGPoint {

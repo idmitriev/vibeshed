@@ -47,12 +47,6 @@ struct OverlayStyle: Equatable {
     }
 }
 
-extension ThemeColor {
-    func cgColor(alpha: Double) -> CGColor {
-        CGColor(srgbRed: red, green: green, blue: blue, alpha: alpha)
-    }
-}
-
 /// Circle geometry for the vignette and the iris, in a screen-sized view's coordinates.
 enum OverlayGeometry {
     /// Distance from `focus` to the farthest corner — a circle this big covers the view.

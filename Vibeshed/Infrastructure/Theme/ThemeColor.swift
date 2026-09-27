@@ -88,7 +88,11 @@ struct ThemeColor: Hashable, Sendable {
     }
 
     var cgColor: CGColor {
-        CGColor(srgbRed: red, green: green, blue: blue, alpha: 1)
+        cgColor(alpha: 1)
+    }
+
+    func cgColor(alpha: Double) -> CGColor {
+        CGColor(srgbRed: red, green: green, blue: blue, alpha: alpha)
     }
 
     // MARK: - Mixing
