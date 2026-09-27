@@ -317,7 +317,7 @@ final class PickerCoordinator {
 
         // Layout correction fallback: if no results and query is non-empty,
         // try transliterating from the current keyboard layout.
-        if options.layoutCorrectionFallback, !query.isEmpty, items.isEmpty,
+        if !query.isEmpty, items.isEmpty,
            let correction = layoutTransliterator?.transliterate(query)
         {
             let correctedScoring = makeScoring(query: correction.correctedQuery, context: ctx)
@@ -332,9 +332,7 @@ final class PickerCoordinator {
             }
         }
 
-        if options.layoutCorrectionFallback {
-            pickerState.layoutCorrectionHint = nil
-        }
+        pickerState.layoutCorrectionHint = nil
         finish(items, cache, scored: combined, scoring)
     }
 }
@@ -432,15 +430,20 @@ extension PickerCoordinator {
 
     /// Triggers an immediate (non-debounced) query to populate the action list.
     /// Called after the show animation completes so re-renders don't contend with animation.
-    func loadInitialActions() {
+    ///
+    /// Ranks whatever the search field holds by then — usually "", but a
+    /// `vibeshed://picker?q=` query or keys typed during the animation may already
+    /// be there, and this run supersedes their debounced query.
+    @discardableResult
+    func loadInitialActions() -> Task<Void, Never> {
         // If no cache was shown before animation, show loading state
         if cachedEmptyQueryItems == nil {
             pickerState.isLoading = true
         }
 
-        Task { @MainActor [weak self] in
+        return Task { @MainActor [weak self] in
             guard let self else { return }
-            await runQuery("", options: .initialLoad)
+            await runQuery(pickerState.query, options: .initialLoad)
         }
     }
 
