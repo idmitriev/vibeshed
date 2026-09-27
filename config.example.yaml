@@ -403,7 +403,7 @@ modules:
 
   # --- Theme ---
   # Palette themes applied across macOS and apps in one go: appearance, accent +
-  # text highlight, folder color, pointer, wallpaper, the Vibeshed picker, iTerm,
+  # text highlight, folder color, pointer, wallpaper, the Vibeshed picker, iTerm, Ghostty,
   # VS Code/Cursor/Windsurf, Zed, JetBrains, Claude Code, plus your own templates.
   #   theme/switch        browse themes; each previews live as you move, Return applies, Esc reverts
   #   theme/apply.<slug>  apply one directly (e.g. theme/apply.tokyo-night — bind it or alias it)
@@ -424,8 +424,11 @@ modules:
     # wallpaperGrain: true            # fine film grain on generated wallpapers
 
     # What a theme is applied to (default: all but github, which changes an account setting):
-    # targets: [appearance, accent, folders, pointer, wallpaper, iterm, vscode, zed,
+    # targets: [appearance, accent, folders, pointer, wallpaper, iterm, ghostty, vscode, zed,
     #           jetbrains, claude, bat, lsd, micro, btop, github, templates, hooks]
+    # ghostty writes ~/.config/ghostty/themes/Vibeshed, sets `theme = Vibeshed` in Ghostty's config
+    # and reloads open terminals (Ghostty 1.2+). Colors your Ghostty config sets itself
+    # (background, palette, …) still override the theme's.
     # bat/lsd/micro get generated themes on each switch (bat: select once with --theme=Vibeshed).
     # fzf needs nothing: configured with ANSI colour slots it follows the terminal palette.
 
@@ -456,14 +459,15 @@ modules:
     #     apps:                                     # use existing app themes instead of generated ones
     #       vscode: "Tokyo Night"
     #       jetbrains: "_@user_Tokyo Night"
+    #       ghostty: "TokyoNight Night"             # any name from `ghostty +list-themes`
     #       github: "dark_dimmed"                   # also opts this theme into the github target
 
     # Templates for any other app, in Omarchy's placeholder syntax:
     # {{ background }}, {{ accent_strip }}, {{ red_rgb }}, {{ mix background green 15% }}, {{ mode }}
     # templates:
-    #   - source: "~/.config/vibeshed/templates/ghostty.conf.tpl"
-    #     target: "~/.config/ghostty/themes/vibeshed"
-    #     reload: "pkill -USR2 -x ghostty"
+    #   - source: "~/.config/vibeshed/templates/kitty.conf.tpl"
+    #     target: "~/.config/kitty/current-theme.conf"
+    #     reload: "pkill -USR1 -x kitty"
     #     preview: true                  # also render during live preview
 
     # Commands run after each apply, with VIBESHED_THEME, VIBESHED_THEME_MODE,
@@ -532,6 +536,17 @@ modules:
       "Lazygit": "lazygit"
       "Lazydocker": "lazydocker"
       "SSH Dev": "ssh user@dev.example.com"
+
+  # --- Ghostty (needs Ghostty 1.3+ for AppleScript; theming is the theme module's `ghostty` target) ---
+  # Open terminals (focus), new window/tab, Run Command, ghostty/reloadConfig.
+  ghostty:
+    maxResults: 20
+    showCWD: true
+    # Typed into a new tab's shell, which stays open when the command exits.
+    commands:
+      "Top": "btop"
+      "Lazygit": "lazygit"
+    # enabledActions: [newTab, runCommand, cmd, terminal]   # full names or families (cmd, terminal)
 
   # --- Claude (Claude Code CLI + Claude Desktop) ---
   anthropic:

@@ -4,8 +4,8 @@ import OSLog
 private let log = Log.module("theme")
 
 /// Renders the `templates:` from config (Omarchy placeholder syntax) and runs each one's
-/// `reload` command — the escape hatch for every app without a built-in target (Ghostty,
-/// kitty, Alacritty, WezTerm, btop, tmux, Neovim, …). Always also exports the palette to
+/// `reload` command — the escape hatch for every app without a built-in target (kitty,
+/// Alacritty, WezTerm, tmux, Neovim, …). Always also exports the palette to
 /// `~/Library/Application Support/Vibeshed/Theme/current/` (`colors.toml`, `colors.json`,
 /// `theme.name`) for scripts that want to read it directly.
 struct TemplatesTarget: ThemeTarget {

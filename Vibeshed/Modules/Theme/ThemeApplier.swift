@@ -12,7 +12,7 @@ actor ThemeApplier {
 
     static let targets: [any ThemeTarget] = [
         AppearanceTarget(), AccentTarget(), FolderColorTarget(), PointerTarget(), WallpaperTarget(),
-        ITermTarget(), VSCodeTarget(), ZedTarget(), JetBrainsTarget(), ClaudeCodeTarget(),
+        ITermTarget(), GhosttyTarget(), VSCodeTarget(), ZedTarget(), JetBrainsTarget(), ClaudeCodeTarget(),
         BatTarget(), LsdTarget(), MicroTarget(), BtopTarget(), GitHubWebTarget(), TemplatesTarget(), HooksTarget(),
     ]
 

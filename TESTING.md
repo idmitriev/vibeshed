@@ -6,7 +6,7 @@
 - Config file at `~/.config/vibeshed/config.yaml` (a minimal one is written on first launch; copy from `config.example.yaml` for full coverage)
 - Accessibility permission granted
 - Input Monitoring permission granted
-- Automation permission granted (for browser/Spotify/iTerm modules)
+- Automation permission granted (for browser/Spotify/iTerm/Ghostty modules)
 - Full Disk Access (for Safari bookmarks/history)
 
 ---
@@ -204,6 +204,8 @@
 - [ ] VSCode theme change
 - [ ] JetBrains IDE theme change
 - [ ] iTerm preset change
+- [ ] Ghostty: open terminals retint while browsing theme/switch; Esc restores the previous `theme =` line and colors
+- [ ] Ghostty: the log notes colors (background, palette, …) that Ghostty's own config sets and that override the theme
 - [ ] Theme presets apply all settings at once
 
 ### 21. Audio Module
@@ -405,6 +407,16 @@
 - [ ] showInSearch: false keeps items out of the main search (menu/search still works)
 - [ ] excludedBundleIDs apps list no items
 - [ ] A keybinding or `vibeshed://menu/View%20%3E%20Scientific` URI clicks the item in whatever app is in front; lowercase and a missing "…" still match
+
+### 44. Ghostty Module
+
+- [ ] First use asks to let Vibeshed control Ghostty (Automation)
+- [ ] Lists open terminals (split panes included) with title, working directory and window/tab
+- [ ] Selecting a terminal brings its window and tab forward and focuses it
+- [ ] New Tab / New Window open in the running Ghostty; with Ghostty quit they launch it with a single window
+- [ ] Run Command and configured commands type into a new tab; the shell stays open after the command exits
+- [ ] Reload Configuration applies an edited Ghostty config without restarting
+- [ ] Ghostty older than 1.3: actions fail with an "update to 1.3" notification and no terminals are listed
 
 ---
 
