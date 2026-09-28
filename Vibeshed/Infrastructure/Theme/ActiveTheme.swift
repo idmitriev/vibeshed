@@ -9,7 +9,7 @@ struct ActiveThemeInfo: Codable, Sendable, Equatable {
     let palette: ThemePalette
 }
 
-/// Which palette Vibeshed's own UI (picker, tiling focus border) follows.
+/// Which palette Vibeshed's own UI (picker, focus border) follows.
 ///
 /// The Theme module writes it — `commit` on apply (persisted, so the picker comes up
 /// themed on the next launch before any module loads), `preview` while the user arrows

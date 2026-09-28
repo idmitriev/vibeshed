@@ -314,6 +314,16 @@ modules:
     enlargeShrinkStep:
       value: 10
       unit: percent
+    # Tuning for the focus border: an outline in the theme's accent color around
+    # the focused window, for any window at least minimumSize points wide and tall.
+    # It hides while the window moves or resizes and comes back once it holds
+    # still. NOT a config flag - off by default on every launch, toggled at
+    # runtime via window/toggleFocusBorder.
+    focusBorder:
+      width: 3.0              # points
+      cornerRadius: 18.0      # points, 0 = sharp corners
+      minimumSize: 200        # skip windows narrower/shorter than this (dialogs, popovers)
+      pollingInterval: 0.1    # seconds between fallback checks; focus/move/resize are event-driven
 
   # --- Tiling Window Manager ---
   # A configurable region grid per display. "match" is the display's exact name
@@ -355,13 +365,6 @@ modules:
       pollingInterval: 1.0         # seconds between checks (also affects move/resize latency)
       excludedBundleIDs: []        # e.g. ["com.apple.systempreferences"]
       minimumSize: 120             # skip windows narrower/shorter than this (tooltips, HUDs, etc.)
-    # Tuning for the focus border (an outline in the theme's accent color around the focused
-    # window, only while it's tiled). Also NOT a config flag - off by default on every
-    # launch, toggled at runtime via tiling/toggleFocusBorder.
-    focusBorder:
-      width: 3.0              # points
-      cornerRadius: 18.0       # points, 0 = sharp corners
-      pollingInterval: 0.1   # seconds between checks for focus changes
 
   # --- Application Launcher ---
   application:

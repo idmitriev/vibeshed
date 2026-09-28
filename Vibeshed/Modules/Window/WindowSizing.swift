@@ -20,6 +20,14 @@ enum WindowSizing {
         return CGRect(x: visible.origin.x, y: y, width: visible.width, height: visible.height)
     }
 
+    /// A screen's full frame (menu bar and Dock areas included) in CG top-left-origin
+    /// coordinates.
+    static func frameCG(of screen: NSScreen) -> CGRect {
+        let primaryHeight = NSScreen.screens.first?.frame.height ?? screen.frame.height
+        let frame = screen.frame
+        return CGRect(x: frame.origin.x, y: primaryHeight - frame.maxY, width: frame.width, height: frame.height)
+    }
+
     /// Converts a CG top-left-origin frame (as used by AX/CGWindowList/WindowInfo.frame) back
     /// into AppKit bottom-left-origin coordinates suitable for `NSWindow.setFrame(_:display:)`.
     /// Self-inverse of the flip in `visibleFrameCG` (same formula, same reference height).

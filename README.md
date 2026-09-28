@@ -98,8 +98,8 @@ The app watches the config file for changes and hot-reloads automatically.
 
 | Module | Description |
 |--------|-------------|
-| **Window** | Resize, move, tile, cycle, maximize/restore, focus windows |
-| **Tiling** | Per-display grid tiling, auto-tile, directional moves, focus border |
+| **Window** | Resize, move, tile, cycle, maximize/restore, focus windows, focus border |
+| **Tiling** | Per-display grid tiling, auto-tile, directional moves |
 | **Application** | Launch, focus, quit applications |
 | **Menu** | Search and click the frontmost app's menu bar items |
 | **Processes** | List and kill running processes |
@@ -156,7 +156,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 
 \* The very first time the generated theme is installed, the editor may need one reload to discover it; after that, switches apply live.
 
-The picker and the tiling focus border follow the theme's accent too. Terminal tools that use the 16 ANSI colours (e.g. fzf with `--color=hl:4,…`) need no target at all: they follow the terminal palette (iTerm, Ghostty) live. For bat, select the generated theme once with `--theme=Vibeshed`.
+The picker and the window focus border follow the theme's accent too. Terminal tools that use the 16 ANSI colours (e.g. fzf with `--color=hl:4,…`) need no target at all: they follow the terminal palette (iTerm, Ghostty) live. For bat, select the generated theme once with `--theme=Vibeshed`.
 
 Themes use [Omarchy](https://omarchy.org)'s `colors.toml` key names (`background`, `accent`, `bright_blue`, `color0`…`color15`, …); only background, foreground and the six base hues are required. 64 built-ins: Catppuccin, Tokyo Night, Rosé Pine, Kanagawa, Gruvbox, Everforest, Nord, Solarized, GitHub, Ayu, Nightfox, Flexoki, Melange, One Dark/Light, Dracula, Monokai Pro, Night Owl, Poimandres, Vesper, Moonfly, Sonokai, Iceberg, Vague, plus Omarchy's own (Osaka Jade, Ristretto, Matte Black, Retro 82, Lumon, …) and classic desktops — BeOS, OS/2 Warp, OS/2 Text Mode and NeXTSTEP, with colors taken from the systems themselves. The community and Omarchy palettes are regenerated from their sources by `scripts/generate-builtin-themes.py`. Define your own in config (optionally `base:` another theme), or drop Omarchy theme folders into `~/.config/vibeshed/themes/`:
 

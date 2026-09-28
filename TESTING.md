@@ -153,6 +153,10 @@
 - [ ] Enlarge/shrink width changes window size by configured step
 - [ ] Window actions work across multiple screens
 - [ ] Window previews show screenshots with highlighted window
+- [ ] Focus border (toggleFocusBorder) surrounds any focused window at least `minimumSize` wide and tall; none on smaller or full-screen windows
+- [ ] Focus border follows focus changes (app switch, window switch within an app) immediately
+- [ ] Focus border hides as soon as the window is dragged or resized and returns once it's released and still; never trails the window
+- [ ] Focus border hides in Mission Control and when the focused window is on another space
 
 ### 16. Application Module
 
@@ -351,7 +355,6 @@
 - [ ] A display's only window is maximized; a second window splits the grid; closing/minimizing back to one maximizes it again; `maximizeSingleWindow: false` keeps a lone window in a cell
 - [ ] Dragged window snaps only after drop, never mid-drag
 - [ ] Tooltips/panels/small windows are not auto-tiled
-- [ ] Focus border appears around focused tiled window when enabled; hides in Mission Control
 
 ### 37. Processes Module
 

@@ -66,15 +66,25 @@ enum AXWindowHelper {
         return axWindows
     }
 
-    /// Get the focused AX window for a given PID.
-    static func focusedWindow(for pid: pid_t) -> AXUIElement? {
+    /// Get the focused AX window for a given PID. A `messagingTimeout` (seconds) is given
+    /// to both the app element and the returned window — it's stored per element
+    /// reference — so calls on them fail after that long when the app is hung, instead of
+    /// blocking for the system default of about 6 seconds.
+    static func focusedWindow(for pid: pid_t, messagingTimeout: Float? = nil) -> AXUIElement? {
         let appElement = AXUIElementCreateApplication(pid)
+        if let messagingTimeout {
+            AXUIElementSetMessagingTimeout(appElement, messagingTimeout)
+        }
         var focusedRef: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(
             appElement, kAXFocusedWindowAttribute as CFString, &focusedRef
         )
         guard result == .success, let window = focusedRef else { return nil }
-        return (window as! AXUIElement) // swiftlint:disable:this force_cast
+        let element = (window as! AXUIElement) // swiftlint:disable:this force_cast
+        if let messagingTimeout {
+            AXUIElementSetMessagingTimeout(element, messagingTimeout)
+        }
+        return element
     }
 
     static func isMinimized(_ element: AXUIElement) -> Bool {
