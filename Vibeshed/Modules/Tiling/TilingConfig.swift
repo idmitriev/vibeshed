@@ -40,15 +40,20 @@ struct AutoTileConfig: Codable, Sendable, Equatable {
     /// Skip windows narrower or shorter than this (points) — filters out tooltips, HUDs,
     /// and other tiny non-content windows that shouldn't be stretched into a grid cell.
     var minimumSize: Double = 100
+    /// A display's only auto-tiled window fills the display (padding still applies); the
+    /// grid takes over once a second one shows up. False puts a lone window in a cell too.
+    var maximizeSingleWindow: Bool = true
 
     init(
         excludedBundleIDs: [String] = [],
         pollingInterval: Double = 1.0,
-        minimumSize: Double = 100
+        minimumSize: Double = 100,
+        maximizeSingleWindow: Bool = true
     ) {
         self.excludedBundleIDs = excludedBundleIDs
         self.pollingInterval = pollingInterval
         self.minimumSize = minimumSize
+        self.maximizeSingleWindow = maximizeSingleWindow
     }
 
     // Custom Decodable: a missing key falls back to its default above instead of
@@ -58,7 +63,7 @@ struct AutoTileConfig: Codable, Sendable, Equatable {
     // existing config.yaml in lockstep or the whole TilingConfig would silently
     // fall back to .defaultValue (see ModuleConfigDecoder's decode-error logging).
     enum CodingKeys: String, CodingKey {
-        case excludedBundleIDs, pollingInterval, minimumSize
+        case excludedBundleIDs, pollingInterval, minimumSize, maximizeSingleWindow
     }
 
     init(from decoder: Decoder) throws {
@@ -66,6 +71,7 @@ struct AutoTileConfig: Codable, Sendable, Equatable {
         excludedBundleIDs = try container.decodeIfPresent([String].self, forKey: .excludedBundleIDs) ?? []
         pollingInterval = try container.decodeIfPresent(Double.self, forKey: .pollingInterval) ?? 1.0
         minimumSize = try container.decodeIfPresent(Double.self, forKey: .minimumSize) ?? 100
+        maximizeSingleWindow = try container.decodeIfPresent(Bool.self, forKey: .maximizeSingleWindow) ?? true
     }
 }
 

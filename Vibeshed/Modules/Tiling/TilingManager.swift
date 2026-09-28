@@ -33,6 +33,27 @@ struct TilingManager: Sendable {
         windowManager.isTileable(window)
     }
 
+    /// `windows` grouped per display that has a grid (explicit or default), each group in
+    /// the input's front-to-back order. Windows on displays without a grid are left out.
+    @MainActor
+    func windowsByDisplay(
+        _ windows: [WindowInfo],
+        config: TilingConfig
+    ) -> [(grid: ResolvedGrid, windows: [WindowInfo])] {
+        var groups: [(grid: ResolvedGrid, windows: [WindowInfo])] = []
+        var groupIndex: [String: Int] = [:]
+        for window in windows {
+            guard let resolved = resolveGrid(for: window.frame, config: config) else { continue }
+            if let index = groupIndex[resolved.displayKey] {
+                groups[index].windows.append(window)
+            } else {
+                groupIndex[resolved.displayKey] = groups.count
+                groups.append((grid: resolved, windows: [window]))
+            }
+        }
+        return groups
+    }
+
     /// Resolves the matching `DisplayGridConfig` and usable CG-coordinate area for a window's
     /// frame, based on which physical display it's on. Returns nil if no display or grid
     /// (explicit or default) could be resolved.
