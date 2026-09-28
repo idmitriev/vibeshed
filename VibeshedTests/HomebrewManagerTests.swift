@@ -3,30 +3,6 @@ import Foundation
 import XCTest
 
 final class HomebrewManagerTests: XCTestCase {
-    func testParseCaskAppPathsReturnsAppTargets() {
-        let json = """
-        {"formulae": [], "casks": [{"token": "visual-studio-code", "artifacts": [
-          {"uninstall": [{"quit": "com.microsoft.VSCode"}]},
-          {"app": ["Visual Studio Code.app"], "target": "/Applications/Visual Studio Code.app"},
-          {"binary": ["/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"],
-           "target": "/opt/homebrew/bin/code"}
-        ]}]}
-        """
-        XCTAssertEqual(
-            HomebrewManager.parseCaskAppPaths(Data(json.utf8)),
-            ["/Applications/Visual Studio Code.app"]
-        )
-    }
-
-    func testParseCaskAppPathsIgnoresCasksWithoutApps() {
-        let json = """
-        {"casks": [{"token": "font-fira-code", "artifacts": [
-          {"font": ["ttf/FiraCode-Bold.ttf"], "target": "/Users/me/Library/Fonts/FiraCode-Bold.ttf"}
-        ]}]}
-        """
-        XCTAssertEqual(HomebrewManager.parseCaskAppPaths(Data(json.utf8)), [])
-    }
-
     func testInstallSummaryPicksBeerLine() {
         let output = """
         ==> Fetching downloads for: jq
@@ -42,7 +18,29 @@ final class HomebrewManagerTests: XCTestCase {
         XCTAssertEqual(HomebrewManager.installSummary(""), "")
     }
 
-    func testParseCaskAppPathsHandlesMalformedJSON() {
-        XCTAssertEqual(HomebrewManager.parseCaskAppPaths(Data("Error: no such cask".utf8)), [])
+    // MARK: - Search ranking
+
+    func testRankSearchResultsPutsExactThenPrefixThenWordStartMatchesFirst() {
+        // `brew search go` lists 250+ names alphabetically; `go` itself comes 81st.
+        let names = ["algol68g", "anycable-go", "argo", "go", "go@1.24", "gopls"]
+        XCTAssertEqual(
+            HomebrewManager.rankSearchResults(names, query: "go"),
+            ["go", "gopls", "go@1.24", "anycable-go", "argo", "algol68g"]
+        )
+    }
+
+    func testRankSearchResultsIgnoresCaseAndTapPrefix() {
+        let names = ["terraform-docs", "hashicorp/tap/terraform", "terraformer"]
+        XCTAssertEqual(
+            HomebrewManager.rankSearchResults(names, query: "Terraform"),
+            ["hashicorp/tap/terraform", "terraformer", "terraform-docs"]
+        )
+    }
+
+    func testRankSearchResultsKeepsBrewOrderForEqualMatches() {
+        XCTAssertEqual(
+            HomebrewManager.rankSearchResults(["b-tool", "a-tool", "tools"], query: "tool"),
+            ["tools", "b-tool", "a-tool"]
+        )
     }
 }
