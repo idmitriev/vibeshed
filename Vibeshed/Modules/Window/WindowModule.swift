@@ -35,8 +35,13 @@ actor WindowModule: ModuleConfigurable {
         log.info("Window module initialized")
     }
 
+    func teardown() async {
+        await FocusBorderController.shared.setEnabled(false)
+    }
+
     func configDidUpdate(_ config: WindowConfig) async {
         self.config = config
+        await FocusBorderController.shared.configure(config.focusBorder ?? FocusBorderConfig())
         let stops = "\(config.horizontalStops.count) h-stops, \(config.verticalStops.count) v-stops"
         log.debug("Config updated: \(stops, privacy: .public)")
     }
@@ -75,6 +80,7 @@ actor WindowModule: ModuleConfigurable {
         if config.enlargeShrinkStep.value <= 0 {
             errors.append("enlargeShrinkStep.value must be positive")
         }
+        errors.append(contentsOf: config.focusBorder?.validationErrors ?? [])
         return errors.isEmpty ? .valid : .invalid(errors)
     }
 
@@ -90,7 +96,8 @@ actor WindowModule: ModuleConfigurable {
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        buildActions()
+        let focusBorderEnabled = await MainActor.run { FocusBorderController.shared.isEnabled }
+        return buildActions() + [makeToggleFocusBorderAction(enabled: focusBorderEnabled)]
     }
 
     func provideParameterOptions(
@@ -404,6 +411,27 @@ extension WindowModule {
                 focused.frame, focused.screenFrame, cfg.padding, cfg.enlargeShrinkStep
             )
             try mgr.setFrame(focused, frame: newFrame)
+            return .dismiss
+        }
+    }
+}
+
+// MARK: - Focus Border
+
+extension WindowModule {
+    /// `FocusBorderController` draws the border and keeps it on the focused window; the
+    /// module only switches it on and off and feeds it config.
+    private func makeToggleFocusBorderAction(enabled: Bool) -> WindowAction {
+        WindowAction(
+            id: ActionID(module: "window", name: "toggleFocusBorder"),
+            title: enabled ? "Disable Focus Border" : "Enable Focus Border",
+            subtitle: enabled
+                ? "Stop drawing the focus border"
+                : "Draw a border around the focused window",
+            iconName: enabled ? "xmark.circle" : "viewfinder",
+            keywords: ["window", "border", "highlight", "outline", "focus", "toggle", "enable", "disable"]
+        ) { _ in
+            await FocusBorderController.shared.toggle()
             return .dismiss
         }
     }

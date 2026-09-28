@@ -1,7 +1,7 @@
 import AppKit
 
 /// Grid actions on the focused window (attach, attach all, detach, directional
-/// move) plus the auto-tile and focus-border toggles.
+/// move) plus the auto-tile toggle.
 extension TilingModule {
     func makeAttachAction(mgr: TilingManager, cfg: TilingConfig) -> TilingAction {
         TilingAction(
@@ -60,22 +60,6 @@ extension TilingModule {
             keywords: ["tiling", "grid", "auto", "toggle", "enable", "disable", "start", "stop"]
         ) { [weak self] _ in
             await self?.toggleAutoTile()
-            return .dismiss
-        }
-    }
-
-    func makeToggleFocusBorderAction() -> TilingAction {
-        let enabled = focusBorderEnabled
-        return TilingAction(
-            id: ActionID(module: "tiling", name: "toggleFocusBorder"),
-            title: enabled ? "Disable Focus Border" : "Enable Focus Border",
-            subtitle: enabled
-                ? "Stop drawing the focus border"
-                : "Draw a contrast border around the focused tiled window",
-            iconName: enabled ? "xmark.circle" : "viewfinder",
-            keywords: ["tiling", "grid", "border", "highlight", "focus", "toggle", "enable", "disable"]
-        ) { [weak self] _ in
-            await self?.toggleFocusBorder()
             return .dismiss
         }
     }

@@ -10,6 +10,9 @@ struct WindowConfig: Codable, Sendable, Equatable {
     var padding: PaddingConfig
     var includeMinimized: Bool
     var enlargeShrinkStep: SizeStop
+    /// Look of the focus border and which windows get one; nil = defaults. Whether the
+    /// border is drawn at all is runtime-only state toggled via `window/toggleFocusBorder`.
+    var focusBorder: FocusBorderConfig?
 
     static let defaultValue = WindowConfig(
         horizontalStops: [
@@ -32,7 +35,8 @@ struct WindowConfig: Codable, Sendable, Equatable {
         displays: [DisplayStopsConfig] = [],
         padding: PaddingConfig,
         includeMinimized: Bool,
-        enlargeShrinkStep: SizeStop
+        enlargeShrinkStep: SizeStop,
+        focusBorder: FocusBorderConfig? = nil
     ) {
         self.horizontalStops = horizontalStops
         self.verticalStops = verticalStops
@@ -40,13 +44,15 @@ struct WindowConfig: Codable, Sendable, Equatable {
         self.padding = padding
         self.includeMinimized = includeMinimized
         self.enlargeShrinkStep = enlargeShrinkStep
+        self.focusBorder = focusBorder
     }
 
-    // `displays` is decoded with decodeIfPresent so existing config.yaml files without it
-    // don't fail to decode (see the Tiling module's AutoTileConfig for why: a Swift
-    // property default doesn't make synthesized Decodable treat a missing key as optional).
+    // `displays` and `focusBorder` are decoded with decodeIfPresent so existing config.yaml
+    // files without them don't fail to decode (see the Tiling module's AutoTileConfig for
+    // why: a Swift property default doesn't make synthesized Decodable treat a missing key
+    // as optional).
     enum CodingKeys: String, CodingKey {
-        case horizontalStops, verticalStops, displays, padding, includeMinimized, enlargeShrinkStep
+        case horizontalStops, verticalStops, displays, padding, includeMinimized, enlargeShrinkStep, focusBorder
     }
 
     init(from decoder: Decoder) throws {
@@ -57,6 +63,68 @@ struct WindowConfig: Codable, Sendable, Equatable {
         padding = try container.decode(PaddingConfig.self, forKey: .padding)
         includeMinimized = try container.decode(Bool.self, forKey: .includeMinimized)
         enlargeShrinkStep = try container.decode(SizeStop.self, forKey: .enlargeShrinkStep)
+        focusBorder = try container.decodeIfPresent(FocusBorderConfig.self, forKey: .focusBorder)
+    }
+}
+
+/// The border is always drawn in the active theme's accent (the system accent when no
+/// theme is applied), so it has no color setting of its own.
+struct FocusBorderConfig: Codable, Sendable, Equatable {
+    var width: Double = 3.0
+    /// Corner radius (points) of the border's rounded rect. 0 = sharp corners.
+    var cornerRadius: Double = 8.0
+    /// Only windows at least this many points wide *and* tall get a border — keeps it off
+    /// dialogs, popovers, and other small utility windows.
+    var minimumSize: Double = 200
+    /// Seconds between fallback checks of the focused window. Focus changes, moves, and
+    /// resizes are picked up from notifications as they happen; the poll catches what
+    /// nothing announces (Mission Control, a closed last window, apps without AX
+    /// notifications).
+    var pollingInterval: Double = 0.15
+
+    init(
+        width: Double = 3.0,
+        cornerRadius: Double = 8.0,
+        minimumSize: Double = 200,
+        pollingInterval: Double = 0.15
+    ) {
+        self.width = width
+        self.cornerRadius = cornerRadius
+        self.minimumSize = minimumSize
+        self.pollingInterval = pollingInterval
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case width, cornerRadius, minimumSize, pollingInterval
+    }
+
+    /// A missing key falls back to its default above instead of throwing keyNotFound and
+    /// discarding the whole WindowConfig. A leftover `color` key from older configs is
+    /// simply ignored.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        width = try container.decodeIfPresent(Double.self, forKey: .width) ?? 3.0
+        cornerRadius = try container.decodeIfPresent(Double.self, forKey: .cornerRadius) ?? 8.0
+        minimumSize = try container.decodeIfPresent(Double.self, forKey: .minimumSize) ?? 200
+        pollingInterval = try container.decodeIfPresent(Double.self, forKey: .pollingInterval) ?? 0.15
+    }
+
+    /// Problems with these values, for `WindowModule.validate`.
+    var validationErrors: [String] {
+        var errors: [String] = []
+        if width <= 0 {
+            errors.append("focusBorder.width must be positive")
+        }
+        if cornerRadius < 0 {
+            errors.append("focusBorder.cornerRadius must be non-negative")
+        }
+        if minimumSize < 0 {
+            errors.append("focusBorder.minimumSize must be non-negative")
+        }
+        if pollingInterval <= 0 {
+            errors.append("focusBorder.pollingInterval must be positive")
+        }
+        return errors
     }
 }
 

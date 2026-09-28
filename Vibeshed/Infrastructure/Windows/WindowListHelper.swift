@@ -69,27 +69,18 @@ enum WindowListHelper {
     /// Current on-screen bounds (CG coordinates) of a single window, or nil if the
     /// window is not on screen. Note the bounds are the window's *live* window-server
     /// rect: during Mission Control / App Exposé windows stay listed but at scattered
-    /// thumbnail positions that no longer match their AX-reported frame.
-    static func onScreenBounds(of windowID: Int) -> CGRect? {
-        guard let windowList = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
-        ) as? [[CFString: Any]] else {
+    /// thumbnail positions that no longer match their AX-reported frame, and during a
+    /// title-bar drag they run ahead of it. Asks the window server about this one window
+    /// only (no app round trip), so it's cheap enough to call per mouse event.
+    static func onScreenBounds(of windowID: CGWindowID) -> CGRect? {
+        let windows = CGWindowListCopyWindowInfo(.optionIncludingWindow, windowID) as? [[CFString: Any]]
+        guard let entry = windows?.first,
+              entry[kCGWindowIsOnscreen] as? Bool == true,
+              let bounds = entry[kCGWindowBounds] as? NSDictionary
+        else {
             return nil
         }
-
-        for entry in windowList {
-            guard let id = entry[kCGWindowNumber] as? Int, id == windowID else { continue }
-            guard let boundsDict = entry[kCGWindowBounds] as? [String: Double],
-                  let x = boundsDict["X"],
-                  let y = boundsDict["Y"],
-                  let width = boundsDict["Width"],
-                  let height = boundsDict["Height"]
-            else {
-                return nil
-            }
-            return CGRect(x: x, y: y, width: width, height: height)
-        }
-        return nil
+        return CGRect(dictionaryRepresentation: bounds as CFDictionary)
     }
 
     /// Collect non-empty titles of on-screen windows owned by any app in `owners`
