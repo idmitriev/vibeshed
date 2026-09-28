@@ -348,6 +348,7 @@
 - [ ] Move left/right/up/down snaps window between cells (no wraparound at edges)
 - [ ] Per-display grids resolved by display name/"main"/index
 - [ ] Enable auto-tile tiles new and moved/resized windows; disable stops it
+- [ ] A display's only window is maximized; a second window splits the grid; closing/minimizing back to one maximizes it again; `maximizeSingleWindow: false` keeps a lone window in a cell
 - [ ] Dragged window snaps only after drop, never mid-drag
 - [ ] Tooltips/panels/small windows are not auto-tiled
 - [ ] Focus border appears around focused tiled window when enabled; hides in Mission Control

@@ -26,7 +26,9 @@ actor TilingModule: ModuleConfigurable {
     /// Runtime-only; always starts disabled on launch and is toggled via
     /// `tiling/toggleAutoTile` — not persisted config.
     private(set) var autoTileEnabled = false
-    private var seenWindowIDs: Set<Int> = []
+    /// On-screen windows `TilingManager.isTileable` said yes to, so a display's layout pass
+    /// doesn't ask each app over AX again (a busy app blocks AX calls for seconds).
+    private var tileable: Set<Int> = []
     private var lastKnownFrames: [Int: CGRect] = [:]
     private var pollTask: Task<Void, Never>?
 
@@ -39,7 +41,6 @@ actor TilingModule: ModuleConfigurable {
         // Seed seen-window/frame state from what's already open so the poller (below)
         // only reacts to windows/moves that appear after auto-tile is enabled.
         let existing = await MainActor.run { manager.listWindows(includeMinimized: false) }
-        seenWindowIDs = Set(existing.map(\.id))
         lastKnownFrames = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0.frame) })
         startPolling()
         startFocusBorderPolling()
@@ -208,38 +209,18 @@ actor TilingModule: ModuleConfigurable {
 
     private func pollForNewWindows() async {
         guard autoTileEnabled else { return }
+        // While the left mouse button is physically held down, a window is very likely
+        // being dragged or resized (or a tab torn off into a new window). Act on nothing
+        // and keep the pre-drag baseline: once the button is released, the next tick sees
+        // the whole change against it and tiles exactly once, instead of yanking a window
+        // mid-drag.
+        guard !Self.isLeftMouseButtonDown() else { return }
 
         let windows = await MainActor.run { manager.listWindows(includeMinimized: false) }
-        // While the left mouse button is physically held down, a move/resize in
-        // progress is very likely a live drag — don't act on it, and don't update
-        // lastKnownFrames either, so it stays pinned to the pre-drag position. Once
-        // the button is released, the next tick compares the final (dropped) frame
-        // against that pre-drag baseline, is guaranteed to see a difference, and
-        // tiles exactly once — instead of yanking the window mid-drag on every tick.
-        let dragging = Self.isLeftMouseButtonDown()
-
-        let newWindows = windows.filter { !seenWindowIDs.contains($0.id) }
-        for window in newWindows {
-            await autoTileIfEligible(window)
-        }
-        if !dragging {
-            let moved = windows.filter { window in
-                seenWindowIDs.contains(window.id)
-                    && !Self.framesRoughlyEqual(lastKnownFrames[window.id], window.frame)
-            }
-            for window in moved {
-                // .nearest, not .nextOpen: the window already had a place in the grid and
-                // was just dropped somewhere else — snap to whichever cell it was actually
-                // dropped near, not to some arbitrary open slot (which could easily be its
-                // own former cell, undoing the move the user just made).
-                await autoTileIfEligible(window, placement: .nearest)
-            }
-        }
-
-        seenWindowIDs = Set(windows.map(\.id))
-        if !dragging {
-            lastKnownFrames = Dictionary(uniqueKeysWithValues: windows.map { ($0.id, $0.frame) })
-        }
+        let previousFrames = lastKnownFrames
+        lastKnownFrames = Dictionary(uniqueKeysWithValues: windows.map { ($0.id, $0.frame) })
+        tileable.formIntersection(lastKnownFrames.keys)
+        await layOutChanges(in: windows, since: previousFrames)
     }
 
     /// Internal (not private), as are `toggleFocusBorder` and `runAutoTile`: called
@@ -258,7 +239,7 @@ actor TilingModule: ModuleConfigurable {
         // Reseed tracking state to "now" so the next poll tick doesn't treat every
         // window as newly-created/moved just because auto-tile was off for a while.
         let existing = await MainActor.run { manager.listWindows(includeMinimized: false) }
-        seenWindowIDs = Set(existing.map(\.id))
+        tileable = []
         lastKnownFrames = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0.frame) })
         await runAutoTile(reason: "enabled")
     }
@@ -362,85 +343,98 @@ extension TilingModule {
     func runAutoTile(reason: String) async {
         let windows = await MainActor.run { manager.listWindows(includeMinimized: false) }
         log.info("Auto-tiling on \(reason, privacy: .public): \(windows.count, privacy: .public) window(s)")
-        for window in windows {
-            await autoTileIfEligible(window)
-        }
+        tileable.formIntersection(windows.map(\.id))
+        await layOut(windows) { _ in .arrived }
     }
 
-    /// `.nextOpen` picks the first free cell in row-major order — right for a window with
-    /// no established position (a brand-new window, or startup/attachAll bulk placement).
-    /// `.nearest` snaps to whichever cell the window's current frame is geometrically
-    /// closest to — right for a window that already had a place and was just moved/resized,
-    /// where the drop position itself expresses where the user wants it.
-    private enum CellPlacementStrategy {
-        case nextOpen
-        case nearest
-    }
+    /// Lays out the displays touched since the last poll: where windows appeared or moved
+    /// to, and where moved or vanished (closed, minimized, hidden) windows were — a display
+    /// left with one window maximizes it, one that gains a second goes back to the grid.
+    private func layOutChanges(in windows: [WindowInfo], since previousFrames: [Int: CGRect]) async {
+        let appeared = Set(windows.filter { previousFrames[$0.id] == nil }.map(\.id))
+        let moved = Set(windows.filter { window in
+            previousFrames[window.id] != nil && !Self.framesRoughlyEqual(previousFrames[window.id], window.frame)
+        }.map(\.id))
+        let vanished = Set(previousFrames.keys).subtracting(windows.map(\.id))
+        guard !appeared.isEmpty || !moved.isEmpty || !vanished.isEmpty else { return }
 
-    private func autoTileIfEligible(_ window: WindowInfo, placement: CellPlacementStrategy = .nextOpen) async {
+        let touchedFrames = windows.filter { appeared.contains($0.id) || moved.contains($0.id) }.map(\.frame)
+            + moved.union(vanished).compactMap { previousFrames[$0] }
         let cfg = config
-        if let bundleID = window.bundleID, cfg.autoTile.excludedBundleIDs.contains(bundleID) {
-            return
+        let mgr = manager
+        let touched = await MainActor.run {
+            Set(touchedFrames.compactMap { mgr.resolveGrid(for: $0, config: cfg)?.displayKey })
         }
-        // Filter out tooltips, HUDs, panels, and other non-standard/fixed-size windows
-        // that shouldn't be forced into a grid cell.
-        if window.frame.width < cfg.autoTile.minimumSize || window.frame.height < cfg.autoTile.minimumSize {
-            return
-        }
-        guard manager.isTileable(window) else { return }
-        guard let resolved = await MainActor.run(body: {
-            manager.resolveGrid(for: window.frame, config: cfg)
-        }) else {
-            return
-        }
-        // Already sitting in a grid cell (within tolerance) — leave it alone. Just refresh
-        // its occupancy record so a subsequent unaligned window doesn't get placed on top
-        // of it. Without this check, re-running attachAll/auto-tile would needlessly
-        // reposition every window on every call.
-        let aligned = TilingGrid.matchingCell(
-            for: window.frame, in: resolved.area, grid: resolved.grid, gap: resolved.gap
-        )
-        if let aligned {
-            setAssignment(windowID: window.id, displayKey: resolved.displayKey, row: aligned.row, col: aligned.col)
-            return
-        }
-        let cell: (row: Int, col: Int) = switch placement {
-        case .nextOpen:
-            nextOpenCell(for: window.id, displayKey: resolved.displayKey, grid: resolved.grid)
-        case .nearest:
-            TilingGrid.nearestCell(for: window.frame, in: resolved.area, grid: resolved.grid)
-        }
-        let frame = TilingGrid.cellRect(
-            row: cell.row, col: cell.col, in: resolved.area, grid: resolved.grid, gap: resolved.gap
-        )
-        do {
-            try manager.setFrame(window, frame: frame)
-            setAssignment(windowID: window.id, displayKey: resolved.displayKey, row: cell.row, col: cell.col)
-        } catch {
-            log.error("autoTile: failed to set frame for window \(window.id, privacy: .public)")
+        await layOut(windows, displays: touched) { window in
+            if appeared.contains(window.id) { return .arrived }
+            return moved.contains(window.id) ? .moved : .unchanged
         }
     }
 
-    /// First grid cell (row-major order) not already occupied by a tracked assignment on
-    /// this display; wraps back to (0, 0) if every cell is already taken (overlap allowed,
-    /// consistent with the manual move actions' collision policy). Excludes `windowID`'s own
-    /// prior assignment from the occupied set — otherwise a window that resizes itself
-    /// slightly (e.g. System Settings switching panes) and no longer exactly matches its own
-    /// cell would see that cell as "taken" and get bounced to a different one, then bounce
-    /// back next time, oscillating between cells forever.
-    private func nextOpenCell(for windowID: Int, displayKey: String, grid: DisplayGridConfig) -> (row: Int, col: Int) {
-        let occupied = Set(
-            assignments
-                .filter { $0.key != windowID && $0.value.displayKey == displayKey }
-                .values
-                .map { $0.row * grid.columns.count + $0.col }
-        )
-        for row in 0 ..< grid.rows.count {
-            for col in 0 ..< grid.columns.count where !occupied.contains(row * grid.columns.count + col) {
-                return (row: row, col: col)
+    /// Plans each display's eligible windows with `AutoTileLayout` — only the displays in
+    /// `displayKeys`, or every display with a grid when nil — and applies the result.
+    private func layOut(
+        _ windows: [WindowInfo],
+        displays displayKeys: Set<String>? = nil,
+        reason: (WindowInfo) -> AutoTileLayout.Reason
+    ) async {
+        let cfg = config
+        let mgr = manager
+        let displays = await MainActor.run { mgr.windowsByDisplay(windows, config: cfg) }
+        for display in displays where displayKeys?.contains(display.grid.displayKey) ?? true {
+            let candidates = display.windows.compactMap { window -> AutoTileLayout.Candidate? in
+                let why = reason(window)
+                guard isEligible(window, reason: why, config: cfg.autoTile) else { return nil }
+                return AutoTileLayout.Candidate(id: window.id, frame: window.frame, reason: why)
             }
+            let placements = AutoTileLayout.plan(
+                candidates,
+                grid: display.grid.grid,
+                area: display.grid.area,
+                gap: display.grid.gap,
+                maximizeSingleWindow: cfg.autoTile.maximizeSingleWindow
+            )
+            apply(placements, to: display.windows, displayKey: display.grid.displayKey)
         }
-        return (row: 0, col: 0)
+    }
+
+    /// Auto-tile manages standard, resizable windows (not panels, dialogs, or fixed-size
+    /// HUDs) that aren't excluded or tiny. A layout pass covers every window on its display,
+    /// so a yes from the AX check is cached, and the check is only made for a window that
+    /// just arrived or moved — one AX couldn't resolve yet is asked again when it next moves.
+    private func isEligible(_ window: WindowInfo, reason: AutoTileLayout.Reason, config: AutoTileConfig) -> Bool {
+        if let bundleID = window.bundleID, config.excludedBundleIDs.contains(bundleID) {
+            return false
+        }
+        if window.frame.width < config.minimumSize || window.frame.height < config.minimumSize {
+            return false
+        }
+        if tileable.contains(window.id) {
+            return true
+        }
+        guard reason != .unchanged, manager.isTileable(window) else {
+            return false
+        }
+        tileable.insert(window.id)
+        return true
+    }
+
+    private func apply(_ placements: [AutoTileLayout.Placement], to windows: [WindowInfo], displayKey: String) {
+        let windowsByID = Dictionary(uniqueKeysWithValues: windows.map { ($0.id, $0) })
+        for placement in placements {
+            guard let window = windowsByID[placement.windowID] else { continue }
+            if let frame = placement.frame {
+                do {
+                    try manager.setFrame(window, frame: frame)
+                } catch {
+                    log.error("autoTile: failed to set frame for window \(window.id, privacy: .public)")
+                    continue
+                }
+                let slot = String(describing: placement.slot)
+                log.debug("autoTile: window \(window.id, privacy: .public) → \(slot, privacy: .public)")
+            }
+            setAssignment(windowID: window.id, displayKey: displayKey, slot: placement.slot)
+        }
     }
 
     // MARK: - Assignment State
@@ -448,7 +442,11 @@ extension TilingModule {
     // Internal (not private): also called from the split-navigation actions in
     // TilingModule+SplitActions.swift.
     func setAssignment(windowID: Int, displayKey: String, row: Int, col: Int) {
-        assignments[windowID] = GridAssignment(displayKey: displayKey, row: row, col: col)
+        setAssignment(windowID: windowID, displayKey: displayKey, slot: .cell(row: row, col: col))
+    }
+
+    private func setAssignment(windowID: Int, displayKey: String, slot: AutoTileLayout.Slot) {
+        assignments[windowID] = GridAssignment(displayKey: displayKey, slot: slot)
     }
 
     func removeAssignment(windowID: Int) {
@@ -458,6 +456,5 @@ extension TilingModule {
 
 private struct GridAssignment {
     let displayKey: String
-    var row: Int
-    var col: Int
+    var slot: AutoTileLayout.Slot
 }

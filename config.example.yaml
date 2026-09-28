@@ -346,7 +346,12 @@ modules:
     # never repositions a window already aligned to a cell (5pt tolerance).
     # Tooltips/HUDs/panels/dialogs are filtered out (fixed-size or non-standard
     # AX subrole) before tiling, plus anything below minimumSize.
+    # A display's only visible window is maximized (padding still applies); the
+    # grid kicks in once a second one appears, and closing, minimizing, or moving
+    # windows away until one is left maximizes it again. attachAll follows the
+    # same rule.
     autoTile:
+      maximizeSingleWindow: true   # false = a lone window takes a grid cell like any other
       pollingInterval: 1.0         # seconds between checks (also affects move/resize latency)
       excludedBundleIDs: []        # e.g. ["com.apple.systempreferences"]
       minimumSize: 120             # skip windows narrower/shorter than this (tooltips, HUDs, etc.)
