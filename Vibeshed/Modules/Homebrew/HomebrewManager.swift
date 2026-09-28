@@ -13,14 +13,30 @@ enum HomebrewManager {
 
     // MARK: - Search
 
-    static func searchFormulae(_ query: String, brewPath: String) async throws -> [PackageInfo] {
-        let output = try await runBrew(brewPath, "search", "--formula", query)
-        return parseSearchResults(output, isCask: false)
+    /// Names of the formulae or casks matching `query`, best matches first.
+    static func search(_ query: String, isCask: Bool, brewPath: String) async throws -> [String] {
+        let output = try await runBrew(brewPath, "search", isCask ? "--cask" : "--formula", query)
+        return rankSearchResults(parseSearchResults(output), query: query)
     }
 
-    static func searchCasks(_ query: String, brewPath: String) async throws -> [PackageInfo] {
-        let output = try await runBrew(brewPath, "search", "--cask", query)
-        return parseSearchResults(output, isCask: true)
+    /// Orders `brew search` hits, which come alphabetically, so the likeliest survive
+    /// truncation: exact name, then prefix, then word-start, then other matches,
+    /// shorter names first within each group. Tap prefixes (`user/tap/`) are ignored.
+    static func rankSearchResults(_ names: [String], query: String) -> [String] {
+        let query = query.lowercased()
+        func group(_ base: String) -> Int {
+            if base == query { return 0 }
+            if base.hasPrefix(query) { return 1 }
+            let words = base.split { "-@._".contains($0) }
+            return words.contains { $0.hasPrefix(query) } ? 2 : 3
+        }
+        return names.enumerated()
+            .map { index, name in
+                let base = name.lowercased().split(separator: "/").last.map(String.init) ?? ""
+                return (name: name, key: (group(base), base.count, index))
+            }
+            .sorted { $0.key < $1.key }
+            .map(\.name)
     }
 
     // MARK: - Install / Uninstall
@@ -49,43 +65,27 @@ enum HomebrewManager {
         try await runBrew(brewPath, "uninstall", "--cask", name)
     }
 
-    // MARK: - List Installed
-
-    static func listInstalledFormulae(brewPath: String) async throws -> [PackageInfo] {
-        let output = try await runBrew(brewPath, "list", "--formula", "--versions")
-        return parseInstalledList(output, isCask: false)
-    }
-
-    static func listInstalledCasks(brewPath: String) async throws -> [PackageInfo] {
-        let output = try await runBrew(brewPath, "list", "--cask", "--versions")
-        return parseInstalledList(output, isCask: true)
-    }
-
     // MARK: - Info
 
-    static func info(_ name: String, isCask: Bool, brewPath: String) async throws -> String {
-        let flag = isCask ? "--cask" : "--formula"
-        return try await runBrew(brewPath, "info", flag, name)
+    /// Details for the named formulae or casks, looked up in one `brew info` run.
+    /// Throws if any name is unknown: brew then prints nothing for the rest either.
+    static func packages(_ names: [String], isCask: Bool, brewPath: String) async throws -> [HomebrewPackage] {
+        guard !names.isEmpty else { return [] }
+        let output = try await runBrew(brewPath, ["info", "--json=v2", isCask ? "--cask" : "--formula"] + names)
+        return HomebrewPackage.parse(Data(output.utf8))
+    }
+
+    /// Details for every installed formula or cask, with `requiredBy` filled in.
+    static func installedPackages(isCask: Bool, brewPath: String) async throws -> [HomebrewPackage] {
+        let output = try await runBrew(brewPath, "info", "--json=v2", "--installed", isCask ? "--cask" : "--formula")
+        return HomebrewPackage.linkingDependents(HomebrewPackage.parse(Data(output.utf8)))
+            .sorted { $0.token.localizedStandardCompare($1.token) == .orderedAscending }
     }
 
     /// Installed locations of a cask's `app` artifacts (e.g. `/Applications/Foo.app`).
     /// Empty for casks that ship no app bundle (fonts, pkg installers, CLI tools).
     static func caskAppPaths(_ name: String, brewPath: String) async throws -> [String] {
-        let output = try await runBrew(brewPath, "info", "--cask", "--json=v2", name)
-        return parseCaskAppPaths(Data(output.utf8))
-    }
-
-    static func parseCaskAppPaths(_ json: Data) -> [String] {
-        guard let root = try? JSONSerialization.jsonObject(with: json) as? [String: Any],
-              let casks = root["casks"] as? [[String: Any]]
-        else { return [] }
-        return casks.flatMap { cask -> [String] in
-            let artifacts = cask["artifacts"] as? [[String: Any]] ?? []
-            return artifacts.compactMap { artifact in
-                guard artifact["app"] != nil else { return nil }
-                return artifact["target"] as? String
-            }
-        }
+        try await packages([name], isCask: true, brewPath: brewPath).flatMap(\.appPaths)
     }
 
     // MARK: - Launch
@@ -136,34 +136,19 @@ enum HomebrewManager {
 
     // MARK: - Private
 
-    private static func parseSearchResults(_ output: String, isCask: Bool) -> [PackageInfo] {
+    private static func parseSearchResults(_ output: String) -> [String] {
         output
             .split(separator: "\n")
-            .map { line in
-                let name = String(line).trimmingCharacters(in: .whitespaces)
-                return PackageInfo(name: name, version: nil, description: nil, isCask: isCask)
-            }
-            .filter { !$0.name.isEmpty && !$0.name.hasPrefix("==>") }
-    }
-
-    private static func parseInstalledList(_ output: String, isCask: Bool) -> [PackageInfo] {
-        output
-            .split(separator: "\n")
-            .compactMap { line -> PackageInfo? in
-                let parts = line.split(separator: " ", maxSplits: 1)
-                guard let name = parts.first else { return nil }
-                let version = parts.count > 1 ? String(parts[1]) : nil
-                return PackageInfo(
-                    name: String(name),
-                    version: version,
-                    description: nil,
-                    isCask: isCask
-                )
-            }
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("==>") }
     }
 
     @discardableResult
     private static func runBrew(_ brewPath: String, _ args: String...) async throws -> String {
+        try await runBrew(brewPath, args)
+    }
+
+    private static func runBrew(_ brewPath: String, _ args: [String]) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
             let task = Process()
             task.executableURL = URL(fileURLWithPath: brewPath)

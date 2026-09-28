@@ -37,6 +37,9 @@ final class PickerCoordinator {
     /// query can never overwrite a newer one's results.
     @ObservationIgnored private var queryGeneration = 0
     @ObservationIgnored private var runningQueryTask: Task<Void, Never>?
+    /// The same guard for dynamic parameter options, whose fetches (e.g. `brew search`)
+    /// can finish out of order.
+    @ObservationIgnored private var parameterOptionsGeneration = 0
 
     // MARK: - Live parameter preview (see PickerCoordinator+LivePreview)
 
@@ -368,12 +371,15 @@ extension PickerCoordinator {
         let moduleID = actionID.moduleID
         guard let module = moduleRegistry.module(id: moduleID) else { return }
         pickerState.isLoadingOptions = true
+        parameterOptionsGeneration += 1
+        let generation = parameterOptionsGeneration
         Task { @MainActor in
             let options = await module.provideParameterOptions(
                 for: param.id, in: actionID, query: query
             )
-            // Only apply if still in the same parameter mode
-            if case let .parameterInput(currentActionID, _) = pickerState.mode,
+            // Only apply the latest fetch, and only if still in the same parameter mode
+            if generation == parameterOptionsGeneration,
+               case let .parameterInput(currentActionID, _) = pickerState.mode,
                currentActionID == actionID,
                pickerState.currentParameter?.id == param.id
             {

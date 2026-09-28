@@ -13,7 +13,9 @@ actor HomebrewModule: ModuleConfigurable {
     }
 
     private var config: HomebrewConfig = .init()
-    private let log = Log.module("homebrew")
+    let log = Log.module("homebrew")
+    /// Recent `brew info` results for the pickers (see HomebrewModule+Options.swift).
+    var packageCache = HomebrewPackageCache()
 
     func initialize(context: ModuleContext) async throws {
         log.info("Homebrew module initialized")
@@ -21,6 +23,7 @@ actor HomebrewModule: ModuleConfigurable {
 
     func configDidUpdate(_ config: HomebrewConfig) async {
         self.config = config
+        packageCache = HomebrewPackageCache()
         log.debug("Config updated")
     }
 
@@ -93,6 +96,7 @@ actor HomebrewModule: ModuleConfigurable {
                     return .showResult(title: "Error", body: "No formula specified")
                 }
                 let output = try await HomebrewManager.installFormula(name, brewPath: brewPath)
+                await self.invalidatePackageCache()
                 return .showResult(title: "Installed \(name)", body: HomebrewManager.installSummary(output))
             },
             HomebrewAction(
@@ -117,6 +121,7 @@ actor HomebrewModule: ModuleConfigurable {
                 let summary = try await HomebrewManager.installSummary(
                     HomebrewManager.installCask(name, brewPath: brewPath)
                 )
+                await self.invalidatePackageCache()
                 // The install already succeeded; a failed app lookup or launch shouldn't turn it into an error.
                 let appPaths = await (try? HomebrewManager.caskAppPaths(name, brewPath: brewPath)) ?? []
                 guard let launched = await HomebrewManager.launchFirstApp(at: appPaths) else {
@@ -150,6 +155,7 @@ actor HomebrewModule: ModuleConfigurable {
                     return .showResult(title: "Error", body: "No formula specified")
                 }
                 let output = try await HomebrewManager.uninstallFormula(name, brewPath: brewPath)
+                await self.invalidatePackageCache()
                 return .showResult(title: "Uninstalled \(name)", body: output)
             },
             HomebrewAction(
@@ -172,6 +178,7 @@ actor HomebrewModule: ModuleConfigurable {
                     return .showResult(title: "Error", body: "No cask specified")
                 }
                 let output = try await HomebrewManager.uninstallCask(name, brewPath: brewPath)
+                await self.invalidatePackageCache()
                 return .showResult(title: "Uninstalled \(name)", body: output)
             },
         ]
@@ -188,6 +195,7 @@ actor HomebrewModule: ModuleConfigurable {
                 keywords: ["brew", "update", "fetch", "homebrew"]
             ) { _ in
                 let output = try await HomebrewManager.update(brewPath: brewPath)
+                await self.invalidatePackageCache()
                 return .showResult(title: "Homebrew Updated", body: output.isEmpty ? "Already up-to-date" : output)
             },
             HomebrewAction(
@@ -199,6 +207,7 @@ actor HomebrewModule: ModuleConfigurable {
                 keywords: ["brew", "upgrade", "outdated", "homebrew"]
             ) { _ in
                 let output = try await HomebrewManager.upgrade(brewPath: brewPath)
+                await self.invalidatePackageCache()
                 return .showResult(title: "Packages Upgraded", body: output.isEmpty ? "Everything up-to-date" : output)
             },
             HomebrewAction(
@@ -228,46 +237,5 @@ actor HomebrewModule: ModuleConfigurable {
                 return .showResult(title: "Cleanup Complete", body: output.isEmpty ? "Nothing to clean" : output)
             },
         ]
-    }
-
-    // MARK: - Parameter Options
-
-    private func searchOptions(query: String, isCask: Bool, brewPath: String) async -> [ParameterOption] {
-        guard query.count >= 2 else { return [] }
-        do {
-            let results = isCask
-                ? try await HomebrewManager.searchCasks(query, brewPath: brewPath)
-                : try await HomebrewManager.searchFormulae(query, brewPath: brewPath)
-            return results.prefix(20).map { pkg in
-                ParameterOption(
-                    id: pkg.name,
-                    label: pkg.name,
-                    subtitle: pkg.description,
-                    iconName: isCask ? "app" : "shippingbox"
-                )
-            }
-        } catch {
-            log.warning("Search failed: \(error.localizedDescription, privacy: .public)")
-            return []
-        }
-    }
-
-    private func installedOptions(isCask: Bool, brewPath: String) async -> [ParameterOption] {
-        do {
-            let results = isCask
-                ? try await HomebrewManager.listInstalledCasks(brewPath: brewPath)
-                : try await HomebrewManager.listInstalledFormulae(brewPath: brewPath)
-            return results.map { pkg in
-                ParameterOption(
-                    id: pkg.name,
-                    label: pkg.name,
-                    subtitle: pkg.version,
-                    iconName: isCask ? "app" : "shippingbox"
-                )
-            }
-        } catch {
-            log.warning("List installed failed: \(error.localizedDescription, privacy: .public)")
-            return []
-        }
     }
 }
