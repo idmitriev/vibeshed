@@ -97,7 +97,7 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .penrose: "Penrose's thin and thick rhombs, a tiling that never repeats"
         case .leaves: "Haiku's Leaves screen saver: gradient leaves piling up on the desktop"
         case .warp: "Star streaks at warp speed, after OS/2 Warp"
-        case .ascii: "A lit torus in terminal characters after donut.c, over a dim ASCII plasma"
+        case .ascii: "Terminal-character art: donut.c's lit torus, the Mandelbrot set or aafire's flames"
         case .polyhedra: "NeXTSTEP BackSpace's Polyhedra: a regular solid in perspective on black"
         case .maze: "The Commodore 64's one-line maze, its sealed-off rooms tinted"
         case .dither: "A banded planet in four tones, Bayer-dithered into chunky pixels"

@@ -2,9 +2,11 @@ import CoreGraphics
 import CoreText
 import Foundation
 
-/// ASCII art on a terminal grid: a lit torus after Andy Sloane's `donut.c`, shaded with its
-/// `.,-~:;=!*#$@` ramp, over a dim plasma of the same characters. Glyphs are real Menlo in
-/// cells twice as tall as wide, so the picture keeps the proportions of an 80-column screen.
+/// ASCII art on a terminal grid, one of three classics picked by the seed: a lit torus after
+/// Andy Sloane's `donut.c`, the Mandelbrot set as BASIC listings printed it, or aalib's
+/// `aafire` (the last two in `WallpaperCanvas+ASCIIScenes`). All are shaded with donut.c's
+/// `.,-~:;=!*#$@` ramp over a dim plasma or a few stars. Glyphs are real Menlo in cells twice
+/// as tall as wide, so the picture keeps the proportions of an 80-column screen.
 extension WallpaperCanvas {
     /// Light to dense; on a dark ground density reads as brightness.
     static let asciiRamp = Array(".,-~:;=!*#$@")
@@ -12,39 +14,69 @@ extension WallpaperCanvas {
     private static let asciiCharacters = asciiRamp + ["+"]
 
     mutating func paintASCII() {
-        let ground = palette["desktop"] ?? base
-        fill(ground)
-        let grid = ASCIIGrid(width: width, height: height, rows: 60)
-        let torus = ASCIITorus(
-            tilt: rng.between(0.55, 1.25), turn: rng.between(0.2, 1.1), spin: rng.between(0, .pi * 2)
-        )
-        let center = (column: Double(grid.columns) * rng.between(0.44, 0.56), row: Double(grid.rows) * 0.5)
-        let donut = torus.render(
-            columns: grid.columns, rows: grid.rows, center: center, halfHeight: Double(grid.rows) * 0.4
-        )
-        let middle = CGPoint(x: CGFloat(center.column) * grid.cellWidth, y: height / 2)
-        glow(palette.accent, at: middle, radius: height * 0.55, alpha: isDark ? 0.16 : 0.1)
-
-        let ramp = Self.asciiRamp.count
-        var cells = backgroundCells(grid: grid, donut: donut)
-        let shades = torusShades(count: ramp)
-        for (index, level) in donut.enumerated() {
-            guard let level else { continue }
-            // Paper ASCII art is dark where it's dense, so a light ground inverts the ramp,
-            // stopping short of its densest characters so the shadow side isn't a solid wall.
-            let glyph = isDark ? level : (ramp - 1 - level) * 3 / 4
+        fill(palette["desktop"] ?? base)
+        let subject = rng.int(below: 3)
+        // The Mandelbrot set gets a finer grid: its edge is all detail.
+        let grid = ASCIIGrid(width: width, height: height, rows: subject == 1 ? 90 : 60)
+        let figure = switch subject {
+        case 0: torusFigure(grid: grid)
+        case 1: mandelbrotFigure(grid: grid)
+        default: fireFigure(grid: grid)
+        }
+        glow(figure.glowColor, at: figure.glowCenter, radius: figure.glowRadius, alpha: isDark ? 0.16 : 0.1)
+        var cells = backgroundCells(grid: grid, figure: figure.marks, haze: figure.haze)
+        for (index, mark) in figure.marks.enumerated() {
+            guard let mark else { continue }
             cells.append(ASCIICell(
-                column: index % grid.columns, row: index / grid.columns, glyph: glyph, color: shades[level]
+                column: index % grid.columns, row: index / grid.columns, glyph: mark.glyph, color: mark.color
             ))
         }
         drawGlyphs(cells, grid: grid)
     }
 
-    /// A faint plasma of the ramp's light end in muted harmony hues and a few stars, kept a
-    /// few cells clear of the torus so its silhouette reads.
-    private mutating func backgroundCells(grid: ASCIIGrid, donut: [Int?]) -> [ASCIICell] {
-        var clear = [Bool](repeating: false, count: donut.count)
-        for index in donut.indices where donut[index] != nil {
+    /// The torus, about 56% of the screen's height, near the middle.
+    private mutating func torusFigure(grid: ASCIIGrid) -> ASCIIFigure {
+        let torus = ASCIITorus(
+            tilt: rng.between(0.55, 1.25), turn: rng.between(0.2, 1.1), spin: rng.between(0, .pi * 2)
+        )
+        let center = (column: Double(grid.columns) * rng.between(0.44, 0.56), row: Double(grid.rows) * 0.5)
+        let levels = torus.render(
+            columns: grid.columns, rows: grid.rows, center: center, halfHeight: Double(grid.rows) * 0.28
+        )
+        let ramp = Self.asciiRamp.count
+        let shades = asciiShades(isDark
+            ? [muted(harmony(3).last ?? palette.accent, 0.35), palette.accent.mix(base, 0.2), palette.accent,
+               palette.accent.mix(palette.brightForeground, 0.7)]
+            : [palette.background.mix(palette.accent, 0.45), palette.accent,
+               palette.accent.mix(palette.foreground, 0.45), palette.foreground])
+        return ASCIIFigure(
+            marks: levels.map { level in
+                level.map {
+                    // Paper ASCII art is dark where it's dense, so a light ground inverts the
+                    // ramp, short of its densest characters so the shadow side isn't a wall.
+                    ASCIIMark(glyph: isDark ? $0 : (ramp - 1 - $0) * 3 / 4, color: shades[$0])
+                }
+            },
+            glowCenter: CGPoint(x: CGFloat(center.column) * grid.cellWidth, y: height / 2),
+            glowRadius: height * 0.42, glowColor: palette.accent, haze: true
+        )
+    }
+
+    /// One color per ramp level, blended through `stops`, lightest level first.
+    func asciiShades(_ stops: [ThemeColor]) -> [ThemeColor] {
+        let count = Self.asciiRamp.count
+        return (0 ..< count).map { level in
+            let position = Double(level) / Double(count - 1) * Double(stops.count - 1)
+            let index = min(Int(position), stops.count - 2)
+            return stops[index].mix(stops[index + 1], position - Double(index))
+        }
+    }
+
+    /// A few stars and, with `haze`, a faint plasma of the ramp's light end in muted harmony
+    /// hues, kept a few cells clear of the figure so its silhouette reads.
+    private mutating func backgroundCells(grid: ASCIIGrid, figure: [ASCIIMark?], haze: Bool) -> [ASCIICell] {
+        var clear = [Bool](repeating: false, count: figure.count)
+        for index in figure.indices where figure[index] != nil {
             let (column, row) = (index % grid.columns, index / grid.columns)
             for near in max(0, row - 1) ... min(grid.rows - 1, row + 1) {
                 for across in max(0, column - 3) ... min(grid.columns - 1, column + 3) {
@@ -63,6 +95,7 @@ extension WallpaperCanvas {
                     cells.append(ASCIICell(column: column, row: row, glyph: rng.pick(stars), color: star))
                     continue
                 }
+                guard haze else { continue }
                 let value = noise.fractal(Double(column) * scale.x, Double(row) * scale.y, octaves: 3)
                 let level = Int((value - 0.5) * 16)
                 guard level >= 0 else { continue }
@@ -74,21 +107,6 @@ extension WallpaperCanvas {
             }
         }
         return cells
-    }
-
-    /// One color per ramp level, unlit first.
-    private func torusShades(count: Int) -> [ThemeColor] {
-        let accent = palette.accent
-        let stops = isDark
-            ? [muted(harmony(3).last ?? accent, 0.35), accent.mix(base, 0.2), accent,
-               accent.mix(palette.brightForeground, 0.7)]
-            : [palette.background.mix(accent, 0.45), accent, accent.mix(palette.foreground, 0.45),
-               palette.foreground]
-        return (0 ..< count).map { level in
-            let position = Double(level) / Double(count - 1) * Double(stops.count - 1)
-            let index = min(Int(position), stops.count - 2)
-            return stops[index].mix(stops[index + 1], position - Double(index))
-        }
     }
 
     /// Draws each cell's ramp character in Menlo, batched by color and glyph.
@@ -123,7 +141,7 @@ extension WallpaperCanvas {
 }
 
 /// The character grid, sized by row count; cells are twice as tall as wide.
-private struct ASCIIGrid {
+struct ASCIIGrid {
     let cellWidth: CGFloat
     let cellHeight: CGFloat
     let columns: Int
@@ -135,6 +153,23 @@ private struct ASCIIGrid {
         columns = Int((width / cellWidth).rounded(.up))
         self.rows = rows
     }
+}
+
+/// What a figure puts in one cell.
+struct ASCIIMark {
+    let glyph: Int
+    let color: ThemeColor
+}
+
+/// One of the style's subjects: a mark per cell (row-major, nil where it's empty) and the
+/// glow painted behind it.
+struct ASCIIFigure {
+    let marks: [ASCIIMark?]
+    let glowCenter: CGPoint
+    let glowRadius: CGFloat
+    let glowColor: ThemeColor
+    /// Whether the plasma fills the background (otherwise it's only stars).
+    let haze: Bool
 }
 
 private struct ASCIICell {
@@ -184,7 +219,7 @@ struct ASCIITorus {
         let extent = (x: (bounds.maxX - bounds.minX) / 2, y: (bounds.maxY - bounds.minY) / 2,
                       midX: (bounds.maxX + bounds.minX) / 2, midY: (bounds.maxY + bounds.minY) / 2)
         // Rows are twice the height of columns, so one unit of y is half as many rows.
-        let scale = min(halfHeight * 2 / max(extent.y, 1e-6), Double(columns) * 0.46 / max(extent.x, 1e-6))
+        let scale = min(halfHeight * 2 / max(extent.y, 1e-6), Double(columns) * 0.32 / max(extent.x, 1e-6))
 
         var depth = [Double](repeating: 0, count: columns * rows)
         var levels = [Int?](repeating: nil, count: columns * rows)
