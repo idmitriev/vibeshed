@@ -7,7 +7,7 @@ import Foundation
 enum BuiltInThemes {
     /// Every built-in theme, alphabetically — so a family (Catppuccin Frappé, Latte,
     /// Macchiato, Mocha) sits together in `theme/switch`.
-    static let all: [ThemeDefinition] = (core + communityDark + communityLight + omarchy + retro + classicMac)
+    static let all: [ThemeDefinition] = (core + communityDark + communityLight + omarchy + retro + classicMac + vintage)
         .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
 
     static let core: [ThemeDefinition] = [

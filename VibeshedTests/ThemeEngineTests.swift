@@ -397,7 +397,7 @@ final class WallpaperStyleTests: XCTestCase {
         let styles: [WallpaperStyle] = [
             .mesh, .ridges, .bokeh, .lowpoly, .topographic, .pulsar, .guilloche, .sashiko, .attractor, .bauhaus,
             .destijl, .truchet, .terrazzo, .circles, .isometric, .penrose, .maze, .dither, .pipes, .pebbles,
-            .pinstripe,
+            .pinstripe, .clouds, .azul, .boing, .rain,
         ]
         for style in styles {
             let one = WallpaperRenderer.draw(palette, size: size, choice: .init(style: style, seed: 1, grain: false))

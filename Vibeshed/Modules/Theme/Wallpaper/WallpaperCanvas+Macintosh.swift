@@ -27,26 +27,32 @@ extension WallpaperCanvas {
 
     /// Device pixels per Mac pixel: a whole number (1 on a 1080p screen, 2 on a retina laptop
     /// or 4K, 4 on 8K), so a dot is one point across, the size it had on a 72 dpi screen.
-    private var macPixel: CGFloat { max(1, (height / 1080).rounded()) }
+    var macPixel: CGFloat { max(1, (height / 1080).rounded()) }
 
     /// The theme's desktop color, or its accent softened toward the page.
-    private var classicDesktop: ThemeColor {
+    var classicDesktop: ThemeColor {
         palette["desktop"] ?? (isDark ? palette.accent.mix(base, 0.6) : palette.accent.mix(palette.background, 0.45))
     }
 
     /// Paints the whole canvas as Mac pixels, anchored at the top-left. `level` picks each
     /// pixel's entry in `tones` from its column and row.
     private func paintMacPixels(_ tones: [Tone], level: (Int, Int) -> Int) {
-        let dot = macPixel
+        paintPixels(dot: macPixel) { column, row in tones[level(column, row)] }
+    }
+
+    /// Paints the whole canvas as `dot`-sized pixels (a whole number of device pixels),
+    /// anchored at the top-left and scaled up without smoothing. `tone` colors each pixel
+    /// from its column and row.
+    func paintPixels(dot: CGFloat, tone: (Int, Int) -> Tone) {
         let columns = Int((width / dot).rounded(.up)), rows = Int((height / dot).rounded(.up))
         var pixels = [UInt8](repeating: 255, count: columns * rows * 4)
         for row in 0 ..< rows {
             for column in 0 ..< columns {
-                let tone = tones[level(column, row)]
+                let color = tone(column, row)
                 let offset = (row * columns + column) * 4
-                pixels[offset] = tone.red
-                pixels[offset + 1] = tone.green
-                pixels[offset + 2] = tone.blue
+                pixels[offset] = color.red
+                pixels[offset + 1] = color.green
+                pixels[offset + 2] = color.blue
             }
         }
         guard let image = bitmapImage(columns: columns, rows: rows, pixels: pixels) else {
