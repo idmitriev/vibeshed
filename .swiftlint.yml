@@ -30,6 +30,7 @@ identifier_name:
     - id
     - x
     - y
+    - z
 
 # Match SwiftFormat's output so the two tools don't fight: its
 # wrapMultilineStatementBraces rule puts `{` on its own line after a wrapped

@@ -5,7 +5,7 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
     case glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset, arcs, halftone
     case pulsar, guilloche, sashiko, attractor
     case bauhaus, destijl, truchet, terrazzo, circles, isometric, penrose
-    case leaves, warp, textmode, polyhedra, maze, dither, pipes
+    case leaves, warp, ascii, polyhedra, maze, dither, pipes
     case pebbles, macpattern, pinstripe
     case clouds, azul, winpattern, boing, rain
     case solid
@@ -55,7 +55,7 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .penrose: "Penrose"
         case .leaves: "Leaves"
         case .warp: "Warp Speed"
-        case .textmode: "Text Mode"
+        case .ascii: "ASCII Art"
         case .polyhedra: "Polyhedra"
         case .maze: "10 PRINT"
         case .dither: "Dither"
@@ -97,7 +97,7 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .penrose: "Penrose's thin and thick rhombs, a tiling that never repeats"
         case .leaves: "Haiku's Leaves screen saver: gradient leaves piling up on the desktop"
         case .warp: "Star streaks at warp speed, after OS/2 Warp"
-        case .textmode: "A text-mode screen: shaded desktop, menus and boxed dialogs"
+        case .ascii: "Terminal-character art: donut.c's lit torus, the Mandelbrot set or aafire's flames"
         case .polyhedra: "NeXTSTEP BackSpace's Polyhedra: a regular solid in perspective on black"
         case .maze: "The Commodore 64's one-line maze, its sealed-off rooms tinted"
         case .dither: "A banded planet in four tones, Bayer-dithered into chunky pixels"
@@ -139,7 +139,7 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .penrose: "rhombus"
         case .leaves: "leaf"
         case .warp: "sparkles"
-        case .textmode: "terminal"
+        case .ascii: "terminal"
         case .polyhedra: "cube.transparent"
         case .maze: "chevron.left.forwardslash.chevron.right"
         case .dither: "checkerboard.rectangle"

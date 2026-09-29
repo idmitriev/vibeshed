@@ -438,6 +438,44 @@ final class WallpaperStyleTests: XCTestCase {
         XCTAssertTrue(strips.rooms().allSatisfy { $0 == nil })
     }
 
+    func testASCIITorusFitsTheFrameWithAHole() {
+        let (columns, rows) = (214, 60) // 16:9
+        let levels = ASCIITorus(tilt: 1.4, turn: 0.6, spin: 0)
+            .render(columns: columns, rows: rows, center: (107, 30), halfHeight: 24)
+        let covered = levels.indices.filter { levels[$0] != nil }
+        let coveredRows = covered.map { $0 / columns }
+        XCTAssertEqual(coveredRows.min() ?? 0, 6, accuracy: 1)
+        XCTAssertEqual(coveredRows.max() ?? 0, 54, accuracy: 1)
+        XCTAssertTrue(covered.allSatisfy { !(0 ... 1).contains($0 % columns) }, "stays off the edges")
+        XCTAssertNil(levels[30 * columns + 107], "the hole")
+        let used = Set(levels.compactMap(\.self))
+        XCTAssertTrue(used.contains(WallpaperCanvas.asciiRamp.count - 1), "a highlight in @")
+        XCTAssertFalse(used.contains(0), "ambient light keeps the shadow side above the lightest dot")
+    }
+
+    func testASCIIMandelbrotHasTheSetInsideAndBlankSpaceOutside() {
+        let (columns, rows) = (160, 60)
+        let values = ASCIIMandelbrot(real: -0.62, span: 3.2).render(columns: columns, rows: rows)
+        // The cell holding c = −0.2 is in the main cardioid; the corners escape at once.
+        let column = Int((-0.2 + 0.62) / (3.2 / Double(rows) / 2) + Double(columns) / 2)
+        XCTAssertNil(values[rows / 2 * columns + column])
+        XCTAssertLessThan(try XCTUnwrap(values[0]), 0.3)
+        XCTAssertEqual(values[0], values[rows * columns - 1 - (columns - 1)], "symmetric about the real axis")
+    }
+
+    func testASCIIFireBurnsFromTheBottomAndCoolsAsItRises() {
+        var rng = SeededGenerator(seed: 1)
+        let (columns, rows) = (80, 40)
+        let heat = ASCIIFire(fuel: Array(repeating: 0.8, count: columns), cooling: 1.9 / Double(rows))
+            .render(rows: rows, rng: &rng)
+        func mean(_ row: Int) -> Double {
+            heat[row * columns ..< (row + 1) * columns].reduce(0, +) / Double(columns)
+        }
+        XCTAssertGreaterThan(mean(rows - 1), 0.4)
+        XCTAssertGreaterThan(mean(rows - 1), mean(rows / 2))
+        XCTAssertEqual(mean(0), 0, "the top is cold")
+    }
+
     func testStyleResolution() {
         XCTAssertEqual(WallpaperStyle.resolve("Ridges", slug: "x"), .ridges)
         XCTAssertNil(WallpaperStyle.resolve("plasma", slug: "x"))

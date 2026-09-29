@@ -68,7 +68,7 @@ extension BuiltInThemes {
             "bright_red": "#ff5555", "bright_yellow": "#ffff55", "bright_green": "#55ff55",
             "bright_cyan": "#55ffff", "bright_blue": "#55ffff", "bright_magenta": "#ff55ff",
         ],
-        wallpaperStyle: WallpaperStyle.textmode.rawValue,
+        wallpaperStyle: WallpaperStyle.ascii.rawValue,
         icon: "terminal",
         keywords: ["os2", "text", "vga", "dos", "retro", "blue"]
     )
