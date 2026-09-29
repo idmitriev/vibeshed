@@ -7,6 +7,7 @@ struct EmojiAction: Action {
     let iconName: String?
     let relevanceScore: Double
     let keywords: [String]
+    let parameters: [ActionParameter]
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
@@ -17,6 +18,7 @@ struct EmojiAction: Action {
         iconName: String? = nil,
         relevanceScore: Double = 0.5,
         keywords: [String] = [],
+        parameters: [ActionParameter] = [],
         runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
@@ -25,6 +27,7 @@ struct EmojiAction: Action {
         self.iconName = iconName
         self.relevanceScore = relevanceScore
         self.keywords = keywords
+        self.parameters = parameters
         self.runner = runner
     }
 
