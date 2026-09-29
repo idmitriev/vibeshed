@@ -23,7 +23,7 @@ final class DefaultConfigTests: XCTestCase {
         XCTAssertEqual(
             Set(config.moduleConfigs.keys),
             [
-                "application", "system", "settings", "audio", "processes",
+                "application", "system", "settings", "audio", "processes", "performance",
                 "math", "timer", "emoji", "websearch", "self",
             ]
         )
@@ -35,6 +35,7 @@ final class DefaultConfigTests: XCTestCase {
         assertUsable(SettingsModule.self)
         assertUsable(AudioModule.self)
         assertUsable(ProcessesModule.self)
+        assertUsable(PerformanceModule.self)
         assertUsable(MathModule.self)
         assertUsable(TimerModule.self)
         assertUsable(EmojiModule.self)

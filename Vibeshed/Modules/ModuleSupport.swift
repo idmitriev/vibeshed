@@ -12,6 +12,15 @@ func abbreviatePath(_ path: String) -> String {
     return path
 }
 
+/// The title and each of its words, lowercased, as keywords, so typing the start of
+/// either earns the keyword bonus. Without them an exact title match ranks below the
+/// web-search fallbacks, whose keywords hold the query.
+func titleKeywords(_ title: String) -> [String] {
+    let lowered = title.lowercased()
+    let words = lowered.split { !$0.isLetter && !$0.isNumber }.map(String.init)
+    return [lowered] + words
+}
+
 /// A monotonically decreasing relevance score for the `index`-th item in an
 /// already-ranked list (most-recent / most-relevant first). Caps at a 0.3 floor so
 /// long lists still surface in fuzzy search. `step` controls the decay per position.

@@ -181,6 +181,7 @@ struct PickerView: View {
             y: 2
         )
         .padding(16)
+        .environment(\.isPickerVisible, panelController.isVisible)
         .accessibilityIdentifier("pickerView")
         .onKeyPress(.downArrow) { state.selectNext(); return .handled }
         .onKeyPress(.upArrow) { state.selectPrevious(); return .handled }

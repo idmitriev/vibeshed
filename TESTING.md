@@ -422,6 +422,18 @@
 - [ ] Reload Configuration applies an edited Ghostty config without restarting
 - [ ] Ghostty older than 1.3: actions fail with an "update to 1.3" notification and no terminals are listed
 
+### 45. Performance Module
+
+- [ ] "cpu", "ram", "disk", "network" and "performance" find CPU Usage, RAM & Memory Usage, Disk Activity, Network Activity and System Performance
+- [ ] Rows show live values in the subtitle and a two-minute sparkline that update every sample
+- [ ] Previews show the current value, a history chart with average and peak, and per-metric details: per-core bars and top processes (CPU), memory split, swap and pressure (Memory), volumes (Disk), interfaces and totals (Network)
+- [ ] Hovering a chart shows a crosshair and the values at that time in the caption row
+- [ ] After sleep the chart shows a gap instead of a line across it
+- [ ] Selecting CPU/Memory/Disk/Network opens Activity Monitor on that tab: when it's quit, when it's running, and when it's running with its window closed
+- [ ] System Performance opens Activity Monitor without changing its tab
+- [ ] After Escape, Vibeshed's CPU use drops back to idle (hidden previews don't redraw or run `ps`)
+- [ ] historyMinutes, sampleInterval and networkInterfaces changes apply on save; history survives the change
+
 ---
 
 ## Edge Cases
