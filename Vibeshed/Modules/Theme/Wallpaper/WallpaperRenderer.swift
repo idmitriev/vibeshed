@@ -41,7 +41,7 @@ enum WallpaperRenderer {
         canvas.context.saveGState()
         painters[choice.style]?(&canvas)
         canvas.context.restoreGState()
-        if choice.grain { canvas.addGrain() }
+        if choice.grain, !choice.style.isClassicMacBitmap { canvas.addGrain() }
         return canvas.ditheredImage()
     }
 
@@ -55,7 +55,8 @@ enum WallpaperRenderer {
         .circles: { $0.paintCircles() }, .isometric: { $0.paintIsometric() }, .penrose: { $0.paintPenrose() },
         .leaves: { $0.paintLeaves() }, .warp: { $0.paintWarp() }, .textmode: { $0.paintTextMode() },
         .polyhedra: { $0.paintPolyhedra() }, .maze: { $0.paintMaze() }, .dither: { $0.paintDither() },
-        .pipes: { $0.paintPipes() }, .solid: { $0.fill($0.palette.background) },
+        .pipes: { $0.paintPipes() }, .pebbles: { $0.paintPebbles() }, .macpattern: { $0.paintDesktopPattern() },
+        .pinstripe: { $0.paintPinstripes() }, .solid: { $0.fill($0.palette.background) },
     ]
 
     /// Deletes all but the most recent generated wallpapers, sparing any on screen.
