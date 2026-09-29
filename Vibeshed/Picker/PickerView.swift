@@ -85,7 +85,8 @@ struct PickerView: View {
                     id: action.id.rawValue,
                     title: action.title,
                     iconSystemName: action.iconName,
-                    detail: state.currentParameter?.label
+                    // A lone parameter adds nothing the placeholder doesn't already say.
+                    detail: action.parameters.count > 1 ? state.currentParameter?.label : nil
                 )]
             } else {
                 []
