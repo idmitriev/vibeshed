@@ -33,5 +33,9 @@
 	<string>$(BUILD_VERSION)</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Vibeshed controls apps such as System Events, your browsers, Spotify and your terminal to run the actions you pick.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Vibeshed shows your upcoming events and their meeting links.</string>
 </dict>
 </plist>
