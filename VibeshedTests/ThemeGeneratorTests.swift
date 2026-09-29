@@ -14,6 +14,11 @@ final class ThemeGeneratorTests: XCTestCase {
         return try XCTUnwrap(context.makeImage())
     }
 
+    private func fill(_ context: CGContext, _ rect: CGRect, _ red: CGFloat, _ green: CGFloat, _ blue: CGFloat) {
+        context.setFillColor(CGColor(srgbRed: red, green: green, blue: blue, alpha: 1))
+        context.fill(rect)
+    }
+
     func testDarkBlueWallpaper() throws {
         let wallpaper = try image { context in
             context.setFillColor(CGColor(srgbRed: 0.05, green: 0.07, blue: 0.15, alpha: 1))
@@ -39,6 +44,35 @@ final class ThemeGeneratorTests: XCTestCase {
         let palette = try ThemePalette.resolve(XCTUnwrap(ThemeGenerator.palette(from: wallpaper)))
         XCTAssertEqual(palette.mode, .light)
         XCTAssertGreaterThan(palette.foreground.contrastRatio(with: palette.background), 7)
+    }
+
+    /// Like Apple's dark "hello Orange": deep reds, a vermilion band and a thin bright
+    /// orange rim. The accent is the rim, not the more saturated but darker vermilion,
+    /// which turns salmon once lightened to accent lightness.
+    func testAccentIsTheGlowNotTheRedItFadesInto() throws {
+        let wallpaper = try image { context in
+            fill(context, CGRect(x: 0, y: 0, width: 64, height: 64), 0.29, 0, 0)
+            fill(context, CGRect(x: 32, y: 0, width: 32, height: 64), 0.78, 0.2, 0.1)
+            fill(context, CGRect(x: 0, y: 12, width: 64, height: 8), 1, 0.34, 0.13) // vermilion, hue 14.5
+            fill(context, CGRect(x: 0, y: 40, width: 64, height: 4), 0.99, 0.53, 0.24) // rim, hue 23.2
+        }
+        let palette = try ThemePalette.resolve(XCTUnwrap(ThemeGenerator.palette(from: wallpaper)))
+        XCTAssertEqual(palette.mode, .dark)
+        XCTAssertLessThan(ThemeColor.hueDistance(palette.accent.hsl.hue, 23.2), 2)
+        XCTAssertEqual(MacAccentColor.nearest(to: palette.accent), .orange)
+    }
+
+    /// Each image color pulls only the ANSI slot it's nearest: a red-orange (hue 18.4) is
+    /// within reach of red and yellow too, but only moves orange.
+    func testImageColorsTintOnlyTheirNearestSlot() throws {
+        let wallpaper = try image { context in
+            fill(context, CGRect(x: 0, y: 0, width: 64, height: 64), 0.1, 0.06, 0.04)
+            fill(context, CGRect(x: 0, y: 0, width: 64, height: 32), 0.91, 0.39, 0.16)
+        }
+        let palette = try ThemePalette.resolve(XCTUnwrap(ThemeGenerator.palette(from: wallpaper)))
+        XCTAssertLessThan(ThemeColor.hueDistance(palette.orange.hsl.hue, 21.7), 2, "halfway to orange's 25")
+        XCTAssertLessThan(ThemeColor.hueDistance(palette.yellow.hsl.hue, 45), 2)
+        XCTAssertLessThan(ThemeColor.hueDistance(palette.red.hsl.hue, 355), 2)
     }
 }
 

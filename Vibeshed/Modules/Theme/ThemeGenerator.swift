@@ -51,8 +51,9 @@ enum ThemeGenerator {
 
         let background = ThemeColor(hue: toneHue, saturation: toneSaturation * 0.6, lightness: isDark ? 0.1 : 0.95)
         let foreground = ThemeColor(hue: toneHue, saturation: 0.18, lightness: isDark ? 0.86 : 0.2)
-        let accent = mostVivid(samples).map {
-            ThemeColor(hue: $0.hue, saturation: max($0.saturation, 0.5), lightness: isDark ? 0.66 : 0.45)
+        let accentLightness = isDark ? 0.66 : 0.45
+        let accent = mostVivid(samples, near: accentLightness).map {
+            ThemeColor(hue: $0.hue, saturation: max($0.saturation, 0.5), lightness: accentLightness)
         } ?? ThemeColor(hue: 218, saturation: hueSaturation, lightness: hueLightness)
 
         var colors: [String: ThemeColor] = [
@@ -64,8 +65,10 @@ enum ThemeGenerator {
             "selection_background": background.mix(accent, 0.3),
             "lighter_background": background.mix(foreground, 0.08),
         ]
+        let vivid = samples.filter { $0.saturation > 0.25 && $0.lightness > 0.15 && $0.lightness < 0.9 }
+        let vividByTarget = Dictionary(grouping: vivid) { nearestTarget(to: $0.hue) }
         for target in hueTargets {
-            let hue = nearbyHue(target.hue, in: samples) ?? target.hue
+            let hue = nearbyHue(target.hue, in: vividByTarget[target.key] ?? [], of: samples.count) ?? target.hue
             colors[target.key] = ThemeColor(hue: hue, saturation: hueSaturation, lightness: hueLightness)
             colors["bright_\(target.key)"] = ThemeColor(
                 hue: hue,
@@ -81,7 +84,8 @@ enum ThemeGenerator {
 
     // MARK: - Sampling
 
-    private static let sampleSize = 48
+    /// Fine enough that thin highlights (a glow's rim) survive the downsampling.
+    private static let sampleSize = 96
 
     private static func sample(_ image: CGImage) -> [Sample]? {
         let size = sampleSize
@@ -106,26 +110,30 @@ enum ThemeGenerator {
         }
     }
 
-    /// The most saturated mid-lightness sample (very dark/light pixels have unreliable hue).
-    private static func mostVivid(_ samples: [Sample]) -> Sample? {
-        samples
+    /// The most saturated sample near `lightness`, the lightness it will be shown at, so it
+    /// keeps its character: a glow's orange rim rather than the red it fades into, which
+    /// turns salmon when lightened. Very dark/light pixels are skipped (unreliable hue).
+    private static func mostVivid(_ samples: [Sample], near lightness: Double) -> Sample? {
+        func score(_ sample: Sample) -> Double {
+            sample.saturation * (1 - abs(sample.lightness - lightness) * 1.2)
+        }
+        return samples
             .filter { $0.lightness > 0.2 && $0.lightness < 0.85 }
             .max { score($0) < score($1) }
             .flatMap { score($0) > 0.2 ? $0 : nil }
     }
 
-    private static func score(_ sample: Sample) -> Double {
-        sample.saturation * (1 - abs(sample.lightness - 0.55) * 1.2)
+    /// The semantic hue nearest `hue`, so each image color informs one ANSI slot only.
+    private static func nearestTarget(to hue: Double) -> String {
+        hueTargets.min { ThemeColor.hueDistance(hue, $0.hue) < ThemeColor.hueDistance(hue, $1.hue) }?.key ?? ""
     }
 
-    /// The image's own hue near `target` (±28°), if it has enough color there. Pulled
-    /// halfway toward the target so red stays red even in an orange-heavy image.
-    private static func nearbyHue(_ target: Double, in samples: [Sample]) -> Double? {
-        let nearby = samples.filter {
-            $0.saturation > 0.25 && $0.lightness > 0.15 && $0.lightness < 0.9
-                && ThemeColor.hueDistance($0.hue, target) <= 28
-        }
-        guard nearby.count >= samples.count / 100 + 1,
+    /// The image's own hue near `target` (±28°) among the colors closest to it, if there's
+    /// enough of it (1% of `total` samples) — an orange glow tints `orange` without also
+    /// dragging `yellow` toward it. Pulled halfway toward the target so red stays red.
+    private static func nearbyHue(_ target: Double, in candidates: [Sample], of total: Int) -> Double? {
+        let nearby = candidates.filter { ThemeColor.hueDistance($0.hue, target) <= 28 }
+        guard nearby.count >= total / 100 + 1,
               let mean = circularMeanHue(nearby, weightedBySaturation: true)
         else { return nil }
         return circularMean([(mean, 1), (target, 1)])
