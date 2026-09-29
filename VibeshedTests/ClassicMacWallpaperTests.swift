@@ -79,10 +79,12 @@ final class ClassicMacWallpaperTests: XCTestCase {
         XCTAssertTrue(zip(rows, rows.dropFirst()).contains { $0 != $1 })
     }
 
-    func testClassicMacStylesStayOutOfAutomaticPicks() {
-        let bitmaps = WallpaperStyle.allCases.filter(\.isClassicMacBitmap)
-        XCTAssertEqual(Set(bitmaps), [.pebbles, .macpattern, .pinstripe])
-        XCTAssertTrue(bitmaps.allSatisfy { !WallpaperStyle.varied.contains($0) })
+    func testPeriodPiecesStayOutOfAutomaticPicks() {
+        let bitmaps = WallpaperStyle.allCases.filter(\.isPixelBitmap)
+        XCTAssertEqual(Set(bitmaps), [.pebbles, .macpattern, .pinstripe, .clouds, .winpattern, .boing, .rain])
+        let pieces = WallpaperStyle.allCases.filter(\.isPeriodPiece)
+        XCTAssertEqual(Set(pieces), Set(bitmaps).union([.azul]))
+        XCTAssertTrue(pieces.allSatisfy { !WallpaperStyle.varied.contains($0) })
         XCTAssertEqual(WallpaperStyle.varied.count, 28, "existing themes keep their automatic style")
     }
 }
