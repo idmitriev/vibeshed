@@ -465,7 +465,7 @@ modules:
     # wallpaperStyle: glow            # glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset,
     #                                 # arcs, halftone, pulsar, guilloche, sashiko, attractor, bauhaus,
     #                                 # destijl, truchet, terrazzo, circles, isometric, penrose, leaves,
-    #                                 # warp, textmode, polyhedra, maze, dither, pipes, solid,
+    #                                 # warp, ascii, polyhedra, maze, dither, pipes, solid,
     #                                 # or auto (a stable pick per theme).
     #                                 # A style chosen with theme/wallpaperStyle overrides this;
     #                                 # a theme can set its own with `wallpaperStyle:`.

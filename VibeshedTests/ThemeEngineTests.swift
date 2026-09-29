@@ -438,6 +438,21 @@ final class WallpaperStyleTests: XCTestCase {
         XCTAssertTrue(strips.rooms().allSatisfy { $0 == nil })
     }
 
+    func testASCIITorusFitsTheFrameWithAHole() {
+        let (columns, rows) = (120, 60)
+        let levels = ASCIITorus(tilt: 1.4, turn: 0.6, spin: 0)
+            .render(columns: columns, rows: rows, center: (60, 30), halfHeight: 24)
+        let covered = levels.indices.filter { levels[$0] != nil }
+        let coveredRows = covered.map { $0 / columns }
+        XCTAssertEqual(coveredRows.min() ?? 0, 6, accuracy: 1)
+        XCTAssertEqual(coveredRows.max() ?? 0, 54, accuracy: 1)
+        XCTAssertTrue(covered.allSatisfy { !(0 ... 1).contains($0 % columns) }, "stays off the edges")
+        XCTAssertNil(levels[30 * columns + 60], "the hole")
+        let used = Set(levels.compactMap(\.self))
+        XCTAssertTrue(used.contains(WallpaperCanvas.asciiRamp.count - 1), "a highlight in @")
+        XCTAssertFalse(used.contains(0), "ambient light keeps the shadow side above the lightest dot")
+    }
+
     func testStyleResolution() {
         XCTAssertEqual(WallpaperStyle.resolve("Ridges", slug: "x"), .ridges)
         XCTAssertNil(WallpaperStyle.resolve("plasma", slug: "x"))
