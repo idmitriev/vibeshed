@@ -28,13 +28,7 @@ actor ProcessesModule: ModuleConfigurable {
     }
 
     func provideActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        var actions: [any Action] = [buildKillByNameAction()]
-
-        let processes = await getCachedOrFreshProcesses()
-        for process in processes {
-            actions.append(buildProcessAction(for: process))
-        }
-        return actions
+        [buildKillByNameAction()]
     }
 
     func provideParameterOptions(
@@ -73,35 +67,11 @@ actor ProcessesModule: ModuleConfigurable {
                     type: .dynamicSelection(hint: "pid"),
                     isRequired: true
                 ),
-            ],
-            pid: 0
+            ]
         ) { values in
             guard let pidString = values["pid"], let pid = Int32(pidString) else {
                 return .showResult(title: "Error", body: "No process selected")
             }
-            do {
-                try ProcessesManager.kill(pid: pid)
-            } catch {
-                return .showResult(title: "Error", body: error.localizedDescription)
-            }
-            return .dismiss
-        }
-    }
-
-    private func buildProcessAction(for process: ProcessEntry) -> ProcessesAction {
-        let pid = process.pid
-        let score = min(0.5 + process.cpuPercent / 200.0, 0.85)
-
-        return ProcessesAction(
-            id: ActionID(module: "processes", name: "process.\(pid)"),
-            title: process.name,
-            subtitle: subtitleText(for: process),
-            iconName: "cpu",
-            relevanceScore: score,
-            keywords: ["process", "kill", "terminate", process.name.lowercased()],
-            pid: pid,
-            appBundleURL: process.bundleURL
-        ) { _ in
             do {
                 try ProcessesManager.kill(pid: pid)
             } catch {
