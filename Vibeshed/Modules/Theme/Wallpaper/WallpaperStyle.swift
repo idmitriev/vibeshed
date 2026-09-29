@@ -6,13 +6,23 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
     case pulsar, guilloche, sashiko, attractor
     case bauhaus, destijl, truchet, terrazzo, circles, isometric, penrose
     case leaves, warp, textmode, polyhedra, maze, dither, pipes
+    case pebbles, macpattern, pinstripe
     case solid
 
     /// Config value that picks a style per theme (stable, so each theme keeps its look).
     static let automatic = "auto"
 
-    /// What `auto` chooses from.
-    static let varied: [WallpaperStyle] = allCases.filter { $0 != .solid }
+    /// What `auto` chooses from. The classic Mac bitmaps are left out: they're period pieces
+    /// for their own themes, and adding them would reshuffle every theme's stable pick.
+    static let varied: [WallpaperStyle] = allCases.filter { $0 != .solid && !$0.isClassicMacBitmap }
+
+    /// Styles drawn in whole-pixel bitmaps, where film grain would spoil the hard edges.
+    var isClassicMacBitmap: Bool {
+        switch self {
+        case .pebbles, .macpattern, .pinstripe: true
+        default: false
+        }
+    }
 
     var displayName: String {
         switch self {
@@ -44,6 +54,9 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .maze: "10 PRINT"
         case .dither: "Dither"
         case .pipes: "Pipes"
+        case .pebbles: "Pebbles"
+        case .macpattern: "Desktop Pattern"
+        case .pinstripe: "Platinum Pinstripes"
         case .solid: "Solid"
         }
     }
@@ -78,6 +91,9 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .maze: "The Commodore 64's one-line maze, its sealed-off rooms tinted"
         case .dither: "A banded planet in four tones, Bayer-dithered into chunky pixels"
         case .pipes: "Shiny pipes wandering a 3D grid, after the Windows NT screen saver"
+        case .pebbles: "The classic Mac desktop tile: a soft rippled weave in pixels, recolored from the desktop color"
+        case .macpattern: "A one-bit 8×8 tile from the Desktop Patterns control panel, in two tones"
+        case .pinstripe: "Platinum's thin horizontal pinstripes, easing in tone down the screen"
         case .solid: "Just the background color"
         }
     }
@@ -112,6 +128,9 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .maze: "chevron.left.forwardslash.chevron.right"
         case .dither: "checkerboard.rectangle"
         case .pipes: "pipe.and.drop"
+        case .pebbles: "square.grid.3x3.fill"
+        case .macpattern: "checkerboard.rectangle"
+        case .pinstripe: "line.3.horizontal"
         case .solid: "square.fill"
         }
     }
