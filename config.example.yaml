@@ -417,6 +417,19 @@ modules:
     maxResults: 100
     excludedNames: []          # e.g. ["kernel_task"]
 
+  # --- Performance ---
+  # CPU, memory, disk and network activity. Previews show the current values, a chart of
+  # the history with its average and peak, and the top processes, per-core load, memory
+  # split, volumes or interfaces. Selecting one opens Activity Monitor on the matching tab.
+  #   performance/overview, performance/cpu, performance/memory, performance/disk,
+  #   performance/network
+  performance:
+    sampleInterval: 2          # seconds between samples, taken in the background (0.5–60)
+    historyMinutes: 60         # how far back the charts reach (1–1440)
+    # networkInterfaces: [en0] # count only these; default: every Ethernet, Wi-Fi and cellular
+    #                          # interface, leaving out VPN tunnels, bridges and VM interfaces
+    # enabledActions: [overview, cpu, memory, disk, network]
+
   # --- System Settings Panes ---
   settings:
     # Uncomment to restrict which panes appear (default: all):

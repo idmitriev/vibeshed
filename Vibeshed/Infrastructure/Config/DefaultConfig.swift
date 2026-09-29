@@ -33,6 +33,7 @@ enum DefaultConfig {
       settings:       # System Settings panes
       audio:          # volume, mute, output/input devices
       processes:      # find processes by CPU/memory/port, kill on select
+      performance:    # CPU, memory, disk and network activity; opens Activity Monitor
       math:           # calculator, unit and currency conversion
       timer:          # timers and reminders
       emoji:          # search emoji, copy on select

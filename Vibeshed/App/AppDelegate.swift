@@ -157,6 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 MenuModule(),
                 SystemModule(),
                 ProcessesModule(),
+                PerformanceModule(),
                 SettingsModule(),
                 ThemeModule(),
                 buildSelfModule(),

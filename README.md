@@ -88,7 +88,7 @@ The app runs as a menu bar item (no Dock icon). Use `make run-debug` to see logs
 
 ## Configuration
 
-Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshed writes a minimal config there: `option+space` toggles the picker, only modules backed by macOS itself are enabled (apps, system actions, settings panes, audio, processes, math, timers, emoji, web search), and the default browser is left alone.
+Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshed writes a minimal config there: `option+space` toggles the picker, only modules backed by macOS itself are enabled (apps, system actions, settings panes, audio, processes, performance, math, timers, emoji, web search), and the default browser is left alone.
 
 See [config.example.yaml](config.example.yaml) for all available options including keybindings, module settings, URL routing rules, and action aliases.
 
@@ -103,6 +103,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Application** | Launch, focus, quit applications |
 | **Menu** | Search and click the frontmost app's menu bar items |
 | **Processes** | List and kill running processes |
+| **Performance** | CPU, memory, disk and network activity with history charts; opens Activity Monitor on the matching tab |
 | **Browser** | Search/focus/close tabs in Safari and Chromium browsers |
 | **Bookmark** | Browser bookmarks and most-visited URLs |
 | **Clipboard** | Clipboard history with search, paste, and persistence |
