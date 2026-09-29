@@ -38,6 +38,12 @@ struct WallpaperTarget: ThemeTarget {
 
     @MainActor
     private static func set(_ url: URL) -> ThemeTargetOutcome {
+        // Already on every screen (a theme generated from the current wallpaper): leave it
+        // as System Settings set it up rather than re-setting it with our options.
+        let target = url.standardizedFileURL
+        if NSScreen.screens.allSatisfy({ NSWorkspace.shared.desktopImageURL(for: $0)?.standardizedFileURL == target }) {
+            return .applied()
+        }
         let options: [NSWorkspace.DesktopImageOptionKey: Any] = [
             .imageScaling: NSImageScaling.scaleProportionallyUpOrDown.rawValue,
             .allowClipping: true,

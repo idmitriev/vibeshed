@@ -1,5 +1,5 @@
-import AppKit
 import CoreGraphics
+import Foundation
 
 /// Derives a complete palette from an image, in the spirit of Aether: a background and
 /// foreground tinted by the image's dominant tone, its most vivid color as the accent,
@@ -18,6 +18,15 @@ enum ThemeGenerator {
         let hue: Double
         let saturation: Double
         let lightness: Double
+    }
+
+    /// The palette for the wallpaper file at `url` as it looks in the current appearance. A
+    /// dynamic desktop's light/dark picture follows the appearance, so the theme keeps it
+    /// too (applying it won't flip the system and swap the picture it came from).
+    static func palette(fromWallpaper url: URL, dark: Bool) -> [String: String]? {
+        guard let wallpaper = DynamicDesktop.thumbnail(of: url, dark: dark, maxPixelSize: 512) else { return nil }
+        let mode: ThemeMode? = wallpaper.followsAppearance ? (dark ? .dark : .light) : nil
+        return palette(from: wallpaper.image, mode: mode)
     }
 
     /// Returns raw `colors.toml`-style keys (hex values plus `mode`), or nil if the image
@@ -68,16 +77,6 @@ enum ThemeGenerator {
         var raw = colors.mapValues(\.hex)
         raw["mode"] = mode.rawValue
         return raw
-    }
-
-    /// Reads the wallpaper of the main screen.
-    @MainActor
-    static func currentWallpaperImage() -> CGImage? {
-        guard let screen = NSScreen.main,
-              let url = NSWorkspace.shared.desktopImageURL(for: screen),
-              let image = NSImage(contentsOf: url)
-        else { return nil }
-        return image.cgImage(forProposedRect: nil, context: nil, hints: nil)
     }
 
     // MARK: - Sampling

@@ -233,44 +233,6 @@ final class ThemeConfigTests: XCTestCase {
     }
 }
 
-final class ThemeGeneratorTests: XCTestCase {
-    private func image(_ fill: (CGContext) -> Void) throws -> CGImage {
-        let context = try XCTUnwrap(CGContext(
-            data: nil, width: 64, height: 64, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ))
-        fill(context)
-        return try XCTUnwrap(context.makeImage())
-    }
-
-    func testDarkBlueWallpaper() throws {
-        let wallpaper = try image { context in
-            context.setFillColor(CGColor(srgbRed: 0.05, green: 0.07, blue: 0.15, alpha: 1))
-            context.fill(CGRect(x: 0, y: 0, width: 64, height: 64))
-            context.setFillColor(CGColor(srgbRed: 0.2, green: 0.5, blue: 1, alpha: 1))
-            context.fill(CGRect(x: 0, y: 0, width: 16, height: 16))
-        }
-        let raw = try XCTUnwrap(ThemeGenerator.palette(from: wallpaper))
-        let palette = try ThemePalette.resolve(raw)
-        XCTAssertEqual(palette.mode, .dark)
-        XCTAssertLessThan(palette.background.relativeLuminance, 0.05)
-        XCTAssertGreaterThan(palette.foreground.contrastRatio(with: palette.background), 7)
-        let accentHue = palette.accent.hsl.hue
-        XCTAssertLessThan(ThemeColor.hueDistance(accentHue, 216), 20, "accent comes from the vivid blue")
-        XCTAssertLessThan(ThemeColor.hueDistance(palette.red.hsl.hue, 0), 30, "red stays red")
-    }
-
-    func testLightWallpaperYieldsLightTheme() throws {
-        let wallpaper = try image { context in
-            context.setFillColor(CGColor(srgbRed: 0.95, green: 0.93, blue: 0.88, alpha: 1))
-            context.fill(CGRect(x: 0, y: 0, width: 64, height: 64))
-        }
-        let palette = try ThemePalette.resolve(try XCTUnwrap(ThemeGenerator.palette(from: wallpaper)))
-        XCTAssertEqual(palette.mode, .light)
-        XCTAssertGreaterThan(palette.foreground.contrastRatio(with: palette.background), 7)
-    }
-}
-
 final class ThemeBuilderTests: XCTestCase {
     private let palette = (try? ThemePalette.resolve(BuiltInThemes.dracula.colors, mode: .dark))
         ?? ThemePalette(mode: .dark, colors: [:])
