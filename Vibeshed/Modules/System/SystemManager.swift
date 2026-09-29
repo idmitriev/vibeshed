@@ -66,6 +66,30 @@ enum SystemManager {
         """)
     }
 
+    // MARK: - Dock & Menu Bar
+
+    static func toggleDockAutohide() throws {
+        let script = """
+        tell application "System Events"
+            tell dock preferences
+                set autohide to not autohide
+            end tell
+        end tell
+        """
+        try runAppleScript(script)
+    }
+
+    static func toggleMenuBarAutohide() throws {
+        let script = """
+        tell application "System Events"
+            tell dock preferences
+                set autohide menu bar to not autohide menu bar
+            end tell
+        end tell
+        """
+        try runAppleScript(script)
+    }
+
     // MARK: - Trash
 
     static func emptyTrash() throws {
