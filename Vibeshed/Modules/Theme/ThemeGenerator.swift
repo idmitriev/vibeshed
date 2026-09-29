@@ -6,7 +6,7 @@ import Foundation
 /// and each ANSI hue pulled toward whatever the image actually has near that hue — so
 /// the terminal, editor and system accents all feel like they belong to the wallpaper.
 enum ThemeGenerator {
-    static let generatedName = "From Wallpaper"
+    static let generatedName = "Last from Wallpaper"
 
     /// Target hue (degrees) for each semantic color.
     private static let hueTargets: [(key: String, hue: Double)] = [

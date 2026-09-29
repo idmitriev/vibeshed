@@ -207,7 +207,7 @@ actor ThemeModule: ModuleConfigurable {
         return ThemeDefinition(
             name: ThemeGenerator.generatedName, colors: colors,
             wallpaper: UserDefaults.standard.string(forKey: Self.generatedDefaultsKey + ".wallpaper"),
-            icon: "wand.and.stars", subtitle: "Generated from the current wallpaper",
+            icon: "wand.and.stars", subtitle: "Last palette made by Generate Theme from Wallpaper",
             keywords: ["wallpaper", "generate", "aether"]
         )
     }
