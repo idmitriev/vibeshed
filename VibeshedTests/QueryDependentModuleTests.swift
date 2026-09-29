@@ -1,8 +1,8 @@
 @testable import Vibeshed
 import XCTest
 
-/// End-to-end `provideActions` behavior for the query-dependent WebSearch and
-/// Emoji modules (using their default configs).
+/// End-to-end `provideActions` behavior for the query-dependent WebSearch module
+/// (using its default config).
 final class QueryDependentModuleTests: XCTestCase {
     private let scoring = ScoringContext(
         usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil
@@ -20,21 +20,5 @@ final class QueryDependentModuleTests: XCTestCase {
         let module = WebSearchModule()
         let actions = await module.provideActions(query: "h", scoring: scoring)
         XCTAssertTrue(actions.isEmpty)
-    }
-
-    func testEmojiSearchFindsShrug() async {
-        let module = EmojiModule()
-        let actions = await module.provideActions(query: "shrug", scoring: scoring)
-        XCTAssertFalse(actions.isEmpty)
-        XCTAssertTrue(actions.contains { $0.title.contains("🤷") })
-    }
-
-    func testEmojiActionResolvableByID() async {
-        let module = EmojiModule()
-        let action = await module.action(
-            id: ActionID(module: "emoji", name: "copy.person-shrugging")
-        )
-        XCTAssertNotNil(action, "emoji IDs must resolve for keybindings/URIs")
-        XCTAssertTrue(action?.title.contains("🤷") ?? false)
     }
 }

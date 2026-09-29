@@ -24,4 +24,44 @@ final class EmojiModuleTests: XCTestCase {
         XCTAssertNotNil(EmojiModule.matchScore(entry: entry, tokens: ["grinning", "face"]))
         XCTAssertNil(EmojiModule.matchScore(entry: entry, tokens: ["grinning", "zzz"]))
     }
+
+    // MARK: - Module
+
+    private let scoring = ScoringContext(
+        usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil
+    )
+
+    func testOnlyFindActionIsTopLevel() async {
+        let module = EmojiModule()
+        let actions = await module.provideActions(query: "shrug", scoring: scoring)
+        XCTAssertEqual(actions.map(\.id), [ActionID(module: "emoji", name: "find")])
+        XCTAssertEqual(actions.first?.parameters.first?.filtersOwnOptions, true)
+    }
+
+    func testFindOptionsMatchKeywords() async {
+        let module = EmojiModule()
+        let find = ActionID(module: "emoji", name: "find")
+        let shrug = await module.provideParameterOptions(for: "emoji", in: find, query: "shrug")
+        XCTAssertTrue(shrug.contains { $0.id == "🤷" })
+        // "cheerful" is only a keyword of 😀, never part of its name.
+        let cheerful = await module.provideParameterOptions(for: "emoji", in: find, query: "cheerful")
+        XCTAssertTrue(cheerful.contains { $0.id == "😀" })
+    }
+
+    func testFindOptionsWithEmptyQueryAreCapped() async {
+        let module = EmojiModule()
+        let find = ActionID(module: "emoji", name: "find")
+        let options = await module.provideParameterOptions(for: "emoji", in: find, query: "")
+        XCTAssertEqual(options.count, EmojiConfig().maxResults)
+        XCTAssertEqual(options.first?.id, EmojiCatalog.entries.first?.char)
+    }
+
+    func testActionsResolvableByID() async {
+        let module = EmojiModule()
+        let copy = await module.action(id: ActionID(module: "emoji", name: "copy.person-shrugging"))
+        XCTAssertNotNil(copy, "emoji IDs must resolve for keybindings/URIs")
+        XCTAssertTrue(copy?.title.contains("🤷") ?? false)
+        let find = await module.action(id: ActionID(module: "emoji", name: "find"))
+        XCTAssertNotNil(find)
+    }
 }

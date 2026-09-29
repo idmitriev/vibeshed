@@ -10,6 +10,10 @@ struct ActionParameter: Sendable, Identifiable {
     /// (`Module.previewParameterOption`) so it can apply it live, and tells it whether
     /// the preview ended in a commit or a cancel (`endParameterPreview`).
     let livePreview: Bool
+    /// For dynamic selections: the module filters and ranks options against the query
+    /// itself (e.g. by keywords the label doesn't contain), so the picker shows them as
+    /// returned instead of fuzzy-filtering them by label.
+    let filtersOwnOptions: Bool
 
     init(
         id: String,
@@ -17,7 +21,8 @@ struct ActionParameter: Sendable, Identifiable {
         type: ParameterType,
         isRequired: Bool = false,
         defaultValue: String? = nil,
-        livePreview: Bool = false
+        livePreview: Bool = false,
+        filtersOwnOptions: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -25,6 +30,7 @@ struct ActionParameter: Sendable, Identifiable {
         self.isRequired = isRequired
         self.defaultValue = defaultValue
         self.livePreview = livePreview
+        self.filtersOwnOptions = filtersOwnOptions
     }
 }
 

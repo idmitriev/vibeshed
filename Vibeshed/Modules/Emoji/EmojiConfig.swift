@@ -1,7 +1,8 @@
 import Foundation
 
 struct EmojiConfig: Codable, Sendable, Equatable {
-    var maxResults: Int = 8
+    /// Most emoji listed while picking one for `emoji/find`.
+    var maxResults: Int = 50
     var pasteOnSelect: Bool = false
 
     init() {}
@@ -10,7 +11,7 @@ struct EmojiConfig: Codable, Sendable, Equatable {
     // leniently — a user's section may specify only some keys.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        maxResults = try container.decodeIfPresent(Int.self, forKey: .maxResults) ?? 8
+        maxResults = try container.decodeIfPresent(Int.self, forKey: .maxResults) ?? 50
         pasteOnSelect = try container.decodeIfPresent(Bool.self, forKey: .pasteOnSelect) ?? false
     }
 

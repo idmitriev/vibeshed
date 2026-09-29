@@ -383,7 +383,9 @@ extension PickerCoordinator {
                currentActionID == actionID,
                pickerState.currentParameter?.id == param.id
             {
-                let filtered = query.isEmpty ? options : options.fuzzyFiltered(by: query)
+                let filtered = query.isEmpty || param.filtersOwnOptions
+                    ? options
+                    : options.fuzzyFiltered(by: query)
                 pickerState.parameterOptions = filtered
                 // Open on the value in effect so a live preview starts from "no change".
                 let current = query.isEmpty ? filtered.first(where: \.isCurrent) : nil
