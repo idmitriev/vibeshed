@@ -175,13 +175,10 @@ extension MenuModule {
         }
     }
 
-    /// The title and each of its words, so typing the start of either earns the
-    /// keyword bonus (as Settings does for pane titles). Without it an exact title
-    /// match ranks below the web-search fallbacks, whose keywords hold the query.
+    /// The title and each of its words (see `titleKeywords`), as Settings does for
+    /// pane titles.
     static func keywords(for title: String) -> [String] {
-        let lowered = title.lowercased()
-        let words = lowered.split { !$0.isLetter && !$0.isNumber }.map(String.init)
-        return [lowered] + words
+        titleKeywords(title)
     }
 
     /// Presses `path` in the app that owns the menu bar now. From the picker that's
