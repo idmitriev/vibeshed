@@ -13,6 +13,10 @@ actor BrowserModule: ModuleConfigurable {
         .init()
     }
 
+    static var automationTargets: [String] {
+        BrowserRegistry.appleScriptCapable.map(\.bundleID)
+    }
+
     private var config: BrowserConfig = .init()
     private let browserManager = BrowserManager()
     private let log = Log.module("browser")

@@ -36,31 +36,51 @@ final class PermissionsManager {
         required.filter { !isGranted($0) }
     }
 
-    func request(_ permission: Permission) {
+    /// Re-reads one permission now rather than at the next periodic recheck.
+    func refresh(_ permission: Permission) {
+        updateStatus(permission, granted: check(permission))
+    }
+
+    func openSettings(for permission: Permission) {
+        if let url = permission.systemSettingsURL {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// Asks macOS for `permission`. Where macOS has a prompt it shows it (once; later
+    /// calls return quietly) and lists Vibeshed in that Privacy & Security pane, so
+    /// granting is a single switch there; Full Disk Access has no prompt, so its pane
+    /// opens. Returns once the request is out, except for the dialogs macOS answers in
+    /// place — Automation (for System Events) and Calendars — which it waits on.
+    func request(_ permission: Permission) async {
         switch permission {
         case .accessibility:
-            let granted = checkAccessibility(prompt: true)
-            updateStatus(permission, granted: granted)
+            updateStatus(permission, granted: checkAccessibility(prompt: true))
         case .inputMonitoring:
-            let granted = CGRequestListenEventAccess()
-            updateStatus(permission, granted: granted)
-        case .screenRecording, .automation, .fullDiskAccess:
-            if let url = permission.systemSettingsURL {
-                NSWorkspace.shared.open(url)
-            }
+            updateStatus(permission, granted: CGRequestListenEventAccess())
+        case .screenRecording:
+            updateStatus(permission, granted: CGRequestScreenCaptureAccess() || checkScreenRecording())
+        case .automation:
+            await requestAutomation(for: [AutomationConsent.systemEvents])
+        case .fullDiskAccess:
+            openSettings(for: permission)
         case .calendars:
             let store = EKEventStore()
-            Task {
-                do {
-                    let granted = try await store.requestFullAccessToEvents()
-                    self.updateStatus(permission, granted: granted)
-                } catch {
-                    if let url = permission.systemSettingsURL {
-                        NSWorkspace.shared.open(url)
-                    }
-                }
+            do {
+                let granted = try await store.requestFullAccessToEvents()
+                updateStatus(permission, granted: granted)
+            } catch {
+                openSettings(for: permission)
             }
         }
+    }
+
+    /// Asks macOS about each app, one dialog at a time (see `AutomationConsent.ask`).
+    @discardableResult
+    func requestAutomation(for bundleIDs: [String]) async -> [String: AutomationConsent.Status] {
+        let answers = await AutomationConsent.ask(for: bundleIDs)
+        refresh(.automation)
+        return answers
     }
 
     func startPeriodicRecheck() {
@@ -133,30 +153,11 @@ final class PermissionsManager {
         }
     }
 
+    /// Stands for Automation as a whole: System Events is what the built-in modules
+    /// script. It quits when idle, and macOS can't answer for it then, so this reads
+    /// as not granted until something starts it again.
     private func checkAutomation() -> Bool {
-        let target = NSAppleEventDescriptor(bundleIdentifier: "com.apple.systemevents")
-        guard let aeDesc = target.aeDesc else { return false }
-        let status = AEDeterminePermissionToAutomateTarget(
-            aeDesc,
-            typeWildCard,
-            typeWildCard,
-            false
-        )
-        return status == noErr
-    }
-
-    /// Probe automation permission for a specific app, optionally triggering the macOS consent dialog.
-    /// Returns `.noErr` if allowed, `errAEEventNotPermitted` if denied, `procNotFound` if not running.
-    @discardableResult
-    func probeAutomation(for bundleID: String, prompt: Bool) -> OSStatus {
-        let target = NSAppleEventDescriptor(bundleIdentifier: bundleID)
-        guard let aeDesc = target.aeDesc else { return OSStatus(errAEEventNotPermitted) }
-        return AEDeterminePermissionToAutomateTarget(
-            aeDesc,
-            typeWildCard,
-            typeWildCard,
-            prompt
-        )
+        AutomationConsent.status(for: AutomationConsent.systemEvents) == .allowed
     }
 
     private func checkInputMonitoring() -> Bool {

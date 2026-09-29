@@ -15,6 +15,10 @@ actor GhosttyModule: ModuleConfigurable {
         .init()
     }
 
+    static var automationTargets: [String] {
+        [GhosttyApp.bundleID]
+    }
+
     static let terminalPrefix = "terminal."
 
     private var config = GhosttyConfig()

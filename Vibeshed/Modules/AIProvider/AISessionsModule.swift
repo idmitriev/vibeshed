@@ -16,6 +16,11 @@ actor AISessionsModule<Provider: AIProvider>: ModuleConfigurable {
         Provider.defaultConfig
     }
 
+    /// CLI sessions start and resume in a new tab of the user's terminal.
+    static var automationTargets: [String] {
+        [AILaunch.defaultTerminalBundleID]
+    }
+
     static func validate(_ config: Config) -> ConfigValidationResult {
         Provider.validate(config)
     }

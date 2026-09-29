@@ -178,15 +178,23 @@ final class ModuleRegistry {
         }
     }
 
+    /// Permissions the loaded modules and the ones waiting on permissions need to load.
     var requiredPermissions: Set<Permission> {
-        var result = Set<Permission>()
-        for module in modules.values {
-            result.formUnion(type(of: module).requiredPermissions)
-        }
-        for module in pendingModules.values {
-            result.formUnion(type(of: module).requiredPermissions)
-        }
-        return result
+        Set(configuredModuleTypes.flatMap { $0.requiredPermissions })
+    }
+
+    /// Permissions those modules use but load without (see `Module.optionalPermissions`).
+    var optionalPermissions: Set<Permission> {
+        Set(configuredModuleTypes.flatMap { $0.optionalPermissions })
+    }
+
+    /// Apps those modules send Apple events to (see `Module.automationTargets`).
+    var automationTargets: Set<String> {
+        Set(configuredModuleTypes.flatMap { $0.automationTargets })
+    }
+
+    private var configuredModuleTypes: [any Module.Type] {
+        (Array(modules.values) + Array(pendingModules.values)).map { type(of: $0) }
     }
 
     func module(id: String) -> (any Module)? {

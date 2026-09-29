@@ -8,6 +8,16 @@ protocol Module: Actor {
 
     static var requiredPermissions: Set<Permission> { get }
 
+    /// Permissions the module uses when they're granted but can load without,
+    /// e.g. Calendars for a module that shows a "grant access" action until then.
+    /// Permission setup asks for these along with `requiredPermissions`.
+    static var optionalPermissions: Set<Permission> { get }
+
+    /// Bundle IDs of the apps this module sends Apple events to. macOS asks once per
+    /// app ("Vibeshed wants access to control …"); permission setup asks up front for
+    /// the ones that are running, and the rest ask the first time they're scripted.
+    static var automationTargets: [String] { get }
+
     /// Whether `provideActions` output depends on the query text.
     ///
     /// Catalog modules (the default, `false`) ignore `query` and return their full
@@ -53,6 +63,14 @@ protocol Module: Actor {
 
 extension Module {
     static var requiredPermissions: Set<Permission> {
+        []
+    }
+
+    static var optionalPermissions: Set<Permission> {
+        []
+    }
+
+    static var automationTargets: [String] {
         []
     }
 

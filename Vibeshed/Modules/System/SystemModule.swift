@@ -12,6 +12,12 @@ actor SystemModule: ModuleConfigurable {
         .init()
     }
 
+    /// Restart, log out, appearance, Dock and menu bar go through System Events;
+    /// emptying the Trash through Finder.
+    static var automationTargets: [String] {
+        [AutomationConsent.systemEvents, AutomationConsent.finder]
+    }
+
     private var config: SystemConfig = .init()
     private let log = Log.module("system")
 

@@ -5,6 +5,8 @@ import OSLog
 private let telegramBundleID = "ru.keepcoder.Telegram"
 
 actor TelegramModule: ModuleConfigurable {
+    static let bundleID = telegramBundleID
+
     let id = "telegram"
     let displayName = "Telegram"
     let iconName = "paperplane.fill"

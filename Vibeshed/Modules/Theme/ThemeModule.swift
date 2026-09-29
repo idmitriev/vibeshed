@@ -16,6 +16,11 @@ actor ThemeModule: ModuleConfigurable {
         .init()
     }
 
+    /// Light/dark appearance goes through System Events, iTerm colors through iTerm.
+    static var automationTargets: [String] {
+        [AutomationConsent.systemEvents, ITermTarget.bundleID]
+    }
+
     static let switchActionID = ActionID(module: "theme", name: "switch")
     private static let generatedDefaultsKey = "theme.generated"
 

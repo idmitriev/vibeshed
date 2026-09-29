@@ -18,6 +18,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let aliasManager: AliasManager
     let layoutTransliterator: LayoutTransliterator
     let keystrokeVisualizer: KeystrokeVisualizer
+    private(set) lazy var permissionSetup = PermissionSetup(
+        permissionsManager: permissionsManager,
+        moduleRegistry: moduleRegistry,
+        configManager: configManager
+    )
 
     override init() {
         self.eventBus = EventBus()
@@ -93,20 +98,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Log.stderr("Vibeshed starting…")
         configManager.start()
+        if configManager.wroteInitialConfig, !isUITesting {
+            PermissionSetup.isPending = true
+        }
         aliasManager.start()
         moduleRegistry.startListeningForConfigChanges()
         permissionsManager.checkAll()
         logPermissionStatus()
         permissionsManager.startPeriodicRecheck()
-        // Prompt for Accessibility + Input Monitoring so the app is
-        // registered in System Settings and the user can grant them.
-        permissionsManager.request(.accessibility)
-        permissionsManager.request(.inputMonitoring)
-        // Request Full Disk Access for the bookmark module (Safari bookmarks/history).
-        // Unlike accessibility, FDA cannot be prompted — this opens System Settings.
-        if !permissionsManager.isGranted(.fullDiskAccess) {
-            permissionsManager.request(.fullDiskAccess)
-        }
         themeEngine.start()
         panelController.startOverlay()
         layoutTransliterator.start()
@@ -194,58 +193,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 }
             }
-            // Probe automation consent after registration, off the main thread —
-            // executeAndReturnError blocks until the user answers the TCC dialog,
-            // which would freeze the UI if run on the main actor.
-            Task.detached(priority: .utility) {
-                Self.promptBrowserAutomation()
-            }
-        }
-    }
-
-    /// Trigger the macOS automation consent dialog via NSAppleScript.
-    /// First probes System Events, then each running browser.
-    /// NSAppleScript runs in-process which is required for TCC to register the app properly.
-    private nonisolated static func promptBrowserAutomation() {
-        // First, request System Events automation (triggers TCC registration)
-        let systemEventsScript = """
-        tell application "System Events"
-            return name of first process
-        end tell
-        """
-        if let script = NSAppleScript(source: systemEventsScript) {
-            var error: NSDictionary?
-            script.executeAndReturnError(&error)
-            if let error {
-                Log.stderr(
-                    "  ⚠ automation: System Events — \(error[NSAppleScript.errorMessage] ?? "denied")"
-                )
+            // Which permissions to ask for depends on the registered modules. On first
+            // launch the setup window asks for all of them, one prompt at a time; later
+            // launches ask only for what Vibeshed asks for at every launch.
+            if PermissionSetup.isPending {
+                permissionSetup.show(welcome: true)
             } else {
-                Log.stderr("  ✓ automation: System Events")
-            }
-        }
-
-        // Then probe each running browser
-        for entry in BrowserRegistry.appleScriptCapable {
-            let name = entry.name
-            let bundleID = entry.bundleID
-            guard BrowserRegistry.isRunning(bundleID) else { continue }
-
-            let browserScript = """
-            tell application id "\(bundleID)"
-                return name
-            end tell
-            """
-            if let script = NSAppleScript(source: browserScript) {
-                var error: NSDictionary?
-                script.executeAndReturnError(&error)
-                if let error {
-                    Log.stderr(
-                        "  ⚠ automation: \(name) — \(error[NSAppleScript.errorMessage] ?? "denied")"
-                    )
-                } else {
-                    Log.stderr("  ✓ automation: \(name)")
-                }
+                await permissionSetup.requestAtLaunch()
             }
         }
     }
