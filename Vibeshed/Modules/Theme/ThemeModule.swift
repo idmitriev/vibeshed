@@ -176,19 +176,19 @@ actor ThemeModule: ModuleConfigurable {
     }
 
     private func generateFromWallpaper() async -> ActionResult {
-        let generated = await MainActor.run { () -> (colors: [String: String], wallpaper: String?)? in
-            guard let image = ThemeGenerator.currentWallpaperImage(),
-                  let colors = ThemeGenerator.palette(from: image)
+        let current = await MainActor.run { () -> (url: URL, dark: Bool)? in
+            guard let screen = NSScreen.main,
+                  let url = NSWorkspace.shared.desktopImageURL(for: screen)
             else { return nil }
-            let path = NSScreen.main.flatMap { NSWorkspace.shared.desktopImageURL(for: $0)?.path }
-            return (colors, path)
+            return (url, NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua)
         }
-        guard let generated else {
+        // Decoded here, off the main thread: wallpapers are often 6K HEICs.
+        guard let current, let colors = ThemeGenerator.palette(fromWallpaper: current.url, dark: current.dark) else {
             return .showResult(title: "Theme", body: "Couldn't read the current wallpaper")
         }
         // Kept across launches, so the generated theme stays in the list.
-        UserDefaults.standard.set(generated.colors, forKey: Self.generatedDefaultsKey)
-        UserDefaults.standard.set(generated.wallpaper, forKey: Self.generatedDefaultsKey + ".wallpaper")
+        UserDefaults.standard.set(colors, forKey: Self.generatedDefaultsKey)
+        UserDefaults.standard.set(current.url.path, forKey: Self.generatedDefaultsKey + ".wallpaper")
         rebuildCatalog()
         await eventBus?.publish(.moduleActionsChanged(moduleID: id))
         return await apply(slug: ResolvedTheme.slug(for: ThemeGenerator.generatedName))
@@ -207,7 +207,7 @@ actor ThemeModule: ModuleConfigurable {
         return ThemeDefinition(
             name: ThemeGenerator.generatedName, colors: colors,
             wallpaper: UserDefaults.standard.string(forKey: Self.generatedDefaultsKey + ".wallpaper"),
-            icon: "wand.and.stars", subtitle: "Generated from the current wallpaper",
+            icon: "wand.and.stars", subtitle: "Last palette made by Generate Theme from Wallpaper",
             keywords: ["wallpaper", "generate", "aether"]
         )
     }

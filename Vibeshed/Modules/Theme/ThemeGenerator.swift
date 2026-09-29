@@ -1,12 +1,12 @@
-import AppKit
 import CoreGraphics
+import Foundation
 
 /// Derives a complete palette from an image, in the spirit of Aether: a background and
 /// foreground tinted by the image's dominant tone, its most vivid color as the accent,
 /// and each ANSI hue pulled toward whatever the image actually has near that hue — so
 /// the terminal, editor and system accents all feel like they belong to the wallpaper.
 enum ThemeGenerator {
-    static let generatedName = "From Wallpaper"
+    static let generatedName = "Last from Wallpaper"
 
     /// Target hue (degrees) for each semantic color.
     private static let hueTargets: [(key: String, hue: Double)] = [
@@ -18,6 +18,15 @@ enum ThemeGenerator {
         let hue: Double
         let saturation: Double
         let lightness: Double
+    }
+
+    /// The palette for the wallpaper file at `url` as it looks in the current appearance. A
+    /// dynamic desktop's light/dark picture follows the appearance, so the theme keeps it
+    /// too (applying it won't flip the system and swap the picture it came from).
+    static func palette(fromWallpaper url: URL, dark: Bool) -> [String: String]? {
+        guard let wallpaper = DynamicDesktop.thumbnail(of: url, dark: dark, maxPixelSize: 512) else { return nil }
+        let mode: ThemeMode? = wallpaper.followsAppearance ? (dark ? .dark : .light) : nil
+        return palette(from: wallpaper.image, mode: mode)
     }
 
     /// Returns raw `colors.toml`-style keys (hex values plus `mode`), or nil if the image
@@ -42,8 +51,9 @@ enum ThemeGenerator {
 
         let background = ThemeColor(hue: toneHue, saturation: toneSaturation * 0.6, lightness: isDark ? 0.1 : 0.95)
         let foreground = ThemeColor(hue: toneHue, saturation: 0.18, lightness: isDark ? 0.86 : 0.2)
-        let accent = mostVivid(samples).map {
-            ThemeColor(hue: $0.hue, saturation: max($0.saturation, 0.5), lightness: isDark ? 0.66 : 0.45)
+        let accentLightness = isDark ? 0.66 : 0.45
+        let accent = mostVivid(samples, near: accentLightness).map {
+            ThemeColor(hue: $0.hue, saturation: max($0.saturation, 0.5), lightness: accentLightness)
         } ?? ThemeColor(hue: 218, saturation: hueSaturation, lightness: hueLightness)
 
         var colors: [String: ThemeColor] = [
@@ -55,8 +65,10 @@ enum ThemeGenerator {
             "selection_background": background.mix(accent, 0.3),
             "lighter_background": background.mix(foreground, 0.08),
         ]
+        let vivid = samples.filter { $0.saturation > 0.25 && $0.lightness > 0.15 && $0.lightness < 0.9 }
+        let vividByTarget = Dictionary(grouping: vivid) { nearestTarget(to: $0.hue) }
         for target in hueTargets {
-            let hue = nearbyHue(target.hue, in: samples) ?? target.hue
+            let hue = nearbyHue(target.hue, in: vividByTarget[target.key] ?? [], of: samples.count) ?? target.hue
             colors[target.key] = ThemeColor(hue: hue, saturation: hueSaturation, lightness: hueLightness)
             colors["bright_\(target.key)"] = ThemeColor(
                 hue: hue,
@@ -70,19 +82,10 @@ enum ThemeGenerator {
         return raw
     }
 
-    /// Reads the wallpaper of the main screen.
-    @MainActor
-    static func currentWallpaperImage() -> CGImage? {
-        guard let screen = NSScreen.main,
-              let url = NSWorkspace.shared.desktopImageURL(for: screen),
-              let image = NSImage(contentsOf: url)
-        else { return nil }
-        return image.cgImage(forProposedRect: nil, context: nil, hints: nil)
-    }
-
     // MARK: - Sampling
 
-    private static let sampleSize = 48
+    /// Fine enough that thin highlights (a glow's rim) survive the downsampling.
+    private static let sampleSize = 96
 
     private static func sample(_ image: CGImage) -> [Sample]? {
         let size = sampleSize
@@ -107,26 +110,30 @@ enum ThemeGenerator {
         }
     }
 
-    /// The most saturated mid-lightness sample (very dark/light pixels have unreliable hue).
-    private static func mostVivid(_ samples: [Sample]) -> Sample? {
-        samples
+    /// The most saturated sample near `lightness`, the lightness it will be shown at, so it
+    /// keeps its character: a glow's orange rim rather than the red it fades into, which
+    /// turns salmon when lightened. Very dark/light pixels are skipped (unreliable hue).
+    private static func mostVivid(_ samples: [Sample], near lightness: Double) -> Sample? {
+        func score(_ sample: Sample) -> Double {
+            sample.saturation * (1 - abs(sample.lightness - lightness) * 1.2)
+        }
+        return samples
             .filter { $0.lightness > 0.2 && $0.lightness < 0.85 }
             .max { score($0) < score($1) }
             .flatMap { score($0) > 0.2 ? $0 : nil }
     }
 
-    private static func score(_ sample: Sample) -> Double {
-        sample.saturation * (1 - abs(sample.lightness - 0.55) * 1.2)
+    /// The semantic hue nearest `hue`, so each image color informs one ANSI slot only.
+    private static func nearestTarget(to hue: Double) -> String {
+        hueTargets.min { ThemeColor.hueDistance(hue, $0.hue) < ThemeColor.hueDistance(hue, $1.hue) }?.key ?? ""
     }
 
-    /// The image's own hue near `target` (±28°), if it has enough color there. Pulled
-    /// halfway toward the target so red stays red even in an orange-heavy image.
-    private static func nearbyHue(_ target: Double, in samples: [Sample]) -> Double? {
-        let nearby = samples.filter {
-            $0.saturation > 0.25 && $0.lightness > 0.15 && $0.lightness < 0.9
-                && ThemeColor.hueDistance($0.hue, target) <= 28
-        }
-        guard nearby.count >= samples.count / 100 + 1,
+    /// The image's own hue near `target` (±28°) among the colors closest to it, if there's
+    /// enough of it (1% of `total` samples) — an orange glow tints `orange` without also
+    /// dragging `yellow` toward it. Pulled halfway toward the target so red stays red.
+    private static func nearbyHue(_ target: Double, in candidates: [Sample], of total: Int) -> Double? {
+        let nearby = candidates.filter { ThemeColor.hueDistance($0.hue, target) <= 28 }
+        guard nearby.count >= total / 100 + 1,
               let mean = circularMeanHue(nearby, weightedBySaturation: true)
         else { return nil }
         return circularMean([(mean, 1), (target, 1)])

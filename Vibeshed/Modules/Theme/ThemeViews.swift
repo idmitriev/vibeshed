@@ -1,4 +1,3 @@
-import ImageIO
 import SwiftUI
 
 /// Preview-panel content for a theme: a miniature editor + terminal drawn in the
@@ -90,12 +89,9 @@ struct WallpaperThumbnail: View {
         case let .generated(choice):
             return WallpaperRenderer.draw(palette, size: CGSize(width: 720, height: 450), choice: choice)
         case let .image(path):
-            guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil) else { return nil }
-            let options = [
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceThumbnailMaxPixelSize: 720,
-            ] as CFDictionary
-            return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
+            // A dynamic desktop shows the picture for the appearance the theme sets.
+            let url = URL(fileURLWithPath: path)
+            return DynamicDesktop.thumbnail(of: url, dark: palette.mode == .dark, maxPixelSize: 720)?.image
         }
     }
 }
