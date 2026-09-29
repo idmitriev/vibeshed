@@ -17,10 +17,12 @@ actor TilingModule: ModuleConfigurable {
         [.accessibility]
     }
 
-    private var config: TilingConfig = .defaultValue
-    private let manager = TilingManager()
-    private var assignments: [Int: GridAssignment] = [:]
-    private let log = Log.module("tiling")
+    var config: TilingConfig = .defaultValue
+    // Internal (not private): the screen-change relayout in TilingModule+ScreenChanges.swift
+    // reads and updates these too.
+    let manager = TilingManager()
+    var assignments: [Int: GridAssignment] = [:]
+    let log = Log.module("tiling")
 
     /// Runtime-only; always starts disabled on launch and is toggled via
     /// `tiling/toggleAutoTile` — not persisted config.
@@ -28,8 +30,10 @@ actor TilingModule: ModuleConfigurable {
     /// On-screen windows `TilingManager.isTileable` said yes to, so a display's layout pass
     /// doesn't ask each app over AX again (a busy app blocks AX calls for seconds).
     private var tileable: Set<Int> = []
-    private var lastKnownFrames: [Int: CGRect] = [:]
+    var lastKnownFrames: [Int: CGRect] = [:]
     private var pollTask: Task<Void, Never>?
+    private var screenChangeObserver: NSObjectProtocol?
+    private var relayoutTask: Task<Void, Never>?
 
     func initialize(context: ModuleContext) async throws {
         // Seed seen-window/frame state from what's already open so the poller (below)
@@ -37,12 +41,19 @@ actor TilingModule: ModuleConfigurable {
         let existing = await MainActor.run { manager.listWindows(includeMinimized: false) }
         lastKnownFrames = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0.frame) })
         startPolling()
+        observeScreenChanges()
         log.info("Tiling module initialized")
     }
 
     func teardown() async {
         pollTask?.cancel()
         pollTask = nil
+        relayoutTask?.cancel()
+        relayoutTask = nil
+        if let screenChangeObserver {
+            NotificationCenter.default.removeObserver(screenChangeObserver)
+        }
+        screenChangeObserver = nil
     }
 
     func configDidUpdate(_ config: TilingConfig) async {
@@ -163,6 +174,30 @@ actor TilingModule: ModuleConfigurable {
             actions = actions.filter { enabled.contains($0.id.actionName) }
         }
         return actions
+    }
+
+    // MARK: - Screen Changes
+
+    /// macOS posts `didChangeScreenParametersNotification` when the usable area changes — a
+    /// display is (un)plugged or reconfigured, or the menu bar or Dock auto-hides or comes
+    /// back. Bursts are coalesced, and `visibleFrame` is settled by the time it's re-read.
+    private func observeScreenChanges() {
+        screenChangeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { await self?.screenParametersDidChange() }
+        }
+    }
+
+    private func screenParametersDidChange() {
+        relayoutTask?.cancel()
+        relayoutTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+            await self?.relayoutAssignedWindows()
+        }
     }
 
     // MARK: - Auto Tile
@@ -350,7 +385,7 @@ extension TilingModule {
     }
 }
 
-private struct GridAssignment {
+struct GridAssignment {
     let displayKey: String
     var slot: AutoTileLayout.Slot
 }

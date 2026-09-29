@@ -45,6 +45,7 @@ actor SystemModule: ModuleConfigurable {
         actions.append(contentsOf: buildPowerActions())
         actions.append(contentsOf: buildDesktopActions())
         actions.append(contentsOf: buildAppearanceActions())
+        actions.append(contentsOf: buildDockAndMenuBarActions())
         actions.append(contentsOf: buildTrashActions())
         actions.append(contentsOf: buildScreenshotActions(path: config.screenshotPath))
         actions.append(contentsOf: buildMaintenanceActions())
@@ -158,6 +159,33 @@ actor SystemModule: ModuleConfigurable {
             ) { _ in
                 try SystemManager.setAutoAppearance()
                 return .showResult(title: "Auto Appearance", body: "Appearance will now follow the system schedule")
+            },
+        ]
+    }
+
+    private func buildDockAndMenuBarActions() -> [SystemAction] {
+        [
+            SystemAction(
+                id: ActionID(module: "system", name: "toggleDock"),
+                title: "Toggle Dock",
+                subtitle: "Turn Dock auto-hide on or off",
+                iconName: "dock.rectangle",
+                relevanceScore: 0.8,
+                keywords: ["dock", "hide", "show", "autohide", "auto-hide", "toggle", "system"]
+            ) { _ in
+                try SystemManager.toggleDockAutohide()
+                return .dismiss
+            },
+            SystemAction(
+                id: ActionID(module: "system", name: "toggleMenuBar"),
+                title: "Toggle Menu Bar",
+                subtitle: "Turn menu bar auto-hide on or off",
+                iconName: "menubar.rectangle",
+                relevanceScore: 0.8,
+                keywords: ["menu", "menubar", "menu bar", "hide", "show", "autohide", "auto-hide", "toggle", "system"]
+            ) { _ in
+                try SystemManager.toggleMenuBarAutohide()
+                return .dismiss
             },
         ]
     }

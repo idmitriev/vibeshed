@@ -404,6 +404,8 @@ modules:
       - missionControl
       - toggleAppearance
       - autoAppearance
+      - toggleDock
+      - toggleMenuBar
       - emptyTrash
       - screenshotFull
       - screenshotClipboard
