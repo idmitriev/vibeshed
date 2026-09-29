@@ -536,6 +536,8 @@ modules:
     volumeStep: 10
 
   # --- Clipboard History ---
+  # Anything an app marks private is never recorded: passwords and codes from
+  # password managers (nspasteboard.org concealed/transient types).
   clipboard:
     maxItems: 200
     pollingInterval: 0.5
