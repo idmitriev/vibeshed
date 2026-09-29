@@ -12,6 +12,7 @@ struct ScorableAction: Sendable {
     /// boost needs no witness-table lookups.
     let scheduledStart: Date?
     let scheduledEnd: Date?
+    let isFallback: Bool
 
     init(action: any Action, extraKeywords: [String] = []) {
         self.action = action
@@ -19,6 +20,7 @@ struct ScorableAction: Sendable {
         self.keywords = combined
         self.scheduledStart = action.scheduledStart
         self.scheduledEnd = action.scheduledEnd
+        self.isFallback = action.isFallback
         self.target = FuzzyMatcher.ScoreTarget(
             title: action.title,
             subtitle: action.subtitle,
@@ -37,6 +39,8 @@ struct ScorableAction: Sendable {
 enum ActionScorer {
     /// Maximum rendered results — nobody scrolls past 200 in a launcher.
     static let maxResults = 200
+
+    typealias RankKey = (isFallback: Bool, score: Double)
 
     /// One action's score, split into its terms. `final` is what ranking sorts by.
     struct Evaluation {
@@ -100,7 +104,7 @@ enum ActionScorer {
         let queryLower = query.lowercased()
         let queryChars = Array(queryLower)
 
-        var scored: [(item: ActionItem, action: any Action, score: Double)] = []
+        var scored: [(item: ActionItem, action: any Action, score: Double, isFallback: Bool)] = []
         var cache: [ActionID: any Action] = [:]
 
         for scorable in corpus {
@@ -121,11 +125,11 @@ enum ActionScorer {
                 keywords: scorable.keywords,
                 titleHighlightRanges: eval.titleRanges.isEmpty ? nil : eval.titleRanges
             )
-            scored.append((item: item, action: action, score: finalScore))
+            scored.append((item: item, action: action, score: finalScore, isFallback: scorable.isFallback))
             cache[action.id] = action
         }
 
-        scored.sort { $0.score > $1.score }
+        scored.sort { ranksBefore(($0.isFallback, $0.score), ($1.isFallback, $1.score)) }
 
         // Collapse actions sharing a deduplication key (e.g. a browser tab and a
         // bookmark/history entry for the same URL). Higher-scored entries are kept
@@ -137,13 +141,24 @@ enum ActionScorer {
         }
 
         if scored.count > maxResults {
-            for entry in scored[maxResults...] {
+            // Trim from the ranked (non-fallback) section so fallbacks, which sort
+            // last, stay reachable at the end of the list.
+            let fallbackCount = scored.reversed().prefix { $0.isFallback }.count
+            let keepRanked = max(0, maxResults - fallbackCount)
+            let droppedRange = keepRanked ..< (scored.count - fallbackCount)
+            for entry in scored[droppedRange] {
                 cache.removeValue(forKey: entry.action.id)
             }
-            scored = Array(scored.prefix(maxResults))
+            scored.removeSubrange(droppedRange)
         }
 
         return (scored.map(\.item), cache)
+    }
+
+    /// Ranking order: non-fallback actions before fallbacks, then higher score first.
+    static func ranksBefore(_ lhs: RankKey, _ rhs: RankKey) -> Bool {
+        if lhs.isFallback != rhs.isFallback { return rhs.isFallback }
+        return lhs.score > rhs.score
     }
 
     /// Convenience over the corpus variant for callers holding raw actions —

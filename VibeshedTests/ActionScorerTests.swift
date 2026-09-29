@@ -11,6 +11,7 @@ private struct StubAction: Action {
     var parameters: [ActionParameter] = []
     var scheduledStart: Date?
     var scheduledEnd: Date?
+    var isFallback = false
     func run(with _: ParameterValues) async throws -> ActionResult {
         .dismiss
     }
@@ -187,6 +188,42 @@ final class ActionScorerTests: XCTestCase {
             query: "meeting", scoring: scoring("meeting", now: now)
         )
         XCTAssertEqual(items.map(\.id.actionName), ["soon", "mid", "later"])
+    }
+
+    func testFallbacksRankLastDespiteStrongerMatchAndUsage() {
+        let now = Date()
+        let actions: [any Action] = [
+            StubAction(
+                id: ActionID("websearch/search.google"), title: "Search Google for \u{201C}term\u{201D}",
+                relevanceScore: 1, keywords: ["term"], isFallback: true
+            ),
+            StubAction(id: ActionID("m/weak"), title: "The Ruby Mangler", relevanceScore: 0),
+            StubAction(id: ActionID("m/strong"), title: "Terminal", relevanceScore: 0.5),
+        ]
+        let heavyUse = ScoringContext(
+            usageCounts: ["websearch/search.google": 500],
+            lastUsedDates: ["websearch/search.google": now],
+            query: "term", systemContext: nil, now: now
+        )
+        let (items, _) = ActionScorer.scoreAndRank(
+            allActions: actions, enrichments: [:], query: "term", scoring: heavyUse
+        )
+        XCTAssertEqual(items.map(\.id.actionName), ["strong", "weak", "search.google"])
+    }
+
+    func testResultCapKeepsFallbacks() {
+        var actions: [any Action] = (0 ..< ActionScorer.maxResults + 50).map {
+            StubAction(id: ActionID("m/a\($0)"), title: "Item \($0)")
+        }
+        actions.append(StubAction(
+            id: ActionID("websearch/search.google"), title: "Search Google for item", isFallback: true
+        ))
+        let (items, cache) = ActionScorer.scoreAndRank(
+            allActions: actions, enrichments: [:], query: "item", scoring: scoring("item")
+        )
+        XCTAssertEqual(items.count, ActionScorer.maxResults)
+        XCTAssertEqual(items.last?.id.rawValue, "websearch/search.google")
+        XCTAssertEqual(cache.count, ActionScorer.maxResults)
     }
 
     func testNormalizeURL() {

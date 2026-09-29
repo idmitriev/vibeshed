@@ -59,7 +59,11 @@ extension ActionListDebugDump {
             ActionScorer.evaluate(scorable, queryLower: queryLower, queryChars: queryChars, scoring: scoring)
                 .map { (scorable, $0) }
         }
-        matched.sort { $0.eval.final > $1.eval.final }
+        matched.sort {
+            ActionScorer.ranksBefore(
+                ($0.scorable.isFallback, $0.eval.final), ($1.scorable.isFallback, $1.eval.final)
+            )
+        }
 
         // Mirror ActionScorer's dedup: the first (highest-scored) holder of a key wins.
         var keyOwners: [String: ActionID] = [:]
