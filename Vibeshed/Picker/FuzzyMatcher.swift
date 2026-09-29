@@ -150,16 +150,23 @@ enum FuzzyMatcher {
         let subtitleMatch = match(
             queryChars: queryChars, against: target.subtitleChars, original: target.subtitle
         )
-        let keywordMatch = target.keywordsLower.contains { $0.hasPrefix(queryLower) }
+        // An exact keyword is a deliberate synonym ("car" on 🚗 Automobile), so it must
+        // outrank scattered fuzzy title hits; a keyword prefix is a weaker signal.
+        let keywordBonus: Double = if target.keywordsLower.contains(queryLower) {
+            0.25
+        } else if target.keywordsLower.contains(where: { $0.hasPrefix(queryLower) }) {
+            0.1
+        } else {
+            0
+        }
 
         // Must match at least title, subtitle, or keyword
-        guard titleMatch != nil || subtitleMatch != nil || keywordMatch else {
+        guard titleMatch != nil || subtitleMatch != nil || keywordBonus > 0 else {
             return nil
         }
 
         let titleScore = titleMatch?.score ?? 0
         let subtitleScore = subtitleMatch?.score ?? 0
-        let keywordBonus: Double = keywordMatch ? 0.1 : 0
 
         let combined = titleScore * 0.4
             + subtitleScore * 0.1

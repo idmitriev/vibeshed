@@ -61,13 +61,18 @@ final class FuzzyMatcherTests: XCTestCase {
     }
 
     func testScoreKeywordOnlyMatch() {
-        let result = FuzzyMatcher.score(
+        let exact = FuzzyMatcher.score(
             query: "kw", target: .init(title: "x", subtitle: "y", keywords: ["kw"], relevanceScore: 0),
             usageBoost: 0
         )
-        // Only the keyword bonus contributes.
-        XCTAssertEqual(result?.score ?? -1, 0.1, accuracy: acc)
-        XCTAssertEqual(result?.titleRanges.count, 0)
+        let prefix = FuzzyMatcher.score(
+            query: "kw", target: .init(title: "x", subtitle: "y", keywords: ["kwd"], relevanceScore: 0),
+            usageBoost: 0
+        )
+        // Only the keyword bonus contributes: exact keywords count more than prefixes.
+        XCTAssertEqual(exact?.score ?? -1, 0.25, accuracy: acc)
+        XCTAssertEqual(prefix?.score ?? -1, 0.1, accuracy: acc)
+        XCTAssertEqual(exact?.titleRanges.count, 0)
     }
 
     func testScoreReturnsNilWhenNothingMatches() {

@@ -82,16 +82,28 @@ extension ActionParameter {
 }
 
 extension [ParameterOption] {
-    /// Options that fuzzy-match `query`, best match first, with label highlights set.
+    /// Options matching `query` the same way actions do (`FuzzyMatcher.score`: fuzzy
+    /// label and subtitle, prefix-matched keywords), best match first with ties in
+    /// module order, and label highlights set.
     func fuzzyFiltered(by query: String) -> [ParameterOption] {
-        var scored: [(option: ParameterOption, score: Double)] = []
-        for option in self {
-            guard let result = FuzzyMatcher.match(query: query, against: option.label) else { continue }
+        let queryLower = query.lowercased()
+        let queryChars = [Character](queryLower)
+        var scored: [(option: ParameterOption, score: Double, index: Int)] = []
+        for (index, option) in enumerated() {
+            let target = FuzzyMatcher.ScoreTarget(
+                title: option.label,
+                subtitle: option.subtitle ?? "",
+                keywords: option.keywords,
+                relevanceScore: 0
+            )
+            guard let result = FuzzyMatcher.score(
+                queryLower: queryLower, queryChars: queryChars, target: target, usageBoost: 0
+            ) else { continue }
             var opt = option
-            opt.labelHighlightRanges = result.matchedRanges.isEmpty ? nil : result.matchedRanges
-            scored.append((option: opt, score: result.score))
+            opt.labelHighlightRanges = result.titleRanges.isEmpty ? nil : result.titleRanges
+            scored.append((option: opt, score: result.score, index: index))
         }
-        scored.sort { $0.score > $1.score }
+        scored.sort { ($0.score, $1.index) > ($1.score, $0.index) }
         return scored.map(\.option)
     }
 }

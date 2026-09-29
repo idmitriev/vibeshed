@@ -10,10 +10,6 @@ struct ActionParameter: Sendable, Identifiable {
     /// (`Module.previewParameterOption`) so it can apply it live, and tells it whether
     /// the preview ended in a commit or a cancel (`endParameterPreview`).
     let livePreview: Bool
-    /// For dynamic selections: the module filters and ranks options against the query
-    /// itself (e.g. by keywords the label doesn't contain), so the picker shows them as
-    /// returned instead of fuzzy-filtering them by label.
-    let filtersOwnOptions: Bool
 
     init(
         id: String,
@@ -21,8 +17,7 @@ struct ActionParameter: Sendable, Identifiable {
         type: ParameterType,
         isRequired: Bool = false,
         defaultValue: String? = nil,
-        livePreview: Bool = false,
-        filtersOwnOptions: Bool = false
+        livePreview: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -30,7 +25,6 @@ struct ActionParameter: Sendable, Identifiable {
         self.isRequired = isRequired
         self.defaultValue = defaultValue
         self.livePreview = livePreview
-        self.filtersOwnOptions = filtersOwnOptions
     }
 }
 
@@ -49,6 +43,8 @@ struct ParameterOption: Sendable, Identifiable {
     let subtitle: String?
     let iconName: String?
     let iconURL: URL?
+    /// Extra search terms, prefix-matched like action keywords (never shown).
+    let keywords: [String]
     var labelHighlightRanges: [Range<String.Index>]?
     /// The value currently in effect (the active theme, the selected device, …): marked
     /// in the list and pre-selected when the list opens unfiltered.
@@ -64,6 +60,7 @@ struct ParameterOption: Sendable, Identifiable {
         subtitle: String? = nil,
         iconName: String? = nil,
         iconURL: URL? = nil,
+        keywords: [String] = [],
         isCurrent: Bool = false,
         swatches: [Color] = [],
         makePreview: (@MainActor @Sendable () -> AnyView)? = nil
@@ -73,6 +70,7 @@ struct ParameterOption: Sendable, Identifiable {
         self.subtitle = subtitle
         self.iconName = iconName
         self.iconURL = iconURL
+        self.keywords = keywords
         self.isCurrent = isCurrent
         self.swatches = swatches
         self.makePreview = makePreview
@@ -84,7 +82,7 @@ extension ParameterOption: Equatable {
     static func == (lhs: ParameterOption, rhs: ParameterOption) -> Bool {
         lhs.id == rhs.id && lhs.label == rhs.label && lhs.subtitle == rhs.subtitle
             && lhs.iconName == rhs.iconName && lhs.iconURL == rhs.iconURL
-            && lhs.isCurrent == rhs.isCurrent && lhs.swatches == rhs.swatches
+            && lhs.keywords == rhs.keywords && lhs.isCurrent == rhs.isCurrent && lhs.swatches == rhs.swatches
     }
 }
 
