@@ -7,21 +7,27 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
     case bauhaus, destijl, truchet, terrazzo, circles, isometric, penrose
     case leaves, warp, textmode, polyhedra, maze, dither, pipes
     case pebbles, macpattern, pinstripe
+    case clouds, azul, winpattern, boing, rain
     case solid
 
     /// Config value that picks a style per theme (stable, so each theme keeps its look).
     static let automatic = "auto"
 
-    /// What `auto` chooses from. The classic Mac bitmaps are left out: they're period pieces
-    /// for their own themes, and adding them would reshuffle every theme's stable pick.
-    static let varied: [WallpaperStyle] = allCases.filter { $0 != .solid && !$0.isClassicMacBitmap }
+    /// What `auto` chooses from. Period pieces are left out: they're made for their own
+    /// themes, and adding them would reshuffle every theme's stable pick.
+    static let varied: [WallpaperStyle] = allCases.filter { $0 != .solid && !$0.isPeriodPiece }
 
     /// Styles drawn in whole-pixel bitmaps, where film grain would spoil the hard edges.
-    var isClassicMacBitmap: Bool {
+    var isPixelBitmap: Bool {
         switch self {
-        case .pebbles, .macpattern, .pinstripe: true
+        case .pebbles, .macpattern, .pinstripe, .clouds, .winpattern, .boing, .rain: true
         default: false
         }
+    }
+
+    /// Recreations of one system's desktop, kept out of `auto`.
+    var isPeriodPiece: Bool {
+        isPixelBitmap || self == .azul
     }
 
     var displayName: String {
@@ -57,6 +63,11 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .pebbles: "Pebbles"
         case .macpattern: "Desktop Pattern"
         case .pinstripe: "Platinum Pinstripes"
+        case .clouds: "Clouds"
+        case .azul: "Azul"
+        case .winpattern: "Windows Pattern"
+        case .boing: "Boing Ball"
+        case .rain: "Digital Rain"
         case .solid: "Solid"
         }
     }
@@ -94,6 +105,11 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .pebbles: "The classic Mac desktop tile: a soft rippled weave in pixels, recolored from the desktop color"
         case .macpattern: "A one-bit 8×8 tile from the Desktop Patterns control panel, in two tones"
         case .pinstripe: "Platinum's thin horizontal pinstripes, easing in tone down the screen"
+        case .clouds: "Windows 95's cloudy sky, in chunky pixels dithered down to 15-bit color"
+        case .azul: "Twisting ribbons of light over deep blue, after Windows XP's Azul"
+        case .winpattern: "A one-bit 8×8 desktop pattern from Windows 3.0 and 95, drawn over the desktop color"
+        case .boing: "The Amiga Boing Ball: a checkered sphere before a grid, in 12-bit color"
+        case .rain: "QNX Photon's screen saver: columns of glyphs raining down the screen"
         case .solid: "Just the background color"
         }
     }
@@ -131,6 +147,11 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .pebbles: "square.grid.3x3.fill"
         case .macpattern: "checkerboard.rectangle"
         case .pinstripe: "line.3.horizontal"
+        case .clouds: "cloud"
+        case .azul: "light.ribbon"
+        case .winpattern: "square.grid.4x3.fill"
+        case .boing: "circle.grid.cross"
+        case .rain: "text.alignleft"
         case .solid: "square.fill"
         }
     }
