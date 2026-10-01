@@ -70,6 +70,11 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
     /// under way from one that has already finished. Default `nil`.
     var scheduledEnd: Date? { get }
 
+    /// Catch-all actions (e.g. "Search Google for …") that match nearly any query.
+    /// They always rank below every non-fallback result regardless of score, usage
+    /// or context boosts, and survive the result cap. Default `false`.
+    var isFallback: Bool { get }
+
     @MainActor
     func makeListItemView() -> AnyView?
     @MainActor
@@ -107,6 +112,10 @@ extension Action {
 
     var scheduledEnd: Date? {
         nil
+    }
+
+    var isFallback: Bool {
+        false
     }
 
     @MainActor

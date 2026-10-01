@@ -7,6 +7,8 @@ struct WebSearchAction: Action {
     let iconName: String?
     let relevanceScore: Double
     let keywords: [String]
+    /// Web searches match whatever was typed, so they always sit at the bottom.
+    let isFallback = true
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
