@@ -12,8 +12,9 @@ actor ThemeApplier {
 
     static let targets: [any ThemeTarget] = [
         AppearanceTarget(), AccentTarget(), FolderColorTarget(), PointerTarget(), WallpaperTarget(),
-        ITermTarget(), GhosttyTarget(), VSCodeTarget(), ZedTarget(), JetBrainsTarget(), ClaudeCodeTarget(),
-        BatTarget(), LsdTarget(), MicroTarget(), BtopTarget(), GitHubWebTarget(), TemplatesTarget(), HooksTarget(),
+        ITermTarget(), GhosttyTarget(), VSCodeTarget(), ZedTarget(), JetBrainsTarget(), NeovimTarget(),
+        ClaudeCodeTarget(), BatTarget(), LsdTarget(), MicroTarget(), BtopTarget(), GitHubWebTarget(),
+        TemplatesTarget(), HooksTarget(),
     ]
 
     private let log = Log.module("theme")
