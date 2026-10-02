@@ -25,28 +25,39 @@ actor ThemeModule: ModuleConfigurable {
     private(set) var eventBus: EventBus?
     let applier = ThemeApplier()
     private let log = Log.module("theme")
-    private var itermWatcher: AppLaunchWatcher?
+    private var appWatchers: [AppLifecycleWatcher] = []
 
     func initialize(context: ModuleContext) async throws {
         eventBus = context.eventBus
         rebuildCatalog()
-        itermWatcher = await MainActor.run {
-            AppLaunchWatcher(bundleID: ITermTarget.bundleID) { [weak self] in
-                Task { await self?.recolorLaunchedITerm() }
+        // Windows iTerm and Terminal restore keep the profile they were created with, so
+        // recolor every session once the app has launched (new ones use the Vibeshed
+        // default profile). A quitting Terminal may have written back its own copy of the
+        // Vibeshed profile (see `TerminalTarget`), so that gets rewritten.
+        let watched: [(String, AppLifecycleWatcher.Event, ThemeTargetID, Duration)] = [
+            (ITermTarget.bundleID, .launch, .iterm, .seconds(2.5)),
+            (TerminalTarget.bundleID, .launch, .terminal, .seconds(1.5)),
+            (TerminalTarget.bundleID, .terminate, .terminal, .zero),
+        ]
+        appWatchers = await MainActor.run {
+            watched.map { bundleID, event, target, delay in
+                AppLifecycleWatcher(bundleID: bundleID, on: event) { [weak self] in
+                    Task { await self?.reapply(target, after: delay) }
+                }
             }
         }
     }
 
     func teardown() async {
-        await itermWatcher?.stop()
+        for watcher in appWatchers {
+            await watcher.stop()
+        }
     }
 
-    /// Windows iTerm restores keep the profile they were created with, so recolor
-    /// every session once iTerm has launched (new ones use the Vibeshed default profile).
-    private func recolorLaunchedITerm() async {
-        guard config.enabledTargets.contains(.iterm), let theme = await currentTheme() else { return }
-        try? await Task.sleep(for: .seconds(2.5))
-        let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: [.iterm])
+    private func reapply(_ target: ThemeTargetID, after delay: Duration) async {
+        guard config.enabledTargets.contains(target), let theme = await currentTheme() else { return }
+        try? await Task.sleep(for: delay)
+        let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: [target])
         _ = await applier.apply(theme, config: config, options: options)
     }
 

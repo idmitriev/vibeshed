@@ -450,7 +450,7 @@ modules:
   # --- Theme ---
   # Palette themes applied across macOS and apps in one go: appearance, accent +
   # text highlight, folder color, pointer, wallpaper, the Vibeshed picker, iTerm, Ghostty,
-  # VS Code/Cursor/Windsurf, Zed, JetBrains, Claude Code, plus your own templates.
+  # Terminal, VS Code/Cursor/Windsurf, Zed, JetBrains, Claude Code, plus your own templates.
   #   theme/switch        browse themes; each previews live as you move, Return applies, Esc reverts
   #   theme/apply.<slug>  apply one directly (e.g. theme/apply.tokyo-night — bind it or alias it)
   #   theme/next, theme/previous, theme/reapply, theme/fromWallpaper
@@ -472,8 +472,8 @@ modules:
     # wallpaperGrain: true            # fine film grain on generated wallpapers
 
     # What a theme is applied to (default: all but github, which changes an account setting):
-    # targets: [appearance, accent, folders, pointer, wallpaper, iterm, ghostty, vscode, zed,
-    #           jetbrains, claude, bat, lsd, micro, btop, github, templates, hooks]
+    # targets: [appearance, accent, folders, pointer, wallpaper, iterm, ghostty, terminal, vscode,
+    #           zed, jetbrains, claude, bat, lsd, micro, btop, github, templates, hooks]
     # ghostty writes ~/.config/ghostty/themes/Vibeshed, sets `theme = Vibeshed` in Ghostty's config
     # and reloads open terminals (Ghostty 1.2+). Colors your Ghostty config sets itself
     # (background, palette, …) still override the theme's.
@@ -487,6 +487,10 @@ modules:
     # iTerm: the "Vibeshed" profile (your default profile + theme colors) becomes iTerm's
     # default so new windows and restarts keep the theme; false gives the default back.
     # itermDefaultProfile: true
+    # Terminal.app: same idea with a "Vibeshed" profile in Terminal's settings (default and
+    # startup profile). Open tabs get background/text/cursor colors live; ANSI colors arrive
+    # when Terminal next launches (its AppleScript can't set them).
+    # terminalDefaultProfile: true
 
     # Folders that also get a palette-tinted custom icon (on top of the system folder color).
     # folders:
@@ -508,6 +512,7 @@ modules:
     #       vscode: "Tokyo Night"
     #       jetbrains: "_@user_Tokyo Night"
     #       ghostty: "TokyoNight Night"             # any name from `ghostty +list-themes`
+    #       terminal: "Clear Dark"                  # one of Terminal's own profiles
     #       github: "dark_dimmed"                   # also opts this theme into the github target
 
     # Templates for any other app, in Omarchy's placeholder syntax:
