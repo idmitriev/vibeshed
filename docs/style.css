@@ -1,27 +1,29 @@
 /* Vibeshed landing page */
 
 :root {
-  --bg: #0e0e14;
-  --bg-card: #16161f;
-  --text: #e4e4ec;
-  --text-secondary: #9a9ab0;
-  --accent: #8b5cf6;
-  --accent-hover: #a78bfa;
-  --border: #2a2a3a;
-  --code-bg: #1a1a28;
+  --bg: #120d16;
+  --bg-card: #1b1420;
+  --text: #f3eaf0;
+  --text-secondary: #a99aa8;
+  --accent: #ff6b8b;
+  --accent-hover: #ff8fa6;
+  --border: #2e2333;
+  --code-bg: #1d1522;
+  --sunset: linear-gradient(135deg, #ffb54d, #ff6f61 55%, #ff3d7f);
+  --on-sunset: #2a0f1f;
   --max-width: 840px;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #fafafa;
+    --bg: #fff8f3;
     --bg-card: #ffffff;
-    --text: #1a1a2e;
-    --text-secondary: #5a5a78;
-    --accent: #7c3aed;
-    --accent-hover: #6d28d9;
-    --border: #e2e2ea;
-    --code-bg: #f0f0f5;
+    --text: #24121f;
+    --text-secondary: #6e5868;
+    --accent: #d4245c;
+    --accent-hover: #b51a4c;
+    --border: #f0dfd6;
+    --code-bg: #fbefe8;
   }
 }
 
@@ -49,9 +51,9 @@ body {
 }
 
 .hero-icon {
-  border-radius: 28px;
-  margin-bottom: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  margin-bottom: 16px;
+  /* The icon has transparent margins, so shadow its shape rather than its box. */
+  filter: drop-shadow(0 12px 24px rgba(176, 18, 74, 0.28));
 }
 
 .hero h1 {
@@ -89,7 +91,7 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.2s, transform 0.1s;
+  transition: background 0.2s, filter 0.2s, transform 0.1s;
 }
 
 .btn:active {
@@ -97,12 +99,12 @@ body {
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: #fff;
+  background: var(--sunset);
+  color: var(--on-sunset);
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  filter: brightness(1.06) saturate(1.1);
 }
 
 .btn-secondary {

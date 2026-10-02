@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/icon.png" alt="Vibeshed icon" width="128" height="128">
+  <img src="docs/icon.png" alt="Vibeshed icon" width="160" height="160">
 </p>
 
 # Vibeshed
@@ -222,6 +222,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup and house style.
 ## Releases
 
 Built, signed, and notarized by GitHub Actions on tag push. See [RELEASING.md](RELEASING.md) for the workflow.
+
+## Wallpapers
+
+Desktop wallpapers in Vibeshed's colors, in 5K and MacBook sizes, are in [docs/wallpapers](docs/wallpapers): [Sunset](docs/wallpapers/vibeshed-sunset-5k.jpg), [Midnight](docs/wallpapers/vibeshed-midnight-5k.jpg) and [Pattern](docs/wallpapers/vibeshed-pattern-5k.jpg).
 
 ## Support
 
