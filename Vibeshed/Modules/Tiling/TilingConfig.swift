@@ -21,6 +21,21 @@ struct TilingConfig: Codable, Sendable, Equatable {
     )
 }
 
+extension TilingConfig {
+    /// Every key is optional, as in `AutoTileConfig` below, so a section sets only what
+    /// it changes. A missing `defaultGrid` stays nil, as before: only an empty section
+    /// gets `defaultValue`'s grid.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self.defaultValue
+        displays = try container.decodeIfPresent([DisplayGridConfig].self, forKey: .displays) ?? defaults.displays
+        defaultGrid = try container.decodeIfPresent(DisplayGridConfig.self, forKey: .defaultGrid)
+        padding = try container.decodeIfPresent(PaddingConfig.self, forKey: .padding) ?? defaults.padding
+        enabledActions = try container.decodeIfPresent(Set<String>.self, forKey: .enabledActions)
+        autoTile = try container.decodeIfPresent(AutoTileConfig.self, forKey: .autoTile) ?? defaults.autoTile
+    }
+}
+
 /// Tuning parameters for auto-tile. Whether auto-tile is actually running is *not*
 /// config — it's runtime-only state toggled via `tiling/toggleAutoTile`, and always
 /// starts off on launch.

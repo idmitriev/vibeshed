@@ -47,22 +47,27 @@ struct WindowConfig: Codable, Sendable, Equatable {
         self.focusBorder = focusBorder
     }
 
-    // `displays` and `focusBorder` are decoded with decodeIfPresent so existing config.yaml
-    // files without them don't fail to decode (see the Tiling module's AutoTileConfig for
-    // why: a Swift property default doesn't make synthesized Decodable treat a missing key
-    // as optional).
+    // Every key is optional and a missing one takes its value from `defaultValue`, so a
+    // section sets only what it changes (`padding:` alone, say). A Swift property default
+    // doesn't make synthesized Decodable treat a missing key as optional; see the Tiling
+    // module's AutoTileConfig.
     enum CodingKeys: String, CodingKey {
         case horizontalStops, verticalStops, displays, padding, includeMinimized, enlargeShrinkStep, focusBorder
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        horizontalStops = try container.decode([SizeStop].self, forKey: .horizontalStops)
-        verticalStops = try container.decode([SizeStop].self, forKey: .verticalStops)
+        let defaults = Self.defaultValue
+        horizontalStops = try container.decodeIfPresent([SizeStop].self, forKey: .horizontalStops)
+            ?? defaults.horizontalStops
+        verticalStops = try container.decodeIfPresent([SizeStop].self, forKey: .verticalStops)
+            ?? defaults.verticalStops
         displays = try container.decodeIfPresent([DisplayStopsConfig].self, forKey: .displays) ?? []
-        padding = try container.decode(PaddingConfig.self, forKey: .padding)
-        includeMinimized = try container.decode(Bool.self, forKey: .includeMinimized)
-        enlargeShrinkStep = try container.decode(SizeStop.self, forKey: .enlargeShrinkStep)
+        padding = try container.decodeIfPresent(PaddingConfig.self, forKey: .padding) ?? defaults.padding
+        includeMinimized = try container.decodeIfPresent(Bool.self, forKey: .includeMinimized)
+            ?? defaults.includeMinimized
+        enlargeShrinkStep = try container.decodeIfPresent(SizeStop.self, forKey: .enlargeShrinkStep)
+            ?? defaults.enlargeShrinkStep
         focusBorder = try container.decodeIfPresent(FocusBorderConfig.self, forKey: .focusBorder)
     }
 }
@@ -154,4 +159,16 @@ struct PaddingConfig: Codable, Sendable, Equatable {
     var left: Double = 0
     var right: Double = 0
     var gap: Double = 0
+}
+
+extension PaddingConfig {
+    /// A missing side is 0, so `padding: { gap: 4 }` works.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        top = try container.decodeIfPresent(Double.self, forKey: .top) ?? 0
+        bottom = try container.decodeIfPresent(Double.self, forKey: .bottom) ?? 0
+        left = try container.decodeIfPresent(Double.self, forKey: .left) ?? 0
+        right = try container.decodeIfPresent(Double.self, forKey: .right) ?? 0
+        gap = try container.decodeIfPresent(Double.self, forKey: .gap) ?? 0
+    }
 }

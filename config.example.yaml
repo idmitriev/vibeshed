@@ -287,6 +287,8 @@ aliases:
 modules:
 
   # --- Window Management ---
+  # Every key is optional; one left out keeps its built-in default (stops at 50% and
+  # 100%, no padding).
   window:
     horizontalStops:
       - { value: 50, unit: percent }
@@ -332,6 +334,8 @@ modules:
   # relative weights, not pixel counts or a fixed cell count alone —
   # [1, 2, 1] means 3 columns where the middle one is 2x as wide.
   # No macOS Space awareness (grids apply the same regardless of active Space).
+  # Every key is optional. An empty `tiling:` gets a 2×2 default grid; a section that
+  # leaves out defaultGrid has none, so unmatched displays aren't tiled.
   tiling:
     displays:
       # - match: main
