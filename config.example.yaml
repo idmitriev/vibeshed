@@ -289,6 +289,8 @@ modules:
   # --- Window Management ---
   # Every key is optional; one left out keeps its built-in default (stops at 50% and
   # 100%, no padding).
+  # window/focusLeft, focusRight, focusUp, focusDown focus the nearest window on that
+  # side of the focused one (the frontmost of a stack), across displays.
   window:
     horizontalStops:
       - { value: 50, unit: percent }
