@@ -128,7 +128,8 @@ final class PermissionSetup {
         return names
     }
 
-    /// The picker toggle as a key label: "⌥Space", "⇪Space".
+    /// The picker toggle as a key label: "⌥Space", or "Caps Lock + Space" spelled out,
+    /// since Caps Lock as a modifier is new to most people.
     static func pickerHotkey(in keybindings: [KeyBindingEntry]) -> String? {
         guard let entry = keybindings.first(where: { $0.action == "app/togglePicker" && $0.app == nil }),
               let combo = try? KeyComboParser.parse(entry.combo)
@@ -139,7 +140,7 @@ final class PermissionSetup {
         case let .standard(keyCode, modifiers):
             KeystrokeFormatter.comboLabel(keyCode: keyCode, modifiers: modifiers)
         case let .capsLockModifier(keyCode):
-            "⇪" + KeystrokeFormatter.keyLabel(for: keyCode, characters: "")
+            "Caps Lock + " + KeystrokeFormatter.keyLabel(for: keyCode, characters: "")
         default:
             entry.combo
         }

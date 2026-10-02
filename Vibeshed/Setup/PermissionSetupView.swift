@@ -174,7 +174,7 @@ private struct PermissionRow: View {
     private var purpose: String {
         switch permission {
         case .accessibility:
-            "The picker hotkey, moving and resizing windows, and pasting into apps."
+            "Keyboard shortcuts, moving and resizing windows, and pasting into apps."
         case .automation where !automationApps.isEmpty:
             "Controlling \(ListFormatter.localizedString(byJoining: automationApps)). "
                 + "Apps that aren't open ask the first time Vibeshed uses them."
@@ -185,7 +185,7 @@ private struct PermissionRow: View {
         case .fullDiskAccess:
             "Safari bookmarks and history."
         case .inputMonitoring:
-            "Caps Lock as a modifier key."
+            "Caps Lock as a modifier key, which your shortcuts use."
         case .screenRecording:
             "Window titles, for finding and switching windows."
         }

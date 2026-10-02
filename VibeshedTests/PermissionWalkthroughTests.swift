@@ -104,7 +104,7 @@ final class PermissionWalkthroughTests: XCTestCase {
             PermissionSetup.pickerHotkey(in: [KeyBindingEntry(combo: combo, action: "app/togglePicker")])
         }
         XCTAssertEqual(label("option+space"), "⌥Space")
-        XCTAssertEqual(label("capslock+space"), "⇪Space")
+        XCTAssertEqual(label("capslock+space"), "Caps Lock + Space")
         XCTAssertEqual(label("cmd+shift+k"), "⇧⌘K")
         let otherAction = KeyBindingEntry(combo: "option+space", action: "window/center")
         XCTAssertNil(PermissionSetup.pickerHotkey(in: [otherAction]))

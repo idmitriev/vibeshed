@@ -88,9 +88,19 @@ The app runs as a menu bar item (no Dock icon). Use `make run-debug` to see logs
 
 ## Configuration
 
-Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshed writes a config there: `option+space` toggles the picker, the default browser is left alone, and these modules are enabled:
+Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshed writes a config there. Caps Lock works as a modifier in it:
 
-- the ones backed by macOS itself: apps, system actions, settings panes, audio, processes, performance, windows, clipboard history, themes, math, timers, emoji and web search;
+| Shortcut | Does |
+|----------|------|
+| Caps Lock + Space | Toggle the picker |
+| Caps Lock + ← → ↑ ↓ | Focus the window on that side |
+| Caps Lock + W A S D | Cycle the window's height or width against the top, left, bottom or right edge |
+| Caps Lock + M | Maximize / restore the window |
+| Caps Lock + P | Pick a window to focus |
+
+Windows and the tiling grid (two side-by-side splits) get 4pt of padding and gaps. The default browser is left alone, and these modules are enabled:
+
+- the ones backed by macOS itself: apps, system actions, settings panes, audio, processes, performance, windows, tiling, clipboard history, themes, math, timers, emoji and web search;
 - one for each app it finds on the Mac: browser tabs, Homebrew, Claude, ChatGPT/Codex, VS Code (and Cursor, Windsurf), JetBrains IDEs, Zed, iTerm, Ghostty, Spotify, Telegram, Zoom and GitHub (via the `gh` CLI or GitHub Desktop).
 
 Every other module is listed in the file, commented out. A welcome window then walks through the permissions those modules need, one macOS prompt at a time, so each module works the first time you use it. It's under **Set Up Permissions…** in the menu bar afterwards.

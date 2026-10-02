@@ -7,13 +7,63 @@ final class DefaultConfigTests: XCTestCase {
     /// The config for a Mac where none of the integrations' software turned up.
     private let bareMac = DefaultConfig.yaml(detected: [])
 
-    func testPickerHotkeyParses() throws {
+    func testPickerHotkeyIsCapsLockSpace() throws {
         let config = try ConfigManager.parseYAML(bareMac)
-        XCTAssertEqual(config.keybindings.count, 1)
         let binding = try XCTUnwrap(config.keybindings.first)
+        XCTAssertEqual(binding.combo, "capslock+space")
         XCTAssertEqual(binding.action, "app/togglePicker")
-        XCTAssertNoThrow(try KeyComboParser.parse(binding.combo))
-        XCTAssertFalse(binding.usesCapsLock, "Caps Lock would need Input Monitoring")
+        XCTAssertTrue(binding.usesCapsLock, "so permission setup asks for Input Monitoring")
+    }
+
+    func testWindowShortcuts() throws {
+        let config = try ConfigManager.parseYAML(bareMac)
+        let bindings = Dictionary(uniqueKeysWithValues: config.keybindings.map { ($0.combo, $0.action) })
+        XCTAssertEqual(bindings, [
+            "capslock+space": "app/togglePicker",
+            "capslock+left": "window/focusLeft",
+            "capslock+right": "window/focusRight",
+            "capslock+up": "window/focusUp",
+            "capslock+down": "window/focusDown",
+            "capslock+m": "window/toggleMaximize",
+            "capslock+p": "window/focusWindow",
+            "capslock+w": "window/cycleTop",
+            "capslock+a": "window/cycleLeft",
+            "capslock+s": "window/cycleBottom",
+            "capslock+d": "window/cycleRight",
+        ])
+        for binding in config.keybindings {
+            XCTAssertNoThrow(try KeyComboParser.parse(binding.combo), binding.combo)
+        }
+    }
+
+    /// Each shortcut runs an action the window module has (a typo would only show up
+    /// as a log line at launch).
+    func testWindowShortcutsNameRealActions() async throws {
+        let config = try ConfigManager.parseYAML(bareMac)
+        let actions = await WindowModule().provideActions(query: "", scoring: ScoringContext(
+            usageCounts: [:], lastUsedDates: [:], query: "", systemContext: nil
+        ))
+        let ids = Set(actions.map(\.id.rawValue))
+        for action in config.keybindings.compactMap(\.action) where action != "app/togglePicker" {
+            XCTAssertTrue(ids.contains(action), "\(action) doesn't exist")
+        }
+    }
+
+    /// 4pt padding and gaps for both, and a two-column split for tiling.
+    func testWindowAndTilingLayout() throws {
+        let config = try ConfigManager.parseYAML(bareMac)
+        let fourPoints = PaddingConfig(top: 4, bottom: 4, left: 4, right: 4, gap: 4)
+
+        let window = try YAMLDecoder().decode(WindowConfig.self, from: XCTUnwrap(config.moduleConfigs["window"]))
+        XCTAssertEqual(window.padding, fourPoints)
+        XCTAssertEqual(window.horizontalStops, WindowConfig.defaultValue.horizontalStops)
+
+        let tiling = try YAMLDecoder().decode(TilingConfig.self, from: XCTUnwrap(config.moduleConfigs["tiling"]))
+        XCTAssertEqual(tiling.padding, fourPoints)
+        XCTAssertEqual(tiling.defaultGrid?.columns, [1, 1])
+        XCTAssertEqual(tiling.defaultGrid?.rows, [1])
+        XCTAssertTrue(TilingModule.validate(tiling).isValid)
+        XCTAssertTrue(WindowModule.validate(window).isValid)
     }
 
     func testLeavesDefaultBrowserAlone() throws {
@@ -21,14 +71,14 @@ final class DefaultConfigTests: XCTestCase {
         XCTAssertFalse(config.urlRouting.registerAsDefaultBrowser)
     }
 
-    /// Window, clipboard and theme join the modules that work with macOS alone.
+    /// Window, tiling, clipboard and theme join the modules that work with macOS alone.
     func testEnablesBuiltInModulesOnEveryMac() throws {
         let config = try ConfigManager.parseYAML(bareMac)
         XCTAssertEqual(
             Set(config.moduleConfigs.keys),
             [
-                "application", "system", "settings", "audio", "processes", "performance", "window", "clipboard",
-                "theme", "math", "timer", "emoji", "websearch", "self",
+                "application", "system", "settings", "audio", "processes", "performance", "window", "tiling",
+                "clipboard", "theme", "math", "timer", "emoji", "websearch", "self",
             ]
         )
     }
@@ -57,8 +107,10 @@ final class DefaultConfigTests: XCTestCase {
         for moduleID in listed {
             XCTAssertTrue(bareMac.contains("\n  # \(moduleID):"), "\(moduleID) isn't listed")
         }
-        let uncommented = bareMac.replacingOccurrences(of: "\n  # ", with: "\n  ")
-        let config = try ConfigManager.parseYAML(uncommented)
+        let modulesStart = try XCTUnwrap(bareMac.range(of: "\nmodules:\n"))
+        let uncommented = bareMac[..<modulesStart.upperBound]
+            + bareMac[modulesStart.upperBound...].replacingOccurrences(of: "\n  # ", with: "\n  ")
+        let config = try ConfigManager.parseYAML(String(uncommented))
         XCTAssertTrue(Set(config.moduleConfigs.keys).isSuperset(of: listed))
     }
 
@@ -71,6 +123,7 @@ final class DefaultConfigTests: XCTestCase {
         assertValidDefaults(ProcessesModule.self)
         assertValidDefaults(PerformanceModule.self)
         assertValidDefaults(WindowModule.self)
+        assertValidDefaults(TilingModule.self)
         assertValidDefaults(ClipboardModule.self)
         assertValidDefaults(ThemeModule.self)
         assertValidDefaults(MathModule.self)
