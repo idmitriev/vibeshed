@@ -11,7 +11,10 @@ struct ActionListView: View {
     var topInset: CGFloat = 0
     var onActivate: ((ActionID) -> Void)?
     @Environment(\.vibeTheme) private var theme
+    @State private var scrollTracker = SelectionScrollTracker<ActionID>()
 
+    private static let scrollSpace = "actionListScroll"
+    private static let rowSpacing: CGFloat = 2
     private static let selectionInset: CGFloat = 8
     private static let rowContentInset: CGFloat = 12
     private static let selectionCornerRadius: CGFloat = 8
@@ -30,12 +33,13 @@ struct ActionListView: View {
         let hotkeys = hotkeyMap
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(spacing: Self.rowSpacing) {
                     ForEach(actions) { item in
                         row(for: item, hotkeyNumber: hotkeys[item.id])
                             .id(item.id)
                     }
                 }
+                .reportsContentOffset(in: Self.scrollSpace) { followScroll(contentMinY: $0) }
                 .padding(.top, 4)
                 .padding(.bottom, 16)
             }
@@ -44,11 +48,24 @@ struct ActionListView: View {
             .safeAreaInset(edge: .top, spacing: 0) {
                 Color.clear.frame(height: topInset + 6)
             }
+            .coordinateSpace(name: Self.scrollSpace)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { scrollTracker.viewportHeight = $0 }
             .scrollEdgeFade(top: 8, bottom: 12)
             .accessibilityIdentifier("actionList")
+            .onAppear {
+                // Appearing with a selection already set (no `onChange`): bring it into view
+                // once the first layout has happened.
+                DispatchQueue.main.async {
+                    if let id = selectedID {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                    DispatchQueue.main.async { scrollTracker.scrollToApplied() }
+                }
+            }
             .onChange(of: selectedID) { _, newID in
-                if let newID {
+                if let newID, scrollTracker.selectionChanged(to: newID) {
                     proxy.scrollTo(newID, anchor: nil)
+                    DispatchQueue.main.async { scrollTracker.scrollToApplied() }
                 }
             }
             .onChange(of: listResetToken) { _, _ in
@@ -88,6 +105,20 @@ struct ActionListView: View {
                     onActivate?(item.id)
                 }
             }
+    }
+
+    /// Moves the selection back into view after the list was scrolled past it.
+    private func followScroll(contentMinY: CGFloat) {
+        scrollTracker.visibleTop = topInset + 6
+        if let newID = scrollTracker.contentMoved(
+            contentMinY: contentMinY,
+            selectedID: selectedID,
+            ids: actions.map(\.id),
+            rowHeight: rowHeight,
+            rowSpacing: Self.rowSpacing
+        ) {
+            selectedID = newID
+        }
     }
 
     @ViewBuilder

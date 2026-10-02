@@ -7,6 +7,10 @@ struct ParameterInputView: View {
     var topInset: CGFloat = 0
     var onConfirm: (() -> Void)?
     @Environment(\.vibeTheme) private var theme
+    @State private var scrollTracker = SelectionScrollTracker<String>()
+
+    private static let scrollSpace = "parameterOptionScroll"
+    private static let rowSpacing: CGFloat = 2
 
     var body: some View {
         Group {
@@ -69,7 +73,7 @@ struct ParameterInputView: View {
         ScrollViewReader { proxy in
             let hotkeys = optionHotkeys
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(spacing: Self.rowSpacing) {
                     ForEach(state.parameterOptions) { option in
                         let isSelected = state.selectedParameterOptionID == option.id
                         ParameterOptionRow(
@@ -96,6 +100,7 @@ struct ParameterInputView: View {
                         .id(option.id)
                     }
                 }
+                .reportsContentOffset(in: Self.scrollSpace) { followScroll(contentMinY: $0) }
                 .padding(.top, 4)
                 .padding(.bottom, 16)
             }
@@ -104,13 +109,40 @@ struct ParameterInputView: View {
             .safeAreaInset(edge: .top, spacing: 0) {
                 Color.clear.frame(height: topInset + 6)
             }
+            .coordinateSpace(name: Self.scrollSpace)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { scrollTracker.viewportHeight = $0 }
             .scrollEdgeFade(top: 8, bottom: 12)
             .accessibilityIdentifier("parameterOptionList")
-            .onChange(of: state.selectedParameterOptionID) { _, newID in
-                if let newID {
-                    proxy.scrollTo(newID, anchor: nil)
+            .onAppear {
+                // Appearing with a selection already set (no `onChange`): bring it into view
+                // once the first layout has happened.
+                DispatchQueue.main.async {
+                    if let id = state.selectedParameterOptionID {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                    DispatchQueue.main.async { scrollTracker.scrollToApplied() }
                 }
             }
+            .onChange(of: state.selectedParameterOptionID) { _, newID in
+                if let newID, scrollTracker.selectionChanged(to: newID) {
+                    proxy.scrollTo(newID, anchor: nil)
+                    DispatchQueue.main.async { scrollTracker.scrollToApplied() }
+                }
+            }
+        }
+    }
+
+    /// Moves the selection back into view after the list was scrolled past it.
+    private func followScroll(contentMinY: CGFloat) {
+        scrollTracker.visibleTop = topInset + 6
+        if let newID = scrollTracker.contentMoved(
+            contentMinY: contentMinY,
+            selectedID: state.selectedParameterOptionID,
+            ids: state.parameterOptions.map(\.id),
+            rowHeight: rowHeight,
+            rowSpacing: Self.rowSpacing
+        ) {
+            state.selectedParameterOptionID = newID
         }
     }
 
