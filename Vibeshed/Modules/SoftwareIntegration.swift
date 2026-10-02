@@ -49,11 +49,24 @@ struct SoftwareEnvironment: Sendable {
     var fileExists: @Sendable (_ path: String) -> Bool
     var homeDirectory: String
 
+    /// LaunchServices can still list an app that was deleted, so the bundle must exist too.
     static let live = SoftwareEnvironment(
-        isAppInstalled: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil },
+        isAppInstalled: { bundleID in
+            NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+                .map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+        },
         fileExists: { FileManager.default.fileExists(atPath: $0) },
         homeDirectory: NSHomeDirectory()
     )
+
+    /// This environment, also counting `bundleIDs` as installed: apps that were just put
+    /// in place, before LaunchServices has picked them up.
+    func adding(apps bundleIDs: Set<String>) -> SoftwareEnvironment {
+        var environment = self
+        let isAppInstalled = isAppInstalled
+        environment.isAppInstalled = { bundleIDs.contains($0) || isAppInstalled($0) }
+        return environment
+    }
 
     func expand(_ path: String) -> String {
         path.hasPrefix("~/") ? homeDirectory + path.dropFirst() : path
@@ -69,6 +82,17 @@ extension SoftwareIntegration {
         among integrations: [SoftwareIntegration] = all
     ) -> [DetectedIntegration] {
         integrations.compactMap { $0.detect(in: environment) }
+    }
+
+    /// The modules whose software is on this Mac.
+    static func detectedModuleIDs(in environment: SoftwareEnvironment = .live) -> Set<String> {
+        Set(detect(in: environment).map(\.moduleID))
+    }
+
+    /// The integrations found in `environment` that weren't among `before` (module IDs
+    /// detected earlier): what an install just added.
+    static func added(since before: Set<String>, in environment: SoftwareEnvironment) -> [DetectedIntegration] {
+        detect(in: environment).filter { !before.contains($0.moduleID) }
     }
 
     func detect(in environment: SoftwareEnvironment) -> DetectedIntegration? {

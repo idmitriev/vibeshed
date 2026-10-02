@@ -61,6 +61,27 @@ final class ConfigManager {
         loadConfig()
     }
 
+    /// Turns modules on by adding their sections to config.yaml (see `ConfigEditor`), then
+    /// reloads. Returns the IDs it added; modules the config already has are left alone.
+    @discardableResult
+    func enableModules(_ entries: [DefaultConfig.Entry]) -> [String] {
+        guard let yaml = try? String(contentsOf: configFileURL, encoding: .utf8) else { return [] }
+        let edit = ConfigEditor.enablingModules(entries, in: yaml)
+        guard !edit.enabled.isEmpty else { return [] }
+        do {
+            // Rewritten in place rather than atomically: replacing the file would leave the
+            // file monitor watching the old one.
+            try Data(edit.yaml.utf8).write(to: configFileURL)
+        } catch {
+            Log.config.error("Failed to enable modules: \(error.localizedDescription, privacy: .public)")
+            return []
+        }
+        let modules = edit.enabled.joined(separator: ", ")
+        Log.config.info("Enabled modules in config.yaml: \(modules, privacy: .public)")
+        loadConfig()
+        return edit.enabled
+    }
+
     private func loadConfig() {
         guard FileManager.default.fileExists(atPath: configFileURL.path) else {
             Log.config.info("No config file at \(self.configFileURL.path, privacy: .public), using defaults")

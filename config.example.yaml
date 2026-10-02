@@ -740,6 +740,8 @@ modules:
     #   - baseConversion
 
   # --- Homebrew ---
+  # Installing something another module works with (the spotify cask, the gh formula, …)
+  # adds that module's section to this file, keeping your comments, and loads it.
   homebrew:
     brewPath: "/opt/homebrew/bin/brew"
     # enabledActions:

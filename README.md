@@ -146,7 +146,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Theme** | Palette themes applied across macOS and apps, with live preview |
 | **Self** | Open config, reload modules, view logs, quit |
 
-Modules load only when their config section is present. Each module declares the permissions it needs (accessibility, automation, etc.) and the apps it scripts; **Set Up Permissions…** in the menu bar walks through granting them.
+Modules load only when their config section is present. A section added while Vibeshed is running loads its module right away; a removed one takes effect at the next launch. Installing an app with the Homebrew module (for example the `spotify` cask or the `gh` formula) adds the section for the module that works with it. Each module declares the permissions it needs (accessibility, automation, etc.) and the apps it scripts; **Set Up Permissions…** in the menu bar walks through granting them.
 
 ## Theming
 

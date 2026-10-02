@@ -379,6 +379,8 @@
 
 - [ ] Search formulas and casks by name
 - [ ] Install/uninstall formula and cask actions work (notification shows output)
+- [ ] Installing something a module works with (e.g. the `spotify` cask or `gh` formula) adds that module's section to config.yaml (uncommenting a `# spotify:` line if there is one), the module loads, and the notification says so
+- [ ] Reinstalling something that was already there, or installing something no module works with, leaves config.yaml alone
 - [ ] Update/upgrade/outdated/cleanup actions work
 - [ ] Long brew output (e.g. many outdated packages) doesn't hang the app
 

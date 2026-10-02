@@ -32,6 +32,18 @@ final class SoftwareIntegrationTests: XCTestCase {
         XCTAssertEqual(software("anthropic", in: detected), ["Claude", "Claude Code"])
     }
 
+    /// What an install added: integrations found now that weren't before, counting a
+    /// cask's apps LaunchServices hasn't registered yet.
+    func testFindsWhatAnInstallAdded() {
+        let environment = mac(apps: ["com.apple.Safari"], paths: ["/opt/homebrew/bin/gh"])
+        let before = SoftwareIntegration.detectedModuleIDs(in: environment)
+        XCTAssertEqual(before, ["browser", "github"])
+
+        let added = SoftwareIntegration.added(since: before, in: environment.adding(apps: ["com.spotify.client"]))
+        XCTAssertEqual(added.map(\.moduleID), ["spotify"])
+        XCTAssertEqual(SoftwareIntegration.added(since: before, in: environment), [])
+    }
+
     func testHomebrewOnIntelGetsItsPath() {
         let detected = SoftwareIntegration.detect(in: mac(paths: ["/usr/local/bin/brew"]))
         XCTAssertEqual(detected.first?.settings, [#"brewPath: "/usr/local/bin/brew""#])

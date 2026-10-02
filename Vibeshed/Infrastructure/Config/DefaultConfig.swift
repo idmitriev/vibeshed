@@ -20,6 +20,10 @@ enum DefaultConfig {
             self.summary = summary
             self.settings = settings
         }
+
+        init(_ integration: DetectedIntegration) {
+            self.init(integration.moduleID, integration.summary, settings: integration.settings)
+        }
     }
 
     /// 4pt from the screen edges and between windows.
@@ -65,17 +69,11 @@ enum DefaultConfig {
     /// The config for a Mac where `detected` turned up.
     static func yaml(detected: [DetectedIntegration]) -> String {
         var lines = [header]
-        for entry in builtInModules {
-            lines.append(moduleLine(entry.moduleID, entry.summary))
-            lines += entry.settings.map { "    " + $0 }
-        }
+        lines += builtInModules.flatMap { sectionLines(for: $0) }
 
         if !detected.isEmpty {
             lines += ["", "  # Found on this Mac:"]
-            for integration in detected {
-                lines.append(moduleLine(integration.moduleID, integration.summary))
-                lines += integration.settings.map { "    " + $0 }
-            }
+            lines += detected.flatMap { sectionLines(for: Entry($0)) }
         }
 
         let detectedIDs = Set(detected.map(\.moduleID))
@@ -83,15 +81,26 @@ enum DefaultConfig {
             .filter { !detectedIDs.contains($0.moduleID) }
             .map { Entry($0.moduleID, $0.summary) }
         lines += ["", "  # More modules — uncomment to enable:"]
-        lines += (optionalModules + missing).map { moduleLine($0.moduleID, $0.summary, commented: true) }
+        lines += (optionalModules + missing).map { moduleLine($0.moduleID, $0.summary, indent: "  ", commented: true) }
 
         return lines.joined(separator: "\n") + "\n"
     }
 
+    /// A module's section under `modules:`, whose children sit `indent` deep: its key line
+    /// and the settings below it.
+    static func sectionLines(for entry: Entry, indent: String = "  ") -> [String] {
+        [moduleLine(entry.moduleID, entry.summary, indent: indent)] + entry.settings.map { indent + indent + $0 }
+    }
+
     /// `  window:         # summary`, comments lined up in one column.
-    private static func moduleLine(_ moduleID: String, _ summary: String, commented: Bool = false) -> String {
-        let key = (commented ? "  # " : "  ") + moduleID + ":"
-        let width = max(key.count + 1, 18)
+    private static func moduleLine(
+        _ moduleID: String,
+        _ summary: String,
+        indent: String,
+        commented: Bool = false
+    ) -> String {
+        let key = indent + (commented ? "# " : "") + moduleID + ":"
+        let width = max(key.count + 1, indent.count + 16)
         return key.padding(toLength: width, withPad: " ", startingAt: 0) + "# " + summary
     }
 

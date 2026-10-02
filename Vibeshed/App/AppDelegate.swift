@@ -179,7 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 BookmarkModule(),
                 TimerModule(),
                 MathModule(),
-                HomebrewModule(),
+                buildHomebrewModule(),
                 WebSearchModule(),
                 EmojiModule(),
             ]
@@ -224,6 +224,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             Log.stderr("  ✓ module: \(id)")
         }
+    }
+
+    /// Installing an app a module works with turns that module on in config.yaml.
+    private func buildHomebrewModule() -> HomebrewModule {
+        let cfgManager = configManager
+        return HomebrewModule(enableModules: { integrations in
+            await cfgManager.enableModules(integrations.map { DefaultConfig.Entry($0) })
+        })
     }
 
     private func buildSelfModule() -> SelfModule {
