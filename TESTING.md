@@ -40,8 +40,8 @@
 - [ ] Invalid module config section logged, module skipped
 - [ ] Valid config changes hot-reload without restart
 - [ ] Modules react to config updates (e.g. changing volumeSteps)
-- [ ] Removing a module section disables that module
-- [ ] Adding a module section enables that module
+- [ ] Removing a module section disables that module at the next launch
+- [ ] Adding a module section loads that module right away, without a restart
 
 ## 4. Picker — Basic
 
