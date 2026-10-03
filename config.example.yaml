@@ -782,9 +782,11 @@ modules:
 # ---------------------------------------------------------------------------
 # Layout Correction
 # ---------------------------------------------------------------------------
-# When a query matches nothing but transliterating it from another keyboard
-# layout (e.g. Cyrillic typed while the wrong layout was active) would match,
-# the picker retries with the corrected text and shows a hint banner.
+# When a query matches nothing (web search aside) but retyping it on your Latin
+# layout would match, the picker retries with the corrected text and shows a
+# hint banner — e.g. "ыфафкш" → "safari". Works for every keyboard layout you
+# have enabled (Russian, Ukrainian, Greek, Hebrew, Arabic, Georgian…) plus the
+# Korean (2-Set), Japanese (romaji) and Chinese (Zhuyin) input methods.
 # Enabled by default; set enabled: false to turn it off.
 # ---------------------------------------------------------------------------
 layoutCorrection:
