@@ -16,7 +16,7 @@
 - [ ] App launches without crash
 - [ ] Status bar icon appears in menu bar
 - [ ] Status bar icon is crisp on light and dark menu bars and inverts while its menu is open
-- [ ] Holding capslock shows a dot at the status bar icon's lower right
+- [ ] Holding capslock shows a dot at the status bar icon's upper right
 - [ ] App icon has transparent corners in Finder, Spotlight and System Settings › Privacy & Security, with no gray backing tile on macOS 26+
 - [ ] Single instance lock prevents second instance
 - [ ] App starts on login when autostart is enabled

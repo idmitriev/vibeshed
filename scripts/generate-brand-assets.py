@@ -7,9 +7,9 @@
     scripts/generate-brand-assets.py --layers DIR    # unmasked layers for building a Liquid Glass
                                                      # icon in Icon Composer
 
-Rendering needs rsvg-convert (`brew install librsvg`). JPEG wallpapers also need sips (built into
-macOS) or ImageMagick; without either they're written as PNG. The .icns is assembled here, so
-iconutil isn't needed.
+Rendering needs rsvg-convert (`brew install librsvg`). JPEG wallpapers also need ImageMagick
+(preferred, for smaller files) or sips (built into macOS); without either they're written as PNG.
+The .icns is assembled here, so iconutil isn't needed.
 
 The icon follows Apple's macOS grid: an 824px continuous-corner tile centered on a 1024px canvas
 with transparent margins. That's the shape macOS 26+ expects of an .icns; anything that spills
@@ -98,8 +98,12 @@ HANDLE_TOP = -44
 HANDLE_W_TOP, HANDLE_W_BOTTOM = 170, 150
 HANDLE_END = 430
 WAVE_CY = HEAD_CY + 22  # vibration arcs and ripples center here
-# Where the wand sits on the tile: rotated 45° (head up-right), local (0, -60) on (508, 526).
-WAND_PLACEMENT = {"scale": 0.84, "anchor": (508, 526), "pivot": -60}
+# The wand's pose everywhere, clockwise from upright: head down-right, handle up-left. Head down
+# keeps it from reading as a magnifier, whose lens is always on top.
+WAND_ANGLE = 150
+# Where the wand sits on the tile: local (0, -60) on (482, 550), which centers the wand and its
+# arcs where the tile's optical center is.
+WAND_PLACEMENT = {"scale": 0.8, "anchor": (482, 550), "pivot": -60}
 
 # Corner of a continuous-curvature rounded rect, in units of the corner radius (the curve
 # UIKit/AppKit use since iOS 7 and Big Sur), from the straight edge round to the next one.
@@ -161,7 +165,7 @@ def neck_rect():
     return f'x="-62" y="{NECK_TOP}" width="124" height="{NECK_BOTTOM - NECK_TOP}"'
 
 
-def placement(scale, anchor, pivot, angle=45):
+def placement(scale, anchor, pivot, angle=WAND_ANGLE):
     """Transform that rotates the wand frame by `angle` and puts local (0, pivot) on `anchor`."""
     dx = -pivot * math.sin(math.radians(angle)) * scale
     dy = pivot * math.cos(math.radians(angle)) * scale
@@ -412,7 +416,7 @@ def _frame(width, height, defs, body, dither_amount=0.006):
 def _sunset(p, width, height):
     unit = height / 1000  # layout in thousandths of the height so every size matches
     scale = unit * 0.8
-    head = (width - 470 * unit, 350 * unit)
+    head = (width - 470 * unit, 600 * unit)  # low enough that the raised handle clears the menu bar
     place = placement(scale, head, WAVE_CY)
     left = 150 * unit
     return _frame(
@@ -505,12 +509,15 @@ def render(svg, out, width, height=None):
 
 
 def to_jpeg(png, jpg, quality=90):
-    """PNG to JPEG with sips or ImageMagick; returns the path written (the PNG if neither exists)."""
-    if shutil.which("sips"):
+    """PNG to JPEG with ImageMagick or sips; returns the path written (the PNG if neither exists).
+
+    ImageMagick comes first: at the same quality sips writes files about twice the size.
+    """
+    if shutil.which("magick") or shutil.which("convert"):
+        cmd = [shutil.which("magick") or shutil.which("convert"), str(png), "-quality", str(quality), str(jpg)]
+    elif shutil.which("sips"):
         cmd = ["sips", "-s", "format", "jpeg", "-s", "formatOptions", str(quality), str(png),
                "--out", str(jpg)]
-    elif shutil.which("magick") or shutil.which("convert"):
-        cmd = [shutil.which("magick") or shutil.which("convert"), str(png), "-quality", str(quality), str(jpg)]
     else:
         return png
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL)

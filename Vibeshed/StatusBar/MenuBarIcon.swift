@@ -1,25 +1,27 @@
 import AppKit
 
-/// The menu bar glyph: the wand at 45° with a vibration arc either side of its head. It's a
-/// template image, so the system tints it for light, dark and highlighted menu bars.
+/// The menu bar glyph: the wand head-down at 150°, as in the app icon, with a vibration arc either
+/// side of its head. It's a template image, so the system tints it for light, dark and highlighted
+/// menu bars.
 enum MenuBarIcon {
     static func make(size: CGFloat = 18, capsLockActive: Bool = false) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
             guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
-            let unit = min(rect.width, rect.height)
+            // Head-down, the wand and its arcs are taller than they are wide; 0.9 fits them.
+            let unit = min(rect.width, rect.height) * 0.9
 
             // Draw in the wand's own frame: origin at the center of the head's dome, +x running
-            // down the axis toward the handle (225°: head up-right, handle down-left).
+            // down the axis toward the handle (120°: head down-right, handle up-left).
             ctx.saveGState()
-            ctx.translateBy(x: rect.width * 0.58, y: rect.height * 0.58)
-            ctx.rotate(by: .pi * 1.25)
+            ctx.translateBy(x: rect.width * 0.507, y: rect.height * 0.374)
+            ctx.rotate(by: .pi * 2 / 3)
             drawWand(unit: unit)
             drawVibration(in: ctx, unit: unit)
             ctx.restoreGState()
 
             if capsLockActive {
-                let dotRadius = unit * 0.09
-                let dotCenter = CGPoint(x: rect.width * 0.87, y: rect.height * 0.13)
+                let dotRadius = min(rect.width, rect.height) * 0.09
+                let dotCenter = CGPoint(x: rect.width * 0.87, y: rect.height * 0.87)
                 ctx.setFillColor(NSColor.black.cgColor)
                 ctx.fillEllipse(in: CGRect(
                     x: dotCenter.x - dotRadius,
@@ -91,7 +93,7 @@ enum MenuBarIcon {
         ctx.saveGState()
         ctx.setStrokeColor(NSColor.black.cgColor)
         ctx.setLineCap(.round)
-        ctx.setLineWidth(max(1, unit * 0.085))
+        ctx.setLineWidth(max(1, unit * 0.095))
 
         for side in [CGFloat.pi / 2, -CGFloat.pi / 2] {
             ctx.beginPath()
