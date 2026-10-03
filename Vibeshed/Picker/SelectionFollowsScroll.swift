@@ -25,6 +25,9 @@ final class SelectionScrollTracker<ID: Hashable> {
     /// correction would fight an ongoing (momentum) scroll. A set because several
     /// corrections can land before SwiftUI delivers their `onChange`.
     private var scrollDrivenSelections: Set<ID> = []
+    /// The most recent correction. SwiftUI may coalesce several corrections into one
+    /// `onChange` carrying only this one; its delivery supersedes all earlier ones.
+    private var latestScrollDrivenSelection: ID?
     /// A selection whose `scrollTo` hasn't been applied yet. Starts true: a list
     /// can appear with its selection already set (e.g. options loaded async, opening on
     /// the current value), which `onChange` never sees — the list scrolls there on appear.
@@ -33,10 +36,25 @@ final class SelectionScrollTracker<ID: Hashable> {
     /// Call from `onChange` of the selection. Returns true when the list should
     /// `scrollTo` the new selection (it came from the keyboard or a click).
     func selectionChanged(to id: ID) -> Bool {
-        if scrollDrivenSelections.remove(id) != nil { return false }
+        if scrollDrivenSelections.contains(id) {
+            if id == latestScrollDrivenSelection {
+                scrollDrivenSelections = []
+                latestScrollDrivenSelection = nil
+            } else {
+                scrollDrivenSelections.remove(id)
+            }
+            return false
+        }
         scrollDrivenSelections = []
-        awaitingScrollTo = true
+        latestScrollDrivenSelection = nil
+        scrollToStarting()
         return true
+    }
+
+    /// Call before any programmatic `scrollTo` that isn't triggered by a selection
+    /// change (on appear, list reset); pair it with `scrollToApplied()`.
+    func scrollToStarting() {
+        awaitingScrollTo = true
     }
 
     /// Call once the pending `scrollTo` (on appear, or for a keyboard/click selection)
@@ -73,6 +91,7 @@ final class SelectionScrollTracker<ID: Hashable> {
         guard let target, target != index else { return nil }
         let newID = ids[target]
         scrollDrivenSelections.insert(newID)
+        latestScrollDrivenSelection = newID
         return newID
     }
 

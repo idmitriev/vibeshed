@@ -115,7 +115,9 @@ struct ParameterInputView: View {
             .accessibilityIdentifier("parameterOptionList")
             .onAppear {
                 // Appearing with a selection already set (no `onChange`): bring it into view
-                // once the first layout has happened.
+                // once the first layout has happened. The tracker outlives the list when the
+                // list is removed and re-inserted (options reloading), so re-arm it each time.
+                scrollTracker.scrollToStarting()
                 DispatchQueue.main.async {
                     if let id = state.selectedParameterOptionID {
                         proxy.scrollTo(id, anchor: .center)

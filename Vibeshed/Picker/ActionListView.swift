@@ -54,7 +54,9 @@ struct ActionListView: View {
             .accessibilityIdentifier("actionList")
             .onAppear {
                 // Appearing with a selection already set (no `onChange`): bring it into view
-                // once the first layout has happened.
+                // once the first layout has happened. The tracker outlives the list when the
+                // list is removed and re-inserted (options reloading), so re-arm it each time.
+                scrollTracker.scrollToStarting()
                 DispatchQueue.main.async {
                     if let id = selectedID {
                         proxy.scrollTo(id, anchor: .center)
@@ -70,7 +72,11 @@ struct ActionListView: View {
             }
             .onChange(of: listResetToken) { _, _ in
                 if let firstID = actions.first?.id {
+                    // The first row may keep its ID across a reset, so no selection
+                    // `onChange` arms the tracker for this scroll.
+                    scrollTracker.scrollToStarting()
                     proxy.scrollTo(firstID, anchor: .top)
+                    DispatchQueue.main.async { scrollTracker.scrollToApplied() }
                 }
             }
         }

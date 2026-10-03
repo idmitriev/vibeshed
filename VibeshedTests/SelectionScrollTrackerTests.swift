@@ -123,4 +123,23 @@ final class SelectionScrollTrackerTests: XCTestCase {
         tracker.scrollToApplied()
         XCTAssertNil(move(tracker, selected: 30, rowMinY: 2000))
     }
+
+    func testCoalescedCorrectionDoesNotLeaveStaleIDs() {
+        let tracker = makeTracker()
+        XCTAssertEqual(move(tracker, selected: 5, rowMinY: 20), 6)
+        XCTAssertEqual(move(tracker, selected: 6, rowMinY: 50), 7)
+        // SwiftUI delivers a single `onChange` for the final value only.
+        XCTAssertFalse(tracker.selectionChanged(to: 7))
+        // A later keyboard move to 6 is a real selection and must scroll.
+        XCTAssertTrue(tracker.selectionChanged(to: 6))
+    }
+
+    func testReusedTrackerWaitsAgainWhenListReappears() {
+        let tracker = makeTracker()
+        // The list is re-inserted (options reloaded) with a preset selection off screen.
+        tracker.scrollToStarting()
+        XCTAssertNil(move(tracker, selected: 30, rowMinY: 70 + 30 * pitch))
+        tracker.scrollToApplied()
+        XCTAssertNil(move(tracker, selected: 30, rowMinY: 200))
+    }
 }
