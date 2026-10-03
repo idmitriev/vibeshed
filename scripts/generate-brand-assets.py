@@ -31,17 +31,18 @@ ROOT = Path(__file__).resolve().parent.parent
 # MARK: - Palettes
 
 PALETTES = {
-    # Tangerine to hot pink with a cream wand: warm and loud, and unlike the blues and
-    # purples that fill most Docks.
+    # Tangerine to raspberry with a cream wand: warm and loud, and unlike the blues and
+    # purples that fill most Docks. The corner under the wand's head is the deepest, so the
+    # head keeps its contrast (4.6:1) at 16px.
     "sunset": {
-        "tile": [(0, "#FFB54D"), (0.55, "#FF6F61"), (1, "#FF3D7F")],
+        "tile": [(0, "#FFB54D"), (0.5, "#FF6F61"), (1, "#D81E5B")],
         "ripple": ("#FFFFFF", 0.075),
         "wand": [(0, "#FFFFFF"), (0.5, "#FFF6F0"), (1, "#FFD9CB")],
         "neck": [(0, "#F9C7B6"), (1, "#E6958C")],
         "ridge": [(0, "#FFFFFF"), (1, "#FFD2C2")],
         "button": "#FF4F7B",
         "waves": "#FFFFFF",
-        "shadow": ("#B0124A", 0.30),
+        "shadow": ("#8A0A3A", 0.32),
         "shine": 0,
     },
     # Aubergine with a peach wand: the old icon's night-time mood, without the neon.

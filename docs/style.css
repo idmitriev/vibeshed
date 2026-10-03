@@ -9,7 +9,7 @@
   --accent-hover: #ff8fa6;
   --border: #2e2333;
   --code-bg: #1d1522;
-  --sunset: linear-gradient(135deg, #ffb54d, #ff6f61 55%, #ff3d7f);
+  --sunset: linear-gradient(135deg, #ffb54d, #ff6f61 50%, #d81e5b);
   --on-sunset: #2a0f1f;
   --max-width: 840px;
 }
