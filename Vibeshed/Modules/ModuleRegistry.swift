@@ -204,9 +204,14 @@ final class ModuleRegistry {
         Set(configuredModuleTypes.flatMap { $0.optionalPermissions })
     }
 
-    /// Apps those modules send Apple events to (see `Module.automationTargets`).
-    var automationTargets: Set<String> {
-        Set(configuredModuleTypes.flatMap { $0.automationTargets })
+    /// Apps those modules send Apple events to with their current settings (see
+    /// `Module.automationTargets`).
+    func automationTargets() async -> Set<String> {
+        var targets = Set<String>()
+        for module in Array(modules.values) + Array(pendingModules.values) {
+            await targets.formUnion(module.automationTargets)
+        }
+        return targets
     }
 
     private var configuredModuleTypes: [any Module.Type] {

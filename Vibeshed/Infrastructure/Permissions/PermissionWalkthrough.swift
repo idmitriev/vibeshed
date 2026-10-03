@@ -3,8 +3,12 @@ import Foundation
 /// What a walkthrough needs from `PermissionsManager`. Tests substitute a fake.
 @MainActor
 protocol PermissionAuthority: AnyObject {
+    /// What macOS last said about controlling each app, by bundle ID.
+    var automationStatuses: [String: AutomationConsent.Status] { get }
+
     func isGranted(_ permission: Permission) -> Bool
     func refresh(_ permission: Permission)
+    func refreshAutomation(for bundleIDs: [String])
     func request(_ permission: Permission) async
     @discardableResult
     func requestAutomation(for bundleIDs: [String]) async -> [String: AutomationConsent.Status]
@@ -44,8 +48,29 @@ final class PermissionWalkthrough {
         permission == .automation || permission == .calendars
     }
 
+    /// Automation goes by the plan's own apps (see `automationHoldouts`) rather than the
+    /// manager's System Events stand-in.
     func isGranted(_ permission: Permission) -> Bool {
-        authority.isGranted(permission)
+        permission == .automation ? automationHoldouts.isEmpty : authority.isGranted(permission)
+    }
+
+    /// The plan's apps macOS refused, or hasn't asked about yet. Apps that haven't run
+    /// don't count, since they ask the first time Vibeshed scripts them; System Events
+    /// does until it has answered, because it can be started just to ask.
+    var automationHoldouts: [String] {
+        plan.automationTargets.filter { bundleID in
+            switch authority.automationStatuses[bundleID] {
+            case .denied?, .notAsked?: true
+            case .notRunning?, nil: bundleID == AutomationConsent.systemEvents
+            case .allowed?: false
+            }
+        }
+    }
+
+    /// The plan's apps Vibeshed was refused control of. macOS won't ask again; only the
+    /// Automation pane in System Settings changes it.
+    var deniedAutomationTargets: [String] {
+        plan.automationTargets.filter { authority.automationStatuses[$0] == .denied }
     }
 
     var allGranted: Bool {
@@ -83,7 +108,7 @@ final class PermissionWalkthrough {
     }
 
     private func run(_ steps: [Permission]) async {
-        for permission in steps where !authority.isGranted(permission) {
+        for permission in steps where !isGranted(permission) {
             guard !Task.isCancelled else { return }
             current = permission
             if permission == .automation {

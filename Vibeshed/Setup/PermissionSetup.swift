@@ -33,8 +33,10 @@ final class PermissionSetup {
     /// Opens the window. `welcome` greets a first launch and names the apps the new
     /// config was set up for; it stays that way until first-launch setup is done.
     /// Call once modules are registered: the plan comes from them.
-    func show(welcome: Bool) {
-        let walkthrough = currentWalkthrough()
+    func show(welcome: Bool) async {
+        let walkthrough = await currentWalkthrough()
+        // Before the first frame, so nothing shows as granted that isn't.
+        refresh(walkthrough.plan)
         let view = PermissionSetupView(
             walkthrough: walkthrough,
             context: makeContext(welcome: welcome || Self.isPending, plan: walkthrough.plan),
@@ -68,7 +70,7 @@ final class PermissionSetup {
     /// them), and about Automation for the apps that are open. Call once modules are
     /// registered.
     func requestAtLaunch() async {
-        let plan = makePlan()
+        let plan = await makePlan()
         for permission in [Permission.accessibility, .inputMonitoring, .fullDiskAccess]
             where plan.permissions.contains(permission) && !permissionsManager.isGranted(permission)
         {
@@ -87,21 +89,22 @@ final class PermissionSetup {
     // MARK: - Plan
 
     /// What the registered modules (and the ones waiting on permissions) need.
-    func makePlan() -> PermissionPlan {
-        PermissionPlan(
+    func makePlan() async -> PermissionPlan {
+        let targets = await moduleRegistry.automationTargets()
+        return PermissionPlan(
             required: moduleRegistry.requiredPermissions,
             optional: moduleRegistry.optionalPermissions,
-            automationTargets: moduleRegistry.automationTargets.filter { Self.appURL($0) != nil },
+            automationTargets: targets.filter { Self.appURL($0) != nil },
             usesCapsLock: configManager.config.keybindings.contains(where: \.usesCapsLock)
         )
     }
 
     /// The running walkthrough, or a new one for the current config.
-    private func currentWalkthrough() -> PermissionWalkthrough {
+    private func currentWalkthrough() async -> PermissionWalkthrough {
         if let walkthrough, walkthrough.isRunning {
             return walkthrough
         }
-        let walkthrough = PermissionWalkthrough(plan: makePlan(), authority: permissionsManager)
+        let walkthrough = PermissionWalkthrough(plan: await makePlan(), authority: permissionsManager)
         walkthrough.onGrantedInSettings = { [weak self] _ in self?.bringToFront() }
         self.walkthrough = walkthrough
         return walkthrough
@@ -112,7 +115,9 @@ final class PermissionSetup {
             isWelcome: welcome,
             hotkey: welcome ? Self.pickerHotkey(in: configManager.config.keybindings) : nil,
             software: welcome ? foundSoftware() : [],
-            automationApps: plan.automationTargets.compactMap(Self.appName)
+            appNames: Dictionary(uniqueKeysWithValues: plan.automationTargets.compactMap { bundleID in
+                Self.appName(bundleID).map { (bundleID, $0) }
+            })
         )
     }
 
@@ -181,12 +186,18 @@ final class PermissionSetup {
         refreshTask?.cancel()
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
-                for permission in plan.permissions {
-                    self?.permissionsManager.refresh(permission)
-                }
                 try? await Task.sleep(for: .seconds(1))
+                self?.refresh(plan)
             }
         }
+    }
+
+    /// Re-reads every permission in the plan; Automation app by app.
+    private func refresh(_ plan: PermissionPlan) {
+        for permission in plan.permissions where permission != .automation {
+            permissionsManager.refresh(permission)
+        }
+        permissionsManager.refreshAutomation(for: plan.automationTargets)
     }
 
     private func end() {

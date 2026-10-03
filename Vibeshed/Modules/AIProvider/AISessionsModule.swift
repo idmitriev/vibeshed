@@ -16,11 +16,6 @@ actor AISessionsModule<Provider: AIProvider>: ModuleConfigurable {
         Provider.defaultConfig
     }
 
-    /// CLI sessions start and resume in a new tab of the user's terminal.
-    static var automationTargets: [String] {
-        [AILaunch.defaultTerminalBundleID]
-    }
-
     static func validate(_ config: Config) -> ConfigValidationResult {
         Provider.validate(config)
     }
@@ -29,6 +24,11 @@ actor AISessionsModule<Provider: AIProvider>: ModuleConfigurable {
     private var config: Config
     private var cache: TimedCache<[AISession]>
     private let log: Logger
+
+    /// CLI sessions start and resume in a new tab of the configured terminal.
+    var automationTargets: [String] {
+        [AILaunch.terminalBundleID(for: config.terminalApp)]
+    }
 
     init() {
         provider = Provider()

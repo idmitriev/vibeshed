@@ -46,12 +46,17 @@ final class PermissionPlanTests: XCTestCase {
     }
 
     /// What the first-launch config's built-in modules need from macOS.
-    func testBuiltInModulesNeedScreenRecordingAndAutomation() {
-        let modules: [any Module.Type] = [WindowModule.self, ClipboardModule.self, ThemeModule.self, SystemModule.self]
+    func testBuiltInModulesNeedScreenRecordingAndAutomation() async {
+        let modules: [any Module] = [WindowModule(), ClipboardModule(), ThemeModule(), SystemModule()]
+        var targets = Set<String>()
+        for module in modules {
+            await targets.formUnion(module.automationTargets)
+        }
+        let types = modules.map { type(of: $0) }
         let plan = PermissionPlan(
-            required: Set(modules.flatMap { $0.requiredPermissions }),
-            optional: Set(modules.flatMap { $0.optionalPermissions }),
-            automationTargets: Set(modules.flatMap { $0.automationTargets })
+            required: Set(types.flatMap { $0.requiredPermissions }),
+            optional: Set(types.flatMap { $0.optionalPermissions }),
+            automationTargets: targets
         )
         XCTAssertEqual(plan.permissions, [.accessibility, .automation, .screenRecording])
         XCTAssertEqual(plan.automationTargets.first, AutomationConsent.systemEvents)

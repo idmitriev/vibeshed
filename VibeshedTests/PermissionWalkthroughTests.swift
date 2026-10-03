@@ -37,7 +37,7 @@ final class PermissionWalkthroughTests: XCTestCase {
     /// Screen Recording is granted with a switch in System Settings: the walkthrough
     /// waits for it, then comes back to the front.
     func testWaitsForTheSwitchInSystemSettings() async {
-        let authority = FakeAuthority(granted: [.accessibility, .automation, .fullDiskAccess])
+        let authority = FakeAuthority(granted: [.accessibility, .fullDiskAccess], automation: allowed)
         let walkthrough = makeWalkthrough(everything, authority)
         var broughtBack: [Permission] = []
         walkthrough.onGrantedInSettings = { broughtBack.append($0) }
@@ -54,7 +54,7 @@ final class PermissionWalkthroughTests: XCTestCase {
     }
 
     func testSkipMovesOnToTheNextPermission() async {
-        let authority = FakeAuthority(granted: [.accessibility, .automation])
+        let authority = FakeAuthority(granted: [.accessibility], automation: allowed)
         let walkthrough = makeWalkthrough(everything, authority)
 
         walkthrough.start()
@@ -88,7 +88,7 @@ final class PermissionWalkthroughTests: XCTestCase {
     }
 
     func testCancelStopsBeforeTheNextPermission() async {
-        let authority = FakeAuthority(granted: [.accessibility, .automation])
+        let authority = FakeAuthority(granted: [.accessibility], automation: allowed)
         let walkthrough = makeWalkthrough(everything, authority)
 
         walkthrough.start()
@@ -97,6 +97,38 @@ final class PermissionWalkthroughTests: XCTestCase {
         await waitUntil { !walkthrough.isRunning }
 
         XCTAssertEqual(authority.requested, [.fullDiskAccess])
+    }
+
+    /// Every app in the plan counts: one refusal keeps Automation open, and the row can
+    /// say which app it was.
+    func testAutomationGoesByEachAppInThePlan() {
+        let authority = FakeAuthority(automation: [
+            AutomationConsent.systemEvents: .allowed, "com.spotify.client": .denied,
+        ])
+        let walkthrough = makeWalkthrough(everything, authority)
+        XCTAssertFalse(walkthrough.isGranted(.automation))
+        XCTAssertEqual(walkthrough.deniedAutomationTargets, ["com.spotify.client"])
+    }
+
+    /// A plan without System Events is done once its own apps allow it.
+    func testPlanWithoutSystemEventsIsDoneWhenItsAppsAllow() {
+        let plan = PermissionPlan(required: [], automationTargets: ["com.spotify.client"])
+        let allowed = makeWalkthrough(plan, FakeAuthority(automation: ["com.spotify.client": .allowed]))
+        XCTAssertTrue(allowed.isGranted(.automation))
+        let unasked = makeWalkthrough(plan, FakeAuthority(automation: ["com.spotify.client": .notAsked]))
+        XCTAssertFalse(unasked.isGranted(.automation))
+    }
+
+    /// Apps that haven't run can't be asked yet, so they don't hold Automation up.
+    /// System Events can be started just to ask, so it has to answer.
+    func testAppsThatHaventRunDontHoldItUpButSystemEventsDoes() {
+        let nothingRunning = FakeAuthority(automation: [
+            AutomationConsent.systemEvents: .notRunning, "com.spotify.client": .notRunning,
+        ])
+        XCTAssertEqual(makeWalkthrough(everything, nothingRunning).automationHoldouts, [AutomationConsent.systemEvents])
+
+        let systemEventsAnswered = FakeAuthority(automation: [AutomationConsent.systemEvents: .allowed])
+        XCTAssertTrue(makeWalkthrough(everything, systemEventsAnswered).isGranted(.automation))
     }
 
     func testPickerHotkeyLabel() {
@@ -111,6 +143,11 @@ final class PermissionWalkthroughTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Every app in `everything` allowed already.
+    private var allowed: [String: AutomationConsent.Status] {
+        Dictionary(uniqueKeysWithValues: everything.automationTargets.map { ($0, .allowed) })
+    }
 
     private func makeWalkthrough(_ plan: PermissionPlan, _ authority: FakeAuthority) -> PermissionWalkthrough {
         PermissionWalkthrough(plan: plan, authority: authority, pollInterval: .milliseconds(5))
@@ -134,15 +171,23 @@ final class PermissionWalkthroughTests: XCTestCase {
 
 /// Grants what's in `grantsOnRequest` as soon as it's asked for, like clicking Allow
 /// or flipping the switch straight away; the rest stays missing until a test grants it.
+/// Automation is per app: asking allows every app if `grantsOnRequest` has it, and
+/// refuses them otherwise.
 @MainActor
 private final class FakeAuthority: PermissionAuthority {
     var granted: Set<Permission>
+    private(set) var automationStatuses: [String: AutomationConsent.Status]
     let grantsOnRequest: Set<Permission>
     private(set) var requested: [Permission] = []
     private(set) var automationAsked: [[String]] = []
 
-    init(granted: Set<Permission> = [], grantsOnRequest: Set<Permission> = []) {
+    init(
+        granted: Set<Permission> = [],
+        automation: [String: AutomationConsent.Status] = [:],
+        grantsOnRequest: Set<Permission> = []
+    ) {
         self.granted = granted
+        automationStatuses = automation
         self.grantsOnRequest = grantsOnRequest
     }
 
@@ -152,6 +197,8 @@ private final class FakeAuthority: PermissionAuthority {
 
     func refresh(_: Permission) {}
 
+    func refreshAutomation(for _: [String]) {}
+
     func request(_ permission: Permission) async {
         requested.append(permission)
         if grantsOnRequest.contains(permission) {
@@ -160,9 +207,13 @@ private final class FakeAuthority: PermissionAuthority {
     }
 
     func requestAutomation(for bundleIDs: [String]) async -> [String: AutomationConsent.Status] {
+        requested.append(.automation)
         automationAsked.append(bundleIDs)
-        await request(.automation)
-        return [:]
+        let answer: AutomationConsent.Status = grantsOnRequest.contains(.automation) ? .allowed : .denied
+        for bundleID in bundleIDs {
+            automationStatuses[bundleID] = answer
+        }
+        return automationStatuses
     }
 
     func openSettings(for _: Permission) {}

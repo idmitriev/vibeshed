@@ -16,11 +16,6 @@ actor ThemeModule: ModuleConfigurable {
         .init()
     }
 
-    /// Light/dark appearance goes through System Events, iTerm colors through iTerm.
-    static var automationTargets: [String] {
-        [AutomationConsent.systemEvents, ITermTarget.bundleID]
-    }
-
     static let switchActionID = ActionID(module: "theme", name: "switch")
     private static let generatedDefaultsKey = "theme.generated"
 
@@ -31,6 +26,15 @@ actor ThemeModule: ModuleConfigurable {
     let applier = ThemeApplier()
     private let log = Log.module("theme")
     private var itermWatcher: AppLaunchWatcher?
+
+    /// The scripted targets that are on: appearance through System Events, iTerm's
+    /// colors through iTerm, and the github target through browser tabs.
+    var automationTargets: [String] {
+        let targets = config.enabledTargets
+        return (targets.contains(.appearance) ? [AutomationConsent.systemEvents] : [])
+            + (targets.contains(.iterm) ? [ITermTarget.bundleID] : [])
+            + (targets.contains(.github) ? BrowserRegistry.appleScriptCapable.map(\.bundleID) : [])
+    }
 
     func initialize(context: ModuleContext) async throws {
         eventBus = context.eventBus

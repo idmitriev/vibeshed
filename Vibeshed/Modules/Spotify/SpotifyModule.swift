@@ -12,7 +12,7 @@ actor SpotifyModule: ModuleConfigurable {
         .init()
     }
 
-    static var automationTargets: [String] {
+    var automationTargets: [String] {
         [SpotifyManager.bundleID]
     }
 

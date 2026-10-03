@@ -13,10 +13,11 @@ protocol Module: Actor {
     /// Permission setup asks for these along with `requiredPermissions`.
     static var optionalPermissions: Set<Permission> { get }
 
-    /// Bundle IDs of the apps this module sends Apple events to. macOS asks once per
-    /// app ("Vibeshed wants access to control …"); permission setup asks up front for
-    /// the ones that are running, and the rest ask the first time they're scripted.
-    static var automationTargets: [String] { get }
+    /// Bundle IDs of the apps this module sends Apple events to with its current config.
+    /// macOS asks once per app ("Vibeshed wants access to control …"); permission setup
+    /// asks up front for the ones that are running, and the rest ask the first time
+    /// they're scripted.
+    var automationTargets: [String] { get }
 
     /// Whether `provideActions` output depends on the query text.
     ///
@@ -70,7 +71,7 @@ extension Module {
         []
     }
 
-    static var automationTargets: [String] {
+    var automationTargets: [String] {
         []
     }
 

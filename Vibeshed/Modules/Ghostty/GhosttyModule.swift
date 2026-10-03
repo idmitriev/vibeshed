@@ -15,7 +15,7 @@ actor GhosttyModule: ModuleConfigurable {
         .init()
     }
 
-    static var automationTargets: [String] {
+    var automationTargets: [String] {
         [GhosttyApp.bundleID]
     }
 

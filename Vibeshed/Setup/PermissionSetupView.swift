@@ -8,8 +8,8 @@ struct PermissionSetupView: View {
         var isWelcome: Bool
         var hotkey: String?
         var software: [String]
-        /// The installed apps the Automation step asks about, by name.
-        var automationApps: [String]
+        /// Names of the installed apps the Automation step asks about, by bundle ID.
+        var appNames: [String: String]
     }
 
     let walkthrough: PermissionWalkthrough
@@ -82,11 +82,7 @@ struct PermissionSetupView: View {
                     if permission != walkthrough.plan.permissions.first {
                         Divider()
                     }
-                    PermissionRow(
-                        walkthrough: walkthrough,
-                        permission: permission,
-                        automationApps: context.automationApps
-                    )
+                    PermissionRow(walkthrough: walkthrough, permission: permission, appNames: context.appNames)
                 }
             }
             .background(RoundedRectangle(cornerRadius: 8).fill(.quinary))
@@ -119,10 +115,16 @@ struct PermissionSetupView: View {
 private struct PermissionRow: View {
     let walkthrough: PermissionWalkthrough
     let permission: Permission
-    let automationApps: [String]
+    let appNames: [String: String]
 
     private var isCurrent: Bool {
         walkthrough.current == permission
+    }
+
+    /// Apps macOS was told not to let Vibeshed control; it won't ask about them again.
+    private var refusedApps: [String] {
+        guard permission == .automation else { return [] }
+        return walkthrough.deniedAutomationTargets.map { appNames[$0] ?? $0 }
     }
 
     var body: some View {
@@ -133,7 +135,7 @@ private struct PermissionRow: View {
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
                 Text(permission.displayName)
-                Text(isCurrent ? hint : purpose)
+                Text(isCurrent ? hint : refusedApps.isEmpty ? purpose : refusedNote)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -162,6 +164,8 @@ private struct PermissionRow: View {
         } else if isCurrent {
             ProgressView()
                 .controlSize(.small)
+        } else if !refusedApps.isEmpty {
+            Button("Open Settings") { walkthrough.openSettings(for: permission) }
         } else {
             Button(walkthrough.skipped.contains(permission) ? "Try Again" : "Grant") {
                 walkthrough.start([permission])
@@ -170,9 +174,15 @@ private struct PermissionRow: View {
         }
     }
 
+    private var refusedNote: String {
+        "Vibeshed isn't allowed to control \(ListFormatter.localizedString(byJoining: refusedApps)). "
+            + "Turn it on for them under Automation in System Settings."
+    }
+
     /// What the permission is for.
     private var purpose: String {
-        switch permission {
+        let automationApps = walkthrough.plan.automationTargets.compactMap { appNames[$0] }
+        return switch permission {
         case .accessibility:
             "Keyboard shortcuts, moving and resizing windows, and pasting into apps."
         case .automation where !automationApps.isEmpty:

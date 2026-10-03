@@ -104,9 +104,9 @@ enum AILaunch {
             ? "iterm" : "terminal"
     }
 
-    /// The app `inTerminal` scripts when the config doesn't name one.
-    static var defaultTerminalBundleID: String {
-        detectTerminal() == "iterm" ? ITermTarget.bundleID : "com.apple.Terminal"
+    /// The app `inTerminal` scripts for a config's `terminalApp`.
+    static func terminalBundleID(for terminalApp: String?) -> String {
+        (terminalApp ?? detectTerminal()) == "iterm" ? ITermTarget.bundleID : "com.apple.Terminal"
     }
 
     // MARK: - Apps and URLs

@@ -30,7 +30,7 @@ struct StatusBarView: View {
         permissionsSection
 
         Button("Set Up Permissions…") {
-            permissionSetup.show(welcome: false)
+            Task { await permissionSetup.show(welcome: false) }
         }
 
         Divider()

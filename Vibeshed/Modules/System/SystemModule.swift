@@ -12,13 +12,20 @@ actor SystemModule: ModuleConfigurable {
         .init()
     }
 
-    /// Restart, log out, appearance, Dock and menu bar go through System Events;
-    /// emptying the Trash through Finder.
-    static var automationTargets: [String] {
-        [AutomationConsent.systemEvents, AutomationConsent.finder]
-    }
-
     private var config: SystemConfig = .init()
+
+    /// Restart, shut down, log out, appearance, Dock and menu bar go through System
+    /// Events, emptying the Trash through Finder: whichever of them are enabled.
+    var automationTargets: [String] {
+        let systemEventsActions: Set = [
+            "restart", "shutdown", "logout", "toggleAppearance", "autoAppearance", "toggleDock", "toggleMenuBar",
+        ]
+        let enabled = config.enabledActions
+        let usesSystemEvents = enabled.map { !$0.isDisjoint(with: systemEventsActions) } ?? true
+        let usesFinder = enabled?.contains("emptyTrash") ?? true
+        return (usesSystemEvents ? [AutomationConsent.systemEvents] : [])
+            + (usesFinder ? [AutomationConsent.finder] : [])
+    }
     private let log = Log.module("system")
 
     func initialize(context: ModuleContext) async throws {

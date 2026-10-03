@@ -12,7 +12,7 @@ actor ITermModule: ModuleConfigurable {
         .init()
     }
 
-    static var automationTargets: [String] {
+    var automationTargets: [String] {
         [ITermTarget.bundleID]
     }
 

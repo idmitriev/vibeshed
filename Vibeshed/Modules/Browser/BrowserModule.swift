@@ -13,11 +13,14 @@ actor BrowserModule: ModuleConfigurable {
         .init()
     }
 
-    static var automationTargets: [String] {
-        BrowserRegistry.appleScriptCapable.map(\.bundleID)
-    }
-
     private var config: BrowserConfig = .init()
+
+    /// The browsers `browsers:` names, or every one with scriptable tabs.
+    var automationTargets: [String] {
+        let scriptable = BrowserRegistry.appleScriptCapable.map(\.bundleID)
+        guard !config.browsers.isEmpty else { return scriptable }
+        return config.browsers.map(BrowserRegistry.resolveBundleID).filter(scriptable.contains)
+    }
     private let browserManager = BrowserManager()
     private let log = Log.module("browser")
 

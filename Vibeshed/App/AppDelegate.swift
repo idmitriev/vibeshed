@@ -197,7 +197,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // launch the setup window asks for all of them, one prompt at a time; later
             // launches ask only for what Vibeshed asks for at every launch.
             if PermissionSetup.isPending {
-                permissionSetup.show(welcome: true)
+                await permissionSetup.show(welcome: true)
             } else {
                 await permissionSetup.requestAtLaunch()
             }
