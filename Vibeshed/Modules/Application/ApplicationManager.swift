@@ -8,15 +8,15 @@ private let log = Log.module("application")
 struct ApplicationManager: Sendable {
     // MARK: - List Installed Applications
 
+    /// Where installed apps are looked up; earlier directories win when a bundle ID appears twice.
+    static let applicationDirectories: [URL] = [
+        URL(fileURLWithPath: "/Applications"),
+        URL(fileURLWithPath: "/System/Applications"),
+        URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Applications"),
+    ]
+
     @MainActor
     func listInstalledApplications() -> [AppInfo] {
-        let appDirs = [
-            "/Applications",
-            "/System/Applications",
-            "/System/Applications/Utilities",
-            NSHomeDirectory() + "/Applications",
-        ]
-
         var seen = Set<String>()
         var apps: [AppInfo] = []
         let runningApps = NSWorkspace.shared.runningApplications
@@ -31,7 +31,7 @@ struct ApplicationManager: Sendable {
         // Single CGWindowList call for all window counts
         let windowCounts = WindowListHelper.countWindowsByPID()
 
-        for dir in appDirs {
+        for dir in Self.applicationDirectories {
             apps += installedApps(
                 in: dir,
                 runningByBundleID: runningByBundleID,
@@ -64,38 +64,29 @@ struct ApplicationManager: Sendable {
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// `.app` bundles directly inside `dir` whose bundle ID isn't in `seen` yet; adds each one it returns to `seen`.
+    /// Apps from `appBundleURLs(in:)` whose ID isn't in `seen` yet; adds each one it returns to `seen`.
     @MainActor
     private func installedApps(
-        in dir: String,
+        in dir: URL,
         runningByBundleID: [String: NSRunningApplication],
         windowCounts: [pid_t: Int],
         seen: inout Set<String>
     ) -> [AppInfo] {
-        let fileManager = FileManager.default
-        guard let contents = try? fileManager.contentsOfDirectory(atPath: dir) else {
-            return []
-        }
         var apps: [AppInfo] = []
-        for item in contents where item.hasSuffix(".app") {
-            let path = (dir as NSString).appendingPathComponent(item)
-            let url = URL(fileURLWithPath: path)
-            guard let bundle = Bundle(url: url),
-                  let bundleID = bundle.bundleIdentifier,
-                  !seen.contains(bundleID)
-            else {
-                continue
-            }
-            seen.insert(bundleID)
+        for url in Self.appBundleURLs(in: dir) {
+            guard let bundle = Bundle(url: url) else { continue }
+            let appID = Self.appID(for: bundle)
+            guard !seen.contains(appID) else { continue }
+            seen.insert(appID)
 
-            let name = fileManager.displayName(atPath: path)
+            let name = FileManager.default.displayName(atPath: url.path)
                 .replacingOccurrences(of: ".app", with: "")
-            let running = runningByBundleID[bundleID]
+            let running = runningByBundleID[appID]
             let windowCount = running
                 .map { windowCounts[$0.processIdentifier] ?? 0 } ?? 0
 
             apps.append(AppInfo(
-                id: bundleID,
+                id: appID,
                 name: name,
                 bundleURL: url,
                 isRunning: running != nil,
@@ -104,6 +95,46 @@ struct ApplicationManager: Sendable {
             ))
         }
         return apps
+    }
+
+    /// `.app` bundles directly inside `dir` and inside its plain subfolders, one level down
+    /// (`/System/Applications/Utilities`, `~/Applications/Chrome Apps.localized`, vendor folders).
+    static func appBundleURLs(in dir: URL) -> [URL] {
+        let fileManager = FileManager.default
+        let keys: [URLResourceKey] = [.isDirectoryKey, .isPackageKey]
+        guard let entries = try? fileManager.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: keys,
+            options: .skipsHiddenFiles
+        ) else {
+            return []
+        }
+        var bundles: [URL] = []
+        var folders: [URL] = []
+        for entry in entries.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+            if entry.pathExtension == "app" {
+                bundles.append(entry)
+            } else if let values = try? entry.resourceValues(forKeys: Set(keys)),
+                      values.isDirectory == true, values.isPackage != true
+            {
+                folders.append(entry)
+            }
+        }
+        for folder in folders {
+            let nested = (try? fileManager.contentsOfDirectory(
+                at: folder,
+                includingPropertiesForKeys: nil,
+                options: .skipsHiddenFiles
+            )) ?? []
+            bundles += nested.filter { $0.pathExtension == "app" }
+                .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        }
+        return bundles
+    }
+
+    /// The bundle ID, or the bundle's path for apps without one (e.g. Steam game shortcuts).
+    static func appID(for bundle: Bundle) -> String {
+        bundle.bundleIdentifier ?? bundle.bundleURL.path
     }
 
     // MARK: - List Running Applications
