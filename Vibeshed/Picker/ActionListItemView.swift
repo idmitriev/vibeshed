@@ -5,7 +5,7 @@ struct ActionListItemView: View, Equatable {
     var hotkeyNumber: Int?
     var rowHeight: CGFloat = 52
     var isSelected: Bool = false
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
 
     nonisolated static func == (lhs: ActionListItemView, rhs: ActionListItemView) -> Bool {
         lhs.item == rhs.item

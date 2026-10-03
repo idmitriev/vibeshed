@@ -2,7 +2,7 @@ import SwiftUI
 
 struct LayoutCorrectionBanner: View {
     let hint: LayoutCorrectionHint
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
 
     var body: some View {
         HStack(spacing: 4) {

@@ -9,7 +9,6 @@ final class PanelController {
     private let pickerState: PickerState
     private let configManager: ConfigManager
     var coordinator: PickerCoordinator?
-    var themeEngine: ThemeEngine?
     @ObservationIgnored private nonisolated(unsafe) var windowCloseObserver: NSObjectProtocol?
 
     private(set) var isVisible: Bool = false
@@ -159,12 +158,11 @@ final class PanelController {
     }
 
     private func overlayStyle(for config: AppConfig.OverlayConfig) -> OverlayStyle {
-        let accent = themeEngine.flatMap { ThemeColor(nsColor: NSColor($0.theme.accent)) }
-            ?? ThemeColor(nsColor: .controlAccentColor)
-            ?? .black
+        let palette = ActiveTheme.shared.displayed?.palette
+        let accent = palette?.accent ?? ThemeColor(nsColor: .controlAccentColor) ?? .black
         let tint = OverlayStyle.tint(
             for: config.color,
-            palette: ActiveTheme.shared.displayed?.palette,
+            palette: palette,
             accent: accent,
             isDarkAppearance: NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         )
@@ -176,7 +174,7 @@ final class PanelController {
     }
 
     /// Restyles the overlay while it's up when what it's drawn from changes: a theme
-    /// applied or live-previewed, the dynamic accent, the config.
+    /// applied or live-previewed, the config.
     private func watchOverlayStyle() {
         overlayStyleWatch += 1
         let watch = overlayStyleWatch
@@ -238,20 +236,9 @@ final class PanelController {
             }
         }
 
-        if let engine = themeEngine {
-            newPanel.setSwiftUIContent(
-                ThemedPickerWrapper(
-                    state: pickerState,
-                    panelController: self,
-                    appearance: appearance,
-                    themeEngine: engine
-                )
-            )
-        } else {
-            newPanel.setSwiftUIContent(
-                PickerView(state: pickerState, panelController: self, appearance: appearance)
-            )
-        }
+        newPanel.setSwiftUIContent(
+            ThemedPickerWrapper(state: pickerState, panelController: self, appearance: appearance)
+        )
 
         windowCloseObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
@@ -271,17 +258,16 @@ final class PanelController {
 
 // MARK: - Themed Wrapper
 
-/// Observes ThemeEngine and injects VibeTheme into the SwiftUI environment.
-/// Needed because NSHostingView content is set once, but @Observable
-/// dependency on themeEngine triggers re-renders when theme changes.
+/// Injects the active palette's PickerTheme into the SwiftUI environment.
+/// Needed because NSHostingView content is set once, but the @Observable
+/// dependency on ActiveTheme triggers re-renders when the theme changes.
 private struct ThemedPickerWrapper: View {
     @Bindable var state: PickerState
     let panelController: PanelController
     let appearance: AppConfig.AppearanceConfig
-    let themeEngine: ThemeEngine
 
     var body: some View {
         PickerView(state: state, panelController: panelController, appearance: appearance)
-            .environment(\.vibeTheme, themeEngine.theme)
+            .environment(\.pickerTheme, PickerTheme.current)
     }
 }
