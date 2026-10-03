@@ -1,6 +1,8 @@
 import SwiftUI
 
-struct VibeTheme: Equatable, Sendable {
+/// Colors for Vibeshed's own UI (picker, keystroke chips). Comes from the applied
+/// palette theme; without one, the system accent.
+struct PickerTheme: Equatable, Sendable {
     let accent: Color
     /// Text/icon color drawn on top of `accent` (selected rows).
     var accentForeground: Color = .white
@@ -10,7 +12,7 @@ struct VibeTheme: Equatable, Sendable {
     let iconTint: Color?
     let shadowColor: Color?
 
-    static let `default` = VibeTheme(
+    static let `default` = PickerTheme(
         accent: .accentColor,
         backgroundTint: nil,
         selectionHighlight: Color.accentColor.opacity(0.14),
@@ -18,9 +20,16 @@ struct VibeTheme: Equatable, Sendable {
         iconTint: nil,
         shadowColor: nil
     )
+
+    /// The theme for the palette on display (applied or live-previewed). Reading it
+    /// from a view body re-renders the view when the palette changes.
+    @MainActor
+    static var current: PickerTheme {
+        ActiveTheme.shared.displayed.map { PickerTheme(palette: $0.palette) } ?? .default
+    }
 }
 
-extension VibeTheme {
+extension PickerTheme {
     /// Picker styling derived from an applied theme palette, so the launcher matches
     /// the rest of the desktop.
     init(palette: ThemePalette) {
@@ -36,13 +45,13 @@ extension VibeTheme {
     }
 }
 
-private struct VibeThemeKey: EnvironmentKey {
-    static let defaultValue: VibeTheme = .default
+private struct PickerThemeKey: EnvironmentKey {
+    static let defaultValue: PickerTheme = .default
 }
 
 extension EnvironmentValues {
-    var vibeTheme: VibeTheme {
-        get { self[VibeThemeKey.self] }
-        set { self[VibeThemeKey.self] = newValue }
+    var pickerTheme: PickerTheme {
+        get { self[PickerThemeKey.self] }
+        set { self[PickerThemeKey.self] = newValue }
     }
 }

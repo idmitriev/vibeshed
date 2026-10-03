@@ -11,18 +11,15 @@ final class KeystrokeVisualizer {
     private(set) var log = KeystrokeLog()
 
     @ObservationIgnored private let keyComboManager: KeyComboManager
-    @ObservationIgnored private let themeEngine: ThemeEngine
     @ObservationIgnored private let resolveActionTitle: @MainActor (ActionID) async -> String?
     @ObservationIgnored private var panel: KeystrokeOverlayPanel?
     @ObservationIgnored private var actionTitles: [ActionID: String] = [:]
 
     init(
         keyComboManager: KeyComboManager,
-        themeEngine: ThemeEngine,
         resolveActionTitle: @escaping @MainActor (ActionID) async -> String?
     ) {
         self.keyComboManager = keyComboManager
-        self.themeEngine = themeEngine
         self.resolveActionTitle = resolveActionTitle
     }
 
@@ -93,7 +90,7 @@ final class KeystrokeVisualizer {
     private func makePanel() -> KeystrokeOverlayPanel {
         let overlay = KeystrokeOverlayPanel()
         let hostingView = NSHostingView(
-            rootView: KeystrokeOverlayView(visualizer: self, themeEngine: themeEngine)
+            rootView: KeystrokeOverlayView(visualizer: self)
         )
         // The panel is sized to the screen, not to the chips.
         hostingView.sizingOptions = []

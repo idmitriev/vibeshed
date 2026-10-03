@@ -3,12 +3,11 @@ import SwiftUI
 /// Stack of keystroke chips, newest at the bottom.
 struct KeystrokeOverlayView: View {
     let visualizer: KeystrokeVisualizer
-    let themeEngine: ThemeEngine
 
     var body: some View {
         VStack(spacing: 8) {
             ForEach(visualizer.log.chips) { chip in
-                KeystrokeChipView(chip: chip, accent: themeEngine.theme.accent)
+                KeystrokeChipView(chip: chip, accent: PickerTheme.current.accent)
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.85).combined(with: .opacity),
                         removal: .opacity

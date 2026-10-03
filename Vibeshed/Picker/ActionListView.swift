@@ -10,7 +10,7 @@ struct ActionListView: View {
     var rowHeight: CGFloat = 52
     var topInset: CGFloat = 0
     var onActivate: ((ActionID) -> Void)?
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
     @State private var scrollTracker = SelectionScrollTracker<ActionID>()
 
     private static let scrollSpace = "actionListScroll"

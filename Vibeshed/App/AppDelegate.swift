@@ -13,7 +13,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let uriManager: URIManager
     let usageTracker: UsageTracker
     let pickerCoordinator: PickerCoordinator
-    let themeEngine: ThemeEngine
     let autostartManager: AutostartManager
     let aliasManager: AliasManager
     let layoutTransliterator: LayoutTransliterator
@@ -36,7 +35,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             permissionsManager: permissionsManager
         )
         self.usageTracker = UsageTracker()
-        self.themeEngine = ThemeEngine(eventBus: eventBus)
         self.autostartManager = AutostartManager()
         self.pickerCoordinator = PickerCoordinator(
             pickerState: pickerState,
@@ -47,12 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.aliasManager = AliasManager(configManager: configManager, eventBus: eventBus)
         self.layoutTransliterator = LayoutTransliterator(configManager: configManager, eventBus: eventBus)
         pickerCoordinator.usageTracker = usageTracker
-        pickerCoordinator.themeEngine = themeEngine
         pickerCoordinator.aliasManager = aliasManager
         pickerCoordinator.layoutTransliterator = layoutTransliterator
         moduleRegistry.aliasManager = aliasManager
         panelController.coordinator = pickerCoordinator
-        panelController.themeEngine = themeEngine
 
         // keyComboManager and uriManager need panelController, so we init them after
         let panel = panelController
@@ -69,7 +65,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
         self.keystrokeVisualizer = Self.makeKeystrokeVisualizer(
-            keyComboManager: keyComboManager, themeEngine: themeEngine, moduleRegistry: moduleRegistry
+            keyComboManager: keyComboManager, moduleRegistry: moduleRegistry
         )
         self.uriManager = URIManager(
             eventBus: eventBus,
@@ -106,7 +102,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         permissionsManager.checkAll()
         logPermissionStatus()
         permissionsManager.startPeriodicRecheck()
-        themeEngine.start()
         panelController.startOverlay()
         layoutTransliterator.start()
         pickerCoordinator.start()
@@ -309,10 +304,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate {
     private static func makeKeystrokeVisualizer(
         keyComboManager: KeyComboManager,
-        themeEngine: ThemeEngine,
         moduleRegistry: ModuleRegistry
     ) -> KeystrokeVisualizer {
-        KeystrokeVisualizer(keyComboManager: keyComboManager, themeEngine: themeEngine) { actionID in
+        KeystrokeVisualizer(keyComboManager: keyComboManager) { actionID in
             // Built-in action with no module behind it (see KeyComboManager).
             if actionID.rawValue == "app/togglePicker" {
                 return "Toggle Picker"

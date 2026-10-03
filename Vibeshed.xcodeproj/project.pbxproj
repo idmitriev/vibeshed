@@ -16,7 +16,6 @@
 		0923793977F63EDAD76F7A49 /* MeetingPrepModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B05979EA161C980EEEA657CC /* MeetingPrepModule.swift */; };
 		0C198076E96A3F6B30473E5D /* VSCodeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1195B84DE0470B9ECA7FA886 /* VSCodeModule.swift */; };
 		0D1E263219C88E3846DCFC0D /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC27D80B4D21183EDA931773 /* AudioManager.swift */; };
-		0E3EB6D3F4FB891E856CB009 /* ThemeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2D1C635D74BDDA19F4D9527 /* ThemeEngine.swift */; };
 		0FBB1681BFB6911B32AC459A /* AliasEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A31264E859C3B545C84063C /* AliasEntry.swift */; };
 		1003A41AE0343E4F6AA62345 /* PickerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352E1E4FAE31463DB02908E6 /* PickerCoordinator.swift */; };
 		13075FB2202D1A8BB16E5B53 /* ApplicationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D9E864CC6A3B2C40E0A6309 /* ApplicationManager.swift */; };
@@ -27,7 +26,6 @@
 		171C6EBA73F0AA5A3E3BBC0C /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FCAB27C3F7A49EAD6D99512 /* ResultView.swift */; };
 		18056C3B63BA39DF8E0D59F4 /* WindowListHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C88FBF5229E2DA524F2B4EC4 /* WindowListHelper.swift */; };
 		1A42B2314E25DB9B810D5AF6 /* AIModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8310D876702A1EE05FD9019 /* AIModule.swift */; };
-		1FD762AF7C211586DE430966 /* ColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F144B2654BBFE798E02337D7 /* ColorExtractor.swift */; };
 		202D6017E32DF2284A131D33 /* TelegramAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA10C3A80C434A2BF4EFA72 /* TelegramAction.swift */; };
 		204E452B5DD345D8E75F60E6 /* ClipboardAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 446B8B1E026DA6512EA13140 /* ClipboardAction.swift */; };
 		20680A066E4785370D44F024 /* ITermConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7C75E3059BA27DA134BFEAB /* ITermConfig.swift */; };
@@ -120,7 +118,7 @@
 		A0CEC1A7E201671142F6B2FB /* ScoringContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F6A1AC73A792839AFF18D5 /* ScoringContext.swift */; };
 		A1A26985CABA50E60D4B421B /* TimerConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E26D84A322C59F1A504EF60E /* TimerConfig.swift */; };
 		A2DF33E34CB341EB711D13F0 /* MathParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1AB7DED5CF7C8EB5BE262F6 /* MathParser.swift */; };
-		A31111C9B280F568344A91BC /* VibeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB6E95CDF04FD4669FC5B1B /* VibeTheme.swift */; };
+		A31111C9B280F568344A91BC /* PickerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB6E95CDF04FD4669FC5B1B /* PickerTheme.swift */; };
 		A36403CA1EFA048777C58E14 /* BookmarkConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1366A4127800117E3666D70F /* BookmarkConfig.swift */; };
 		A377B2E3D61720E628B947E9 /* VSCodeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD782530B7A954DC31BE9B5 /* VSCodeManager.swift */; };
 		A44754DF8E5B3C2AEB657196 /* CalendarModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36BE78651B8A40324896C512 /* CalendarModule.swift */; };
@@ -259,7 +257,7 @@
 		3A31264E859C3B545C84063C /* AliasEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasEntry.swift; sourceTree = "<group>"; };
 		3B70745FF807EF529900D188 /* LayoutTransliterator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTransliterator.swift; sourceTree = "<group>"; };
 		3D2F93098C3A489C019816AB /* ZoomViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomViews.swift; sourceTree = "<group>"; };
-		3EB6E95CDF04FD4669FC5B1B /* VibeTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VibeTheme.swift; sourceTree = "<group>"; };
+		3EB6E95CDF04FD4669FC5B1B /* PickerTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerTheme.swift; sourceTree = "<group>"; };
 		41751DCDEFF6D788A3114E08 /* MeetingPrepAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingPrepAction.swift; sourceTree = "<group>"; };
 		446B8B1E026DA6512EA13140 /* ClipboardAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardAction.swift; sourceTree = "<group>"; };
 		47BCAE127DD3D2EFCDB13293 /* ITermViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ITermViews.swift; sourceTree = "<group>"; };
@@ -381,9 +379,7 @@
 		E96F4BD07D1B0A04DB6EDC7C /* BrowserManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserManager.swift; sourceTree = "<group>"; };
 		EC2D569D8FF4C4E43B611C2C /* ActionPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionPreviewView.swift; sourceTree = "<group>"; };
 		EFD4A5FF2F22EF9F5409F0A0 /* ContextualScorer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualScorer.swift; sourceTree = "<group>"; };
-		F144B2654BBFE798E02337D7 /* ColorExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtractor.swift; sourceTree = "<group>"; };
 		F203F6C0D5021D09840B350C /* TimerScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerScheduler.swift; sourceTree = "<group>"; };
-		F2D1C635D74BDDA19F4D9527 /* ThemeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeEngine.swift; sourceTree = "<group>"; };
 		F343598BBFBA1E675E67E8FA /* KeyComboParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyComboParser.swift; sourceTree = "<group>"; };
 		F35138A4744269AD8CA17E46 /* JetBrainsAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JetBrainsAction.swift; sourceTree = "<group>"; };
 		F5966B3AD8D7E6D1F38CCCDC /* WindowInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowInfo.swift; sourceTree = "<group>"; };
@@ -457,9 +453,7 @@
 			isa = PBXGroup;
 			children = (
 				0F55A3B785B7D36B4925CCF3 /* AppColorMap.swift */,
-				F144B2654BBFE798E02337D7 /* ColorExtractor.swift */,
-				F2D1C635D74BDDA19F4D9527 /* ThemeEngine.swift */,
-				3EB6E95CDF04FD4669FC5B1B /* VibeTheme.swift */,
+				3EB6E95CDF04FD4669FC5B1B /* PickerTheme.swift */,
 			);
 			path = Theme;
 			sourceTree = "<group>";
@@ -1093,7 +1087,6 @@
 				71A7F48CD8505290F066ED94 /* ClipboardManager.swift in Sources */,
 				E462877A80931C5EE47D19C0 /* ClipboardModule.swift in Sources */,
 				C5A58A5D54F74BBD24E65B5B /* ClipboardViews.swift in Sources */,
-				1FD762AF7C211586DE430966 /* ColorExtractor.swift in Sources */,
 				3CF947AC4BCCC4CF4A29E87D /* ConfigManager.swift in Sources */,
 				DFA96FC776518ED7DD9D47AB /* ContextualScorer.swift in Sources */,
 				4D18505D84655A967B5E7559 /* CurrencyConverter.swift in Sources */,
@@ -1179,7 +1172,6 @@
 				61EB23DEF7F5C1DAA354DBB1 /* TelegramViews.swift in Sources */,
 				41AEF77C74FBBFEFA7FE711D /* ThemeAction.swift in Sources */,
 				AC14415FC03EEC471AF9183A /* ThemeConfig.swift in Sources */,
-				0E3EB6D3F4FB891E856CB009 /* ThemeEngine.swift in Sources */,
 				1337DD653126308E7F4C0FBE /* ThemeManager.swift in Sources */,
 				8ACC8E82A4CC547E193EF5D7 /* ThemeModule.swift in Sources */,
 				BC07EC4BEDF348493AFEC71F /* ThemeViews.swift in Sources */,
@@ -1203,7 +1195,7 @@
 				A377B2E3D61720E628B947E9 /* VSCodeManager.swift in Sources */,
 				0C198076E96A3F6B30473E5D /* VSCodeModule.swift in Sources */,
 				44C7B45514DEC11E0D00623C /* VSCodeViews.swift in Sources */,
-				A31111C9B280F568344A91BC /* VibeTheme.swift in Sources */,
+				A31111C9B280F568344A91BC /* PickerTheme.swift in Sources */,
 				6C3C30FFC99B8AA7DC2E8440 /* VibeshedApp.swift in Sources */,
 				48FE3623D80A9C5786E5AFE2 /* WindowAction.swift in Sources */,
 				FEBE9E0C5926EADE0E4FE7E9 /* WindowConfig.swift in Sources */,

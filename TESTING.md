@@ -128,10 +128,12 @@
 - [ ] Alias actions work from keybindings (alias.Name)
 - [ ] Alias icons and subtitles display correctly
 
-## 13. Dynamic Theme
+## 13. Picker Theme
 
-- [ ] Theme responds to system appearance changes
-- [ ] Theme updates based on running apps / music
+- [ ] With no theme applied, the picker uses the system accent color
+- [ ] After applying a theme, the picker, keystroke chips and the overlay's `accent` tint use its colors
+- [ ] Browsing `theme/switch` retints the picker live; Esc restores the previous colors
+- [ ] The applied theme's colors are back on the picker after a relaunch
 
 ## 14. Contextual Actions
 
@@ -206,15 +208,15 @@
 
 ### 20. Theme Module
 
-- [ ] Set Dark/Light mode
-- [ ] Set accent color
-- [ ] Set wallpaper
-- [ ] VSCode theme change
-- [ ] JetBrains IDE theme change
-- [ ] iTerm preset change
+- [ ] `theme/switch` applies each highlighted theme live; Return keeps it, Esc restores everything
+- [ ] `theme/apply.<slug>`, `theme/next`, `theme/previous` and `theme/reapply` apply across all configured targets
+- [ ] `theme/fromWallpaper` derives a "Last from Wallpaper" theme from the current wallpaper
+- [ ] `theme/wallpaperStyle` previews generated styles live; `theme/shuffleWallpaper` re-rolls the variation
+- [ ] Dark/Light appearance, accent, folder color and wallpaper follow the theme
+- [ ] VS Code, Zed, JetBrains, iTerm, Claude Code, bat/lsd/micro and btop pick up the generated theme
+- [ ] Custom themes from config (with `base:`) and Omarchy folders in `~/.config/vibeshed/themes/` are listed
 - [ ] Ghostty: open terminals retint while browsing theme/switch; Esc restores the previous `theme =` line and colors
 - [ ] Ghostty: the log notes colors (background, palette, …) that Ghostty's own config sets and that override the theme
-- [ ] Theme presets apply all settings at once
 
 ### 21. Audio Module
 

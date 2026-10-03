@@ -11,7 +11,6 @@ final class PickerCoordinator {
     let panelController: PanelController
     private let eventBus: EventBus
     var usageTracker: UsageTracker?
-    var themeEngine: ThemeEngine?
     var aliasManager: AliasManager?
     var layoutTransliterator: LayoutTransliterator?
 
@@ -284,9 +283,6 @@ final class PickerCoordinator {
 
         if options.captureContext {
             currentContext = SystemContext.capture()
-            if let ctx = currentContext {
-                await themeEngine?.refresh(context: ctx)
-            }
         }
         let ctx = currentContext
 
