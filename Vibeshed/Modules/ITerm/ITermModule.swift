@@ -12,6 +12,10 @@ actor ITermModule: ModuleConfigurable {
         .init()
     }
 
+    var automationTargets: [String] {
+        [ITermTarget.bundleID]
+    }
+
     private var config: ITermConfig = .init()
     private let log = Log.module("iterm")
     /// Session listing goes through an osascript subprocess — cache it so

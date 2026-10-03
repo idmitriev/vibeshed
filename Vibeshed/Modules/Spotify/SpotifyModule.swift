@@ -12,6 +12,10 @@ actor SpotifyModule: ModuleConfigurable {
         .init()
     }
 
+    var automationTargets: [String] {
+        [SpotifyManager.bundleID]
+    }
+
     private var config: SpotifyConfig = .init()
     private var searchClient: SpotifySearchClient?
     private let log = Log.module("spotify")

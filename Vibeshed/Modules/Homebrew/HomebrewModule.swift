@@ -16,6 +16,13 @@ actor HomebrewModule: ModuleConfigurable {
     let log = Log.module("homebrew")
     /// Recent `brew info` results for the pickers (see HomebrewModule+Options.swift).
     var packageCache = HomebrewPackageCache()
+    /// Turns on the Vibeshed modules for software an install added and returns their IDs;
+    /// the app hands in `ConfigManager.enableModules` (see HomebrewModule+Install.swift).
+    let enableModules: @Sendable ([DetectedIntegration]) async -> [String]
+
+    init(enableModules: @escaping @Sendable ([DetectedIntegration]) async -> [String] = { _ in [] }) {
+        self.enableModules = enableModules
+    }
 
     func initialize(context: ModuleContext) async throws {
         log.info("Homebrew module initialized")
@@ -95,9 +102,7 @@ actor HomebrewModule: ModuleConfigurable {
                 guard let name = values["package"], !name.isEmpty else {
                     return .showResult(title: "Error", body: "No formula specified")
                 }
-                let output = try await HomebrewManager.installFormula(name, brewPath: brewPath)
-                await self.invalidatePackageCache()
-                return .showResult(title: "Installed \(name)", body: HomebrewManager.installSummary(output))
+                return try await self.install(formula: name, brewPath: brewPath)
             },
             HomebrewAction(
                 id: ActionID(module: "homebrew", name: "installCask"),
@@ -118,17 +123,7 @@ actor HomebrewModule: ModuleConfigurable {
                 guard let name = values["package"], !name.isEmpty else {
                     return .showResult(title: "Error", body: "No cask specified")
                 }
-                let summary = try await HomebrewManager.installSummary(
-                    HomebrewManager.installCask(name, brewPath: brewPath)
-                )
-                await self.invalidatePackageCache()
-                // The install already succeeded; a failed app lookup or launch shouldn't turn it into an error.
-                let appPaths = await (try? HomebrewManager.caskAppPaths(name, brewPath: brewPath)) ?? []
-                guard let launched = await HomebrewManager.launchFirstApp(at: appPaths) else {
-                    return .showResult(title: "Installed \(name)", body: summary)
-                }
-                let appName = URL(fileURLWithPath: launched).deletingPathExtension().lastPathComponent
-                return .showResult(title: "Installed \(name)", body: "Launched \(appName)\n\(summary)")
+                return try await self.install(cask: name, brewPath: brewPath)
             },
         ]
     }

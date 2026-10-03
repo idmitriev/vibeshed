@@ -37,6 +37,8 @@ targets:
       properties:
         LSUIElement: true
         CFBundleIconFile: AppIcon
+        NSAppleEventsUsageDescription: Vibeshed controls apps such as System Events, your browsers, Spotify and your terminal to run the actions you pick.
+        NSCalendarsFullAccessUsageDescription: Vibeshed shows your upcoming events and their meeting links.
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - vibeshed

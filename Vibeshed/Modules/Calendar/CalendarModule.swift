@@ -14,6 +14,11 @@ actor CalendarModule: ModuleConfigurable {
         .init()
     }
 
+    /// Without it the module shows a "Grant Calendar Access" action instead of events.
+    static var optionalPermissions: Set<Permission> {
+        [.calendars]
+    }
+
     private var config: CalendarConfig = .init()
     private let log = Log.module("calendar")
 

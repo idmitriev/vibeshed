@@ -88,7 +88,22 @@ The app runs as a menu bar item (no Dock icon). Use `make run-debug` to see logs
 
 ## Configuration
 
-Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshed writes a minimal config there: `option+space` toggles the picker, only modules backed by macOS itself are enabled (apps, system actions, settings panes, audio, processes, performance, math, timers, emoji, web search), and the default browser is left alone.
+Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshed writes a config there. Caps Lock works as a modifier in it:
+
+| Shortcut | Does |
+|----------|------|
+| Caps Lock + Space | Toggle the picker |
+| Caps Lock + ← → ↑ ↓ | Focus the window on that side |
+| Caps Lock + W A S D | Cycle the window's height or width against the top, left, bottom or right edge |
+| Caps Lock + M | Maximize / restore the window |
+| Caps Lock + P | Pick a window to focus |
+
+Windows and the tiling grid (two side-by-side splits) get 4pt of padding and gaps. The default browser is left alone, and these modules are enabled:
+
+- the ones backed by macOS itself: apps, system actions, settings panes, audio, processes, performance, windows, tiling, clipboard history, themes, math, timers, emoji and web search;
+- one for each app it finds on the Mac: browser tabs, Homebrew, Claude, ChatGPT/Codex, VS Code (and Cursor, Windsurf), JetBrains IDEs, Zed, iTerm, Ghostty, Spotify, Telegram, Zoom and GitHub (via the `gh` CLI or GitHub Desktop).
+
+Every other module is listed in the file, commented out. A welcome window then walks through the permissions those modules need, one macOS prompt at a time, so each module works the first time you use it. It's under **Set Up Permissions…** in the menu bar afterwards.
 
 See [config.example.yaml](config.example.yaml) for all available options including keybindings, module settings, URL routing rules, and action aliases.
 
@@ -131,7 +146,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Theme** | Palette themes applied across macOS and apps, with live preview |
 | **Self** | Open config, reload modules, view logs, quit |
 
-Modules load only when their config section is present. Each module declares required permissions (accessibility, automation, etc.) and the app guides you through granting them.
+Modules load only when their config section is present. A section added while Vibeshed is running loads its module right away; a removed one takes effect at the next launch. Installing an app with the Homebrew module (for example the `spotify` cask or the `gh` formula) adds the section for the module that works with it. Each module declares the permissions it needs (accessibility, automation, etc.) and the apps it scripts; **Set Up Permissions…** in the menu bar walks through granting them.
 
 ## Theming
 

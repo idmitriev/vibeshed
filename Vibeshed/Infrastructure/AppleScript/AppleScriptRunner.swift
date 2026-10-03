@@ -119,16 +119,16 @@ enum AppleScriptRunner {
 // MARK: - ResumeGate
 
 /// Thread-safe one-shot gate for resuming a continuation exactly once.
-private final class ResumeGate<T: Sendable>: @unchecked Sendable {
+final class ResumeGate<T: Sendable, Failure: Error>: @unchecked Sendable {
     private let lock = NSLock()
     private var resumed = false
-    private let continuation: CheckedContinuation<T, Error>
+    private let continuation: CheckedContinuation<T, Failure>
 
-    init(continuation: CheckedContinuation<T, Error>) {
+    init(continuation: CheckedContinuation<T, Failure>) {
         self.continuation = continuation
     }
 
-    func resume(with result: Result<T, Error>) {
+    func resume(with result: Result<T, Failure>) {
         lock.lock()
         defer { lock.unlock() }
         guard !resumed else { return }

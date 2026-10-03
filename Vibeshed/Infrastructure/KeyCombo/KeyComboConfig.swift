@@ -13,6 +13,15 @@ struct KeyBindingEntry: Codable, Sendable, Equatable {
         self.remap = remap
         self.app = app
     }
+
+    /// Held Caps Lock as the modifier. `CapsLockMonitor` reads it over IOKit HID,
+    /// which needs Input Monitoring.
+    var usesCapsLock: Bool {
+        if case .capsLockModifier? = try? KeyComboParser.parse(combo) {
+            return true
+        }
+        return false
+    }
 }
 
 enum KeyComboType: Sendable, Equatable {

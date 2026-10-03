@@ -27,6 +27,15 @@ actor ThemeModule: ModuleConfigurable {
     private let log = Log.module("theme")
     private var itermWatcher: AppLaunchWatcher?
 
+    /// The scripted targets that are on: appearance through System Events, iTerm's
+    /// colors through iTerm, and the github target through browser tabs.
+    var automationTargets: [String] {
+        let targets = config.enabledTargets
+        return (targets.contains(.appearance) ? [AutomationConsent.systemEvents] : [])
+            + (targets.contains(.iterm) ? [ITermTarget.bundleID] : [])
+            + (targets.contains(.github) ? BrowserRegistry.appleScriptCapable.map(\.bundleID) : [])
+    }
+
     func initialize(context: ModuleContext) async throws {
         eventBus = context.eventBus
         rebuildCatalog()

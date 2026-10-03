@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - macOS 14+ (Sonoma)
-- Config file at `~/.config/vibeshed/config.yaml` (a minimal one is written on first launch; copy from `config.example.yaml` for full coverage)
+- Config file at `~/.config/vibeshed/config.yaml` (one is written on first launch for the apps found on the Mac; copy from `config.example.yaml` for full coverage)
 - Accessibility permission granted
 - Input Monitoring permission granted
 - Automation permission granted (for browser/Spotify/iTerm/Ghostty modules)
@@ -22,6 +22,10 @@
 
 ## 2. Permissions
 
+- [ ] First launch (no config): config.yaml enables a module per installed app, and the welcome window lists those apps and the permissions they need
+- [ ] "Grant Permissions" asks for each missing permission in turn and waits for the System Settings switch; "Skip" moves on
+- [ ] After "Quit & Reopen" from System Settings, the welcome window comes back; "Later" or "Done" ends it for good
+- [ ] "Set Up Permissions…" in the status bar menu opens the same window without the greeting
 - [ ] Status bar shows check icon when all permissions granted
 - [ ] Status bar shows warning icon when permissions are missing
 - [ ] Missing permissions listed in status bar dropdown
@@ -36,8 +40,8 @@
 - [ ] Invalid module config section logged, module skipped
 - [ ] Valid config changes hot-reload without restart
 - [ ] Modules react to config updates (e.g. changing volumeSteps)
-- [ ] Removing a module section disables that module
-- [ ] Adding a module section enables that module
+- [ ] Removing a module section disables that module at the next launch
+- [ ] Adding a module section loads that module right away, without a restart
 
 ## 4. Picker — Basic
 
@@ -375,6 +379,8 @@
 
 - [ ] Search formulas and casks by name
 - [ ] Install/uninstall formula and cask actions work (notification shows output)
+- [ ] Installing something a module works with (e.g. the `spotify` cask or `gh` formula) adds that module's section to config.yaml (uncommenting a `# spotify:` line if there is one), the module loads, and the notification says so
+- [ ] Reinstalling something that was already there, or installing something no module works with, leaves config.yaml alone
 - [ ] Update/upgrade/outdated/cleanup actions work
 - [ ] Long brew output (e.g. many outdated packages) doesn't hang the app
 

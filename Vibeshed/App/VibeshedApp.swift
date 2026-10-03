@@ -10,7 +10,8 @@ struct VibeshedApp: App {
                 panelController: appDelegate.panelController,
                 permissionsManager: appDelegate.permissionsManager,
                 moduleRegistry: appDelegate.moduleRegistry,
-                autostartManager: appDelegate.autostartManager
+                autostartManager: appDelegate.autostartManager,
+                permissionSetup: appDelegate.permissionSetup
             )
         } label: {
             MenuBarLabel()

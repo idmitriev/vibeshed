@@ -5,6 +5,8 @@ import Yams
 @Observable
 final class ConfigManager {
     private(set) var config: AppConfig = .init()
+    /// Whether this launch found no config and wrote the first one.
+    private(set) var wroteInitialConfig = false
 
     let configDirectoryURL: URL
     let configFileURL: URL
@@ -21,7 +23,7 @@ final class ConfigManager {
 
     func start() {
         ensureConfigDirectory()
-        writeDefaultConfigIfMissing()
+        writeInitialConfigIfMissing()
         loadConfig()
         startMonitoring()
     }
@@ -38,20 +40,46 @@ final class ConfigManager {
         )
     }
 
-    /// First launch: seed a minimal config so the picker hotkey and built-in
-    /// modules work out of the box (and so the file exists to be watched).
-    private func writeDefaultConfigIfMissing() {
+    /// First launch: seed a config with the picker hotkey, the built-in modules and
+    /// a module for each app found on this Mac (and so the file exists to be watched).
+    private func writeInitialConfigIfMissing() {
         guard !FileManager.default.fileExists(atPath: configFileURL.path) else { return }
+        let detected = SoftwareIntegration.detect(in: .live)
         do {
-            try Data(DefaultConfig.yaml.utf8).write(to: configFileURL, options: .withoutOverwriting)
-            Log.config.info("Wrote default config to \(self.configFileURL.path, privacy: .public)")
+            let yaml = DefaultConfig.yaml(detected: detected)
+            try Data(yaml.utf8).write(to: configFileURL, options: .withoutOverwriting)
+            wroteInitialConfig = true
+            let path = configFileURL.path
+            let modules = detected.map(\.moduleID).joined(separator: ", ")
+            Log.config.info("Wrote initial config to \(path, privacy: .public) (found: \(modules, privacy: .public))")
         } catch {
-            Log.config.error("Failed to write default config: \(error.localizedDescription, privacy: .public)")
+            Log.config.error("Failed to write initial config: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     func reload() {
         loadConfig()
+    }
+
+    /// Turns modules on by adding their sections to config.yaml (see `ConfigEditor`), then
+    /// reloads. Returns the IDs it added; modules the config already has are left alone.
+    @discardableResult
+    func enableModules(_ entries: [DefaultConfig.Entry]) -> [String] {
+        guard let yaml = try? String(contentsOf: configFileURL, encoding: .utf8) else { return [] }
+        let edit = ConfigEditor.enablingModules(entries, in: yaml)
+        guard !edit.enabled.isEmpty else { return [] }
+        do {
+            // Rewritten in place rather than atomically: replacing the file would leave the
+            // file monitor watching the old one.
+            try Data(edit.yaml.utf8).write(to: configFileURL)
+        } catch {
+            Log.config.error("Failed to enable modules: \(error.localizedDescription, privacy: .public)")
+            return []
+        }
+        let modules = edit.enabled.joined(separator: ", ")
+        Log.config.info("Enabled modules in config.yaml: \(modules, privacy: .public)")
+        loadConfig()
+        return edit.enabled
     }
 
     private func loadConfig() {

@@ -16,7 +16,7 @@ struct SpotifyNowPlaying: Sendable {
 }
 
 enum SpotifyManager {
-    private static let bundleID = "com.spotify.client"
+    static let bundleID = "com.spotify.client"
 
     // MARK: - State
 

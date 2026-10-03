@@ -18,6 +18,11 @@ actor MeetingPrepModule: ModuleConfigurable {
         [.accessibility, .screenRecording]
     }
 
+    /// Meetings come from the calendar; without access there's nothing to prepare for.
+    static var optionalPermissions: Set<Permission> {
+        [.calendars]
+    }
+
     private var config: MeetingPrepConfig = .init()
     private let log = Log.module("meetingPrep")
     private let windowManager = WindowManager()

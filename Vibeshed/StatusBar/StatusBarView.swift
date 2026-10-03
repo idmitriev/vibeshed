@@ -5,6 +5,7 @@ struct StatusBarView: View {
     let permissionsManager: PermissionsManager
     let moduleRegistry: ModuleRegistry
     let autostartManager: AutostartManager
+    let permissionSetup: PermissionSetup
 
     private var missingPermissions: [Permission] {
         moduleRegistry.requiredPermissions
@@ -27,6 +28,10 @@ struct StatusBarView: View {
         Divider()
 
         permissionsSection
+
+        Button("Set Up Permissions…") {
+            Task { await permissionSetup.show(welcome: false) }
+        }
 
         Divider()
 

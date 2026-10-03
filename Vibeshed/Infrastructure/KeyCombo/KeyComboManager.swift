@@ -166,15 +166,7 @@ extension KeyComboManager {
             }
         case .inputMonitoring:
             if eventTapRunning {
-                let hasCaps = currentEntries.contains { entry in
-                    if let ct = try? KeyComboParser.parse(entry.combo),
-                       case .capsLockModifier = ct
-                    {
-                        return true
-                    }
-                    return false
-                }
-                manageCapsLockMonitor(hasCapsLockBindings: hasCaps)
+                manageCapsLockMonitor(hasCapsLockBindings: currentEntries.contains(where: \.usesCapsLock))
             }
         default:
             break
@@ -412,12 +404,8 @@ extension KeyComboManager {
     }
 
     private func setCapsLockErrors(_ message: String) {
-        for entry in currentEntries {
-            if let ct = try? KeyComboParser.parse(entry.combo),
-               case .capsLockModifier = ct
-            {
-                bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
-            }
+        for entry in currentEntries where entry.usesCapsLock {
+            bindingErrors[bindingErrorKey(combo: entry.combo, app: entry.app)] = message
         }
     }
 

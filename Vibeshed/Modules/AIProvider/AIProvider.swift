@@ -11,6 +11,8 @@ protocol AIProviderConfig: Codable, Sendable, Equatable {
     var enabledActions: Set<String>? { get }
     /// Which of the vendor's surfaces to scan, by `AISessionSource.id`.
     var sources: [String] { get }
+    /// "iterm" or "terminal" for CLI sessions; nil picks iTerm when it's installed.
+    var terminalApp: String? { get }
 }
 
 /// Describes one AI vendor for `AISessionsModule`. A provider knows how to discover

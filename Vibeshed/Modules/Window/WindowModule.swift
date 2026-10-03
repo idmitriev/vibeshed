@@ -134,6 +134,7 @@ actor WindowModule: ModuleConfigurable {
         actions.append(contentsOf: buildPositionActions(mgr: mgr, cfg: cfg))
         actions.append(contentsOf: buildTileActions(mgr: mgr, cfg: cfg))
         actions.append(contentsOf: buildResizeActions(mgr: mgr, cfg: cfg))
+        actions.append(contentsOf: buildDirectionalFocusActions(mgr: mgr))
         return actions
     }
 
