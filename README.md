@@ -161,6 +161,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 | `wallpaper` | Theme image, or one generated from the palette in one of 37 styles | ✓ |
 | `iterm` | Every open session, plus a "Vibeshed" profile (your default profile's settings, theme colours) made the default, so new windows and restarts keep the theme | ✓ |
 | `ghostty` | Generated `themes/Vibeshed`, selected with `theme =` in your config; open terminals reload on SIGUSR2 (Ghostty 1.2+) | ✓ |
+| `terminal` | Terminal.app: a "Vibeshed" profile (your default profile's settings, theme colours) made the default and startup profile; open tabs get background, text and cursor colours live, ANSI colours when Terminal next launches | partly |
 | `vscode` | VS Code, Insiders, Cursor, Windsurf, VSCodium via a generated theme extension | ✓* |
 | `zed` | Generated `themes/vibeshed.json`, selected in settings | ✓* |
 | `jetbrains` | Generated editor scheme; follows "Sync with OS" | on restart |
