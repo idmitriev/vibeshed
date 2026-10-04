@@ -59,6 +59,10 @@ Every module is an actor conforming to `Module` / `ModuleConfigurable`. Actions 
 - No new dependencies without discussion. We have one runtime dependency (Yams) plus the
   SwiftLint/SwiftFormat build plugins. Keep it small.
 
+## Icon and wallpapers
+
+The app icon (`Resources/AppIcon.svg`, `.png`, `.icns` and `docs/icon.png`) and the wallpapers in `docs/wallpapers` are drawn by `scripts/generate-brand-assets.py`: change the script rather than the images, then run it (`brew install librsvg` first). The menu bar glyph is drawn in code, in `Vibeshed/StatusBar/MenuBarIcon.swift`.
+
 ## Testing
 
 - `swift test` runs the test suite.
