@@ -18,7 +18,7 @@ struct PickerSearchField: View {
     var selectionIconSystemName: String?
     /// App-bundle path of the selected result; its Finder icon is shown in preference to the SF Symbol.
     var selectionAppIconPath: String?
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
 
     var body: some View {
         HStack(spacing: 8) {
@@ -162,7 +162,7 @@ private struct BackspaceTextField: NSViewRepresentable {
 private struct PillView: View {
     let pill: SearchFieldPill
     let onRemove: () -> Void
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
 
     var body: some View {
         HStack(spacing: 4) {

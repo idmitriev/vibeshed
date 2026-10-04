@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ParameterPreviewView: View {
     let state: PickerState
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
 
     private var action: (any Action)? {
         state.activeAction

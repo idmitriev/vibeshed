@@ -6,7 +6,7 @@ struct ParameterInputView: View {
     var rowHeight: CGFloat = 52
     var topInset: CGFloat = 0
     var onConfirm: (() -> Void)?
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
     @State private var scrollTracker = SelectionScrollTracker<String>()
 
     private static let scrollSpace = "parameterOptionScroll"
@@ -216,7 +216,7 @@ struct ParameterOptionRow: View, Equatable {
     var hotkeyNumber: Int?
     var rowHeight: CGFloat = 52
     var isSelected: Bool = false
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
 
     nonisolated static func == (lhs: ParameterOptionRow, rhs: ParameterOptionRow) -> Bool {
         lhs.option == rhs.option

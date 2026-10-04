@@ -13,7 +13,7 @@ import UserNotifications
 /// with the same keyboard-layout fallback, because whichever run claims the
 /// newest generation is the one left on screen.
 struct QueryOptions {
-    /// Capture a fresh `SystemContext` and refresh the theme first.
+    /// Capture a fresh `SystemContext` first.
     var captureContext: Bool
     /// Re-fetch the catalog corpus from modules instead of reusing the cached one.
     /// Keystrokes pass `false`; show/refresh paths pass `true`.

@@ -5,7 +5,7 @@ struct PickerView: View {
     @Bindable var state: PickerState
     let panelController: PanelController
     var appearance: AppConfig.AppearanceConfig = .init()
-    @Environment(\.vibeTheme) private var theme
+    @Environment(\.pickerTheme) private var theme
 
     @State private var previewVisible = false
     @State private var previewIdleTask: Task<Void, Never>?
