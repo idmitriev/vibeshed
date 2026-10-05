@@ -15,6 +15,19 @@ struct ApplicationManager: Sendable {
         URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Applications"),
     ]
 
+    /// User-facing apps in /System/Library/CoreServices, listed one by one because the rest of that
+    /// tree is agents and helpers. Missing ones are skipped: Keychain Access moved here in macOS 15
+    /// (from /System/Applications/Utilities, where Screen Sharing has been since macOS 14).
+    static let coreServicesApps: [URL] = [
+        "/System/Library/CoreServices/Finder.app",
+        "/System/Library/CoreServices/Applications/Archive Utility.app",
+        "/System/Library/CoreServices/Applications/Directory Utility.app",
+        "/System/Library/CoreServices/Applications/Feedback Assistant.app",
+        "/System/Library/CoreServices/Applications/Keychain Access.app",
+        "/System/Library/CoreServices/Applications/Ticket Viewer.app",
+        "/System/Library/CoreServices/Applications/Wireless Diagnostics.app",
+    ].map { URL(fileURLWithPath: $0) }
+
     @MainActor
     func listInstalledApplications() -> [AppInfo] {
         var seen = Set<String>()
@@ -31,14 +44,12 @@ struct ApplicationManager: Sendable {
         // Single CGWindowList call for all window counts
         let windowCounts = WindowListHelper.countWindowsByPID()
 
-        for dir in Self.applicationDirectories {
-            apps += installedApps(
-                in: dir,
-                runningByBundleID: runningByBundleID,
-                windowCounts: windowCounts,
-                seen: &seen
-            )
-        }
+        apps += installedApps(
+            at: Self.installedAppBundleURLs(),
+            runningByBundleID: runningByBundleID,
+            windowCounts: windowCounts,
+            seen: &seen
+        )
 
         // Add running apps not found in standard directories
         for app in runningApps {
@@ -64,16 +75,16 @@ struct ApplicationManager: Sendable {
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// Apps from `appBundleURLs(in:)` whose ID isn't in `seen` yet; adds each one it returns to `seen`.
+    /// Apps at `bundleURLs` whose ID isn't in `seen` yet; adds each one it returns to `seen`.
     @MainActor
     private func installedApps(
-        in dir: URL,
+        at bundleURLs: [URL],
         runningByBundleID: [String: NSRunningApplication],
         windowCounts: [pid_t: Int],
         seen: inout Set<String>
     ) -> [AppInfo] {
         var apps: [AppInfo] = []
-        for url in Self.appBundleURLs(in: dir) {
+        for url in bundleURLs {
             guard let bundle = Bundle(url: url) else { continue }
             let appID = Self.appID(for: bundle)
             guard !seen.contains(appID) else { continue }
@@ -95,6 +106,16 @@ struct ApplicationManager: Sendable {
             ))
         }
         return apps
+    }
+
+    /// Every app bundle to list, in lookup order: those found in `directories` by `appBundleURLs(in:)`,
+    /// then the `extraApps` that exist.
+    static func installedAppBundleURLs(
+        directories: [URL] = applicationDirectories,
+        extraApps: [URL] = coreServicesApps
+    ) -> [URL] {
+        directories.flatMap(appBundleURLs(in:))
+            + extraApps.filter { FileManager.default.fileExists(atPath: $0.path) }
     }
 
     /// `.app` bundles directly inside `dir` and inside its plain subfolders, one level down
