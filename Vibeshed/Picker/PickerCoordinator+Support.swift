@@ -128,31 +128,33 @@ extension ActionItem {
     }
 }
 
-func postActionNotification(title: String, body: String) {
-    Task {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-        let request = UNNotificationRequest(
-            identifier: "vibeshed.action.result.\(UUID().uuidString)",
-            content: content,
-            trigger: nil
-        )
-        let center = UNUserNotificationCenter.current()
-        center.delegate = ForegroundNotificationPresenter.shared
-        do {
-            // Only prompts while permission is undetermined; afterwards it just reports the
-            // stored answer. Without it, results posted before anything else (e.g. the timer
-            // module) asked for permission are silently dropped.
-            guard try await center.requestAuthorization(options: [.alert, .sound]) else {
-                Log.picker.warning("Not posting notification: permission denied")
-                return
-            }
-            try await center.add(request)
-        } catch {
-            Log.picker.error("Failed to post notification: \(error.localizedDescription, privacy: .public)")
+/// Posts an action's result or failure as a notification. Returns `false` when it couldn't
+/// be posted (notifications denied or unavailable), so the caller can show it another way.
+func postActionNotification(title: String, body: String) async -> Bool {
+    let content = UNMutableNotificationContent()
+    content.title = title
+    content.body = body
+    content.sound = .default
+    let request = UNNotificationRequest(
+        identifier: "vibeshed.action.result.\(UUID().uuidString)",
+        content: content,
+        trigger: nil
+    )
+    let center = UNUserNotificationCenter.current()
+    center.delegate = ForegroundNotificationPresenter.shared
+    do {
+        // Only prompts while permission is undetermined; afterwards it just reports the
+        // stored answer. Without it, results posted before anything else (e.g. the timer
+        // module) asked for permission are silently dropped.
+        guard try await center.requestAuthorization(options: [.alert, .sound]) else {
+            Log.picker.warning("Not posting notification: permission denied")
+            return false
         }
+        try await center.add(request)
+        return true
+    } catch {
+        Log.picker.error("Failed to post notification: \(error.localizedDescription, privacy: .public)")
+        return false
     }
 }
 
