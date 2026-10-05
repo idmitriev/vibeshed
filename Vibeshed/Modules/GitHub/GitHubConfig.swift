@@ -28,3 +28,21 @@ struct GitHubConfig: Codable, Sendable, Equatable {
     /// Show unread notifications action (requires token).
     var showNotifications: Bool = true
 }
+
+extension GitHubConfig {
+    /// Every key is optional: a missing one keeps its default above instead of failing
+    /// the whole section (see `ApplicationConfig`).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
+        token = try container.decodeIfPresent(String.self, forKey: .token)
+        defaultOwner = try container.decodeIfPresent(String.self, forKey: .defaultOwner)
+        repoOwners = try container.decodeIfPresent([String].self, forKey: .repoOwners)
+        maxResults = try container.decodeIfPresent(Int.self, forKey: .maxResults) ?? defaults.maxResults
+        searchTypes = try container.decodeIfPresent([String].self, forKey: .searchTypes) ?? defaults.searchTypes
+        enabledActions = try container.decodeIfPresent(Set<String>.self, forKey: .enabledActions)
+        showRepos = try container.decodeIfPresent(Bool.self, forKey: .showRepos) ?? defaults.showRepos
+        showNotifications = try container.decodeIfPresent(Bool.self, forKey: .showNotifications)
+            ?? defaults.showNotifications
+    }
+}

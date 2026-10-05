@@ -16,3 +16,18 @@ struct SpotifyConfig: Codable, Sendable, Equatable {
     /// Whether to show "Now Playing" as an action when Spotify is running.
     var showNowPlaying: Bool = true
 }
+
+extension SpotifyConfig {
+    /// Every key is optional: a missing one keeps its default above instead of failing
+    /// the whole section (see `ApplicationConfig`).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
+        clientId = try container.decodeIfPresent(String.self, forKey: .clientId)
+        maxSearchResults = try container.decodeIfPresent(Int.self, forKey: .maxSearchResults)
+            ?? defaults.maxSearchResults
+        searchTypes = try container.decodeIfPresent([String].self, forKey: .searchTypes) ?? defaults.searchTypes
+        enabledActions = try container.decodeIfPresent(Set<String>.self, forKey: .enabledActions)
+        showNowPlaying = try container.decodeIfPresent(Bool.self, forKey: .showNowPlaying) ?? defaults.showNowPlaying
+    }
+}

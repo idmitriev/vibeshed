@@ -28,6 +28,14 @@ struct AppConfig: Sendable, Equatable {
     }
 }
 
+extension AppConfig.LayoutCorrectionConfig {
+    /// `layoutCorrection: {}` keeps the default rather than failing to decode.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? Self().enabled
+    }
+}
+
 extension AppConfig.AppearanceConfig {
     /// The overlay to draw, if it's configured and not switched off.
     var activeOverlay: AppConfig.OverlayConfig? {
