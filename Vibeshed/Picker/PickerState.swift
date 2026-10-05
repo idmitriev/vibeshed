@@ -67,10 +67,13 @@ final class PickerState {
     private let querySubject = PassthroughSubject<String, Never>()
     private let parameterQuerySubject = PassthroughSubject<String, Never>()
 
+    /// No `removeDuplicates()`: its memory outlives a panel session and misses the
+    /// runs that don't come from here (the initial load), so it could drop the field's
+    /// text as a "repeat" while the list showed another text's results.
+    /// `PickerCoordinator` skips repeats of what it last ranked instead.
     var debouncedQuery: AnyPublisher<String, Never> {
         querySubject
             .debounce(for: .milliseconds(150), scheduler: RunLoop.main)
-            .removeDuplicates()
             .eraseToAnyPublisher()
     }
 
