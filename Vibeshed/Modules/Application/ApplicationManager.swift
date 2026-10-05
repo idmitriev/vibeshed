@@ -201,16 +201,22 @@ struct ApplicationManager: Sendable {
     // MARK: - Focus Application
 
     @MainActor
-    func focusApplication(_ app: AppInfo) -> Bool {
+    func focusApplication(_ app: AppInfo) async throws -> Bool {
         guard let running = findRunningApp(bundleID: app.id) else {
             log.warning("focusApplication: app not running \(app.id, privacy: .public)")
             return false
         }
 
-        if running == NSWorkspace.shared.frontmostApplication {
-            cycleWindows(for: running)
+        let axWindows = AXWindowHelper.windows(for: running.processIdentifier).filter(AXWindowHelper.isWindow)
+        if axWindows.isEmpty {
+            // activate() would only switch the menu bar. Opening a running app sends it a reopen
+            // event, as a Dock click does, so it shows a window (Finder opens a new one).
+            log.debug("focusApplication: no windows, reopening \(app.id, privacy: .public)")
+            try await launchApplication(app)
+        } else if running == NSWorkspace.shared.frontmostApplication {
+            cycleWindows(axWindows, of: running)
         } else {
-            restoreMinimizedWindows(for: running)
+            restoreMinimizedWindows(axWindows)
             running.activate(options: [])
         }
         return true
@@ -234,9 +240,8 @@ struct ApplicationManager: Sendable {
     // MARK: - Window Cycling
 
     @MainActor
-    private func cycleWindows(for app: NSRunningApplication) {
+    private func cycleWindows(_ axWindows: [AXUIElement], of app: NSRunningApplication) {
         let pid = app.processIdentifier
-        let axWindows = AXWindowHelper.windows(for: pid)
         guard axWindows.count > 1 else {
             if let only = axWindows.first, AXWindowHelper.isMinimized(only) {
                 AXWindowHelper.deminiaturize(only)
@@ -270,8 +275,7 @@ struct ApplicationManager: Sendable {
         app.activate(options: [])
     }
 
-    private func restoreMinimizedWindows(for app: NSRunningApplication) {
-        let axWindows = AXWindowHelper.windows(for: app.processIdentifier)
+    private func restoreMinimizedWindows(_ axWindows: [AXUIElement]) {
         let allMinimized = !axWindows.isEmpty && axWindows.allSatisfy { AXWindowHelper.isMinimized($0) }
         if allMinimized, let first = axWindows.first {
             AXWindowHelper.deminiaturize(first)

@@ -111,6 +111,17 @@ enum AXWindowHelper {
         )
     }
 
+    /// True if the element's role is AXWindow. Some apps list other elements among their
+    /// AX windows, e.g. Finder's desktop is an AXScrollArea.
+    static func isWindow(_ element: AXUIElement) -> Bool {
+        var ref: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(
+            element, kAXRoleAttribute as CFString, &ref
+        )
+        guard result == .success, let role = ref as? String else { return false }
+        return role == kAXWindowRole as String
+    }
+
     /// True if the AX window's subrole marks it as a normal content window
     /// (AXStandardWindow), as opposed to a panel/dialog/system window/tooltip.
     static func isStandardWindow(_ element: AXUIElement) -> Bool {
