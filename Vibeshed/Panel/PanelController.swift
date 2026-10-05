@@ -236,6 +236,12 @@ final class PanelController {
             }
         }
 
+        newPanel.onKeyStatusChange = { isKey in
+            MainActor.assumeIsolated {
+                PickerKeyFocus.shared.setHeld(isKey)
+            }
+        }
+
         newPanel.setSwiftUIContent(
             ThemedPickerWrapper(state: pickerState, panelController: self, appearance: appearance)
         )
