@@ -213,19 +213,30 @@ final class SpotifySearchClient: @unchecked Sendable {
         try await withCheckedThrowingContinuation { continuation in
             let session = ASWebAuthenticationSession(
                 url: url,
-                callbackURLScheme: "vibeshed"
-            ) { callbackURL, error in
-                if let error {
-                    continuation.resume(throwing: SearchError.authFailed(error.localizedDescription))
-                } else if let callbackURL {
-                    continuation.resume(returning: callbackURL)
-                } else {
-                    continuation.resume(throwing: SearchError.authFailed("No callback URL"))
-                }
-            }
+                callbackURLScheme: "vibeshed",
+                completionHandler: Self.authSessionCompletion(continuation)
+            )
             session.presentationContextProvider = WebAuthContextProvider.shared
             session.prefersEphemeralWebBrowserSession = false
             session.start()
+        }
+    }
+
+    /// The sign-in sheet's completion handler. AuthenticationServices calls it on an XPC
+    /// reply queue, so it must not be a closure written inside `performAuthSession`: that
+    /// one inherits the main actor (the SDK doesn't mark the handler `@Sendable`), Swift 6
+    /// checks the isolation when it runs, and the app traps right after the user signs in.
+    static func authSessionCompletion(
+        _ continuation: CheckedContinuation<URL, any Error>
+    ) -> @Sendable (URL?, (any Error)?) -> Void {
+        { callbackURL, error in
+            if let error {
+                continuation.resume(throwing: SearchError.authFailed(error.localizedDescription))
+            } else if let callbackURL {
+                continuation.resume(returning: callbackURL)
+            } else {
+                continuation.resume(throwing: SearchError.authFailed("No callback URL"))
+            }
         }
     }
 
