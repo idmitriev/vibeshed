@@ -8,8 +8,11 @@ final class LayoutTransliterator {
     private var mappingTables: [String: [Character: Character]] = [:]
     /// Localized name per source ID for the correction hint.
     private var sourceNames: [String: String] = [:]
+    /// The Latin layout the tables map onto; rebuilt when the user picks another one.
+    private var latinSourceID: String?
     private var isEnabled: Bool = true
     private var inputSourceObserver: NSObjectProtocol?
+    private var selectedSourceObserver: NSObjectProtocol?
 
     private let configManager: ConfigManager
     private let eventBus: EventBus
@@ -31,6 +34,17 @@ final class LayoutTransliterator {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.buildMappingTables()
+            }
+        }
+
+        // Switching between enabled Latin layouts (ABC ↔ Dvorak) moves the target.
+        selectedSourceObserver = DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.rebuildIfLatinTargetChanged()
             }
         }
 
@@ -106,6 +120,15 @@ final class LayoutTransliterator {
 
     // MARK: - Mapping Table Construction
 
+    /// Runs on every input source switch, so it only rebuilds when the Latin layout
+    /// itself changed — not on the common ABC ↔ Russian switches.
+    private func rebuildIfLatinTargetChanged() {
+        guard let latin = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue(),
+              inputSourceID(latin) != latinSourceID
+        else { return }
+        buildMappingTables()
+    }
+
     private func buildMappingTables() {
         mappingTables.removeAll()
         sourceNames.removeAll()
@@ -130,6 +153,7 @@ final class LayoutTransliterator {
             return
         }
 
+        latinSourceID = inputSourceID(latinSource)
         let latinUnshifted = keycodeToCharMap(for: latinSource, shifted: false)
         let latinShifted = keycodeToCharMap(for: latinSource, shifted: true)
 
