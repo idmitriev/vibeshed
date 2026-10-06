@@ -100,6 +100,10 @@ final class ConfigDecodingCoverageTests: XCTestCase {
             $0.commands = ["a": "b"]
             $0.enabledActions = ["x"]
         })
+        try assertRoundTrip(changed(TerminalConfig()) {
+            $0.commands = ["a": "b"]
+            $0.enabledActions = ["x"]
+        })
         try assertRoundTrip(changed(MenuConfig()) {
             $0.showInSearch = false
             $0.maxSubmenuItems = 1
@@ -225,6 +229,7 @@ private extension ConfigDecodingCoverageTests {
             "zed": ModuleSection(RecentProjectsModule<ZedProvider>.self),
             "iterm": ModuleSection(ITermModule.self),
             "ghostty": ModuleSection(GhosttyModule.self),
+            "terminal": ModuleSection(TerminalModule.self),
             "anthropic": ModuleSection(AISessionsModule<AnthropicProvider>.self),
             "openai": ModuleSection(AISessionsModule<OpenAIProvider>.self),
             "telegram": ModuleSection(TelegramModule.self),

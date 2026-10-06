@@ -26,6 +26,7 @@
 ## 2. Permissions
 
 - [ ] First launch (no config): config.yaml enables a module per installed app, and the welcome window lists those apps and the permissions they need
+- [ ] First launch without Homebrew: config.yaml has an "Install Homebrew" alias and the terminal module; selecting it runs the brew.sh install script in a new Terminal window. With Homebrew, neither is enabled
 - [ ] "Grant Permissions" asks for each missing permission in turn and waits for the System Settings switch; "Skip" moves on
 - [ ] After "Quit & Reopen" from System Settings, the welcome window comes back; "Later" or "Done" ends it for good
 - [ ] "Set Up Permissions…" in the status bar menu opens the same window without the greeting
@@ -127,7 +128,7 @@
 ## 12. Aliases
 
 - [ ] Parameterless aliases enrich existing actions with keywords
-- [ ] Parameterized aliases ({query}) create separate picker entries
+- [ ] Parameterized aliases ({query} or preset `parameters:`) create separate picker entries; preset ones run without asking
 - [ ] URL aliases open URLs in configured browser
 - [ ] Directory aliases open folders in Finder
 - [ ] Alias actions work from keybindings (alias.Name)
@@ -446,6 +447,13 @@
 - [ ] System Performance opens Activity Monitor without changing its tab
 - [ ] After Escape, Vibeshed's CPU use drops back to idle (hidden previews don't redraw or run `ps`)
 - [ ] historyMinutes, sampleInterval and networkInterfaces changes apply on save; history survives the change
+
+### 46. Terminal Module
+
+- [ ] First use asks to let Vibeshed control Terminal (Automation)
+- [ ] New Window opens a window in the running Terminal; with Terminal quit it launches it with a single window
+- [ ] Run Command and configured commands run in a new window; the shell stays open after the command exits
+- [ ] With Terminal quit, Run Command launches it and runs the command in its startup window (no second window)
 
 ---
 

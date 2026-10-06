@@ -72,15 +72,58 @@ final class DefaultConfigTests: XCTestCase {
     }
 
     /// Window, tiling, clipboard and theme join the modules that work with macOS alone.
+    /// Terminal is there for the Homebrew alias.
     func testEnablesBuiltInModulesOnEveryMac() throws {
         let config = try ConfigManager.parseYAML(bareMac)
         XCTAssertEqual(
             Set(config.moduleConfigs.keys),
             [
                 "application", "system", "settings", "audio", "processes", "performance", "window", "tiling",
-                "clipboard", "theme", "math", "timer", "emoji", "websearch", "self",
+                "clipboard", "theme", "math", "timer", "emoji", "websearch", "self", "terminal",
             ]
         )
+    }
+
+    /// Without Homebrew, an alias runs its install script through the Terminal module.
+    func testInstallHomebrewAliasWhenHomebrewIsMissing() async throws {
+        let config = try ConfigManager.parseYAML(bareMac)
+        XCTAssertNotNil(config.moduleConfigs["terminal"])
+        let alias = try XCTUnwrap(config.aliases.first)
+        XCTAssertEqual(config.aliases.count, 1)
+        XCTAssertEqual(alias.alias, "Install Homebrew")
+        XCTAssertEqual(alias.action, "terminal/runCommand")
+        let script = "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+        XCTAssertEqual(alias.parameters, ["command": #"/bin/bash -c "$(curl -fsSL "# + script + #")""#])
+
+        // Its own picker entry, which runs Run Command with the script (rather than only
+        // adding keywords to Run Command).
+        let runCommand = TerminalModule.actions(config: TerminalConfig(), appIcon: nil).map(\.id)
+        XCTAssertTrue(runCommand.contains(ActionID(alias.action)))
+        XCTAssertFalse(AliasManager.enriches(alias, actionIDs: Set(runCommand)))
+        let manager = AliasManager(configManager: ConfigManager(eventBus: EventBus()), eventBus: EventBus())
+        let action = manager.buildAction(from: alias)
+        XCTAssertTrue(action.parameters.isEmpty, "runs without asking for anything")
+        guard case let .chain(target, values) = try await action.run(with: .empty) else {
+            return XCTFail("doesn't chain to Run Command")
+        }
+        XCTAssertEqual(target, ActionID("terminal/runCommand"))
+        XCTAssertEqual(values["command"], DefaultConfig.homebrewInstallCommand)
+    }
+
+    func testNoHomebrewAliasWhenHomebrewIsInstalled() throws {
+        for brew in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] {
+            let detected = SoftwareIntegration.detect(in: SoftwareEnvironment(
+                isAppInstalled: { _ in false },
+                fileExists: { $0 == brew },
+                homeDirectory: "/Users/test"
+            ))
+            let yaml = DefaultConfig.yaml(detected: detected)
+            let config = try ConfigManager.parseYAML(yaml)
+            XCTAssertEqual(config.aliases, [], brew)
+            XCTAssertFalse(yaml.contains("aliases:"), brew)
+            XCTAssertNil(config.moduleConfigs["terminal"], brew)
+            XCTAssertTrue(yaml.contains("\n  # terminal:"), "listed commented out with \(brew)")
+        }
     }
 
     func testEnablesAModuleForEachDetectedIntegration() throws {
@@ -131,6 +174,7 @@ final class DefaultConfigTests: XCTestCase {
         assertValidDefaults(EmojiModule.self)
         assertValidDefaults(WebSearchModule.self)
         assertValidDefaults(SelfModule.self)
+        assertValidDefaults(TerminalModule.self)
     }
 
     /// The IDs the config lists are the ones the modules answer to.
@@ -139,14 +183,15 @@ final class DefaultConfigTests: XCTestCase {
             ApplicationModule(), SystemModule(), SettingsModule(), AudioModule(), ProcessesModule(),
             PerformanceModule(), WindowModule(), ClipboardModule(), ThemeModule(), MathModule(), TimerModule(),
             EmojiModule(), WebSearchModule(), TilingModule(), MenuModule(), BookmarkModule(), CalendarModule(),
-            MeetingPrepModule(),
+            MeetingPrepModule(), TerminalModule(),
         ]
         var ids: Set<String> = []
         for module in modules {
             await ids.insert(module.id)
         }
         // SelfModule needs the app's callbacks to build; its ID is fixed.
-        let listed = (DefaultConfig.builtInModules + DefaultConfig.optionalModules).map(\.moduleID)
+        let listed = (DefaultConfig.builtInModules + DefaultConfig.optionalModules + [DefaultConfig.terminal])
+            .map(\.moduleID)
         XCTAssertEqual(ids.union(["self"]), Set(listed))
     }
 
