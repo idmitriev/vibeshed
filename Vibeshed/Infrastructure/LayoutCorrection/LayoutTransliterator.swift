@@ -8,8 +8,11 @@ final class LayoutTransliterator {
     private var mappingTables: [String: [Character: Character]] = [:]
     /// Localized name per source ID for the correction hint.
     private var sourceNames: [String: String] = [:]
+    /// The Latin layout the tables map onto; rebuilt when the user picks another one.
+    private var latinSourceID: String?
     private var isEnabled: Bool = true
     private var inputSourceObserver: NSObjectProtocol?
+    private var selectedSourceObserver: NSObjectProtocol?
 
     private let configManager: ConfigManager
     private let eventBus: EventBus
@@ -34,6 +37,17 @@ final class LayoutTransliterator {
             }
         }
 
+        // Switching between enabled Latin layouts (ABC ↔ Dvorak) moves the target.
+        selectedSourceObserver = DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.rebuildIfLatinTargetChanged()
+            }
+        }
+
         // Reload config on changes.
         Task { [weak self] in
             guard let self else { return }
@@ -48,46 +62,53 @@ final class LayoutTransliterator {
 
     // MARK: - Transliteration
 
-    /// Attempts to transliterate the query from the current non-Latin input source to Latin.
-    /// Returns `nil` if the current source is already Latin, disabled, or no mapping exists.
-    func transliterate(_ query: String) -> LayoutCorrectionHint? {
-        guard isEnabled, !query.isEmpty else { return nil }
+    /// Latin readings of a query typed with the wrong input source, most likely first.
+    /// Empty when the query looks Latin already or correction is disabled.
+    ///
+    /// Matches on the characters themselves rather than only the active source, so a
+    /// query still corrects after the source changed (a mid-query switch, or macOS
+    /// auto-switching per window). Input methods (Korean, Japanese, Zhuyin) have no
+    /// key table and are reversed by `InputMethodTransliteration`.
+    func corrections(for query: String) -> [LayoutCorrectionHint] {
+        guard isEnabled, !query.isEmpty, !query.allSatisfy(\.isASCII) else { return [] }
 
-        guard let currentSource = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue() else {
-            return nil
+        let imeCandidates = InputMethodTransliteration.candidates(for: query)
+        if !imeCandidates.isEmpty {
+            return imeCandidates.compactMap { hint(query, $0.text, $0.language) }
         }
 
-        // If current source is ASCII-capable (Latin), no correction needed.
-        if isASCIICapable(currentSource) { return nil }
+        let currentID = TISCopyCurrentKeyboardInputSource().map { inputSourceID($0.takeRetainedValue()) }
+        guard let (sourceID, corrected) = Self.bestMapping(
+            for: query, tables: mappingTables, preferring: currentID
+        ) else { return [] }
+        return hint(query, corrected, sourceNames[sourceID] ?? "Unknown").map { [$0] } ?? []
+    }
 
-        let sourceID = inputSourceID(currentSource)
-        guard let mapping = mappingTables[sourceID] else { return nil }
+    /// The layout table that maps every non-ASCII character of `query`, preferring
+    /// `preferredID` (the active source) when several do — Russian and Ukrainian
+    /// share most letters.
+    nonisolated static func bestMapping(
+        for query: String,
+        tables: [String: [Character: Character]],
+        preferring preferredID: String?
+    ) -> (sourceID: String, corrected: String)? {
+        let foreign = query.filter { !$0.isASCII && !$0.isWhitespace }
+        guard !foreign.isEmpty else { return nil }
 
-        var corrected: [Character] = []
-        var anyMapped = false
-        for ch in query {
-            if let mapped = mapping[ch] {
-                corrected.append(mapped)
-                anyMapped = true
-            } else {
-                corrected.append(ch)
-            }
-        }
+        let covering = tables.filter { _, table in foreign.allSatisfy { table[$0] != nil } }
+        guard let sourceID = covering[preferredID ?? ""] != nil
+            ? preferredID
+            : covering.keys.min(),
+            let table = covering[sourceID]
+        else { return nil }
+        return (sourceID, String(query.map { table[$0] ?? $0 }))
+    }
 
-        guard anyMapped else { return nil }
-
-        let correctedQuery = String(corrected)
-        guard correctedQuery != query else { return nil }
-
-        let layoutName = sourceNames[sourceID] ?? "Unknown"
-        let correction = "'\(query)' → '\(correctedQuery)' (\(layoutName))"
+    private func hint(_ query: String, _ corrected: String, _ layoutName: String) -> LayoutCorrectionHint? {
+        guard corrected != query else { return nil }
+        let correction = "'\(query)' → '\(corrected)' (\(layoutName))"
         Log.layout.debug("Layout correction: \(correction, privacy: .public)")
-
-        return LayoutCorrectionHint(
-            originalQuery: query,
-            correctedQuery: correctedQuery,
-            sourceLayoutName: layoutName
-        )
+        return LayoutCorrectionHint(originalQuery: query, correctedQuery: corrected, sourceLayoutName: layoutName)
     }
 
     // MARK: - Config
@@ -98,6 +119,15 @@ final class LayoutTransliterator {
     }
 
     // MARK: - Mapping Table Construction
+
+    /// Runs on every input source switch, so it only rebuilds when the Latin layout
+    /// itself changed — not on the common ABC ↔ Russian switches.
+    private func rebuildIfLatinTargetChanged() {
+        guard let latin = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue(),
+              inputSourceID(latin) != latinSourceID
+        else { return }
+        buildMappingTables()
+    }
 
     private func buildMappingTables() {
         mappingTables.removeAll()
@@ -115,12 +145,15 @@ final class LayoutTransliterator {
             return
         }
 
-        // Find the primary ASCII-capable (Latin) source to transliterate TO.
-        guard let latinSource = sourceList.first(where: { isASCIICapable($0) }) else {
+        // Transliterate TO the Latin layout the user actually types with (ABC, Dvorak…).
+        guard let latinSource = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue()
+            ?? sourceList.first(where: { isASCIICapable($0) })
+        else {
             Log.layout.info("No ASCII-capable keyboard layout found, layout correction disabled")
             return
         }
 
+        latinSourceID = inputSourceID(latinSource)
         let latinUnshifted = keycodeToCharMap(for: latinSource, shifted: false)
         let latinShifted = keycodeToCharMap(for: latinSource, shifted: true)
 

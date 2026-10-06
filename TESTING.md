@@ -94,6 +94,8 @@
 - [ ] Wrong layout detection works (e.g. typing Russian on English layout)
 - [ ] Layout correction hint shown in picker
 - [ ] Actions still found when typing in wrong layout
+- [ ] Correction still fires with the websearch module enabled (it matches every query)
+- [ ] Korean 2-Set (`ㄴㅁㄹㅁ갸`), Japanese romaji (`さふぁり`) and Zhuyin (`ㄋㄇㄑㄇㄐㄛ`) correct to "safari"
 
 ## 9. Key-Combos
 

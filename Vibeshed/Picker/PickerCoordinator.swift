@@ -12,7 +12,7 @@ final class PickerCoordinator {
     private let eventBus: EventBus
     var usageTracker: UsageTracker?
     var aliasManager: AliasManager?
-    var layoutTransliterator: LayoutTransliterator?
+    var layoutTransliterator: (any LayoutCorrecting)?
 
     private var currentContext: SystemContext?
     private var parameterQuerySubscription: AnyCancellable?
@@ -241,7 +241,7 @@ final class PickerCoordinator {
     /// Queries query-dependent modules (e.g. math), merges with the cached corpus,
     /// and scores/ranks off the main actor — the per-keystroke hot path.
     /// `combined` is everything that was scored (the debug dump re-ranks it uncapped).
-    private func scoreQuery(
+    func scoreQuery(
         _ query: String,
         corpus: [ScorableAction],
         scoring: ScoringContext
@@ -259,7 +259,7 @@ final class PickerCoordinator {
 
     // MARK: - Unified query pipeline
 
-    private func makeScoring(query: String, context: SystemContext?) -> ScoringContext {
+    func makeScoring(query: String, context: SystemContext?) -> ScoringContext {
         usageTracker?.makeScoringContext(query: query, systemContext: context)
             ?? ScoringContext(usageCounts: [:], lastUsedDates: [:], query: query, systemContext: context)
     }
@@ -314,19 +314,14 @@ final class PickerCoordinator {
         let (items, cache, combined) = await scoreQuery(query, corpus: corpus, scoring: scoring)
         guard isCurrent() else { return }
 
-        // Layout correction fallback: if no results and query is non-empty,
-        // try transliterating from the current keyboard layout.
-        if !query.isEmpty, items.isEmpty,
-           let correction = layoutTransliterator?.transliterate(query)
-        {
-            let correctedScoring = makeScoring(query: correction.correctedQuery, context: ctx)
-            let (correctedItems, correctedCache, correctedCombined) = await scoreQuery(
-                correction.correctedQuery, corpus: corpus, scoring: correctedScoring
-            )
+        // Layout correction fallback: nothing but catch-alls (web search) matched,
+        // so retry the query as typed on the Latin layout.
+        if !query.isEmpty, Self.topRankedScore(items, cache) == nil {
+            let corrected = await bestLayoutCorrection(of: query, corpus: corpus, context: ctx)
             guard isCurrent() else { return }
-            if !correctedItems.isEmpty {
-                pickerState.layoutCorrectionHint = correction
-                finish(correctedItems, correctedCache, scored: correctedCombined, correctedScoring)
+            if let corrected {
+                pickerState.layoutCorrectionHint = corrected.hint
+                finish(corrected.items, corrected.cache, scored: corrected.combined, corrected.scoring)
                 return
             }
         }
