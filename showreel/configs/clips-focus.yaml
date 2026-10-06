@@ -1,0 +1,20 @@
+# Layered over clips.yaml by clip-focus: Caps Lock chords that walk focus
+# around the tiling grid and move the focused window. Lists replace
+# clips.yaml's, so the picker and tiling bindings are repeated.
+#
+# Vibeshed 0.6.1 has no directional focus yet (window/focusLeft… came after
+# it), so focus steps through the splits in order.
+
+keybindings:
+  - combo: "capslock+space"
+    action: "app/togglePicker"
+  - combo: "capslock+t"
+    action: "tiling/attachAll"
+  - combo: "capslock+right"
+    action: "tiling/focusNextSplit"
+  - combo: "capslock+left"
+    action: "tiling/focusPreviousSplit"
+  - combo: "capslock+shift+right"
+    action: "tiling/moveRight"
+  - combo: "capslock+shift+left"
+    action: "tiling/moveLeft"

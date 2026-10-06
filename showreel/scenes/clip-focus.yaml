@@ -1,0 +1,61 @@
+# Loop for the website: four tiled windows with the focus border on. Focus
+# walks the grid with ⇪→, the focused window moves right and back with
+# ⇪⇧→/⇪⇧←, and the border follows; four steps come back to the start.
+title: "Clip: focus and the focus border"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  # The theme clips change the system accent; start from the default.
+  prepare: defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null; true
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-focus.yaml]
+    keystrokes: true
+  apps:
+    - { app: Spotify, frame: [690, 330, 560, 440] }
+    - { app: Safari, open: "https://github.com/idmitriev/vibeshed", frame: [50, 50, 760, 520] }
+    - { app: Visual Studio Code, open: ../../Vibeshed/Picker/FuzzyMatcher.swift, frame: [440, 150, 780, 540] }
+    - { app: Ghostty, frame: [140, 370, 620, 400] }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors; the border uses its accent
+    - wait: 0.8
+    - type: { text: "export PS1='%F{205}❯%f '; clear", cps: 60 }
+    - press: return
+    - type: { text: "fastfetch --structure OS:Kernel:Uptime:Packages:Shell:Terminal:CPU:Memory:Colors", cps: 80 }
+    - press: return
+    - press: capslock+t             # tile all four
+    - wait: 1.5
+    - open: vibeshed://window/toggleFocusBorder
+  settle: 4                        # the setup's keystroke chips fade out
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.6                     # still frame for the loop to fade into
+  - press: capslock+right         # focus the next split
+  - wait: 1.0
+  - press: capslock+right
+  - wait: 1.0
+  - marker: moving
+  - press: capslock+shift+right   # the focused window moves; the border follows
+  - wait: 1.2
+  - press: capslock+shift+left
+  - wait: 1.2
+  - press: capslock+right
+  - wait: 1.0
+  - press: capslock+right         # back to the first window
+  - wait: 1.2
+  - marker: end
+
+outputs:
+  # The whole 1280×800 display below the menu bar.
+  - { name: focus, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: focus, format: webm, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: focus-poster, format: png, crop: [0, 30, 1280, 770], width: 1280, at: moving }

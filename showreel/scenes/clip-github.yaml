@@ -1,0 +1,65 @@
+# Loop for the website: search pull requests and open one in the browser
+# (github.com links go to Chrome by the clips' URL rule).
+title: "Clip: GitHub pull requests"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  sync: [../fixtures/demo-data.py]
+  # Sample projects, Claude sessions and VS Code recents; the system accent
+  # back to default (the theme clip changes it).
+  prepare: |
+    defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null
+    python3 "$SCENE_DIR/../fixtures/demo-data.py"
+    rm -rf "$HOME/Library/Application Support/Google/Chrome/Default/Sessions"
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-content.yaml]
+    keystrokes: true
+  apps:
+    - app: Google Chrome
+      open: "https://ivandmitriev.com/vibeshed/"
+      args: [--no-default-browser-check, --no-first-run]
+      frame: [90, 45, 1100, 700]
+  focus: Google Chrome
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors (see clips.yaml)
+    - wait: 0.8
+  settle: 3
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still frame for the loop to fade into
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6                     # the list settles after opening
+  - type: { text: search pull, cps: 16 }
+  - waitFor: { result: Search Pull Requests }
+  - wait: 0.2
+  - press: return
+  - wait: 0.5
+  - type: { text: theme, cps: 14 }
+  - press: return
+  - marker: searching
+  - waitFor: { result: "#", timeout: 15 }   # PR rows read "#123 …"
+  - marker: results
+  - wait: 1.2
+  - press: return
+  - waitFor: { window: picker, gone: true }
+  - marker: opening
+  - waitFor: { window: Google Chrome, title: idmitriev/vibeshed, timeout: 15 }   # long titles get cut in the middle
+  - marker: opened
+  - wait: 1.5
+  - marker: end
+
+outputs:
+  # The whole 1280×800 display below the menu bar.
+  - { name: github, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5, skip: [[searching+0.5, results-0.1], [opening+0.4, opened]] }
+  - { name: github, format: webm, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5, skip: [[searching+0.5, results-0.1], [opening+0.4, opened]] }
+  - { name: github-poster, format: png, crop: [0, 30, 1280, 770], width: 1280, at: results }

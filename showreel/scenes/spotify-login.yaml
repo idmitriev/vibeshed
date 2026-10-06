@@ -1,0 +1,43 @@
+# Not a clip: signs Vibeshed in to the Spotify Web API once, so clip-spotify
+# can search playlists. The first search opens Spotify's sign-in sheet — sign
+# in and approve in the VM; the scene waits until Vibeshed has its tokens
+# (~/.config/vibeshed/spotify-tokens.json, kept across takes). Needs
+# SPOTIFY_CLIENT_ID in showreel/.vm/secrets.env.
+title: "Warm-up: Spotify sign-in"
+
+setup:
+  display: { width: 1280, height: 800 }
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-content.yaml]
+    # Vibeshed 0.6.1 crashes when the sign-in sheet hands back its callback (the
+    # completion closure inherits the main actor; AuthenticationServices calls
+    # it off the main thread). A build with the fix signs in once; 0.6.1 then
+    # reads and refreshes the tokens. Copy one there with
+    # `rsync -a .build/Vibeshed.app/ <vm>:Applications/VibeshedDev.app/`.
+    app: ~/Applications/VibeshedDev.app
+    # Signed differently from 0.6.1, so macOS asks for its permissions again
+    # at launch; the first step waits while those are answered (Deny is fine:
+    # signing in needs none of them).
+    warmUp: false
+
+record: { video: false }
+
+actions:
+  - waitForUser: 180
+  - open: vibeshed://picker
+  - waitFor: picker
+  - wait: 0.8
+  - type: { text: search spotify, cps: 20 }
+  - waitFor: { result: Search Spotify }
+  - press: return
+  - wait: 0.8
+  - type: { text: lofi, cps: 20 }
+  - press: return
+  - waitForUser: 60               # "Vibeshed wants to use spotify.com to sign in"
+  - shell: |
+      echo "sign in to Spotify in the VM window; waiting up to 5 minutes…"
+      for _ in {1..300}; do
+        [ -s ~/.config/vibeshed/spotify-tokens.json ] && { echo "signed in"; exit 0; }
+        sleep 1
+      done
+      echo "no Spotify tokens after 5 minutes" >&2; exit 1

@@ -1,0 +1,73 @@
+# Loop for the website: one keystroke (⇪N, theme/next) retints everything at
+# once — VS Code, Neovim, htop and lsd in Ghostty splits, the wallpaper and
+# the accent. Four themes and the list wraps, so the loop ends where it began.
+title: "Clip: themes everywhere"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  # The Vibeshed sources, so VS Code shows a real project tree.
+  sync: [../fixtures/demo-data.py, ../fixtures/terminal-tools.sh, ../../Vibeshed]
+  # Sample projects and terminal tool configs; the system accent back to
+  # default (themes set it).
+  prepare: |
+    defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null
+    python3 "$SCENE_DIR/../fixtures/demo-data.py"
+    zsh "$SCENE_DIR/../fixtures/terminal-tools.sh"
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-theming.yaml]
+    keystrokes: true
+  apps:
+    # A folder, then a file in it: VS Code colors a no-folder window's status
+    # bar its own purple, whatever the theme.
+    - { app: Visual Studio Code, open: ~/Showreel/repo/Vibeshed }
+    - { app: Visual Studio Code, open: ~/Showreel/repo/Vibeshed/Picker/FuzzyMatcher.swift, frame: [30, 66, 680, 670] }
+    - { app: Ghostty, frame: [726, 66, 524, 670] }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.tokyo-night
+    - wait: 3
+    # Ghostty: Neovim on top, htop and an lsd tree below (⌘⇧D splits down).
+    - type: { text: "cd ~/Showreel/repo/showreel/fixtures && nvim +88 -c 'normal zt' demo-data.py", cps: 80 }
+    - press: return
+    - wait: 1.2
+    - press: cmd+shift+d
+    - wait: 0.8
+    - type: { text: "htop", cps: 60 }
+    - press: return
+    - wait: 0.8
+    - press: cmd+shift+d
+    - wait: 0.8
+    # lsd bakes colors into what it prints, so it reruns; drawing over the
+    # same-width output (cursor home, print) never shows an empty pane.
+    - type: { text: "clear; while true; do printf '\\e[H%s' \"$(lsd -l --blocks permission,user,size,name --color always ~/Showreel/repo/Vibeshed)\"; sleep 0.5; done", cps: 90 }
+    - press: return
+    - press: cmd+ctrl+equal          # equal heights
+    - press: { keys: cmd+option+up, times: 2 }   # Neovim's split titles the window
+  settle: 3.5                      # the setup's keystroke chips fade out
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.6                     # still frame for the loop to fade into
+  - press: capslock+n             # Gruvbox
+  - wait: 2.4
+  - marker: gruvbox
+  - press: capslock+n             # Rosé Pine
+  - wait: 2.4
+  - press: capslock+n             # Everforest
+  - wait: 2.4
+  - press: capslock+n             # back to Tokyo Night
+  - wait: 2.2
+  - marker: end
+
+outputs:
+  # The whole 1280×800 display below the menu bar.
+  - { name: theming, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: theming, format: webm, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: theming-poster, format: png, crop: [0, 30, 1280, 770], width: 1280, at: gruvbox+1.6 }

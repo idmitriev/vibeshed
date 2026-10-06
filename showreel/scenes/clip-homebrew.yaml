@@ -1,0 +1,54 @@
+# Loop for the website: search Homebrew casks from the picker.
+title: "Clip: Homebrew"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  # The theme clip's accent target changes the system accent; start from the
+  # default so the picker's match highlights look the same in every clip.
+  prepare: defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null; true
+  vibeshed:
+    config: ../configs/clips.yaml
+    keystrokes: true
+  # Warm brew's package index so the search answers right away.
+  shell: "/opt/homebrew/bin/brew search --cask obsidian >/dev/null 2>&1; true"
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors (see clips.yaml)
+    - wait: 0.8
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still background for the loop to fade into
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.4                     # the list settles after opening
+  - type: { text: install cask, cps: 30 }
+  - waitFor: { result: Install Cask }
+  - wait: 0.15
+  - press: return
+  - wait: 0.4
+  - type: { text: obsid, cps: 24 }   # quick, so brew searches once, not per letter
+  - marker: searching
+  - waitFor: { result: obsidian, timeout: 12 }
+  - marker: results
+  - wait: 1.3                     # the details pane fills in
+  - marker: found
+  - press: { keys: escape, times: 2, interval: 0.25 }
+  - waitFor: { window: picker, gone: true }
+  - wait: 0.4
+  - marker: end
+
+outputs:
+  # The picker plus the keystroke chips under it. `loop` fades the end back
+  # into the start, so <video loop> cycles without a seam; `skip` jumps past
+  # most of brew's search spinner.
+  - { name: homebrew, crop: [230, 190, 820, 580], width: 1280, from: start, to: end, loop: 0.5, skip: [[searching+0.5, results-0.1]] }
+  - { name: homebrew, format: webm, crop: [230, 190, 820, 580], width: 1280, from: start, to: end, loop: 0.5, skip: [[searching+0.5, results-0.1]] }
+  - { name: homebrew-poster, format: png, crop: [230, 190, 820, 580], width: 1280, at: found }

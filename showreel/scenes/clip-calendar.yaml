@@ -1,0 +1,55 @@
+# Loop for the website: today's meetings in the picker, with the Zoom link
+# one Return away.
+# Needs a Vibeshed newer than 0.6.1: that release's Info.plist has no
+# NSCalendarsFullAccessUsageDescription, so macOS never shows its Calendar
+# prompt and the module finds no events (fixed on main in a47d2a3).
+title: "Clip: calendar"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  sync: [../fixtures/demo-data.py]
+  # Sample projects, Claude sessions and VS Code recents; the system accent
+  # back to default (the theme clip changes it).
+  prepare: |
+    defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null
+    python3 "$SCENE_DIR/../fixtures/demo-data.py"
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-content.yaml]
+    keystrokes: true
+  events:
+    - { title: "Daily standup", in: -5, minutes: 15, url: "https://zoom.us/j/7392018462" }
+    - { title: "Design review: onboarding flow", in: 12, minutes: 45, url: "https://zoom.us/j/5810274936" }
+    - { title: "1:1 with Alex", in: 95, minutes: 30, location: "Room 4" }
+    - { title: "Launch planning", in: 240, minutes: 60, url: "https://zoom.us/j/2648193705" }
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors (see clips.yaml)
+    - wait: 0.8
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still frame for the loop to fade into
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6                     # the list settles after opening
+  - type: { text: design review, cps: 16 }
+  - waitFor: { result: Design review }
+  - wait: 2.2                     # the preview pane fills in
+  - marker: found
+  - press: escape
+  - waitFor: { window: picker, gone: true }
+  - wait: 0.4
+  - marker: end
+
+outputs:
+  # The picker plus the keystroke chips under it.
+  - { name: calendar, crop: [230, 190, 820, 580], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: calendar, format: webm, crop: [230, 190, 820, 580], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: calendar-poster, format: png, crop: [230, 190, 820, 580], width: 1280, at: found }

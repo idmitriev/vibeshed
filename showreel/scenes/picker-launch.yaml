@@ -1,0 +1,76 @@
+# Open the picker, find an app by a few letters and launch it.
+title: Launch an app from the picker
+
+setup:
+  display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
+  appearance: dark
+  wallpaper: ../../docs/wallpapers/vibeshed-sunset-macbook.jpg
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: ../configs/demo.yaml
+    keystrokes: true
+  settle: 1.5
+
+record:
+  leadIn: 1.0
+  leadOut: 0.3
+
+actions:
+  - press: capslock+space
+  - waitFor: picker
+  - marker: opened
+  - wait: 0.8
+  - type: calc
+  - wait: 1.2
+  - screenshot: { name: picker-calc, region: picker, padding: 80 }
+  - screenshot: { name: picker-calc-window, window: picker }
+  - marker: found
+  - waitFor: { result: Calculator }
+  - press: return
+  - waitFor: { window: picker, gone: true }
+  - waitFor: Calculator
+  - marker: launched
+  - wait: 1.0
+  - type: "12*7="
+  - wait: 1.5
+  - marker: done
+  # Calculator keeps its display between launches: clear it for the next take
+  # (after `done`, so no output shows it).
+  - press: { keys: escape, times: 2 }
+
+outputs:
+  # Website hero: the whole screen, sized for a 1080p video tag.
+  - name: website
+    width: 1920
+    to: done
+  - name: website
+    format: webm
+    width: 1920
+    to: done
+  # Social: the picker and the keystroke visualizer under it, square.
+  - name: square
+    crop: [500, 290, 920, 920]
+    size: 1080x1080
+    background: blur
+    from: opened-0.6
+    to: launched+0.4
+  # Stories / Shorts / Reels.
+  - name: vertical
+    crop: picker
+    padding: 60
+    size: 1080x1920
+    background: blur
+    from: opened-0.6
+    to: done
+  - name: preview
+    format: gif
+    crop: picker
+    padding: 40
+    width: 720
+    from: opened-0.3
+    to: launched
+  - name: poster
+    format: png
+    at: found

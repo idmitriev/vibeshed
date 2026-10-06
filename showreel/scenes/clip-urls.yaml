@@ -1,0 +1,60 @@
+# Loop for the website: Vibeshed is the default browser, so a link opened
+# anywhere shows its browser chooser; ↓ Return opens it in Chrome.
+title: "Clip: URL routing"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: ../configs/clips.yaml
+    keystrokes: true
+  # The theme clip's accent target changes the system accent: start from the
+  # default. Chrome would restore earlier takes' tabs (and nag about it).
+  prepare: >-
+    defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null;
+    rm -rf "$HOME/Library/Application Support/Google/Chrome/Default/Sessions"
+  apps:
+    - app: Google Chrome
+      open: "https://ivandmitriev.com/vibeshed/"
+      args: [--no-default-browser-check, --no-first-run]   # Vibeshed is the default browser here
+      frame: [380, 60, 860, 680]
+    - { app: Ghostty, frame: [110, 250, 740, 440] }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors (see clips.yaml)
+    - wait: 0.8
+    - type: { text: "export PS1='%F{205}❯%f '; clear", cps: 60 }
+    - press: return
+  settle: 2
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still frame for the loop to fade into
+  - type: { text: "open https://news.ycombinator.com", cps: 24 }
+  - press: return
+  - waitFor: picker               # the browser chooser
+  - wait: 1.0
+  - marker: chooser
+  - press: down
+  - wait: 0.5
+  - press: return
+  - waitFor: { window: picker, gone: true }
+  - marker: chosen
+  - waitFor: { window: Google Chrome, title: Hacker News, timeout: 15 }
+  - marker: loaded
+  - wait: 1.2                     # the page renders
+  - marker: end
+
+outputs:
+  # The whole 1280×800 display below the menu bar; `skip` cuts most of the
+  # wait for the page, however long the network takes.
+  - { name: urls, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5, skip: [[chosen+0.6, loaded]] }
+  - { name: urls, format: webm, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5, skip: [[chosen+0.6, loaded]] }
+  - { name: urls-poster, format: png, crop: [0, 30, 1280, 770], width: 1280, at: chooser }

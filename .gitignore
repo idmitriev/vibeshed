@@ -39,3 +39,7 @@ credentials.json
 release/
 *.zip
 *.dmg
+
+# Showreel: VM state (guest details, host key copy) and takes
+showreel/.vm/
+showreel/out/

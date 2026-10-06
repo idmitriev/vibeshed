@@ -10,4 +10,4 @@
 --funcattributes prev-line
 --typeattributes prev-line
 --varattributes prev-line
---exclude .build,.swiftpm,VibeshedUITests
+--exclude .build,.swiftpm,VibeshedUITests,showreel/.build

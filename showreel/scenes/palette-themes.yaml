@@ -1,0 +1,42 @@
+# Arrow through palette themes: the picker, accent color and wallpaper follow
+# live, then Return applies one.
+title: Switch palette themes live
+
+setup:
+  display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
+  appearance: dark
+  wallpaper: ../../docs/wallpapers/vibeshed-midnight-macbook.jpg
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: ../configs/demo-themes.yaml
+    keystrokes: true
+
+record:
+  leadIn: 0.6
+  leadOut: 1.5
+
+actions:
+  - marker: start
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.9                     # the list settles about a second after opening
+  - type: { text: switch theme, cps: 20 }
+  - waitFor: { result: Switch Theme }
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - marker: browsing
+  - press: { keys: down, times: 4, interval: 1.4 }
+  - wait: 1.4
+  - press: return
+  - waitFor: { window: picker, gone: true }
+  - marker: applied
+  - wait: 1.0
+
+outputs:
+  # From just before the theme list opens, to keep it under 10 seconds.
+  - { name: website, width: 1920, from: browsing-1.6, to: applied+1.0 }
+  - { name: square, size: 1080x1080, background: blur, from: browsing-1.6, to: applied+1.0 }
+  - { name: poster, format: png, at: browsing+4.4 }

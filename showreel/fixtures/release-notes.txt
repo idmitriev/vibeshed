@@ -1,0 +1,7 @@
+Vibeshed 0.6 — release notes
+
+• Palette themes across macOS and your apps
+• Clipboard history with search
+• Window tiling from the keyboard
+
+Install:
