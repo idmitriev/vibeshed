@@ -1,6 +1,6 @@
 cask "vibeshed" do
-  version "0.6.1"
-  sha256 "3b186f60a7bc76e25227590165773f8cab355f6ab9a280ca8afa499e2832b900"
+  version "0.7.0"
+  sha256 "e446fb116f7cce219074428bee05edda311faa535739abcd48feedacdc5ea44f"
 
   url "https://github.com/idmitriev/vibeshed/releases/download/v#{version}/Vibeshed-#{version}.zip"
   name "Vibeshed"
