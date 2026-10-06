@@ -103,6 +103,8 @@ Windows and the tiling grid (two side-by-side splits) get 4pt of padding and gap
 - the ones backed by macOS itself: apps, system actions, settings panes, audio, processes, performance, windows, tiling, clipboard history, themes, math, timers, emoji and web search;
 - one for each app it finds on the Mac: browser tabs, Homebrew, Claude, ChatGPT/Codex, VS Code (and Cursor, Windsurf), JetBrains IDEs, Zed, iTerm, Ghostty, Spotify, Telegram, Zoom and GitHub (via the `gh` CLI or GitHub Desktop).
 
+Without Homebrew, it also adds an **Install Homebrew** alias that runs the [brew.sh](https://brew.sh) install script in a new Terminal window, and enables the Terminal module that alias runs in.
+
 Every other module is listed in the file, commented out. A welcome window then walks through the permissions those modules need, one macOS prompt at a time, so each module works the first time you use it. It's under **Set Up Permissions…** in the menu bar afterwards.
 
 See [config.example.yaml](config.example.yaml) for all available options including keybindings, module settings, URL routing rules, and action aliases.
@@ -131,6 +133,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **JetBrains** | Search and open IDE projects |
 | **ITerm** | Session listing, command execution, new tabs |
 | **Ghostty** | Focus open terminals, new windows/tabs, quick commands, config reload (Ghostty 1.3+) |
+| **Terminal** | New Terminal.app windows, Run Command, quick commands |
 | **Claude** | Resume Claude Code/Desktop sessions, start new ones, jump to sessions awaiting input |
 | **Codex** | Resume Codex threads with project/branch/model context, start new sessions |
 | **Zed** | Search and open recent workspaces |

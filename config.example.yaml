@@ -261,6 +261,16 @@ aliases:
     parameters:
       query: "{query}"
 
+  # Aliases with preset parameters run the action with them, as a separate picker
+  # entry. The first-launch config adds this one when Homebrew isn't installed.
+  - alias: "Install Homebrew"
+    action: "terminal/runCommand"
+    icon: "cup.and.saucer"
+    subtitle: "Run the install script from brew.sh in Terminal"
+    keywords: ["homebrew", "brew", "package manager"]
+    parameters:
+      command: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+
   # URL aliases — open URLs directly in a browser
   - alias: "Google"
     action: "https://www.google.com/search?q={query}"
@@ -611,6 +621,14 @@ modules:
       "Top": "btop"
       "Lazygit": "lazygit"
     # enabledActions: [newTab, runCommand, cmd, terminal]   # full names or families (cmd, terminal)
+
+  # --- Terminal.app (theming is the theme module's `terminal` target) ---
+  # New Window, Run Command and the commands below, each in a new window (Terminal's
+  # AppleScript can't open a tab). The shell stays open when the command exits.
+  terminal:
+    commands:
+      "Top": "top -o cpu"
+    # enabledActions: [newWindow, runCommand, cmd]   # full names or the cmd family
 
   # --- Claude (Claude Code CLI + Claude Desktop) ---
   anthropic:
