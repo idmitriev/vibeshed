@@ -16,3 +16,18 @@ struct MeetingPrepConfig: Codable, Sendable, Equatable {
     /// Enabled actions filter (nil = all)
     var enabledActions: Set<String>?
 }
+
+extension MeetingPrepConfig {
+    /// Every key is optional: a missing one keeps its default above instead of failing
+    /// the whole section (see `ApplicationConfig`).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
+        prepWindowMinutes = try container.decodeIfPresent(Int.self, forKey: .prepWindowMinutes)
+            ?? defaults.prepWindowMinutes
+        hideApps = try container.decodeIfPresent([String].self, forKey: .hideApps)
+        keepApps = try container.decodeIfPresent([String].self, forKey: .keepApps)
+        autoJoinVideo = try container.decodeIfPresent(Bool.self, forKey: .autoJoinVideo) ?? defaults.autoJoinVideo
+        enabledActions = try container.decodeIfPresent(Set<String>.self, forKey: .enabledActions)
+    }
+}

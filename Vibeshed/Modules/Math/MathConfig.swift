@@ -19,3 +19,20 @@ struct MathConfig: Codable, Sendable, Equatable {
     /// Restrict to specific action types (nil = all)
     var enabledActions: Set<String>?
 }
+
+extension MathConfig {
+    /// Every key is optional: a missing one keeps its default above instead of failing
+    /// the whole section (see `ApplicationConfig`).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
+        decimalPlaces = try container.decodeIfPresent(Int.self, forKey: .decimalPlaces) ?? defaults.decimalPlaces
+        enableCurrency = try container.decodeIfPresent(Bool.self, forKey: .enableCurrency) ?? defaults.enableCurrency
+        currencyRateTTL = try container.decodeIfPresent(Int.self, forKey: .currencyRateTTL)
+            ?? defaults.currencyRateTTL
+        copyOnSelect = try container.decodeIfPresent(Bool.self, forKey: .copyOnSelect) ?? defaults.copyOnSelect
+        showBaseConversions = try container.decodeIfPresent(Bool.self, forKey: .showBaseConversions)
+            ?? defaults.showBaseConversions
+        enabledActions = try container.decodeIfPresent(Set<String>.self, forKey: .enabledActions)
+    }
+}
