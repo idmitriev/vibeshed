@@ -306,6 +306,7 @@ private extension ConfigDecodingCoverageTests {
         config.wallpaperStyle = "mesh"
         config.wallpaperGrain = false
         config.itermDefaultProfile = false
+        config.terminalDefaultProfile = false
         config.folders = ["/f"]
         config.templates = try YAMLDecoder().decode([ThemeTemplateConfig].self, from: "[{ source: s, target: t }]")
         config.hooks = ["h"]
