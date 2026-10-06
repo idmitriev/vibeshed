@@ -54,7 +54,11 @@ struct TerminalTarget: ThemeTarget {
         }
 
         if let profile = request.override(.terminal) {
-            if request.config.terminalDefaultProfile { TerminalProfiles.setDefault(profile) }
+            if request.config.terminalDefaultProfile {
+                TerminalProfiles.setDefault(profile)
+            } else {
+                TerminalProfiles.restoreDefault()
+            }
             guard isRunning else { return .applied() }
             return await Self.run(Self.useProfileScript(profile, makeDefault: request.config.terminalDefaultProfile))
         }

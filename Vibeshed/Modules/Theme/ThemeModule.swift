@@ -54,9 +54,10 @@ actor ThemeModule: ModuleConfigurable {
         }
     }
 
+    /// Resolves the theme after the delay, so a switch made meanwhile isn't undone.
     private func reapply(_ target: ThemeTargetID, after delay: Duration) async {
-        guard config.enabledTargets.contains(target), let theme = await currentTheme() else { return }
         try? await Task.sleep(for: delay)
+        guard config.enabledTargets.contains(target), let theme = await currentTheme() else { return }
         let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: [target])
         _ = await applier.apply(theme, config: config, options: options)
     }
