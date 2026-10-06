@@ -33,6 +33,10 @@ struct ThemeConfig: Codable, Sendable, Equatable {
     /// keep the theme. `false` hands the default back to the profile it replaced.
     var itermDefaultProfile = true
 
+    /// Make the "Vibeshed" Terminal profile the default and startup profile, so new windows
+    /// and Terminal restarts keep the theme. `false` hands those back to your own profiles.
+    var terminalDefaultProfile = true
+
     /// Folders that get a palette-tinted custom icon (on top of the system-wide folder color).
     var folders: [String] = []
 
@@ -71,6 +75,8 @@ struct ThemeConfig: Codable, Sendable, Equatable {
         wallpaperGrain = try container.decodeIfPresent(Bool.self, forKey: .wallpaperGrain) ?? defaults.wallpaperGrain
         itermDefaultProfile = try container.decodeIfPresent(Bool.self, forKey: .itermDefaultProfile)
             ?? defaults.itermDefaultProfile
+        terminalDefaultProfile = try container.decodeIfPresent(Bool.self, forKey: .terminalDefaultProfile)
+            ?? defaults.terminalDefaultProfile
         folders = try container.decodeIfPresent([String].self, forKey: .folders) ?? defaults.folders
         templates = try container.decodeIfPresent([ThemeTemplateConfig].self, forKey: .templates)
             ?? defaults.templates
@@ -106,7 +112,7 @@ struct ThemeDefinition: Codable, Sendable, Equatable {
     /// Multicolor). Default: the named color nearest the palette's accent hue.
     var macosAccent: String?
     /// Use an existing app theme instead of generating one, by target id:
-    /// `vscode`, `zed`, `jetbrains`, `iterm`, `ghostty`, `claude`, `github`.
+    /// `vscode`, `zed`, `jetbrains`, `iterm`, `ghostty`, `terminal`, `claude`, `github`.
     var apps: [String: String] = [:]
 
     init(
@@ -180,6 +186,7 @@ enum ThemeTargetID: String, CaseIterable, Sendable {
     case wallpaper
     case iterm
     case ghostty
+    case terminal
     case vscode
     case zed
     case jetbrains
@@ -197,5 +204,5 @@ enum ThemeTargetID: String, CaseIterable, Sendable {
 
 /// Keys accepted under a theme's `apps:` map.
 enum ThemeAppOverride {
-    static let keys: Set<String> = ["vscode", "zed", "jetbrains", "iterm", "ghostty", "claude", "github"]
+    static let keys: Set<String> = ["vscode", "zed", "jetbrains", "iterm", "ghostty", "terminal", "claude", "github"]
 }
