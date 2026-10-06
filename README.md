@@ -165,6 +165,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 | `vscode` | VS Code, Insiders, Cursor, Windsurf, VSCodium via a generated theme extension | ✓* |
 | `zed` | Generated `themes/vibeshed.json`, selected in settings | ✓* |
 | `jetbrains` | Generated editor scheme; follows "Sync with OS" | on restart |
+| `neovim` | Generated `colors/vibeshed.lua` (UI, syntax, Tree-sitter, LSP, diagnostics, `:terminal`); running Neovims using it reload over their RPC sockets | ✓ |
 | `claude` | Claude Code custom theme (`~/.claude/themes`) | ✓ |
 | `bat` / `lsd` / `micro` | Generated `Vibeshed.tmTheme` (+ cache rebuild), `colors.yaml`, `vibeshed.micro` | next run |
 | `btop` | Generated `vibeshed.theme`, selected in `btop.conf`; running btops reload via SIGUSR2 | ✓ |
@@ -173,7 +174,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 
 \* The very first time the generated theme is installed, the editor may need one reload to discover it; after that, switches apply live.
 
-The picker and the window focus border follow the theme's accent too. Terminal tools that use the 16 ANSI colours (e.g. fzf with `--color=hl:4,…`) need no target at all: they follow the terminal palette (iTerm, Ghostty) live. For bat, select the generated theme once with `--theme=Vibeshed`.
+The picker and the window focus border follow the theme's accent too. Terminal tools that use the 16 ANSI colours (e.g. fzf with `--color=hl:4,…`) need no target at all: they follow the terminal palette (iTerm, Ghostty) live. For bat, select the generated theme once with `--theme=Vibeshed`; for Neovim, with `vim.cmd.colorscheme("vibeshed")` (or LazyVim's `opts = { colorscheme = "vibeshed" }`).
 
 Themes use [Omarchy](https://omarchy.org)'s `colors.toml` key names (`background`, `accent`, `bright_blue`, `color0`…`color15`, …); only background, foreground and the six base hues are required. 73 built-ins: Catppuccin, Tokyo Night, Rosé Pine, Kanagawa, Gruvbox, Everforest, Nord, Solarized, GitHub, Ayu, Nightfox, Flexoki, Melange, One Dark/Light, Dracula, Monokai Pro, Night Owl, Poimandres, Vesper, Moonfly, Sonokai, Iceberg, Vague, plus Omarchy's own (Osaka Jade, Ristretto, Matte Black, Retro 82, Lumon, …) and classic desktops — BeOS, OS/2 Warp, OS/2 Text Mode and NeXTSTEP, with colors taken from the systems themselves, plus System 7, Mac OS 8, Mac OS 9 and the Hi-Tech appearance from Mac OS 8.5's betas (Platinum greys and the Macintosh 16-color palette; the highlight and desktop colors are inspired rather than measured), and Windows 95, Windows XP (Luna), Amiga Workbench 1.3 and 3.1 (every color in the Amiga's 12-bit palette) and QNX Photon (its window manager's default title colors and the QNX 6.2 demo CD's desktop). The community and Omarchy palettes are regenerated from their sources by `scripts/generate-builtin-themes.py`. Define your own in config (optionally `base:` another theme), or drop Omarchy theme folders into `~/.config/vibeshed/themes/`:
 

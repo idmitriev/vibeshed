@@ -112,7 +112,7 @@ struct ThemeDefinition: Codable, Sendable, Equatable {
     /// Multicolor). Default: the named color nearest the palette's accent hue.
     var macosAccent: String?
     /// Use an existing app theme instead of generating one, by target id:
-    /// `vscode`, `zed`, `jetbrains`, `iterm`, `ghostty`, `terminal`, `claude`, `github`.
+    /// `vscode`, `zed`, `jetbrains`, `iterm`, `ghostty`, `terminal`, `neovim`, `claude`, `github`.
     var apps: [String: String] = [:]
 
     init(
@@ -190,6 +190,7 @@ enum ThemeTargetID: String, CaseIterable, Sendable {
     case vscode
     case zed
     case jetbrains
+    case neovim
     case claude
     case bat
     case lsd
@@ -204,5 +205,7 @@ enum ThemeTargetID: String, CaseIterable, Sendable {
 
 /// Keys accepted under a theme's `apps:` map.
 enum ThemeAppOverride {
-    static let keys: Set<String> = ["vscode", "zed", "jetbrains", "iterm", "ghostty", "terminal", "claude", "github"]
+    static let keys: Set<String> = [
+        "vscode", "zed", "jetbrains", "iterm", "ghostty", "terminal", "neovim", "claude", "github",
+    ]
 }

@@ -456,7 +456,7 @@ modules:
   # --- Theme ---
   # Palette themes applied across macOS and apps in one go: appearance, accent +
   # text highlight, folder color, pointer, wallpaper, the Vibeshed picker, iTerm, Ghostty,
-  # Terminal, VS Code/Cursor/Windsurf, Zed, JetBrains, Claude Code, plus your own templates.
+  # Terminal, VS Code/Cursor/Windsurf, Zed, JetBrains, Neovim, Claude Code, plus your own templates.
   #   theme/switch        browse themes; each previews live as you move, Return applies, Esc reverts
   #   theme/apply.<slug>  apply one directly (e.g. theme/apply.tokyo-night — bind it or alias it)
   #   theme/next, theme/previous, theme/reapply, theme/fromWallpaper
@@ -479,10 +479,12 @@ modules:
 
     # What a theme is applied to (default: all but github, which changes an account setting):
     # targets: [appearance, accent, folders, pointer, wallpaper, iterm, ghostty, terminal, vscode,
-    #           zed, jetbrains, claude, bat, lsd, micro, btop, github, templates, hooks]
+    #           zed, jetbrains, neovim, claude, bat, lsd, micro, btop, github, templates, hooks]
     # ghostty writes ~/.config/ghostty/themes/Vibeshed, sets `theme = Vibeshed` in Ghostty's config
     # and reloads open terminals (Ghostty 1.2+). Colors your Ghostty config sets itself
     # (background, palette, …) still override the theme's.
+    # neovim writes ~/.config/nvim/colors/vibeshed.lua; select it once with
+    # `vim.cmd.colorscheme("vibeshed")` and every running Neovim using it retints live.
     # bat/lsd/micro get generated themes on each switch (bat: select once with --theme=Vibeshed).
     # fzf needs nothing: configured with ANSI colour slots it follows the terminal palette.
 
@@ -519,6 +521,7 @@ modules:
     #       jetbrains: "_@user_Tokyo Night"
     #       ghostty: "TokyoNight Night"             # any name from `ghostty +list-themes`
     #       terminal: "Clear Dark"                  # one of Terminal's own profiles
+    #       neovim: "tokyonight-night"              # an installed colorscheme, loaded as `vibeshed`
     #       github: "dark_dimmed"                   # also opts this theme into the github target
 
     # Templates for any other app, in Omarchy's placeholder syntax:
