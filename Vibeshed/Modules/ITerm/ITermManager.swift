@@ -78,15 +78,16 @@ enum ITermManager {
         profile: String?,
         command: String?
     ) async throws {
-        guard try await launchIfNeeded(profile: profile, command: command) else { return }
+        let launched = try await launchIfNeeded()
+        let reuseStartup = launched && isPlain(profile: profile, command: command)
         let profileClause = profilePart(profile)
         let commandClause = commandPart(command)
         let script = """
         tell application "iTerm2"
-            \(awaitStartupWindowsClause)
+            \(launched ? awaitStartupWindowsClause : "")
             if (count of windows) is 0 then
                 create window with \(profileClause)\(commandClause)
-            else
+            else if not \(reuseStartup) then
                 tell current window
                     create tab with \(profileClause)\(commandClause)
                 end tell
@@ -103,13 +104,16 @@ enum ITermManager {
         profile: String?,
         command: String?
     ) async throws {
-        guard try await launchIfNeeded(profile: profile, command: command) else { return }
+        let launched = try await launchIfNeeded()
+        let reuseStartup = launched && isPlain(profile: profile, command: command)
         let profileClause = profilePart(profile)
         let commandClause = commandPart(command)
         let script = """
         tell application "iTerm2"
-            \(awaitStartupWindowsClause)
-            create window with \(profileClause)\(commandClause)
+            \(launched ? awaitStartupWindowsClause : "")
+            if (count of windows) is 0 or not \(reuseStartup) then
+                create window with \(profileClause)\(commandClause)
+            end if
             activate
         end tell
         """
@@ -118,18 +122,18 @@ enum ITermManager {
 
     // MARK: - Launching
 
-    /// Launches iTerm when it isn't running. Returns whether the caller still has
-    /// a tab or window to create: a plain one is already covered by the window
-    /// iTerm opens on launch, and scripting another on top of it would leave two.
-    private static func launchIfNeeded(
-        profile: String?,
-        command: String?
-    ) async throws -> Bool {
-        guard !isRunning() else { return true }
+    /// Launches iTerm when it isn't running; returns whether it did.
+    private static func launchIfNeeded() async throws -> Bool {
+        guard !isRunning() else { return false }
         log.debug("iTerm not running, launching it")
         try await launch()
-        let isPlain = (profile ?? "").isEmpty && (command ?? "").isEmpty
-        return !isPlain
+        return true
+    }
+
+    /// A plain tab or window (default profile, no command) is what iTerm's own
+    /// startup window already is; scripting another on top of it would leave two.
+    private static func isPlain(profile: String?, command: String?) -> Bool {
+        (profile ?? "").isEmpty && (command ?? "").isEmpty
     }
 
     @MainActor
@@ -148,7 +152,7 @@ enum ITermManager {
     /// A freshly launched iTerm opens (or restores) its windows a moment after it
     /// starts answering AppleScript; wait for them so a script's "no windows" branch
     /// doesn't race them into an extra window. Gives up after 3s, for setups that
-    /// open no window on launch.
+    /// open no window on launch — the script then creates one itself.
     private static let awaitStartupWindowsClause = """
     repeat 30 times
         if (count of windows) > 0 then exit repeat
