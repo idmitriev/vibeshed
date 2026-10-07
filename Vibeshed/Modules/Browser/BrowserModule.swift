@@ -251,12 +251,8 @@ actor BrowserModule: ModuleConfigurable {
             browserBundleID: tab.browserBundleID,
             tabURL: tab.url
         ) { [mgr] _ in
-            do {
-                try await mgr.focusTab(tab)
-                return .dismiss
-            } catch {
-                return .showResult(title: "Error", body: error.localizedDescription)
-            }
+            try await mgr.focusTab(tab)
+            return .dismiss
         }
     }
 }
