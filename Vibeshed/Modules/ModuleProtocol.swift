@@ -52,6 +52,16 @@ protocol Module: Actor {
         query: String
     ) async -> [ParameterOption]
 
+    /// The same, for options that depend on what was picked in the action's earlier
+    /// parameters (`collected`), like a search scoped by a source chosen first. The
+    /// picker calls this one; the default ignores `collected`.
+    func provideParameterOptions(
+        for parameterID: String,
+        in actionID: ActionID,
+        query: String,
+        collected: ParameterValues
+    ) async -> [ParameterOption]
+
     /// Live preview for parameters declared with `livePreview: true`: called (debounced)
     /// each time the highlighted option changes while the picker collects `parameterID`.
     func previewParameterOption(_ optionID: String, parameterID: String, actionID: ActionID) async
@@ -97,6 +107,15 @@ extension Module {
         query: String
     ) async -> [ParameterOption] {
         []
+    }
+
+    func provideParameterOptions(
+        for parameterID: String,
+        in actionID: ActionID,
+        query: String,
+        collected _: ParameterValues
+    ) async -> [ParameterOption] {
+        await provideParameterOptions(for: parameterID, in: actionID, query: query)
     }
 
     func previewParameterOption(_: String, parameterID _: String, actionID _: ActionID) async {}

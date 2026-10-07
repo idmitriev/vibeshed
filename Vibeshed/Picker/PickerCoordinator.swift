@@ -364,9 +364,10 @@ extension PickerCoordinator {
         pickerState.isLoadingOptions = true
         parameterOptionsGeneration += 1
         let generation = parameterOptionsGeneration
+        let collected = pickerState.collectedValues
         Task { @MainActor in
             let options = await module.provideParameterOptions(
-                for: param.id, in: actionID, query: query
+                for: param.id, in: actionID, query: query, collected: collected
             )
             // Scored off the main actor: option lists can be large (~1,900 emoji).
             let filtered = await Task.detached {

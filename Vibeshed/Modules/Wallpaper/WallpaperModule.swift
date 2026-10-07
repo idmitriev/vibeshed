@@ -17,7 +17,12 @@ actor WallpaperModule: ModuleConfigurable {
         .init()
     }
 
-    static let parameterID = "wallpaper"
+    /// Parameters: `source` (`all` or a source name) for both actions, then the search's
+    /// `wallpaper` (a result's option ID) or the random pick's `query` (empty: featured).
+    static let sourceParameterID = "source"
+    static let wallpaperParameterID = "wallpaper"
+    static let queryParameterID = "query"
+    static let allSources = "all"
     /// Waited on top of the picker's debounce before a query goes out, so typing a word
     /// costs one search per source rather than one per letter (Unsplash allows 50 an hour).
     static let searchDelay: Duration = .milliseconds(250)
@@ -65,18 +70,26 @@ actor WallpaperModule: ModuleConfigurable {
     }
 
     func provideActions(query _: String, scoring _: ScoringContext) async -> [any Action] {
-        Self.enabled(buildActions(), config: config)
+        let actions = buildActions()
+        guard let enabled = config.enabledActions else { return actions }
+        return actions.filter { enabled.contains($0.id.actionName) }
     }
 
     func provideParameterOptions(
         for parameterID: String,
-        in actionID: ActionID,
-        query: String
+        in _: ActionID,
+        query: String,
+        collected: ParameterValues
     ) async -> [ParameterOption] {
-        guard parameterID == Self.parameterID, let sourceIDs = Self.searchedSources(actionID, config: config) else {
+        let sourceIDs = Self.sources(for: collected[Self.sourceParameterID], config: config)
+        switch parameterID {
+        case Self.wallpaperParameterID:
+            return await searchOptions(query, sources: sourceIDs)
+        case Self.queryParameterID:
+            return Self.subjectOptions(query, sources: sourceIDs)
+        default:
             return []
         }
-        return await searchOptions(query, sources: sourceIDs)
     }
 
     private func rebuildSources() {
@@ -93,23 +106,13 @@ actor WallpaperModule: ModuleConfigurable {
         }
     }
 
-    /// The sources a search action covers: `search` all active ones, `search.<source>` one.
-    static func searchedSources(_ actionID: ActionID, config: WallpaperConfig) -> [WallpaperSourceID]? {
-        let name = actionID.actionName
-        if name == "search" { return config.activeSources }
-        guard name.hasPrefix("search."), let source = WallpaperSourceID(rawValue: String(name.dropFirst(7))) else {
-            return nil
+    /// The sources a `source` value covers: every active one for `all` (or none given,
+    /// as from a URI without it), else that one.
+    static func sources(for value: String?, config: WallpaperConfig) -> [WallpaperSourceID] {
+        guard let value, value != allSources, let source = WallpaperSourceID(rawValue: value) else {
+            return config.activeSources
         }
         return [source]
-    }
-
-    /// `enabledActions` takes full names (`search.met`) or a family (`search`, `random`).
-    static func enabled(_ actions: [WallpaperAction], config: WallpaperConfig) -> [WallpaperAction] {
-        guard let enabled = config.enabledActions else { return actions }
-        return actions.filter { action in
-            let name = action.id.actionName
-            return enabled.contains(name) || enabled.contains(String(name.prefix { $0 != "." }))
-        }
     }
 }
 
@@ -152,7 +155,7 @@ extension WallpaperModule {
         return results.map(Self.option) + messages
     }
 
-    private func isBlocked(_ source: WallpaperSourceID) -> Bool {
+    func isBlocked(_ source: WallpaperSourceID) -> Bool {
         guard let since = blockedSince[source] else { return false }
         return since.duration(to: .now) < Self.blockedSourceBreak
     }
@@ -288,13 +291,21 @@ extension WallpaperModule {
         return try await source.wallpaper(itemID: itemID)
     }
 
-    /// A random featured image from one of `sourceIDs`, trying the others when one fails.
-    func setRandomWallpaper(from sourceIDs: [WallpaperSourceID]) async throws -> ActionResult {
+    /// A random image for the action's `source` (`all` or a name) and `query` values.
+    func setRandomWallpaper(source: String?, query: String?) async throws -> ActionResult {
+        try await setRandomWallpaper(from: Self.sources(for: source, config: config), query: query)
+    }
+
+    /// A random image from one of `sourceIDs`, trying the others when one fails or has
+    /// nothing: from its featured images, or from its search results for `query`.
+    func setRandomWallpaper(from requested: [WallpaperSourceID], query: String? = nil) async throws -> ActionResult {
+        let query = Self.subject(query)
+        let sourceIDs = requested.count > 1 ? requested.filter { !isBlocked($0) } : requested
         var lastError: Error?
         for sourceID in sourceIDs.shuffled() {
             guard let source = sources[sourceID] else { continue }
             do {
-                if let wallpaper = try await source.random(options: config.searchOptions) {
+                if let wallpaper = try await randomPick(from: source, query: query) {
                     return try await apply(wallpaper)
                 }
             } catch {
@@ -304,7 +315,46 @@ extension WallpaperModule {
             }
         }
         if let lastError { throw lastError }
-        return .showResult(title: "Random Wallpaper", body: "None of the sources had one to offer")
+        let body = query.isEmpty ? "None of the sources had one to offer" : "Nothing found for “\(query)”"
+        return .showResult(title: "Random Wallpaper", body: body)
+    }
+
+    private func randomPick(from source: any WallpaperSource, query: String) async throws -> OnlineWallpaper? {
+        let options = config.searchOptions
+        guard !query.isEmpty else { return try await source.random(options: options) }
+        let results: [OnlineWallpaper]
+        if let cached = cache.results(source.id, query) {
+            results = cached
+        } else {
+            results = try await source.search(query, options: options)
+            cache.store(results, source.id, query)
+        }
+        return results.filter { options.orientation.matches($0.aspectRatio) }.randomElement() ?? results.randomElement()
+    }
+
+    /// The `query` option that stands for "anything": the featured images.
+    static let featuredSubject = "*"
+
+    /// A random pick's subject, empty for the featured images.
+    static func subject(_ value: String?) -> String {
+        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed == featuredSubject ? "" : trimmed
+    }
+
+    /// The random pick's subject step: what's typed, or "Anything" when nothing is.
+    static func subjectOptions(_ query: String, sources: [WallpaperSourceID]) -> [ParameterOption] {
+        let subject = subject(query)
+        let owner = sources.count == 1 ? "\(sources[0].displayName)’s " : ""
+        guard !subject.isEmpty else {
+            return [ParameterOption(
+                id: featuredSubject, label: "Anything", subtitle: "A random pick from \(owner)featured images",
+                iconName: "shuffle"
+            )]
+        }
+        return [ParameterOption(
+            id: subject, label: "“\(subject)”", subtitle: "A random pick from \(owner)results for it",
+            iconName: "magnifyingglass"
+        )]
     }
 
     /// Downloads `wallpaper` and puts it on every screen.

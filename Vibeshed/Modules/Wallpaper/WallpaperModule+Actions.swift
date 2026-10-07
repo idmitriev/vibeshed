@@ -1,88 +1,59 @@
 import Foundation
 
-/// `search` and `random` across the active sources, `search.<source>` and
-/// `random.<source>` for each one (when there's more than one), and `openSourcePage`.
+/// Search Wallpapers and Random Wallpaper, each asking for a source first (when more
+/// than one is active), and Open Wallpaper Source Page.
 extension WallpaperModule {
     func buildActions() -> [WallpaperAction] {
         let active = config.activeSources
         guard !active.isEmpty else { return [openSourcePageAction()] }
-        var actions = [searchAction(active)]
-        if active.count > 1 {
-            actions += active.map(searchAction)
-        }
-        actions.append(randomAction(active))
-        if active.count > 1 {
-            actions += active.map(randomAction)
-        }
-        actions.append(openSourcePageAction())
-        return actions
+        return [searchAction(active), randomAction(active), openSourcePageAction()]
     }
 
     private static let keywords = ["wallpaper", "background", "desktop", "picture", "image"]
 
-    private static var wallpaperParameter: ActionParameter {
-        ActionParameter(
-            id: parameterID,
+    private func searchAction(_ sources: [WallpaperSourceID]) -> WallpaperAction {
+        let results = ActionParameter(
+            id: Self.wallpaperParameterID,
             label: "Wallpaper",
             type: .dynamicSelection(hint: "wallpapers"),
             isRequired: true,
             rankedByModule: true
         )
-    }
-
-    private func searchAction(_ sources: [WallpaperSourceID]) -> WallpaperAction {
-        WallpaperAction(
+        return WallpaperAction(
             id: ActionID(module: id, name: "search"),
             title: "Search Wallpapers",
-            subtitle: "Find one on \(ListFormatter.localizedString(byJoining: sources.map(\.displayName))) and set it",
+            subtitle: "Find one on \(Self.names(sources)) and set it",
             iconName: "photo.on.rectangle.angled",
             relevanceScore: 0.85,
-            keywords: Self.keywords + ["search", "find", "online", "photo", "art"],
-            parameters: [Self.wallpaperParameter]
+            keywords: Self.keywords + ["search", "find", "online", "photo", "art", "painting", "museum"]
+                + sources.flatMap(Self.keywords(for:)),
+            parameters: sourceParameter(sources, featured: false) + [results]
         ) { values in
-            guard let optionID = values[Self.parameterID] else { return .keepOpen }
-            return try await self.setWallpaper(optionID: optionID)
-        }
-    }
-
-    private func searchAction(_ source: WallpaperSourceID) -> WallpaperAction {
-        WallpaperAction(
-            id: ActionID(module: id, name: "search.\(source.rawValue)"),
-            title: "Search \(source.displayName)",
-            subtitle: Self.summary(of: source),
-            iconName: source.iconName,
-            relevanceScore: 0.75,
-            keywords: Self.keywords + ["search", "find"] + Self.keywords(for: source),
-            parameters: [Self.wallpaperParameter]
-        ) { values in
-            guard let optionID = values[Self.parameterID] else { return .keepOpen }
+            guard let optionID = values[Self.wallpaperParameterID] else { return .keepOpen }
             return try await self.setWallpaper(optionID: optionID)
         }
     }
 
     private func randomAction(_ sources: [WallpaperSourceID]) -> WallpaperAction {
-        WallpaperAction(
+        let subject = ActionParameter(
+            id: Self.queryParameterID,
+            label: "Subject",
+            type: .dynamicSelection(hint: "a subject, or nothing for any"),
+            isRequired: true,
+            rankedByModule: true
+        )
+        return WallpaperAction(
             id: ActionID(module: id, name: "random"),
             title: "Random Wallpaper",
-            subtitle: "A featured image from \(ListFormatter.localizedString(byJoining: sources.map(\.displayName)))",
+            subtitle: "A random image from \(Self.names(sources)), on any subject or one you type",
             iconName: "shuffle",
             relevanceScore: 0.7,
-            keywords: Self.keywords + ["random", "shuffle", "surprise", "new"]
-        ) { _ in
-            try await self.setRandomWallpaper(from: sources)
-        }
-    }
-
-    private func randomAction(_ source: WallpaperSourceID) -> WallpaperAction {
-        WallpaperAction(
-            id: ActionID(module: id, name: "random.\(source.rawValue)"),
-            title: "Random Wallpaper from \(source.displayName)",
-            subtitle: Self.featured(from: source),
-            iconName: "shuffle",
-            relevanceScore: 0.6,
-            keywords: Self.keywords + ["random", "shuffle"] + Self.keywords(for: source)
-        ) { _ in
-            try await self.setRandomWallpaper(from: [source])
+            keywords: Self.keywords + ["random", "shuffle", "surprise", "new"],
+            parameters: sourceParameter(sources, featured: true) + [subject]
+        ) { values in
+            try await self.setRandomWallpaper(
+                source: values[Self.sourceParameterID], query: values[Self.queryParameterID]
+            )
         }
     }
 
@@ -99,6 +70,36 @@ extension WallpaperModule {
         }
     }
 
+    /// The Source step: all sources first, then each. None with a single source.
+    /// `featured` describes what a random pick draws on instead of what a search covers.
+    private func sourceParameter(_ sources: [WallpaperSourceID], featured: Bool) -> [ActionParameter] {
+        guard sources.count > 1 else { return [] }
+        let all = ParameterOption(
+            id: Self.allSources,
+            label: "All Sources",
+            subtitle: Self.names(sources),
+            iconName: "square.stack"
+        )
+        let each = sources.map { source in
+            ParameterOption(
+                id: source.rawValue,
+                label: source.displayName,
+                subtitle: isBlocked(source)
+                    ? "Turning away apps with a browser check right now"
+                    : featured ? Self.featured(from: source) : Self.summary(of: source),
+                iconName: source.iconName,
+                keywords: Self.keywords(for: source)
+            )
+        }
+        return [ActionParameter(
+            id: Self.sourceParameterID, label: "Source", type: .selection([all] + each), isRequired: true
+        )]
+    }
+
+    private static func names(_ sources: [WallpaperSourceID]) -> String {
+        ListFormatter.localizedString(byJoining: sources.map(\.displayName))
+    }
+
     private static func summary(of source: WallpaperSourceID) -> String {
         switch source {
         case .wallhaven: "Wallpapers uploaded to wallhaven.cc"
@@ -109,24 +110,25 @@ extension WallpaperModule {
         }
     }
 
+    /// What a random pick with no subject draws on.
     private static func featured(from source: WallpaperSourceID) -> String {
         switch source {
-        case .wallhaven: "From the past year's top list"
-        case .unsplash: "From Unsplash's Wallpapers topic"
-        case .artic: "One of the museum's highlighted paintings"
-        case .rijksmuseum: "One of the museum's landscape paintings"
-        case .met: "One of the museum's highlighted paintings"
+        case .wallhaven: "The past year's top list"
+        case .unsplash: "Unsplash's Wallpapers topic"
+        case .artic: "The museum's highlighted paintings"
+        case .rijksmuseum: "The museum's landscape paintings"
+        case .met: "The museum's highlighted paintings"
         }
     }
 
-    private static func keywords(for source: WallpaperSourceID) -> [String] {
+    static func keywords(for source: WallpaperSourceID) -> [String] {
         let name = titleKeywords(source.displayName)
         switch source {
         case .wallhaven: return name
         case .unsplash: return name + ["photo", "photography"]
-        case .artic: return name + ["aic", "museum", "art", "painting"]
-        case .rijksmuseum: return name + ["museum", "art", "painting", "amsterdam"]
-        case .met: return name + ["metropolitan", "museum", "art", "painting"]
+        case .artic: return name + ["aic", "chicago"]
+        case .rijksmuseum: return name + ["amsterdam"]
+        case .met: return name + ["metropolitan", "new york"]
         }
     }
 }
