@@ -133,6 +133,22 @@ struct WindowManager: Sendable {
         return count
     }
 
+    /// Brings back every minimized window of the apps in the Dock, except hidden ones;
+    /// returns how many.
+    @MainActor
+    func restoreMinimizedWindows() -> Int {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        var count = 0
+        for app in NSWorkspace.shared.runningApplications
+            where app.activationPolicy == .regular && !app.isHidden && app.processIdentifier != ownPID {
+            for window in AXWindowHelper.windows(for: app.processIdentifier) where AXWindowHelper.isMinimized(window) {
+                AXWindowHelper.deminiaturize(window)
+                count += 1
+            }
+        }
+        return count
+    }
+
     // MARK: - Per-Display Stops
 
     /// Resolves the horizontal/vertical stop lists to use for a window's frame, based on

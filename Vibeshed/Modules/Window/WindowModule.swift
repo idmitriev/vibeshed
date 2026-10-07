@@ -292,6 +292,19 @@ extension WindowModule {
                 }
                 return .dismiss
             },
+            WindowAction(
+                id: ActionID(module: "window", name: "restoreMinimized"),
+                title: "Restore Minimized Windows",
+                subtitle: "Bring every minimized window back from the Dock",
+                iconName: "plus.rectangle.on.rectangle",
+                keywords: ["restore", "unminimize", "show", "all", "windows", "apps", "dock"]
+            ) { _ in
+                let count = await MainActor.run { mgr.restoreMinimizedWindows() }
+                if count == 0 {
+                    return .showResult(title: "No Windows", body: "No minimized windows to restore")
+                }
+                return .dismiss
+            },
         ]
     }
 
