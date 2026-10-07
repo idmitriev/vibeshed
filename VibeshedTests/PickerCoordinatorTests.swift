@@ -80,6 +80,58 @@ final class PickerCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(state.parameterOptions.map(\.id), ["ab"])
     }
+
+    /// Search results whose titles don't contain the query (a painting found by its
+    /// description) stay listed, in the module's order.
+    func testRankedByModuleOptionsSkipFuzzyFiltering() async throws {
+        for rankedByModule in [false, true] {
+            let (coordinator, state) = try await makeCoordinator(module: SearchResultsModule())
+            coordinator.start()
+            state.enterParameterMode(action: MockAction(
+                id: ActionID(module: "searchResults", name: "pick"),
+                title: "Pick",
+                subtitle: "",
+                iconName: nil,
+                relevanceScore: 1,
+                keywords: [],
+                parameters: [
+                    ActionParameter(
+                        id: "item", label: "Item", type: .dynamicSelection(hint: ""), isRequired: true,
+                        rankedByModule: rankedByModule
+                    ),
+                ]
+            ))
+            state.parameterQuery = "storm"
+            try await Task.sleep(for: .milliseconds(300))
+
+            XCTAssertEqual(
+                state.parameterOptions.map(\.id),
+                rankedByModule ? ["gust", "storm", "tivoli"] : ["storm"]
+            )
+        }
+    }
+}
+
+/// Answers any query with the same three paintings, as a remote search would.
+private actor SearchResultsModule: Module {
+    let id = "searchResults"
+    let displayName = "Search Results"
+    let iconName = "sparkle"
+    var isEnabled = true
+
+    func initialize(context _: ModuleContext) async throws {}
+
+    func provideActions(query _: String, scoring _: ScoringContext) async -> [any Action] {
+        []
+    }
+
+    func provideParameterOptions(for _: String, in _: ActionID, query _: String) async -> [ParameterOption] {
+        [
+            ParameterOption(id: "gust", label: "A Ship on the High Seas Caught by a Squall"),
+            ParameterOption(id: "storm", label: "A Storm"),
+            ParameterOption(id: "tivoli", label: "The Cascades at Tivoli"),
+        ]
+    }
 }
 
 /// Answers "a" after "ab", like a short `brew search` query overtaken by a refined one

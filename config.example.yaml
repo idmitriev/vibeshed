@@ -554,6 +554,25 @@ modules:
     # JetBrains IDEs to theme (default: all detected)
     # jetbrainsIDEs: [idea, webstorm]
 
+  # --- Wallpaper (search wallpaper sites and museum collections, set the result) ---
+  # "Search Wallpapers" mixes every source's results; each source also gets its own
+  # "Search …" and "Random Wallpaper from …" actions. Enter downloads the highlighted image
+  # and sets it on every screen. "Open Wallpaper Source Page" opens where it came from.
+  # artic: the Art Institute of Chicago's image server has turned away apps with a
+  # Cloudflare browser check since June 2026; its results show up again once that ends.
+  wallpaper:
+    sources: [wallhaven, unsplash, artic, rijksmuseum, met]   # order = mixing order
+    maxResultsPerSource: 10
+    orientation: landscape        # landscape, portrait or any
+    scaling: auto                 # auto: photos fill the screen, artwork of another shape
+                                  # is fitted on a matte in its edge color; or fill / fit
+    # downloadDirectory: "~/Pictures/Wallpapers"   # kept forever; default: Application
+                                                   # Support, which keeps the 40 most recent
+    # wallhavenAPIKey: "..."      # optional (wallhaven.cc account settings)
+    wallhavenCategories: [general, anime]   # general, anime, people
+    # unsplashAccessKey: "..."    # needed for Unsplash: https://unsplash.com/oauth/applications
+    # enabledActions: [search, random, openSourcePage]   # families or full names (search.met)
+
   # --- Audio Control ---
   audio:
     volumeSteps: [25, 50, 75, 100]

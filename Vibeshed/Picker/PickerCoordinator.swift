@@ -370,7 +370,7 @@ extension PickerCoordinator {
             )
             // Scored off the main actor: option lists can be large (~1,900 emoji).
             let filtered = await Task.detached {
-                let ranked = query.isEmpty ? options : options.fuzzyFiltered(by: query)
+                let ranked = query.isEmpty || param.rankedByModule ? options : options.fuzzyFiltered(by: query)
                 return Array(ranked.prefix(ActionScorer.maxResults))
             }.value
             // Only apply the latest fetch, and only if still in the same parameter mode

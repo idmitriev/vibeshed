@@ -72,6 +72,13 @@ final class ConfigDecodingCoverageTests: XCTestCase {
         try assertRoundTrip(SettingsConfig(enabledPanes: ["wifi"], customPanes: ["a": "b"]))
     }
 
+    func testEveryFieldIsDecodedInWallpaper() throws {
+        try assertRoundTrip(WallpaperConfig(
+            sources: ["met"], maxResultsPerSource: 3, orientation: "any", scaling: "fit", downloadDirectory: "/w",
+            wallhavenAPIKey: "k", wallhavenCategories: ["people"], unsplashAccessKey: "u", enabledActions: ["x"]
+        ))
+    }
+
     /// The configs that already had their own decoders.
     func testEveryFieldIsDecodedByEarlierDecoders() throws {
         try assertRoundTrip(changed(AnthropicConfig()) {
@@ -218,6 +225,7 @@ private extension ConfigDecodingCoverageTests {
             "performance": ModuleSection(PerformanceModule.self),
             "settings": ModuleSection(SettingsModule.self),
             "theme": ModuleSection(ThemeModule.self),
+            "wallpaper": ModuleSection(WallpaperModule.self),
             "self": ModuleSection(SelfModule.self),
             "audio": ModuleSection(AudioModule.self),
             "clipboard": ModuleSection(ClipboardModule.self),

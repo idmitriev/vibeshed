@@ -65,6 +65,7 @@ enum DefaultConfig {
         Entry("bookmark", "browser bookmarks/history (Full Disk Access for Safari)"),
         Entry("calendar", "upcoming events (Calendars)"),
         Entry("meetingPrep", "get ready for the next meeting (Calendars + Screen Recording)"),
+        Entry("wallpaper", "search Wallhaven, Unsplash and museum collections for wallpapers"),
     ]
 
     /// Terminal.app comes with every Mac, but is enabled only for the "Install Homebrew"
