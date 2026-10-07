@@ -85,6 +85,13 @@ final class ClassicMacWallpaperTests: XCTestCase {
         let pieces = WallpaperStyle.allCases.filter(\.isPeriodPiece)
         XCTAssertEqual(Set(pieces), Set(bitmaps).union([.azul]))
         XCTAssertTrue(pieces.allSatisfy { !WallpaperStyle.varied.contains($0) })
+        let optIn: Set<WallpaperStyle> = [.flow, .lens, .papercut, .automata, .cyclic, .chladni, .complex, .growth]
+        XCTAssertTrue(optIn.allSatisfy { !WallpaperStyle.varied.contains($0) }, "styles added later are opt-in")
         XCTAssertEqual(WallpaperStyle.varied.count, 28, "existing themes keep their automatic style")
+        XCTAssertEqual(WallpaperStyle.varied.map(\.rawValue), [
+            "glow", "mesh", "waves", "ridges", "bokeh", "lowpoly", "topographic", "sunset", "arcs", "halftone",
+            "pulsar", "guilloche", "sashiko", "attractor", "bauhaus", "destijl", "truchet", "terrazzo", "circles",
+            "isometric", "penrose", "leaves", "warp", "ascii", "polyhedra", "maze", "dither", "pipes",
+        ], "in the same order, so every theme's pick stays put")
     }
 }

@@ -481,8 +481,9 @@ modules:
     # wallpaperStyle: glow            # glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset,
     #                                 # arcs, halftone, pulsar, guilloche, sashiko, attractor, bauhaus,
     #                                 # destijl, truchet, terrazzo, circles, isometric, penrose, leaves,
-    #                                 # warp, ascii, polyhedra, maze, dither, pipes, solid,
-    #                                 # or auto (a stable pick per theme).
+    #                                 # warp, ascii, polyhedra, maze, dither, pipes, flow, lens, papercut,
+    #                                 # automata, cyclic, chladni, complex, growth, solid,
+    #                                 # or auto (a stable pick per theme, never flow through growth).
     #                                 # A style chosen with theme/wallpaperStyle overrides this;
     #                                 # a theme can set its own with `wallpaperStyle:`.
     # wallpaperGrain: true            # fine film grain on generated wallpapers
