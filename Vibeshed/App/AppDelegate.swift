@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let aliasManager: AliasManager
     let layoutTransliterator: LayoutTransliterator
     let keystrokeVisualizer: KeystrokeVisualizer
+    private(set) lazy var homebrewArrival = HomebrewArrival(configManager: configManager)
     private(set) lazy var permissionSetup = PermissionSetup(
         permissionsManager: permissionsManager,
         moduleRegistry: moduleRegistry,
@@ -97,6 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if configManager.wroteInitialConfig, !isUITesting {
             PermissionSetup.isPending = true
         }
+        homebrewArrival.start()
         aliasManager.start()
         moduleRegistry.startListeningForConfigChanges()
         permissionsManager.checkAll()
