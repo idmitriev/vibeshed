@@ -58,6 +58,7 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 - Homebrew package search, install, upgrade, and cleanup
 
 **Media & Communication**
+- Wallpaper search across Wallhaven, Unsplash and public-domain museum collections, with previews and credits
 - Spotify search and playback control with OAuth
 - System audio volume, mute, device selection, media keys
 - Telegram chat quick-open
@@ -147,6 +148,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Web Search** | Search the web when nothing else matches |
 | **Emoji** | Search and copy/paste emoji |
 | **Theme** | Palette themes applied across macOS and apps, with live preview |
+| **Wallpaper** | Search Wallhaven, Unsplash and the Rijksmuseum, Met and Art Institute of Chicago collections, or pick at random; set the result as the wallpaper |
 | **Self** | Open config, reload modules, view logs, quit |
 
 Modules load only when their config section is present. A section added while Vibeshed is running loads its module right away; a removed one takes effect at the next launch. Installing an app with the Homebrew module (for example the `spotify` cask or the `gh` formula) adds the section for the module that works with it. Each module declares the permissions it needs (accessibility, automation, etc.) and the apps it scripts; **Set Up Permissions…** in the menu bar walks through granting them.

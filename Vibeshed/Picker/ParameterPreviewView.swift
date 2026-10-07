@@ -29,7 +29,9 @@ struct ParameterPreviewView: View {
                         subtitle: selectedOption?.subtitle ?? action.subtitle
                     ) {
                         Group {
-                            if let iconURL = selectedOption?.iconURL {
+                            if let iconURL = selectedOption?.iconURL, !iconURL.isFileURL {
+                                RemoteThumbnail(url: iconURL, placeholderSymbol: selectedOption?.iconName)
+                            } else if let iconURL = selectedOption?.iconURL {
                                 Image(nsImage: NSWorkspace.shared.icon(forFile: iconURL.path))
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
