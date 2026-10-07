@@ -104,6 +104,12 @@ final class ConfigDecodingCoverageTests: XCTestCase {
             $0.commands = ["a": "b"]
             $0.enabledActions = ["x"]
         })
+        try assertRoundTrip(changed(NotesConfig()) {
+            $0.maxResults = 1
+            $0.searchContent = false
+            $0.newNoteFolder = "f"
+            $0.enabledActions = ["x"]
+        })
         try assertRoundTrip(changed(MenuConfig()) {
             $0.showInSearch = false
             $0.maxSubmenuItems = 1
@@ -237,6 +243,7 @@ private extension ConfigDecodingCoverageTests {
             "calendar": ModuleSection(CalendarModule.self),
             "meetingPrep": ModuleSection(MeetingPrepModule.self),
             "bookmark": ModuleSection(BookmarkModule.self),
+            "notes": ModuleSection(NotesModule.self),
             "timer": ModuleSection(TimerModule.self),
             "math": ModuleSection(MathModule.self),
             "homebrew": ModuleSection(HomebrewModule.self),

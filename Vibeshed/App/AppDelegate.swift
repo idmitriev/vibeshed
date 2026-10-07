@@ -173,6 +173,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 CalendarModule(),
                 MeetingPrepModule(),
                 BookmarkModule(),
+                NotesModule(),
                 TimerModule(),
                 MathModule(),
                 buildHomebrewModule(),

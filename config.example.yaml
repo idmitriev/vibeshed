@@ -740,6 +740,16 @@ modules:
     minVisitCount: 3           # minimum visits to include a history entry
     cacheTTLSeconds: 300       # re-read bookmarks/history every 5 minutes
 
+  # --- Apple Notes ---
+  # Search Notes (titles and text), New Note, and your latest notes in the main search.
+  # Scripts Notes, so macOS asks once to let Vibeshed control it. The main search lists
+  # notes only once Notes has run since Vibeshed started; it never launches Notes.
+  notes:
+    maxResults: 100            # latest notes in the main search (0 = none; Search Notes has all)
+    searchContent: true        # Search Notes matches note text too, not just titles
+    # newNoteFolder: "Inbox"   # folder for New Note (default: Notes' default folder)
+    # enabledActions: [search, create, note]   # full names or the note family
+
   # --- Timers & Reminders ---
   timer:
     defaultSound: "Glass"                # macOS system sound name
