@@ -47,6 +47,16 @@ extension Array {
     }
 }
 
+extension [ThemeColor] {
+    /// The color `position` (0…1) of the way along these stops, blending linearly between
+    /// neighbors.
+    func ramp(_ position: Double) -> ThemeColor {
+        let scaled = clampUnit(position) * Double(count - 1)
+        let index = Swift.min(Int(scaled), count - 1)
+        return self[index].mix(self[Swift.min(index + 1, count - 1)], scaled - Double(index))
+    }
+}
+
 /// Hermite step from 0 at `edge0` to 1 at `edge1`.
 func smoothstep(_ edge0: Double, _ edge1: Double, _ value: Double) -> Double {
     let progress = min(max((value - edge0) / (edge1 - edge0), 0), 1)
