@@ -335,7 +335,7 @@ modules:
     # runtime via window/toggleFocusBorder.
     focusBorder:
       width: 3.0              # points
-      cornerRadius: 18.0      # points, 0 = sharp corners
+      cornerRadius: 16.0      # the windows' corner radius (macOS 27: 16); the ring follows it, 0 = sharp
       minimumSize: 200        # skip windows narrower/shorter than this (dialogs, popovers)
       pollingInterval: 0.1    # seconds between fallback checks; focus/move/resize are event-driven
 

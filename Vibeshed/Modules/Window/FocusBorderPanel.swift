@@ -45,7 +45,9 @@ final class FocusBorderPanel: NSPanel {
     /// Surrounds `cgFrame` (a window frame, CG top-left-origin). The panel is the frame
     /// outset by `width` on every side and the layer draws its border inside the panel's
     /// edge, so the ring sits entirely outside the window: its inner edge on the window's
-    /// edge, nothing drawn over the window's content.
+    /// edge, nothing drawn over the window's content. `cornerRadius` is the window's own;
+    /// a layer border's inner corners are its outer radius minus the width, so the outer
+    /// radius is grown by `width` to keep the inner edge on the window's rounded corner.
     func surround(_ cgFrame: CGRect, width: Double, cornerRadius: Double, color: CGColor) {
         let frame = WindowSizing.appKitFrame(fromCG: cgFrame.insetBy(dx: -width, dy: -width))
         CATransaction.begin()
@@ -55,7 +57,7 @@ final class FocusBorderPanel: NSPanel {
         }
         borderLayer.frame = CGRect(origin: .zero, size: frame.size)
         borderLayer.borderWidth = width
-        borderLayer.cornerRadius = cornerRadius
+        borderLayer.cornerRadius = cornerRadius > 0 ? cornerRadius + width : 0
         borderLayer.borderColor = color
         CATransaction.commit()
     }
