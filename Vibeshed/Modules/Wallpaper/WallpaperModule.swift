@@ -178,8 +178,12 @@ extension WallpaperModule {
         await withTaskGroup(of: (WallpaperSourceID, Result<[OnlineWallpaper], Error>).self) { group in
             for (sourceID, source) in pending {
                 group.addTask {
+                    // Await first, then pair: release builds (Swift 6.3, 6.4) lose a value read
+                    // before the `await` in `try await (sourceID, .success(…))`, and every source's
+                    // results came back tagged as Wallhaven's.
                     do {
-                        return try await (sourceID, .success(source.search(query, options: options)))
+                        let results = try await source.search(query, options: options)
+                        return (sourceID, .success(results))
                     } catch {
                         return (sourceID, .failure(error))
                     }

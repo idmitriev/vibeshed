@@ -109,6 +109,31 @@ final class WallpaperModuleTests: XCTestCase {
         XCTAssertEqual(queries, ["storm", "wave"])
     }
 
+    /// Results stay with the source that sent them. Release builds of 0.8.0 filed every
+    /// source's under Wallhaven (the first case), so searching The Met alone listed nothing.
+    /// Only optimized builds went wrong; run with `swift test -c release -Xswiftc -enable-testing`.
+    func testASourcesResultsStayWithIt() async {
+        let (module, _) = await makeModule(sources: ["wallhaven", "rijksmuseum", "met"], stubs: [
+            .wallhaven: .results([sample(.wallhaven, "w1")]),
+            .rijksmuseum: .results([sample(.rijksmuseum, "r1")]),
+            .met: .results([sample(.met, "1"), sample(.met, "2")]),
+        ])
+        let met = await search(module, "storm", source: "met")
+        XCTAssertEqual(met.map(\.id), ["met:1", "met:2"])
+        let rijksmuseum = await search(module, "", source: "rijksmuseum")
+        XCTAssertEqual(rijksmuseum.map(\.id), ["rijksmuseum:r1"])
+    }
+
+    /// Lookups come back in the identifiers' order (the API's ranking), however they finish.
+    func testLookupsKeepTheIdentifiersOrder() async throws {
+        let found = try await WallpaperLookup.all(["1", "2", "3", "4"]) { itemID in
+            // The first answers last.
+            try await Task.sleep(for: .milliseconds(10 * (5 - (Int(itemID) ?? 0))))
+            return itemID == "3" ? nil : sample(.met, itemID)
+        }
+        XCTAssertEqual(found.map(\.id), ["met:1", "met:2", "met:4"])
+    }
+
     func testRepeatedSearchesUseTheCacheAndShortQueriesShowFeatured() async {
         let (module, calls) = await makeModule(sources: ["wallhaven"], stubs: [
             .wallhaven: .results([sample(.wallhaven, "w1")]),
