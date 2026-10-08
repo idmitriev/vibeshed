@@ -14,6 +14,9 @@ jobs:
         run: swift build
       - name: Test
         run: swift test
+      - name: Test (release build)
+        # Releases ship -c release; 0.8.0's museum searches broke only when optimized.
+        run: swift test -c release -Xswiftc -enable-testing
       - name: Lint
         run: |
           SWIFTLINT=.build/artifacts/swiftlintplugins/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint

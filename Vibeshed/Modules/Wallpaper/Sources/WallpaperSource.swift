@@ -171,8 +171,11 @@ enum WallpaperLookup {
         let outcomes = await withTaskGroup(of: (Int, Result<OnlineWallpaper?, Error>).self) { group in
             for (index, itemID) in identifiers.enumerated() {
                 group.addTask {
+                    // Await first, then pair: release builds miscompile `try await (index, .success(…))`
+                    // in `WallpaperModule.search(_:in:)`; this copy hasn't gone wrong, but could.
                     do {
-                        return try await (index, .success(lookup(itemID)))
+                        let wallpaper = try await lookup(itemID)
+                        return (index, .success(wallpaper))
                     } catch {
                         return (index, .failure(error))
                     }
