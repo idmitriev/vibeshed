@@ -45,7 +45,10 @@ struct ITermTarget: ThemeTarget {
             do {
                 // Resolve the parent before the default moves to the Vibeshed profile.
                 let parent = ITermProfiles.parentProfileName()
-                let profile = Self.profile(request.palette, parent: parent)
+                let font = CommittedFont.current.flatMap { font in
+                    ITermFontTarget.normalFont(font.terminalFamily, like: ITermProfiles.parentNormalFont())
+                }
+                let profile = Self.profile(request.palette, parent: parent, normalFont: font)
                 try ThemeFiles.writeJSON(["Profiles": [profile]], to: Self.profilePath)
             } catch {
                 return .failed("dynamic profile: \(error.localizedDescription)")
@@ -125,16 +128,14 @@ struct ITermTarget: ThemeTarget {
             .appendingPathComponent("Library/Application Support/iTerm2/DynamicProfiles/vibeshed-theme.json").path
     }
 
-    /// The Dynamic Profile: palette colors on top of the parent profile. Separate
-    /// light/dark colors are switched off explicitly — a parent with them on would
-    /// otherwise make iTerm read its own "(Dark)"/"(Light)" keys and ignore these.
-    static func profile(_ palette: ThemePalette, parent: String?) -> [String: Any] {
-        var profile: [String: Any] = [
-            "Name": "Vibeshed",
-            "Guid": profileGUID,
-            "Use Separate Colors for Light and Dark Mode": false,
-        ]
-        if let parent { profile["Dynamic Profile Parent Name"] = parent }
+    /// The Dynamic Profile: palette colors (and the font `theme/switchFont` applied) on top
+    /// of the parent profile. Separate light/dark colors are switched off explicitly — a
+    /// parent with them on would otherwise make iTerm read its own "(Dark)"/"(Light)" keys
+    /// and ignore these.
+    static func profile(_ palette: ThemePalette, parent: String?, normalFont: String? = nil) -> [String: Any] {
+        var profile = baseProfile(parent: parent)
+        profile["Use Separate Colors for Light and Dark Mode"] = false
+        if let normalFont { profile["Normal Font"] = normalFont }
         for entry in colors(palette) {
             profile[entry.profileKey] = [
                 "Red Component": entry.color.red,
@@ -145,6 +146,22 @@ struct ITermTarget: ThemeTarget {
             ]
         }
         return profile
+    }
+
+    /// The Vibeshed profile with nothing of its own: everything comes from `parent`.
+    static func baseProfile(parent: String?) -> [String: Any] {
+        var profile: [String: Any] = ["Name": "Vibeshed", "Guid": profileGUID]
+        if let parent { profile["Dynamic Profile Parent Name"] = parent }
+        return profile
+    }
+
+    /// The Vibeshed profile as last written, when its file can be read.
+    static func storedProfile() -> [String: Any]? {
+        guard let data = FileManager.default.contents(atPath: profilePath),
+              let file = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let profiles = file["Profiles"] as? [[String: Any]]
+        else { return nil }
+        return profiles.first { $0["Guid"] as? String == profileGUID }
     }
 }
 

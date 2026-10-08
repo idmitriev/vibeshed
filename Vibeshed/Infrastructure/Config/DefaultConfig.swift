@@ -51,7 +51,7 @@ enum DefaultConfig {
             ] + padding
         ),
         Entry("clipboard", "clipboard history, kept on disk (skips copied passwords)"),
-        Entry("theme", "palette themes across macOS and apps"),
+        Entry("theme", "palette themes and coding fonts across macOS and apps"),
         Entry("math", "calculator, unit and currency conversion"),
         Entry("timer", "timers and reminders"),
         Entry("emoji", "search emoji, copy on select"),

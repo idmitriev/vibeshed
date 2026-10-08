@@ -147,7 +147,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Math** | Arithmetic, unit/currency conversion |
 | **Web Search** | Search the web when nothing else matches |
 | **Emoji** | Search and copy/paste emoji |
-| **Theme** | Palette themes applied across macOS and apps, with live preview |
+| **Theme** | Palette themes and coding fonts applied across macOS and apps, with live preview |
 | **Wallpaper** | Search Wallhaven, Unsplash and the Rijksmuseum, Met and Art Institute of Chicago collections, or pick at random; set the result as the wallpaper |
 | **Self** | Open config, reload modules, view logs, quit |
 
@@ -199,6 +199,21 @@ modules:
 Generated wallpapers come in 37 styles: glow, mesh gradient, waves, ridges, bokeh, low poly, topographic, retro sunset, retro arcs, halftone and solid; eleven from the generative-art canon — Pulsar (after the Unknown Pleasures cover), Guilloché, Sashiko (hitomezashi stitching), a Clifford attractor, Bauhaus, De Stijl, Truchet tiles, Terrazzo, circle packing, isometric terraces and Penrose tiling; and fifteen from classic systems — Leaves (Haiku's screen saver, the BeOS theme's default), Polyhedra (NeXTSTEP BackSpace's module, which could run as the workspace background), Warp Speed (OS/2 Warp), ASCII Art (a shaded `donut.c` torus, the Mandelbrot set or `aafire` flames, in terminal characters), 10 PRINT (the Commodore 64 one-line maze), Dither (a Bayer-dithered planet), Pipes (the Windows NT screen saver), Pebbles (the classic Mac desktop tile, recolored from the theme's desktop color), Desktop Pattern (one-bit 8×8 tiles), Platinum Pinstripes, Clouds (Windows 95's sky in dithered 15-bit color), Azul (XP's ribbons of light), Windows Pattern (the one-bit patterns of Windows 3.0 and 95), Boing Ball (the Amiga demo, in 12-bit color) and Digital Rain (QNX Photon's screen saver). These last eight are made for their own themes, so they stay out of `auto`, and all but Azul are pixel bitmaps that skip film grain. Any style works with any theme; the classic themes default to their own. `theme/wallpaperStyle` browses them on the current theme with live preview, and `theme/shuffleWallpaper` re-rolls the variation. They're painted at full display resolution in 16-bit colour and dithered, so soft gradients don't band.
 
 The resolved palette is also exported to `~/Library/Application Support/Vibeshed/Theme/current/` (`colors.toml`, `colors.json`) for scripts.
+
+### Fonts
+
+`theme/switchFont` does the same for coding fonts: it lists the installed ones among ~50 popular picks (JetBrains Mono, Fira Code, Cascadia Code, Iosevka, Monaspace, Geist Mono, Berkeley Mono, SF Mono, …), previews each live in your terminals and editors as you move, and opens on the font your apps already use. Every font is also a direct action (`theme/font.jetbrains-mono`). Editors get the font as published; terminals get its Nerd Font single-width variant ("JetBrainsMono Nerd Font Mono") when that's installed, so prompt and `ls` icons keep working, and families cut for terminals where a font has one (Iosevka Term). Fonts you add under `fonts:` are offered too.
+
+| Target | What changes | Live? |
+|--------|--------------|-------|
+| `iterm` | Font of the "Vibeshed" profile, keeping the weight and size of your default profile's font | ✓ |
+| `ghostty` | The first `font-family` in your config (later ones stay as fallbacks) | ✓ |
+| `terminal` | Font of every open tab and of the "Vibeshed" profile, keeping your size and weight | ✓ |
+| `vscode` | `editor.fontFamily`, and `terminal.integrated.fontFamily` if you set one; fallback fonts are kept | ✓ |
+| `zed` | `buffer_font_family`, `ui_font_family` when it matched the buffer font, `terminal.font_family` if set | ✓ |
+| `jetbrains` | Editor font, terminal and console fonts if set apart, and fonts your color scheme overrides | on restart |
+
+The `targets:` list limits fonts as well as themes, and a theme switch keeps the font.
 
 ## Key Bindings
 

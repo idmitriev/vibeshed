@@ -547,6 +547,10 @@ modules:
     # hooks:
     #   - "sketchybar --reload"
 
+    # theme/switchFont lists the installed fonts among ~50 popular coding fonts; add others
+    # by family name. Terminals get a font's Nerd Font Mono variant when it's installed.
+    # fonts: ["Comic Code", "PragmataPro Mono"]
+
     # VS Code-family editors (display name: Application Support folder); default: all detected
     # vscodeVariants:
     #   "Cursor": "Cursor"

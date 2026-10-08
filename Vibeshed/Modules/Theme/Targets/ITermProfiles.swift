@@ -27,6 +27,14 @@ enum ITermProfiles {
         return previousDefault()?.name
     }
 
+    /// The font (`"<PostScript name> <size>"`) of the user's own default profile.
+    static func parentNormalFont() -> String? {
+        let current = currentDefault().flatMap { $0.guid == ITermTarget.profileGUID ? nil : $0.guid }
+        guard let guid = current ?? previousDefault()?.guid else { return nil }
+        let profiles = SystemPreferences.value(profilesKey, domain: domain) as? [[String: Any]] ?? []
+        return profiles.first { $0["Guid"] as? String == guid }?["Normal Font"] as? String
+    }
+
     /// Makes the Vibeshed profile iTerm's default (`adopt`), or hands the role back to the
     /// profile it took it from. Read by iTerm at launch; a running iTerm keeps using its
     /// current default for new sessions until restarted.

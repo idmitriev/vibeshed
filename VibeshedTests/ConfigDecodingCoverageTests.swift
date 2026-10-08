@@ -323,6 +323,7 @@ private extension ConfigDecodingCoverageTests {
         config.folders = ["/f"]
         config.templates = try YAMLDecoder().decode([ThemeTemplateConfig].self, from: "[{ source: s, target: t }]")
         config.hooks = ["h"]
+        config.fonts = ["f"]
         config.vscodeVariants = ["a": "b"]
         config.jetbrainsIDEs = ["idea"]
         config.enabledActions = ["x"]
