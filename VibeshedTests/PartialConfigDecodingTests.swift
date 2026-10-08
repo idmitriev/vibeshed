@@ -12,7 +12,7 @@ final class PartialConfigDecodingTests: XCTestCase {
         XCTAssertEqual(config.horizontalStops, WindowConfig.defaultValue.horizontalStops)
         XCTAssertEqual(config.verticalStops, WindowConfig.defaultValue.verticalStops)
         XCTAssertEqual(config.enlargeShrinkStep, WindowConfig.defaultValue.enlargeShrinkStep)
-        XCTAssertFalse(config.includeMinimized)
+        XCTAssertTrue(config.includeMinimized)
     }
 
     func testTilingSectionWithOnlyAGrid() throws {

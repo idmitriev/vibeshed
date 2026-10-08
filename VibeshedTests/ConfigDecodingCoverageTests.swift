@@ -136,7 +136,7 @@ final class ConfigDecodingCoverageTests: XCTestCase {
             verticalStops: [SizeStop(value: 2, unit: .pixels)],
             displays: [DisplayStopsConfig(match: "main")],
             padding: PaddingConfig(gap: 1),
-            includeMinimized: true,
+            includeMinimized: false,
             enlargeShrinkStep: SizeStop(value: 5, unit: .pixels),
             focusBorder: FocusBorderConfig()
         ))
