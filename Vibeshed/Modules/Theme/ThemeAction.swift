@@ -11,6 +11,8 @@ struct ThemeAction: Action {
     /// Set for `apply.<slug>` actions: drives the palette preview.
     let theme: ResolvedTheme?
     let wallpaper: ThemeWallpaperPreview?
+    /// Set for `font.<slug>` actions: drives the font preview.
+    let font: ResolvedFont?
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
@@ -24,6 +26,7 @@ struct ThemeAction: Action {
         parameters: [ActionParameter] = [],
         theme: ResolvedTheme? = nil,
         wallpaper: ThemeWallpaperPreview? = nil,
+        font: ResolvedFont? = nil,
         runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
@@ -35,6 +38,7 @@ struct ThemeAction: Action {
         self.parameters = parameters
         self.theme = theme
         self.wallpaper = wallpaper
+        self.font = font
         self.runner = runner
     }
 
@@ -44,6 +48,7 @@ struct ThemeAction: Action {
 
     @MainActor
     func makePreviewView() -> AnyView? {
+        if let font { return AnyView(FontPreviewView(font: font)) }
         guard let theme else { return nil }
         return AnyView(ThemePreviewView(theme: theme, wallpaper: wallpaper))
     }

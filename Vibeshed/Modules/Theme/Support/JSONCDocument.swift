@@ -32,6 +32,28 @@ struct JSONCDocument {
         return try? JSONSerialization.jsonObject(with: Data(cleaned), options: .fragmentsAllowed)
     }
 
+    /// The parsed value at a key path into nested objects (`["terminal", "font_family"]`).
+    func value(at path: [String]) -> Any? {
+        guard let first = path.first else { return nil }
+        return path.dropFirst().reduce(value(forKey: first)) { value, key in (value as? [String: Any])?[key] }
+    }
+
+    /// Sets a key inside nested objects, editing only that value like `setValue(_:forKey:)`.
+    /// Every object along the path must already exist.
+    mutating func setValue(_ value: Any, at path: [String]) throws {
+        guard let key = path.first else { return }
+        guard path.count > 1 else { return try setValue(value, forKey: key) }
+        var bytes = Array(text.utf8)
+        var scanner = Scanner(bytes: bytes)
+        guard let member = scanner.scanMembers()?.members.first(where: { $0.key == key }),
+              let objectText = String(bytes: bytes[member.valueStart ..< member.valueEnd], encoding: .utf8)
+        else { throw EditError.malformed }
+        var object = JSONCDocument(text: objectText)
+        try object.setValue(value, at: Array(path.dropFirst()))
+        bytes.replaceSubrange(member.valueStart ..< member.valueEnd, with: Array(object.text.utf8))
+        text = String(bytes: bytes, encoding: .utf8) ?? text
+    }
+
     /// Sets (replaces or appends) a top-level key.
     mutating func setValue(_ value: Any, forKey key: String) throws {
         var bytes = Array(text.utf8)

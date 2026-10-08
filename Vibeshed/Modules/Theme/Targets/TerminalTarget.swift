@@ -70,7 +70,11 @@ struct TerminalTarget: ThemeTarget {
             if case let .failed(message) = await Self.run(script) { return .failed(message) }
         }
         do {
-            try TerminalProfiles.write(Self.profile(request.palette, parent: TerminalProfiles.parentProfile()))
+            let parent = TerminalProfiles.parentProfile()
+            let font = CommittedFont.current.flatMap { font in
+                TerminalFontTarget.font(font.terminalFamily, like: TerminalProfiles.parentFont())
+            }
+            try TerminalProfiles.write(Self.profile(request.palette, parent: parent, font: font))
         } catch {
             return .failed("profile: \(error.localizedDescription)")
         }
@@ -125,19 +129,29 @@ struct TerminalTarget: ThemeTarget {
 
     // MARK: - Profile
 
-    /// The Vibeshed profile: `parent`'s settings with the palette's colors. Terminal's
-    /// dynamic ANSI foreground adjustment is switched off so the palette shows as is.
-    static func profile(_ palette: ThemePalette, parent: [String: Any]?) -> [String: Any] {
-        var profile = parent ?? [:]
-        profile["name"] = profileName
-        profile["type"] = "Window Settings"
+    /// The Vibeshed profile: `parent`'s settings with the palette's colors (and the font
+    /// `theme/switchFont` applied). Terminal's dynamic ANSI foreground adjustment is
+    /// switched off so the palette shows as is.
+    static func profile(_ palette: ThemePalette, parent: [String: Any]?, font: NSFont? = nil) -> [String: Any] {
+        var profile = baseProfile(parent: parent)
         profile["DynamicANSIForegroundColors"] = false
-        if profile["ProfileCurrentVersion"] == nil { profile["ProfileCurrentVersion"] = 2.09 }
         for entry in profileColors(palette) {
             profile[entry.key] = try? NSKeyedArchiver.archivedData(
                 withRootObject: entry.color.nsColor, requiringSecureCoding: true
             )
         }
+        if let font {
+            profile["Font"] = try? NSKeyedArchiver.archivedData(withRootObject: font, requiringSecureCoding: true)
+        }
+        return profile
+    }
+
+    /// The Vibeshed profile with nothing of its own: a copy of `parent`.
+    static func baseProfile(parent: [String: Any]?) -> [String: Any] {
+        var profile = parent ?? [:]
+        profile["name"] = profileName
+        profile["type"] = "Window Settings"
+        if profile["ProfileCurrentVersion"] == nil { profile["ProfileCurrentVersion"] = 2.09 }
         return profile
     }
 
@@ -227,6 +241,18 @@ enum TerminalProfiles {
         guard let name = userDefaults()?[defaultKeys[0]] else { return nil }
         let profiles = SystemPreferences.value(profilesKey, domain: domain) as? [String: Any]
         return profiles?[name] as? [String: Any]
+    }
+
+    /// The font of the user's own default profile.
+    static func parentFont() -> NSFont? {
+        guard let data = parentProfile()?["Font"] as? Data else { return nil }
+        return try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSFont.self, from: data)
+    }
+
+    /// The Vibeshed profile as last written.
+    static func vibeshedProfile() -> [String: Any]? {
+        let profiles = SystemPreferences.value(profilesKey, domain: domain) as? [String: Any]
+        return profiles?[TerminalTarget.profileName] as? [String: Any]
     }
 
     /// Makes `profile` the default and startup profile, remembering the user's own.

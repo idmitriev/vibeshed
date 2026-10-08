@@ -46,6 +46,10 @@ struct ThemeConfig: Codable, Sendable, Equatable {
     /// Shell commands run after every apply, with `VIBESHED_THEME*` / `VIBESHED_COLOR_*` env vars.
     var hooks: [String] = []
 
+    /// Font families to offer in `theme/switchFont` besides the curated coding fonts
+    /// (listed when installed).
+    var fonts: [String] = []
+
     /// VS Code-family editors: display name → Application Support folder
     /// (nil = VS Code, Insiders, Cursor, Windsurf, VSCodium).
     var vscodeVariants: [String: String]?
@@ -81,6 +85,7 @@ struct ThemeConfig: Codable, Sendable, Equatable {
         templates = try container.decodeIfPresent([ThemeTemplateConfig].self, forKey: .templates)
             ?? defaults.templates
         hooks = try container.decodeIfPresent([String].self, forKey: .hooks) ?? defaults.hooks
+        fonts = try container.decodeIfPresent([String].self, forKey: .fonts) ?? defaults.fonts
         vscodeVariants = try container.decodeIfPresent([String: String].self, forKey: .vscodeVariants)
         jetbrainsIDEs = try container.decodeIfPresent(Set<String>.self, forKey: .jetbrainsIDEs)
         enabledActions = try container.decodeIfPresent(Set<String>.self, forKey: .enabledActions)
