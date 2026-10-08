@@ -16,6 +16,13 @@ enum SystemDialogs {
         WindowInfo.onScreen().first { owners.contains($0.owner) && $0.frame.width > 50 }
     }
 
+    /// Notification banners and notification permission requests: Notification Center
+    /// shows them in a full-screen window above apps (its widgets sit below the desktop).
+    /// Some stay up until clicked or until there's user activity again.
+    static func banner() -> WindowInfo? {
+        WindowInfo.onScreen().first { $0.owner == "Notification Center" && $0.layer >= 0 }
+    }
+
     static func ensureNone() throws {
         guard let dialog = current() else { return }
         let title = dialog.title.isEmpty ? "" : " “\(dialog.title)”"

@@ -33,6 +33,14 @@ public enum SceneAction: Sendable, Equatable {
     /// Bring an app to the front.
     case focus(String)
     case window(WindowPlacement)
+    /// `recording: pause` stops capturing until `recording: resume`, for long
+    /// waits: the paused stretch isn't in the take at all, and markers set
+    /// during it land on the cut.
+    case recording(RecordingControl)
+}
+
+public enum RecordingControl: String, Decodable, Sendable {
+    case pause, resume
 }
 
 extension SceneAction: Decodable {
@@ -71,6 +79,7 @@ extension SceneAction: Decodable {
         "shell": { try .shell($0.decode(String.self, forKey: $1)) },
         "focus": { try .focus($0.decode(String.self, forKey: $1)) },
         "window": { try .window($0.decode(WindowPlacement.self, forKey: $1)) },
+        "recording": { try .recording($0.decode(RecordingControl.self, forKey: $1)) },
     ]
 }
 

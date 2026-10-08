@@ -29,10 +29,25 @@ public struct Manifest: Codable, Sendable {
         }
     }
 
+    /// One stretch of video between `recording: pause`s, in its own file.
+    public struct Segment: Codable, Sendable, Equatable {
+        public var file: String
+        /// Seconds of recording time it covers. Its file can be shorter: no
+        /// frames are written while the screen is still.
+        public var duration: Double
+
+        public init(file: String, duration: Double) {
+            self.file = file
+            self.duration = duration
+        }
+    }
+
     public var scene: String
     public var display: Display
-    /// Video file name in the take's directory.
+    /// Video file name in the take's directory. For a take in segments the
+    /// host joins them into it before cutting outputs.
     public var video: String?
+    public var segments: [Segment]?
     public var duration: Double?
     public var markers: [String: Double] = [:]
     /// Union of every frame a window was seen at while recording, by target

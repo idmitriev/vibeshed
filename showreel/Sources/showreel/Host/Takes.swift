@@ -61,29 +61,69 @@ struct Takes {
         try vm.runScript(host: host, script, arguments: [output] + arguments)
     }
 
-    func record(_ names: [String], postProcess: Bool) throws {
-        let host = try vm.ensureReady()
-        try deployAgent(host: host)
+    /// Scenes with `machine: fresh` run on a new clone of the VM, deleted after a
+    /// good take (or kept with `keepClone`); after a failed one it's left running.
+    func record(_ names: [String], postProcess: Bool, keepClone: Bool = false) throws {
         for name in names {
             let url = try sceneURL(name)
             let scene = try Scene.load(from: url)
             print("\n🎬 \(scene.title ?? url.lastPathComponent)")
-            let guestScene = try syncSceneFiles(url, scene: scene, host: host)
-            let sceneName = url.deletingPathExtension().lastPathComponent
-            let guestTake = "Showreel/takes/\(sceneName)"
-            try runAgent(host: host, ["run", guestScene, "--out", guestTake], output: guestTake)
-            let take = takeDirectory(for: url)
-            try? FileManager.default.removeItem(at: take)
-            try FileManager.default.createDirectory(at: take, withIntermediateDirectories: true)
-            try vm.fetch(host: host, guestTake + "/", to: take.path + "/")
-            let manifest = try Manifest.load(from: take.appendingPathComponent("manifest.json"))
-            if let failure = manifest.failure {
-                throw HostError("\(sceneName) failed in the VM: \(failure)\n  log: \(take.path)/agent.log")
+            let machine = scene.machine == .fresh ? try vm.makeClone() : vm
+            let host = try machine.ensureReady()
+            try deployAgent(host: host)
+            do {
+                try record(url, scene: scene, host: host, postProcess: postProcess)
+            } catch {
+                if scene.machine == .fresh {
+                    print("“\(machine.name)” is still running for a look; the next fresh take replaces it")
+                }
+                throw error
             }
-            if postProcess {
-                try cutOutputs(scene: scene, manifest: manifest, take: take)
+            if scene.machine == .fresh, !keepClone {
+                try machine.delete()
             }
-            summarize(take)
+        }
+    }
+
+    private func record(_ url: URL, scene: Scene, host: String, postProcess: Bool) throws {
+        let guestScene = try syncSceneFiles(url, scene: scene, host: host)
+        let sceneName = url.deletingPathExtension().lastPathComponent
+        let guestTake = "Showreel/takes/\(sceneName)"
+        try runAgent(host: host, ["run", guestScene, "--out", guestTake], output: guestTake)
+        let take = takeDirectory(for: url)
+        try? FileManager.default.removeItem(at: take)
+        try FileManager.default.createDirectory(at: take, withIntermediateDirectories: true)
+        try vm.fetch(host: host, guestTake + "/", to: take.path + "/")
+        let manifest = try Manifest.load(from: take.appendingPathComponent("manifest.json"))
+        try joinSegments(of: manifest, in: take)
+        if let failure = manifest.failure {
+            throw HostError("\(sceneName) failed in the VM: \(failure)\n  log: \(take.path)/agent.log")
+        }
+        if postProcess {
+            try cutOutputs(scene: scene, manifest: manifest, take: take)
+        }
+        summarize(take)
+    }
+
+    /// Joins a take's segments (split by `recording: pause`) into its video. Each one
+    /// starts at the recording time the previous one covered up to (the concat
+    /// demuxer's `duration`), so one that stopped writing early, on a still screen,
+    /// holds its last frame up to the cut.
+    private func joinSegments(of manifest: Manifest, in take: URL) throws {
+        guard let video = manifest.video, let segments = manifest.segments, !segments.isEmpty else { return }
+        let output = take.appendingPathComponent(video)
+        try? FileManager.default.removeItem(at: output)
+        if segments.count == 1 {
+            try FileManager.default.moveItem(at: take.appendingPathComponent(segments[0].file), to: output)
+            return
+        }
+        guard let ffmpeg = Shell.which("ffmpeg") else { throw HostError("ffmpeg not found — brew install ffmpeg") }
+        let list = take.appendingPathComponent("segments.txt")
+        let entries = segments.map { "file '\($0.file)'\nduration \($0.duration)" }
+        try (entries.joined(separator: "\n") + "\n").write(to: list, atomically: true, encoding: .utf8)
+        try Shell.run([ffmpeg, "-v", "error", "-f", "concat", "-safe", "0", "-i", list.path, "-c", "copy", output.path])
+        for file in segments.map(\.file) + ["segments.txt"] {
+            try? FileManager.default.removeItem(at: take.appendingPathComponent(file))
         }
     }
 

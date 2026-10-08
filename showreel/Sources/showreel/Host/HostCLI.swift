@@ -7,6 +7,7 @@ enum HostCLI {
 
       record <scene>...       record scenes in the VM and cut their outputs
         --no-post             skip cutting outputs
+        --keep-clone          keep a `machine: fresh` scene's clone of the VM after the take
       post <scene>...         re-cut outputs from the last take (no VM needed)
       list                    list scenes
 
@@ -15,7 +16,8 @@ enum HostCLI {
       vm grant [--dry-run]    grant ShowreelAgent + Vibeshed their permissions in the VM with
                               sudo (password from Keychain); needs SIP off in the VM
       vm inspect              screenshot + window frames, for writing scenes
-      vm install-vibeshed     install Vibeshed in the VM from Homebrew
+      vm install-vibeshed     install Vibeshed's latest GitHub release in the VM
+        --brew                …from the Homebrew tap instead
         --dev                 …or copy this checkout's build (make build)
       vm start | stop | status
       vm ssh [command]        shell into the VM
@@ -32,9 +34,10 @@ enum HostCLI {
             switch arguments.first {
             case "record":
                 let postProcess = !rest.contains("--no-post")
-                rest.removeAll { $0 == "--no-post" }
+                let keepClone = rest.contains("--keep-clone")
+                rest.removeAll { ["--no-post", "--keep-clone"].contains($0) }
                 guard !rest.isEmpty else { throw HostError("which scene? (scripts/showreel list)") }
-                try takes.record(Array(rest), postProcess: postProcess)
+                try takes.record(Array(rest), postProcess: postProcess, keepClone: keepClone)
             case "post":
                 guard !rest.isEmpty else { throw HostError("which scene?") }
                 try takes.postProcess(Array(rest))
@@ -104,14 +107,15 @@ struct VMCommands {
         case "doctor": try doctor()
         case "grant": try grant(dryRun: options.contains("--dry-run"))
         case "inspect": try inspect()
-        case "install-vibeshed": try installVibeshed(dev: options.contains("--dev"))
+        case "install-vibeshed":
+            try installVibeshed(from: options.contains("--dev") ? .dev : options.contains("--brew") ? .brew : .release)
         case "deploy": try takes.deployAgent(host: vm.ensureReady())
         default: throw HostError("unknown vm command\n\n\(HostCLI.usage)")
         }
     }
 
     private func ssh(_ command: [String]) throws {
-        let host = try vm.ensureReady()
+        let host = try vm.ensureReady(desktop: false)
         try Shell.run(["/usr/bin/ssh"] + vm.sshOptions(tty: true) + ["\(vm.user)@\(host)"] + command, check: false)
     }
 
@@ -177,9 +181,32 @@ struct VMCommands {
         print("📁 \(local.path)/screen.png")
     }
 
-    private func installVibeshed(dev: Bool) throws {
+    enum VibeshedSource { case release, brew, dev }
+
+    private func installVibeshed(from source: VibeshedSource) throws {
         let host = try vm.ensureReady()
-        if dev {
+        switch source {
+        case .release:
+            // Downloaded in the VM, as a new user would, and checked against the release's .sha256.
+            try vm.runScript(host: host, """
+            set -eu
+            tag=$(curl -fsSL https://api.github.com/repos/idmitriev/vibeshed/releases/latest \\
+                | sed -n 's/.*"tag_name": *"\\([^"]*\\)".*/\\1/p' | head -1)
+            [ -n "$tag" ] || { echo "no release found" >&2; exit 1; }
+            zip="Vibeshed-${tag#v}.zip"
+            url="https://github.com/idmitriev/vibeshed/releases/download/$tag/$zip"
+            dir=$(mktemp -d)
+            curl -fsSL -o "$dir/$zip" "$url"
+            curl -fsSL -o "$dir/$zip.sha256" "$url.sha256"
+            [ "$(awk '{ print $1 }' "$dir/$zip.sha256")" = "$(shasum -a 256 "$dir/$zip" | awk '{ print $1 }')" ] \\
+                || { echo "$zip doesn't match its .sha256" >&2; exit 1; }
+            pkill -x Vibeshed || true
+            rm -rf /Applications/Vibeshed.app
+            ditto -x -k "$dir/$zip" /Applications
+            rm -rf "$dir"
+            echo "✓ installed Vibeshed $tag at /Applications/Vibeshed.app in the VM"
+            """)
+        case .dev:
             try Shell.run(["/usr/bin/make", "-C", repo.path, "build"])
             try vm.runScript(host: host, "pkill -x Vibeshed; true")
             try vm.rsync(
@@ -187,7 +214,7 @@ struct VMCommands {
                 to: "/Applications/Vibeshed.app/", extra: ["--delete"]
             )
             print("✓ installed this checkout's build at /Applications/Vibeshed.app in the VM")
-        } else {
+        case .brew:
             try vm.runScript(host: host, """
             export PATH=/opt/homebrew/bin:$PATH
             if brew list --cask vibeshed >/dev/null 2>&1; then

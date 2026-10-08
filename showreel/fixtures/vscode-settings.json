@@ -1,0 +1,16 @@
+{
+  "workbench.startupEditor": "none",
+  "workbench.welcomePage.walkthroughs.openOnInstall": false,
+  "workbench.tips.enabled": false,
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "security.workspace.trust.enabled": false,
+  "telemetry.telemetryLevel": "off",
+  "update.mode": "none",
+  "update.showReleaseNotes": false,
+  "extensions.ignoreRecommendations": true,
+  "chat.disableAIFeatures": true,
+  "chat.commandCenter.enabled": false,
+  "git.openRepositoryInParentFolders": "never",
+  "git.autofetch": false,
+  "editor.fontSize": 13
+}

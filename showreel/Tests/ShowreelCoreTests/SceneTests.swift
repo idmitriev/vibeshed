@@ -8,6 +8,11 @@ struct SceneTests {
         try YAMLDecoder().decode(Scene.self, from: yaml)
     }
 
+    @Test func machineDefaultsToTheCurrentVM() throws {
+        #expect(try decode("title: Here").machine == .current)
+        #expect(try decode("machine: fresh").machine == .fresh)
+    }
+
     @Test func defaultsApplyToAnEmptyScene() throws {
         let scene = try decode("title: Empty")
         #expect(scene.setup.quitApps)
@@ -39,6 +44,8 @@ struct SceneTests {
           - marker: picked
           - open: vibeshed://picker?q=theme
           - window: { app: Safari, frame: [80, 60, 1200, 760] }
+          - recording: pause
+          - recording: resume
         """)
         let expected: [SceneAction] = try [
             .wait(0.5),
@@ -59,6 +66,8 @@ struct SceneTests {
             .marker("picked"),
             .open("vibeshed://picker?q=theme"),
             .window(WindowPlacement(app: "Safari", frame: Rect(x: 80, y: 60, width: 1200, height: 760))),
+            .recording(.pause),
+            .recording(.resume),
         ]
         #expect(scene.actions == expected)
     }

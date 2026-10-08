@@ -1,0 +1,21 @@
+# Run once on the base VM before cloning it for fresh takes: brings up the
+# consent prompts Vibeshed would otherwise raise mid-take, for someone at the
+# VM to answer. Vibeshed's setup window asks for the apps that are open;
+# Terminal, which "Install Homebrew" runs in, isn't, so it asks on first use.
+title: "Warm-up: base VM prompts"
+
+setup:
+  vibeshed: { warmUp: false }
+
+record: { video: false }
+
+actions:
+  - open: Terminal
+  - waitFor: { window: Terminal, timeout: 20 }
+  - open: vibeshed://terminal/newWindow       # an Apple event to Terminal
+  - wait: 3
+  - waitForUser: 180                          # "Vibeshed wants access to control Terminal" › Allow
+  - wait: 2
+  - shell: |
+      pkill -x Terminal; sleep 1
+      rm -rf "$HOME/Library/Saved Application State/com.apple.Terminal.savedState"

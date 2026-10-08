@@ -25,10 +25,11 @@ extension SceneRunner {
         }
     }
 
-    /// Keyboard, pointer and wait actions; false for the rest.
+    /// Keyboard, pointer, wait and recording actions; false for the rest.
     private func performInput(_ action: SceneAction) async throws -> Bool {
         switch action {
         case let .wait(seconds): try await sleep(seconds)
+        case let .recording(control): try await control == .pause ? pauseRecording() : resumeRecording()
         case let .waitForUser(seconds): try await waitForUser(seconds)
         case let .press(press): try await Keyboard.press(press)
         case let .type(typing): try await Keyboard.type(typing)
@@ -49,6 +50,7 @@ extension SceneRunner {
         case let .move(move): "move to \(move.to.x),\(move.to.y)"
         case let .drag(drag): "drag \(drag.from.x),\(drag.from.y) → \(drag.to.x),\(drag.to.y)"
         case let .scroll(scroll): "scroll \(scroll.dy)"
+        case let .recording(control): "\(control.rawValue) recording"
         default: describeOther(action)
         }
     }
@@ -142,13 +144,16 @@ extension SceneRunner {
 
     func waitForUser(_ seconds: Double) async throws {
         let deadline = Date().addingTimeInterval(seconds)
-        var announced = false
         try await Task.sleep(for: .seconds(1.5))   // a prompt the last step triggered may still be coming
+        var announced: Set<String> = []
         while Date() < deadline {
-            guard let dialog = SystemDialogs.current() else { return }
-            if !announced {
-                Log.info("answer the \(dialog.owner) dialog in the VM…")
-                announced = true
+            // Notification banners too: someone at the VM can clear them while the take waits.
+            guard let dialog = SystemDialogs.current() ?? SystemDialogs.banner() else { return }
+            if announced.insert(dialog.owner).inserted {
+                let ask = dialog.owner == "Notification Center"
+                    ? "clear the notifications in the VM's top-right corner…"
+                    : "answer the \(dialog.owner) dialog in the VM…"
+                Log.info(ask)
             }
             try await Task.sleep(for: .milliseconds(300))
         }

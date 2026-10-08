@@ -65,10 +65,73 @@ struct VirtualMachine {
         try Shell.run([utmctl, "stop", name])
     }
 
-    /// Starts the VM if needed and waits until SSH answers; returns its address.
+    /// Asks the guest to shut down, then powers it off if it hasn't within `timeout`.
+    func shutDown(timeout: Double = 45) throws {
+        guard exists, status() != "stopped" else { return }
+        print("Stopping VM “\(name)”…")
+        _ = try? Shell.capture([utmctl, "stop", name, "--request"], check: false)
+        if waitUntilStopped(timeout: timeout) { return }
+        try Shell.run([utmctl, "stop", name, "--force"])
+        guard waitUntilStopped(timeout: 30) else { throw HostError("VM “\(name)” won't stop") }
+    }
+
+    private func waitUntilStopped(timeout: Double) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if status() == "stopped" { return true }
+            Thread.sleep(forTimeInterval: 1)
+        }
+        return false
+    }
+
+    var exists: Bool {
+        let list = (try? Shell.capture([utmctl, "list"], check: false)) ?? ""
+        // Rows are "<UUID> <status> <name>"; names may contain spaces.
+        return list.split(separator: "\n").contains { row in
+            row.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true).dropFirst(2).first
+                .map { String($0).trimmingCharacters(in: .whitespaces) == name } ?? false
+        }
+    }
+
+    /// The VM fresh takes run on: a clone of this one, made anew for each take.
+    var cloneName: String { "\(name) Take" }
+
+    /// Replaces the clone with a new copy of this VM, stopped first so its disk is
+    /// consistent. UTM keeps the MAC address, so the clone gets this VM's IP address
+    /// and SSH host key; only one of the two can run at a time.
+    func makeClone() throws -> VirtualMachine {
+        var clone = self
+        clone.name = cloneName
+        try clone.delete()
+        try shutDown()
+        print("Cloning “\(name)” as “\(clone.name)”…")
+        try Shell.run([utmctl, "clone", name, "--name", clone.name])
+        return clone
+    }
+
+    func delete() throws {
+        guard exists else { return }
+        try shutDown()
+        try Shell.run([utmctl, "delete", name])
+    }
+
+    /// Starts the VM if needed and waits until SSH answers and, with `desktop`, until
+    /// someone is logged in to the guest's desktop, where the agent runs; returns its address.
     @discardableResult
-    func ensureReady(timeout: Double = 180) throws -> String {
+    func ensureReady(timeout: Double = 180, desktop: Bool = true) throws -> String {
+        let host = try waitForSSH(timeout: timeout)
+        if desktop { try waitForDesktop(host: host) }
+        return host
+    }
+
+    private func waitForSSH(timeout: Double) throws -> String {
         if !["started", "running"].contains(status()) {
+            // A VM and its take clone share a MAC address, so they'd answer at the same IP.
+            var twin = self
+            twin.name = name.hasSuffix(" Take") ? String(name.dropLast(" Take".count)) : cloneName
+            if twin.exists, ["started", "running"].contains(twin.status()) {
+                throw HostError("“\(twin.name)” is running and has the same address; stop it before starting “\(name)”")
+            }
             print("Starting VM “\(name)”…")
             try start()
         }
@@ -82,6 +145,23 @@ struct VirtualMachine {
         throw HostError(
             "VM “\(name)” isn't reachable over SSH — run `scripts/showreel vm setup` (or check Remote Login in the VM)"
         )
+    }
+
+    /// A guest without automatic login boots to the login window, with no session to
+    /// launch the agent in.
+    private func waitForDesktop(host: String, timeout: Double = 600) throws {
+        let check = sshCommand(host: host, #"pgrep -qx -U "$(id -u)" Dock"#)
+        if (try? Shell.capture(check)) != nil { return }
+        print("▶ log in to “\(name)” in its UTM window (automatic login in the VM skips this)")
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            Thread.sleep(forTimeInterval: 2)
+            if (try? Shell.capture(check)) != nil {
+                Thread.sleep(forTimeInterval: 5) // the session's login items settle
+                return
+            }
+        }
+        throw HostError("nobody logged in to “\(name)” within \(Int(timeout / 60)) minutes")
     }
 
     /// The guest's address: fixed, or its newest DHCP lease from UTM's shared

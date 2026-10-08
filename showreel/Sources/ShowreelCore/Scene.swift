@@ -18,18 +18,25 @@ public enum SceneError: Error, CustomStringConvertible, Equatable {
 /// so a scene only spells out what it changes.
 public struct Scene: Decodable, Sendable {
     public var title: String?
+    /// `fresh` runs the scene on a new clone of the VM, deleted after the take.
+    public var machine: Machine
     public var setup: Setup
     public var record: RecordSettings
     public var actions: [SceneAction]
     public var outputs: [OutputSpec]
 
+    public enum Machine: String, Decodable, Sendable {
+        case current, fresh
+    }
+
     enum CodingKeys: String, CodingKey {
-        case title, setup, record, actions, outputs
+        case title, machine, setup, record, actions, outputs
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         title = try container.decodeIfPresent(String.self, forKey: .title)
+        machine = try container.decodeIfPresent(Machine.self, forKey: .machine) ?? .current
         setup = try container.decodeIfPresent(Setup.self, forKey: .setup) ?? Setup()
         record = try container.decodeIfPresent(RecordSettings.self, forKey: .record) ?? RecordSettings()
         actions = try container.decodeIfPresent([SceneAction].self, forKey: .actions) ?? []
