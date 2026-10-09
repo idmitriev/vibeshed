@@ -89,6 +89,11 @@ struct ParameterInputView: View {
                                 .fill(isSelected ? theme.accent : Color.clear)
                         )
                         .padding(.horizontal, 8)
+                        .activationPulse(
+                            trigger: state.optionActivationCounters[option.id] ?? 0,
+                            cornerRadius: 8,
+                            inset: 8
+                        )
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             state.selectedParameterOptionID = option.id
