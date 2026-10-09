@@ -54,7 +54,7 @@ struct SpotifyActionPreviewView: View {
                 if let itemType = action.spotifyItemType {
                     PreviewPill(
                         text: itemType.rawValue.capitalized,
-                        icon: iconForType(itemType),
+                        icon: itemType.iconName,
                         color: .green
                     )
                 }
@@ -99,13 +99,41 @@ struct SpotifyActionPreviewView: View {
     }
 }
 
-private func iconForType(_ type: SpotifyItemType) -> String {
-    switch type {
-    case .track: "music.note"
-    case .album: "square.stack"
-    case .artist: "person"
-    case .playlist: "music.note.list"
-    case .nowPlaying: "waveform"
-    case .control: "playpause"
+/// The preview for a search result: its cover, large, over what it is and who made it.
+struct SpotifySearchItemPreview: View {
+    let item: SpotifySearchItem
+
+    var body: some View {
+        PreviewLayout(moduleName: "spotify") {
+            PreviewHeader(title: item.name, subtitle: item.byline) {
+                artwork
+            }
+
+            PreviewPill(text: item.kind.searchLabel, icon: item.kind.iconName, color: .green)
+        }
+    }
+
+    /// The larger cover, with the list's thumbnail standing in while it loads.
+    private var artwork: some View {
+        AsyncImage(url: item.previewArtworkURL) { phase in
+            if let image = phase.image {
+                image.resizable().aspectRatio(contentMode: .fit)
+            } else {
+                AsyncImage(url: item.artworkURL) { thumbnail in
+                    if let image = thumbnail.image {
+                        image.resizable().aspectRatio(contentMode: .fit)
+                    } else {
+                        Image(systemName: item.kind.iconName)
+                            .font(.system(size: 56))
+                            .foregroundStyle(.green)
+                            .frame(width: 72, height: 72)
+                    }
+                }
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        // Spotify shows artists round and everything else square.
+        .clipShape(item.kind == .artist ? AnyShape(Circle()) : AnyShape(RoundedRectangle(cornerRadius: 8)))
+        .frame(maxWidth: 220, maxHeight: 220)
     }
 }

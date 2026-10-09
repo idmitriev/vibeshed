@@ -59,7 +59,7 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 
 **Media & Communication**
 - Wallpaper search across Wallhaven, Unsplash and public-domain museum collections, with previews and credits
-- Spotify search and playback control with OAuth
+- Spotify search that plays songs, albums, artists and playlists, plus playback control (no API setup)
 - System audio volume, mute, device selection, media keys
 - Telegram chat quick-open
 - Zoom meeting join, start, and configured meeting shortcuts
@@ -128,7 +128,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Audio** | Volume, mute, device selection, media key control |
 | **System** | Lock, sleep, restart, shutdown, appearance, screenshots |
 | **Settings** | Open macOS System Settings panes |
-| **Spotify** | Search artists/albums/playlists, playback control |
+| **Spotify** | Search and play songs, albums, artists, playlists; playback control |
 | **GitHub** | Search repos, issues, PRs; view notifications |
 | **VSCode** | Search and open recent projects |
 | **JetBrains** | Search and open IDE projects |
