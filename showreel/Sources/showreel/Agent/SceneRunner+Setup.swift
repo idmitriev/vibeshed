@@ -20,7 +20,7 @@ extension SceneRunner {
             NSPasteboard.general.setString(text, forType: .string)
         }
         if let script = setup.shell { try runShell(script) }
-        if let focus = setup.focus { _ = try await Apps.open(focus, activate: true) }
+        if let focus = setup.focus { try await Windows.bringToFront(Apps.open(focus, activate: true)) }
         if let cursor = setup.cursor { Mouse.warp(to: cursor) }
         for action in setup.actions {
             try SystemDialogs.ensureNone()

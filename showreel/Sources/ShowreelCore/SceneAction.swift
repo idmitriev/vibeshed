@@ -171,15 +171,21 @@ public enum MouseButton: String, Codable, Sendable {
 public struct Click: Decodable, Sendable, Equatable {
     /// Where to click; the current pointer position when omitted.
     public var at: Point?
+    /// Or the middle of a window: `click: { window: Ghostty }` gives it the keyboard
+    /// for sure, which activating its app doesn't always.
+    public var window: WindowTarget?
     public var button = MouseButton.left
     public var count = 1
     /// Seconds the pointer takes to glide to `at`; 0 jumps there.
     public var glide = 0.4
 
-    enum CodingKeys: String, CodingKey { case at, button, count, glide }
+    enum CodingKeys: String, CodingKey { case at, window, button, count, glide }
 
-    public init(at: Point?, button: MouseButton = .left, count: Int = 1, glide: Double = 0.4) {
+    public init(
+        at: Point?, window: WindowTarget? = nil, button: MouseButton = .left, count: Int = 1, glide: Double = 0.4
+    ) {
         self.at = at
+        self.window = window
         self.button = button
         self.count = count
         self.glide = glide
@@ -190,6 +196,7 @@ public struct Click: Decodable, Sendable, Equatable {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             return try Click(
                 at: container.decodeIfPresent(Point.self, forKey: .at),
+                window: container.decodeIfPresent(String.self, forKey: .window).map(WindowTarget.init),
                 button: container.decodeIfPresent(MouseButton.self, forKey: .button) ?? .left,
                 count: container.decodeIfPresent(Int.self, forKey: .count) ?? 1,
                 glide: container.decodeIfPresent(Double.self, forKey: .glide) ?? 0.4
@@ -322,9 +329,14 @@ public struct WaitCondition: Decodable, Sendable, Equatable {
     public var gone = false
     /// Wait until the window's title contains this, e.g. a page that loaded.
     public var title: String?
+    /// For a result: also wait for the top row (title and subtitle) to differ from the
+    /// one listed before the last typing, so a remote search's own results have replaced
+    /// what was there (a wallpaper source's featured images). If it never changes, the
+    /// take warns and goes on.
+    public var fresh = false
     public var timeout = 5.0
 
-    enum CodingKeys: String, CodingKey { case window, result, gone, title, timeout }
+    enum CodingKeys: String, CodingKey { case window, result, gone, title, fresh, timeout }
 
     public init(window: WindowTarget, gone: Bool = false, title: String? = nil, timeout: Double = 5) {
         target = .window(window)
@@ -333,8 +345,9 @@ public struct WaitCondition: Decodable, Sendable, Equatable {
         self.timeout = timeout
     }
 
-    public init(result: String, timeout: Double = 3) {
+    public init(result: String, fresh: Bool = false, timeout: Double = 3) {
         target = .result(result)
+        self.fresh = fresh
         self.timeout = timeout
     }
 
@@ -350,7 +363,8 @@ public struct WaitCondition: Decodable, Sendable, Equatable {
             let container = try $0.container(keyedBy: CodingKeys.self)
             let timeout = try container.decodeIfPresent(Double.self, forKey: .timeout)
             if let result = try container.decodeIfPresent(String.self, forKey: .result) {
-                return WaitCondition(result: result, timeout: timeout ?? 3)
+                let fresh = try container.decodeIfPresent(Bool.self, forKey: .fresh) ?? false
+                return WaitCondition(result: result, fresh: fresh, timeout: timeout ?? 3)
             }
             return try WaitCondition(
                 window: WindowTarget(container.decode(String.self, forKey: .window)),

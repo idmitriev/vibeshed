@@ -16,7 +16,7 @@ extension SceneRunner {
         case let .shell(script):
             try runShell(script)
         case let .focus(app):
-            _ = try await Apps.open(app, activate: true)
+            try await Windows.bringToFront(Apps.open(app, activate: true))
         case let .window(placement):
             guard let app = Apps.running(placement.app) else { throw AgentError("\(placement.app) isn't running") }
             try Windows.place(app, frame: placement.frame)
@@ -32,8 +32,10 @@ extension SceneRunner {
         case let .recording(control): try await control == .pause ? pauseRecording() : resumeRecording()
         case let .waitForUser(seconds): try await waitForUser(seconds)
         case let .press(press): try await Keyboard.press(press)
-        case let .type(typing): try await Keyboard.type(typing)
-        case let .click(click): try await Mouse.click(click)
+        case let .type(typing):
+            rowBeforeTyping = PickerResults.topRow()
+            try await Keyboard.type(typing)
+        case let .click(click): try await Mouse.click(resolved(click))
         case let .move(move): try await Mouse.move(to: move.to, duration: move.duration)
         case let .drag(drag): try await Mouse.drag(drag)
         case let .scroll(scroll): try await Mouse.scroll(scroll)
@@ -42,11 +44,20 @@ extension SceneRunner {
         return true
     }
 
+    /// A click on a window lands in its middle.
+    private func resolved(_ click: Click) throws -> Click {
+        guard let target = click.window else { return click }
+        guard let frame = Windows.find(target)?.frame else { throw AgentError("no \(target.name) window to click") }
+        var click = click
+        click.at = Point(x: frame.x + frame.width / 2, y: frame.y + frame.height / 2)
+        return click
+    }
+
     func describe(_ action: SceneAction) -> String {
         switch action {
         case let .press(press): "press \(press.chord)" + (press.times > 1 ? " ×\(press.times)" : "")
         case let .type(typing): "type \"\(typing.text)\""
-        case let .click(click): "click \(click.at.map { "\($0.x),\($0.y)" } ?? "here")"
+        case let .click(click): "click \(click.window?.name ?? click.at.map { "\($0.x),\($0.y)" } ?? "here")"
         case let .move(move): "move to \(move.to.x),\(move.to.y)"
         case let .drag(drag): "drag \(drag.from.x),\(drag.from.y) → \(drag.to.x),\(drag.to.y)"
         case let .scroll(scroll): "scroll \(scroll.dy)"
@@ -60,7 +71,8 @@ extension SceneRunner {
         case let .wait(seconds): "wait \(seconds)s"
         case let .open(target): "open \(target)"
         case let .screenshot(shot): "screenshot \(shot.name)"
-        case let .waitFor(condition): "wait for \(condition.name)" + (condition.gone ? " to close" : "")
+        case let .waitFor(condition):
+            "wait for \(condition.name)" + (condition.gone ? " to close" : condition.fresh ? " from this search" : "")
         case let .marker(name): "marker \(name)"
         case let .waitForUser(seconds): "wait up to \(Int(seconds))s for dialogs to be answered"
         case .shell: "shell"
@@ -125,10 +137,9 @@ extension SceneRunner {
                     return
                 }
             case let .result(text):
-                // A prefix, not a substring: "Search Google for “design review”"
-                // must not pass for the event "Design review".
                 lastSeen = PickerResults.topTitle()
-                if let lastSeen, lastSeen.lowercased().hasPrefix(text.lowercased()) { return }
+                let changed = !condition.fresh || PickerResults.topRow() != rowBeforeTyping
+                if changed, topResult(lastSeen, startsWith: text) { return }
             }
             try await Task.sleep(for: .milliseconds(50))
         }
@@ -138,8 +149,18 @@ extension SceneRunner {
             let titled = condition.title.map { " titled “\($0)” (last title: “\(lastSeen ?? "")”)" } ?? ""
             throw AgentError("\(window.name)\(titled) didn't \(state) within \(condition.timeout)s")
         case let .result(text):
+            if condition.fresh, topResult(lastSeen, startsWith: text) {
+                // The search may simply have the same first result as the list before it.
+                return warn("the picker's top result stayed “\(rowBeforeTyping ?? "")” after typing")
+            }
             throw AgentError("the picker's top result is “\(lastSeen ?? "nothing")”, not “\(text)”")
         }
+    }
+
+    /// A prefix, not a substring: "Search Google for “design review”" must not pass
+    /// for the event "Design review".
+    private func topResult(_ title: String?, startsWith text: String) -> Bool {
+        title.map { $0.lowercased().hasPrefix(text.lowercased()) } ?? false
     }
 
     func waitForUser(_ seconds: Double) async throws {

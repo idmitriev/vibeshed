@@ -21,6 +21,8 @@ final class SceneRunner {
     private var segmentStart: Double = 0
     /// Windows whose frames the manifest keeps, for crops in outputs.
     private var trackedTargets: [WindowTarget] = [.picker]
+    /// The picker's top row when the last typing started, for `waitFor` a fresh result.
+    var rowBeforeTyping: String?
 
     static let videoName = "recording.mov"
 
@@ -62,7 +64,7 @@ final class SceneRunner {
             try await startRecording()
             try await sleep(scene.record.leadIn)
             for (index, action) in scene.actions.enumerated() {
-                if case .waitForUser = action {} else { try SystemDialogs.ensureNone() }
+                if case .waitForUser = action {} else { try await guardAgainstDialogs() }
                 CapsLock.turnOff()
                 event("[\(index + 1)/\(scene.actions.count)] \(describe(action))")
                 try await perform(action)
@@ -140,6 +142,18 @@ final class SceneRunner {
             manifest.segments = segments
         }
         try await recorder.stop()
+    }
+
+    /// No input goes out while a system dialog is up: the take stops, or with
+    /// `record.pauseOnDialogs` its recording pauses until someone answers.
+    private func guardAgainstDialogs() async throws {
+        guard scene.record.pauseOnDialogs, SystemDialogs.current() != nil else {
+            return try SystemDialogs.ensureNone()
+        }
+        let pausedHere = pausedAt == nil
+        if pausedHere { try await pauseRecording() }
+        try await waitForUser(900)
+        if pausedHere { try await resumeRecording() }
     }
 
     func pauseRecording() async throws {

@@ -88,9 +88,13 @@ public struct OutputSpec: Decodable, Sendable {
     public var skip: [[TimeRef]] = []
     /// Encoder quality: CRF for mp4 (default 18) and webm (default 32).
     public var quality: Int?
+    /// Seconds a video opens on a before/after frame: the left half of its first frame
+    /// beside the right half of its last. A `<name>-split.png` of it is written too.
+    public var beforeAfter: Double?
 
     enum CodingKeys: String, CodingKey {
         case name, format, crop, padding, size, width, fit, background, fps, from, to, at, speed, loop, skip, quality
+        case beforeAfter
     }
 
     public init(name: String) {
@@ -124,6 +128,7 @@ public struct OutputSpec: Decodable, Sendable {
             ))
         }
         quality = try container.decodeIfPresent(Int.self, forKey: .quality)
+        beforeAfter = try container.decodeIfPresent(Double.self, forKey: .beforeAfter)
         if format == .png, at == nil {
             throw DecodingError.keyNotFound(CodingKeys.at, .init(
                 codingPath: container.codingPath, debugDescription: "a png output needs `at`"

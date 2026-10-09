@@ -15,6 +15,43 @@ public enum FFmpegPlan {
         return args
     }
 
+    /// Puts a before/after frame in front of `clip` (an output already cut): the left
+    /// half of its first frame beside the right half of its last, held `seconds`, then
+    /// the clip, re-encoded like `output`. Both frames come straight from the clip, in its
+    /// own pixel format, so nothing shifts color at the cut.
+    public static func beforeAfterArguments(
+        for output: OutputSpec,
+        seconds: Double,
+        clip: String,
+        destination: String
+    ) -> [String] {
+        let fps = output.fps ?? 60
+        let frame = "trim=end_frame=1,setpts=PTS-STARTPTS"
+        let hold = "tpad=stop_mode=clone:stop_duration=\(seconds)"
+        let normalize = "fps=\(fps),format=yuv420p,setsar=1,settb=AVTB"
+        let graph = [
+            "[0:v]\(frame),crop=iw/2:ih:0:0,\(hold)[left]",
+            "[1:v]\(frame),crop=iw/2:ih:iw/2:0,\(hold)[right]",
+            "[left][right]hstack=inputs=2,\(normalize)[intro]",
+            "[2:v]\(normalize)[clip]",
+            "[intro][clip]concat=n=2:v=1:a=0[out]",
+        ].joined(separator: ";")
+        return ["-hide_banner", "-loglevel", "error", "-y", "-t", "0.2", "-i", clip, "-sseof", "-0.2", "-i", clip,
+                "-i", clip, "-filter_complex", graph, "-map", "[out]"]
+            + encoderArguments(for: output) + [destination]
+    }
+
+    /// The before/after frame alone, as an image.
+    public static func beforeAfterImageArguments(clip: String, destination: String) -> [String] {
+        let graph = [
+            "[0:v]trim=end_frame=1,crop=iw/2:ih:0:0[left]",
+            "[1:v]trim=end_frame=1,crop=iw/2:ih:iw/2:0[right]",
+            "[left][right]hstack=inputs=2[out]",
+        ].joined(separator: ";")
+        return ["-hide_banner", "-loglevel", "error", "-y", "-t", "0.2", "-i", clip, "-sseof", "-0.2", "-i", clip,
+                "-filter_complex", graph, "-map", "[out]", "-frames:v", "1", "-update", "1", destination]
+    }
+
     /// The crop in source pixels, rounded to even numbers for yuv420p.
     public static func cropPixels(for output: OutputSpec, manifest: Manifest) throws -> Rect {
         let bounds = manifest.display.bounds

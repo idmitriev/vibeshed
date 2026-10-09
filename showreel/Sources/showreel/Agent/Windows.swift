@@ -60,6 +60,25 @@ enum Windows {
             .max { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }
     }
 
+    /// Brings `app` to the front with its front window raised, so typing reaches it.
+    /// Since macOS 14 NSWorkspace's activation is a request the active app can turn
+    /// down, and the agent runs in the background; Accessibility's frontmost flag isn't.
+    static func bringToFront(_ app: NSRunningApplication, timeout: Double = 5) async throws {
+        let element = AXUIElementCreateApplication(app.processIdentifier)
+        let deadline = Date().addingTimeInterval(timeout)
+        while NSWorkspace.shared.frontmostApplication?.processIdentifier != app.processIdentifier {
+            guard Date() < deadline else { throw AgentError("\(app.localizedName ?? "app") didn't come to the front") }
+            AXUIElementSetAttributeValue(element, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
+            try await Task.sleep(for: .milliseconds(150))
+        }
+        var value: CFTypeRef?
+        if AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &value) == .success,
+           let window = (value as? [AXUIElement])?.first
+        {
+            AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+        }
+    }
+
     /// Moves and resizes an app's front window through Accessibility.
     static func place(_ app: NSRunningApplication, frame: Rect) throws {
         let element = AXUIElementCreateApplication(app.processIdentifier)

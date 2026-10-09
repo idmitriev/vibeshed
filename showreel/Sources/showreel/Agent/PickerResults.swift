@@ -7,16 +7,40 @@ import ApplicationServices
 enum PickerResults {
     /// The first row's title — the row Return runs right after typing.
     static func topTitle() -> String? {
-        guard let picker = Windows.picker() else { return nil }
+        topTexts(2).first
+    }
+
+    /// The first row's title and subtitle, to tell one list from another when titles
+    /// repeat (Wallhaven's are resolutions).
+    static func topRow() -> String? {
+        let texts = topTexts(2)
+        return texts.isEmpty ? nil : texts.joined(separator: " · ")
+    }
+
+    /// The list's first `count` non-empty texts, in order.
+    private static func topTexts(_ count: Int) -> [String] {
+        guard let picker = Windows.picker() else { return [] }
         let app = AXUIElementCreateApplication(picker.pid)
         for window in children(of: app, attribute: kAXWindowsAttribute) {
             guard let list = first(in: window, depth: 8, where: { role(of: $0) == kAXScrollAreaRole }) else {
                 continue
             }
-            let title = first(in: list, depth: 10) { role(of: $0) == kAXStaticTextRole && !value(of: $0).isEmpty }
-            if let title { return value(of: title) }
+            var texts: [String] = []
+            collectTexts(in: list, depth: 10, into: &texts, limit: count)
+            if !texts.isEmpty { return texts }
         }
-        return nil
+        return []
+    }
+
+    private static func collectTexts(in element: AXUIElement, depth: Int, into texts: inout [String], limit: Int) {
+        guard depth > 0 else { return }
+        for child in children(of: element, attribute: kAXChildrenAttribute) {
+            guard texts.count < limit else { return }
+            if role(of: child) == kAXStaticTextRole, !value(of: child).isEmpty {
+                texts.append(value(of: child))
+            }
+            collectTexts(in: child, depth: depth - 1, into: &texts, limit: limit)
+        }
     }
 
     private static func first(

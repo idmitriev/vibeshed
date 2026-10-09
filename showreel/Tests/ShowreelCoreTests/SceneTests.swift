@@ -20,6 +20,7 @@ struct SceneTests {
         #expect(scene.setup.vibeshed.reset)
         #expect(scene.record.video)
         #expect(scene.record.fps == 60)
+        #expect(!scene.record.pauseOnDialogs)
         #expect(scene.actions.isEmpty)
     }
 
@@ -33,6 +34,7 @@ struct SceneTests {
           - type: { text: "Hello", cps: 20 }
           - click: [100, 200]
           - click: { at: [10, 20], button: right, glide: 0 }
+          - click: { window: Ghostty }
           - screenshot: results
           - screenshot: { name: panel, window: picker }
           - screenshot: { name: around, region: picker, padding: 40 }
@@ -40,6 +42,7 @@ struct SceneTests {
           - waitFor: picker
           - waitFor: { window: picker, gone: true, timeout: 2 }
           - waitFor: { result: Safari }
+          - waitFor: { result: "", fresh: true, timeout: 30 }
           - waitFor: { window: Google Chrome, title: Hacker News, timeout: 10 }
           - marker: picked
           - open: vibeshed://picker?q=theme
@@ -55,6 +58,7 @@ struct SceneTests {
             .type(TypeText(text: "Hello", cps: 20)),
             .click(Click(at: Point(x: 100, y: 200))),
             .click(Click(at: Point(x: 10, y: 20), button: .right, glide: 0)),
+            .click(Click(at: nil, window: .app("Ghostty"))),
             .screenshot(Screenshot(name: "results")),
             .screenshot(Screenshot(name: "panel", window: .picker)),
             .screenshot(Screenshot(name: "around", region: .window(.picker), padding: 40)),
@@ -62,6 +66,7 @@ struct SceneTests {
             .waitFor(WaitCondition(window: .picker)),
             .waitFor(WaitCondition(window: .picker, gone: true, timeout: 2)),
             .waitFor(WaitCondition(result: "Safari")),
+            .waitFor(WaitCondition(result: "", fresh: true, timeout: 30)),
             .waitFor(WaitCondition(window: .app("Google Chrome"), title: "Hacker News", timeout: 10)),
             .marker("picked"),
             .open("vibeshed://picker?q=theme"),
@@ -96,6 +101,23 @@ struct SceneTests {
         #expect(scene.referencedFiles == [
             "../../docs/wallpapers/a.jpg", "../configs/demo.yaml", "../fixtures/usage.json", "../fixtures/notes.txt",
         ])
+    }
+
+    @Test func beforeAfterOpensOnTheFirstFramesLeftAndTheLastFramesRight() throws {
+        let scene = try decode("""
+        outputs:
+          - { name: clip, from: start, to: end, beforeAfter: 2 }
+        """)
+        let output = try #require(scene.outputs.first)
+        #expect(output.beforeAfter == 2)
+        let args = FFmpegPlan.beforeAfterArguments(for: output, seconds: 2, clip: "in.mp4", destination: "out.mp4")
+        let graph = try #require(args.firstIndex(of: "-filter_complex").map { args[$0 + 1] })
+        #expect(args.contains("-sseof"))
+        #expect(graph.contains("[0:v]trim=end_frame=1,setpts=PTS-STARTPTS,crop=iw/2:ih:0:0"))
+        #expect(graph.contains("[1:v]trim=end_frame=1,setpts=PTS-STARTPTS,crop=iw/2:ih:iw/2:0"))
+        #expect(graph.contains("tpad=stop_mode=clone:stop_duration=2.0"))
+        #expect(graph.hasSuffix("[intro][clip]concat=n=2:v=1:a=0[out]"))
+        #expect(args.last == "out.mp4")
     }
 
     @Test func outputsDecodeCropsAndSizes() throws {

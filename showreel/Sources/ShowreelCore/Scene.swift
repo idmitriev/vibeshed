@@ -260,9 +260,12 @@ public struct RecordSettings: Decodable, Sendable {
     /// Seconds recorded before the first action and after the last.
     public var leadIn = 0.5
     public var leadOut = 1.0
+    /// A system dialog that comes up mid-take pauses the recording until it's answered
+    /// (and banners are cleared), so it becomes a cut instead of failing the take.
+    public var pauseOnDialogs = false
 
     enum CodingKeys: String, CodingKey {
-        case video, fps, cursor, codec, leadIn, leadOut
+        case video, fps, cursor, codec, leadIn, leadOut, pauseOnDialogs
     }
 
     public init() {}
@@ -275,6 +278,7 @@ public struct RecordSettings: Decodable, Sendable {
         codec = try container.decodeIfPresent(VideoCodec.self, forKey: .codec) ?? codec
         leadIn = try container.decodeIfPresent(Double.self, forKey: .leadIn) ?? leadIn
         leadOut = try container.decodeIfPresent(Double.self, forKey: .leadOut) ?? leadOut
+        pauseOnDialogs = try container.decodeIfPresent(Bool.self, forKey: .pauseOnDialogs) ?? pauseOnDialogs
     }
 }
 

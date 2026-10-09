@@ -91,6 +91,7 @@ struct Takes {
         let guestTake = "Showreel/takes/\(sceneName)"
         try runAgent(host: host, ["run", guestScene, "--out", guestTake], output: guestTake)
         let take = takeDirectory(for: url)
+        try keepLastGoodTake(take)
         try? FileManager.default.removeItem(at: take)
         try FileManager.default.createDirectory(at: take, withIntermediateDirectories: true)
         try vm.fetch(host: host, guestTake + "/", to: take.path + "/")
@@ -103,6 +104,17 @@ struct Takes {
             try cutOutputs(scene: scene, manifest: manifest, take: take)
         }
         summarize(take)
+    }
+
+    /// A new take replaces the last one. A good one (no failure) moves to
+    /// `<name>-last-good` first, so a retake that fails doesn't cost it.
+    private func keepLastGoodTake(_ take: URL) throws {
+        let manifestURL = take.appendingPathComponent("manifest.json")
+        guard let manifest = try? Manifest.load(from: manifestURL), manifest.failure == nil else { return }
+        let kept = take.deletingLastPathComponent().appendingPathComponent("\(take.lastPathComponent)-last-good")
+        try? FileManager.default.removeItem(at: kept)
+        try FileManager.default.moveItem(at: take, to: kept)
+        print("📦 the previous take is now \(kept.path)")
     }
 
     /// Joins a take's segments (split by `recording: pause`) into its video. Each one
@@ -182,12 +194,30 @@ struct Takes {
                 destination: take.appendingPathComponent(output.fileName).path
             )
             try Shell.run([ffmpeg] + args)
+            if let seconds = output.beforeAfter, output.format.isVideo, output.format != .gif {
+                try addBeforeAfter(seconds, to: output, in: take, ffmpeg: ffmpeg)
+            }
             if output.format.isVideo, output.format != .gif,
                let color = cornerColor(of: take.appendingPathComponent(output.fileName), ffmpeg: ffmpeg)
             {
                 print("   top-left pixel \(color) — a page behind the clip should use this color")
             }
         }
+    }
+
+    /// Re-cuts `output` to open on its before/after frame, and saves that frame as
+    /// `<name>-split.png`.
+    private func addBeforeAfter(_ seconds: Double, to output: OutputSpec, in take: URL, ffmpeg: String) throws {
+        let clip = take.appendingPathComponent(output.fileName)
+        let joined = take.appendingPathComponent("\(output.name)-joined.\(output.format.rawValue)")
+        let image = take.appendingPathComponent("\(output.name)-split.png")
+        if !FileManager.default.fileExists(atPath: image.path) || output.format == .mp4 {
+            try Shell.run([ffmpeg] + FFmpegPlan.beforeAfterImageArguments(clip: clip.path, destination: image.path))
+        }
+        try Shell.run([ffmpeg] + FFmpegPlan.beforeAfterArguments(
+            for: output, seconds: seconds, clip: clip.path, destination: joined.path
+        ))
+        _ = try FileManager.default.replaceItemAt(clip, withItemAt: joined)
     }
 
     /// The first frame's top-left color as a browser decodes it.
