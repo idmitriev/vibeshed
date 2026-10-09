@@ -36,7 +36,7 @@ final class FloatingPanel: NSPanel {
         )
 
         isFloatingPanel = true
-        level = .floating
+        level = .picker
         collectionBehavior = [
             .canJoinAllSpaces,
             .fullScreenAuxiliary,

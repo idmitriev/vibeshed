@@ -147,7 +147,7 @@ final class PanelController {
 
     private func presentOverlay(behind panel: FloatingPanel, on screen: NSScreen?) {
         guard let config = configManager.config.appearance.activeOverlay, let screen else {
-            panel.level = .floating
+            panel.level = .picker
             overlay.hide()
             return
         }
