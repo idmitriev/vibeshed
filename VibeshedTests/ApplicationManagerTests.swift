@@ -67,6 +67,19 @@ final class ApplicationManagerTests: XCTestCase {
         XCTAssertEqual(names, ["Top.app", "Nested.app", "Finder.app"])
     }
 
+    func testFocusReopensOnlyAfterAnEmptyWindowQuery() {
+        for frontmost in [false, true] {
+            XCTAssertEqual(ApplicationManager.focusStep(windowCount: 0, isFrontmost: frontmost), .reopen)
+            // A failed AX query says nothing about the app's windows.
+            XCTAssertEqual(ApplicationManager.focusStep(windowCount: nil, isFrontmost: frontmost), .activate)
+        }
+    }
+
+    func testFocusCyclesOnlyWhenFrontmost() {
+        XCTAssertEqual(ApplicationManager.focusStep(windowCount: 1, isFrontmost: true), .cycleWindows)
+        XCTAssertEqual(ApplicationManager.focusStep(windowCount: 2, isFrontmost: false), .restoreAndActivate)
+    }
+
     func testBundleWithoutIdentifierFallsBackToPath() throws {
         let url = try makeApp("Shortcut.app", bundleID: nil)
         let bundle = try XCTUnwrap(Bundle(url: url))

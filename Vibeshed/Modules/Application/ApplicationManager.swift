@@ -200,6 +200,27 @@ struct ApplicationManager: Sendable {
 
     // MARK: - Focus Application
 
+    /// What `focusApplication` does with a running app.
+    enum FocusStep: Equatable {
+        /// The AX window query failed (no Accessibility permission, app not responding), so it
+        /// may have windows: activate it, as a reopen could make it open another one.
+        case activate
+        /// No windows. activate() would only switch the menu bar. Opening a running app sends it
+        /// a reopen event, as a Dock click does, so it shows a window (Finder opens a new one).
+        case reopen
+        /// Already frontmost: raise its next window.
+        case cycleWindows
+        /// Activate it, restoring a window first if all of them are minimized.
+        case restoreAndActivate
+    }
+
+    /// `windowCount` is nil when the AX window query failed.
+    static func focusStep(windowCount: Int?, isFrontmost: Bool) -> FocusStep {
+        guard let windowCount else { return .activate }
+        if windowCount == 0 { return .reopen }
+        return isFrontmost ? .cycleWindows : .restoreAndActivate
+    }
+
     @MainActor
     func focusApplication(_ app: AppInfo) async throws -> Bool {
         guard let running = findRunningApp(bundleID: app.id) else {
@@ -207,16 +228,19 @@ struct ApplicationManager: Sendable {
             return false
         }
 
-        let axWindows = AXWindowHelper.windows(for: running.processIdentifier).filter(AXWindowHelper.isWindow)
-        if axWindows.isEmpty {
-            // activate() would only switch the menu bar. Opening a running app sends it a reopen
-            // event, as a Dock click does, so it shows a window (Finder opens a new one).
+        let axWindows = AXWindowHelper.windowsIfAvailable(for: running.processIdentifier)?
+            .filter(AXWindowHelper.isWindow)
+        let isFrontmost = running == NSWorkspace.shared.frontmostApplication
+        switch Self.focusStep(windowCount: axWindows?.count, isFrontmost: isFrontmost) {
+        case .activate:
+            running.activate(options: [])
+        case .reopen:
             log.debug("focusApplication: no windows, reopening \(app.id, privacy: .public)")
             try await launchApplication(app)
-        } else if running == NSWorkspace.shared.frontmostApplication {
-            cycleWindows(axWindows, of: running)
-        } else {
-            restoreMinimizedWindows(axWindows)
+        case .cycleWindows:
+            cycleWindows(axWindows ?? [], of: running)
+        case .restoreAndActivate:
+            restoreMinimizedWindows(axWindows ?? [])
             running.activate(options: [])
         }
         return true
