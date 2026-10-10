@@ -84,7 +84,7 @@ final class NotesManagerTests: XCTestCase {
 
     func testListScriptAsksForTextOnlyWhenSearchingIt() {
         let withText = NotesManager.listScript(includeText: true)
-        XCTAssertTrue(withText.contains("try { listing.texts = notes.plaintext(); } catch (error) {}"))
+        XCTAssertTrue(withText.contains("try { listing.texts = notes.plaintext(); } catch (error) {"))
         XCTAssertFalse(withText.contains("container"), "scripting can't use a note's container")
         XCTAssertTrue(withText.contains("notes: queue[i].notes.id()"))
         XCTAssertFalse(NotesManager.listScript(includeText: false).contains("plaintext"))
@@ -132,6 +132,50 @@ final class NotesManagerTests: XCTestCase {
 
         XCTAssertEqual(NotesManager.errorCode(in: "execution error: Error: Not authorized. (-1743)"), -1743)
         XCTAssertNil(NotesManager.errorCode(in: "no number"))
+    }
+
+    /// The listing script itself, run by osascript against a stand-in for Notes: one note's
+    /// unreadable text (a locked note) fails the bulk read, and only that note loses it.
+    func testListingReadsTextsOneByOneWhenTheBulkReadFails() async throws {
+        let stub = """
+        function fakeNotes() {
+          const library = [
+            { id: "p1", name: "Groceries", text: "Groceries\\nmilk", folder: "Notes" },
+            { id: "p2", name: "Diary", text: null, folder: "Notes" },
+            { id: "p3", name: "Plan", text: "Plan\\nship it", folder: "Work" },
+          ];
+          const text = note => { if (note.text === null) { throw new Error("locked"); } return note.text; };
+          const folder = name => ({
+            name: () => name,
+            notes: { id: () => library.filter(note => note.folder === name).map(note => note.id) },
+            folders: () => [],
+          });
+          return {
+            notes: {
+              id: () => library.map(note => note.id),
+              name: () => library.map(note => note.name),
+              modificationDate: () => library.map((note, index) => new Date(1000 * (index + 1))),
+              plaintext: () => library.map(text),
+              byId: id => ({ plaintext: () => text(library.find(note => note.id === id)) }),
+            },
+            folders: () => [folder("Notes"), folder("Work")],
+          };
+        }
+
+        """
+        let script = NotesManager.listScript(includeText: true)
+            .replacingOccurrences(of: #"Application("com.apple.Notes")"#, with: "fakeNotes()")
+        // Never let the test reach the real Notes (that would ask to control it).
+        guard !script.contains("Application(") else {
+            return XCTFail("the listing script names Notes some other way; update the stand-in")
+        }
+        let output = try await AppleScriptRunner.run(stub + script, language: .javaScript, timeout: 10)
+        let notes = try NotesManager.parseListing(Data(output.utf8), excludingFolders: [])
+
+        XCTAssertEqual(notes.map(\.id), ["p3", "p2", "p1"])
+        XCTAssertEqual(notes.map(\.text), ["Plan\nship it", "", "Groceries\nmilk"])
+        XCTAssertEqual(notes.map(\.folder), ["Work", "Notes", "Notes"])
+        XCTAssertEqual(notes[0].modified, Date(timeIntervalSince1970: 3))
     }
 
     func testTrashFolderNameFollowsTheChosenLocalization() {
@@ -243,5 +287,91 @@ final class NotesModuleTests: XCTestCase {
         XCTAssertFalse(passage?.contains("\n") ?? true)
         XCTAssertEqual(NotesModule.passage(in: "key at the start", around: "KEY"), "key at the start")
         XCTAssertNil(NotesModule.passage(in: "nothing here", around: "key"))
+    }
+
+    // MARK: - Search Notes
+
+    func testSearchNotesListsAgainOnceStale() async {
+        let library = FakeLibrary()
+        library.set([groceries])
+        let module = NotesModule(lister: { try library.list(includeText: $0) })
+        let search = ActionID("notes/search")
+
+        var titles = await module.provideParameterOptions(for: "note", in: search, query: "").map(\.label)
+        XCTAssertEqual(titles, ["Groceries"])
+        library.set([plan, groceries])
+        titles = await module.provideParameterOptions(for: "note", in: search, query: "").map(\.label)
+        XCTAssertEqual(titles, ["Groceries"], "a fresh listing answers without listing again")
+        XCTAssertEqual(library.listings, 1)
+
+        // Whether or not Notes is running: Search Notes may launch it.
+        await module.markStale()
+        titles = await module.provideParameterOptions(for: "note", in: search, query: "").map(\.label)
+        XCTAssertEqual(titles, ["Q4 plan", "Groceries"])
+        XCTAssertEqual(library.listings, 2)
+    }
+
+    /// The picker doesn't filter Search Notes' options (`rankedByModule`), so the row
+    /// saying why there are no notes stays up whatever the user types.
+    func testCouldNotReadRowSurvivesATypedQuery() async {
+        let library = FakeLibrary()
+        library.set([], error: NotesError.notAuthorized)
+        let module = NotesModule(lister: { try library.list(includeText: $0) })
+        let search = ActionID("notes/search")
+
+        let options = await module.provideParameterOptions(for: "note", in: search, query: "groceries")
+        XCTAssertEqual(options.map(\.id), [""])
+        XCTAssertEqual(options.first?.subtitle, NotesError.notAuthorized.localizedDescription)
+        let parameter = await module.fixedActions(appIcon: nil).first { $0.id == search }?.parameters.first
+        XCTAssertEqual(parameter?.rankedByModule, true)
+
+        // Without a listing, every query tries again: once allowed, the notes come up.
+        library.set([groceries])
+        let retried = await module.provideParameterOptions(for: "note", in: search, query: "groc")
+        XCTAssertEqual(retried.map(\.label), ["Groceries"])
+    }
+
+    func testModuleRanksOptionsLikeThePicker() async {
+        let library = FakeLibrary()
+        library.set([groceries, plan])
+        let module = NotesModule(lister: { try library.list(includeText: $0) })
+        let search = ActionID("notes/search")
+
+        let byText = await module.provideParameterOptions(for: "note", in: search, query: "buy eggs")
+        XCTAssertEqual(byText.map(\.id), [plan.id])
+        let byTitle = await module.provideParameterOptions(for: "note", in: search, query: "groc")
+        XCTAssertEqual(byTitle.map(\.id), [groceries.id])
+        XCTAssertNotNil(byTitle.first?.labelHighlightRanges)
+        let everything = await module.provideParameterOptions(for: "note", in: search, query: "")
+        XCTAssertEqual(everything.map(\.id), [groceries.id, plan.id])
+    }
+}
+
+/// The notes a test's `NotesModule` lists, and how often it asked.
+private final class FakeLibrary: @unchecked Sendable {
+    private let lock = NSLock()
+    private var notes: [NoteInfo] = []
+    private var error: Error?
+    private var count = 0
+
+    var listings: Int {
+        lock.withLock { count }
+    }
+
+    func set(_ notes: [NoteInfo], error: Error? = nil) {
+        lock.withLock {
+            self.notes = notes
+            self.error = error
+        }
+    }
+
+    func list(includeText _: Bool) throws -> [NoteInfo] {
+        try lock.withLock {
+            count += 1
+            if let error {
+                throw error
+            }
+            return notes
+        }
     }
 }

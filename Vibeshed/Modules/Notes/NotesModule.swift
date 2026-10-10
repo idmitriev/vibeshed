@@ -8,8 +8,8 @@ import SwiftUI
 /// Listing takes a few Apple events and a large library's text a while, so notes are
 /// cached and refreshed in the background. The main search never launches Notes or
 /// brings up the Automation prompt: it refreshes only while Notes is running and
-/// Vibeshed may script it. Search Notes, which the user asked for, waits for the first
-/// listing and may do both.
+/// Vibeshed may script it. Search Notes, which the user asked for, waits for a fresh
+/// listing (the first, or one older than `refreshInterval`) and may do both.
 actor NotesModule: ModuleConfigurable {
     let id = "notes"
     let displayName = "Notes"
@@ -39,6 +39,14 @@ actor NotesModule: ModuleConfigurable {
     private var listedAt = Date.distantPast
     private var listingError: Error?
     private var refreshTask: Task<Void, Never>?
+    /// Lists every note, with its text when asked: Notes itself, or a stand-in in tests.
+    private let lister: @Sendable (_ includeText: Bool) async throws -> [NoteInfo]
+
+    init(lister: @escaping @Sendable (_ includeText: Bool) async throws -> [NoteInfo] = {
+        try await NotesManager.listNotes(includeText: $0)
+    }) {
+        self.lister = lister
+    }
 
     func initialize(context: ModuleContext) async throws {
         eventBus = context.eventBus
@@ -93,17 +101,22 @@ actor NotesModule: ModuleConfigurable {
         return Self.enabled([action], config: config).first
     }
 
+    /// Search Notes was asked for, so a stale listing is listed again before it answers,
+    /// launching Notes if it has quit: notes made or synced since show up, and an open
+    /// list never misses a refresh that lands after it. A listing stays fresh for
+    /// `refreshInterval`, so typing doesn't wait. The module ranks the options itself
+    /// (`rankedByModule`), the way the picker would, so the row saying Notes couldn't be
+    /// read isn't filtered out by the note the user is typing.
     func provideParameterOptions(for parameterID: String, in _: ActionID, query: String) async -> [ParameterOption] {
         guard parameterID == "note" else { return [] }
-        if hasListing {
-            refreshQuietlyIfStale()
-        } else {
+        if !hasListing || isStale {
             await refresh().value
         }
         if !hasListing, let listingError {
             return [Self.failureOption(listingError)]
         }
-        return Self.searchOptions(notes, query: query, appURL: NotesManager.appURL)
+        let options = Self.searchOptions(notes, query: query, appURL: NotesManager.appURL)
+        return query.isEmpty ? options : options.fuzzyFiltered(by: query)
     }
 
     /// `enabledActions` takes full names (`search`, `create`) or the `note` family.
@@ -143,7 +156,7 @@ extension NotesModule {
             let start = ContinuousClock.now
             let result: Result<[NoteInfo], Error>
             do {
-                result = try await .success(NotesManager.listNotes(includeText: includeText))
+                result = try await .success(lister(includeText))
             } catch {
                 result = .failure(error)
             }
@@ -213,7 +226,13 @@ extension NotesModule {
             relevanceScore: 0.88,
             keywords: ["notes", "note", "search", "find", "apple notes"],
             parameters: [
-                ActionParameter(id: "note", label: "Note", type: .dynamicSelection(hint: "note"), isRequired: true),
+                ActionParameter(
+                    id: "note",
+                    label: "Note",
+                    type: .dynamicSelection(hint: "note"),
+                    isRequired: true,
+                    rankedByModule: true
+                ),
             ]
         ) { [self] values in
             // The only row without an ID is the one saying Notes couldn't be read.

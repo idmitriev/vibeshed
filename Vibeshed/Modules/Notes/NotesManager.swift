@@ -179,8 +179,9 @@ enum NotesManager {
     }
 
     /// Note IDs, titles, edit times (seconds since 1970) and, with `includeText`, plain
-    /// text, one Apple event each, then each folder's name and note IDs. A failure to
-    /// read the text (a locked note, say) leaves it out rather than failing the listing.
+    /// text, one Apple event each, then each folder's name and note IDs. Should one note's
+    /// text be unreadable (a locked note, say), the bulk read fails as a whole: the texts
+    /// are then read note by note, one event each, so only that note's is missing (null).
     ///
     /// Folders come from walking them: a note's `container` gives references scripting
     /// can't use. The walk goes breadth first through subfolders, so a note in a
@@ -196,7 +197,13 @@ enum NotesManager {
             "};",
         ]
         if includeText {
-            body.append("try { listing.texts = notes.plaintext(); } catch (error) {}")
+            body += [
+                "try { listing.texts = notes.plaintext(); } catch (error) {",
+                "listing.texts = listing.ids.map(id => {",
+                "try { return Notes.notes.byId(id).plaintext(); } catch (error) { return null; }",
+                "});",
+                "}",
+            ]
         }
         body += [
             "const queue = Notes.folders();",
