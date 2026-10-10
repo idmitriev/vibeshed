@@ -124,7 +124,7 @@ private final class KeystrokeOverlayPanel: NSPanel {
             backing: .buffered,
             defer: false
         )
-        level = .screenSaver
+        level = .keystrokeVisualizer
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         ignoresMouseEvents = true
         backgroundColor = .clear

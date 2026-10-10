@@ -1,12 +1,5 @@
 import AppKit
 
-extension NSWindow.Level {
-    /// Above the menu bar and Dock, so the overlay covers the whole screen.
-    static let pickerOverlay = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
-    /// The picker's own level while an overlay is up.
-    static let pickerAboveOverlay = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 2)
-}
-
 /// The backdrop behind the open picker (`appearance.overlay`): one `OverlayWindow` per
 /// covered screen, shown and hidden in step with the panel by `PanelController`.
 @MainActor

@@ -72,6 +72,13 @@ final class ConfigDecodingCoverageTests: XCTestCase {
         try assertRoundTrip(SettingsConfig(enabledPanes: ["wifi"], customPanes: ["a": "b"]))
     }
 
+    func testEveryFieldIsDecodedInWallpaper() throws {
+        try assertRoundTrip(WallpaperConfig(
+            sources: ["met"], maxResultsPerSource: 3, orientation: "any", scaling: "fit", downloadDirectory: "/w",
+            wallhavenAPIKey: "k", wallhavenCategories: ["people"], unsplashAccessKey: "u", enabledActions: ["x"]
+        ))
+    }
+
     /// The configs that already had their own decoders.
     func testEveryFieldIsDecodedByEarlierDecoders() throws {
         try assertRoundTrip(changed(AnthropicConfig()) {
@@ -135,7 +142,7 @@ final class ConfigDecodingCoverageTests: XCTestCase {
             verticalStops: [SizeStop(value: 2, unit: .pixels)],
             displays: [DisplayStopsConfig(match: "main")],
             padding: PaddingConfig(gap: 1),
-            includeMinimized: true,
+            includeMinimized: false,
             enlargeShrinkStep: SizeStop(value: 5, unit: .pixels),
             focusBorder: FocusBorderConfig()
         ))
@@ -224,6 +231,7 @@ private extension ConfigDecodingCoverageTests {
             "performance": ModuleSection(PerformanceModule.self),
             "settings": ModuleSection(SettingsModule.self),
             "theme": ModuleSection(ThemeModule.self),
+            "wallpaper": ModuleSection(WallpaperModule.self),
             "self": ModuleSection(SelfModule.self),
             "audio": ModuleSection(AudioModule.self),
             "clipboard": ModuleSection(ClipboardModule.self),
@@ -322,6 +330,7 @@ private extension ConfigDecodingCoverageTests {
         config.folders = ["/f"]
         config.templates = try YAMLDecoder().decode([ThemeTemplateConfig].self, from: "[{ source: s, target: t }]")
         config.hooks = ["h"]
+        config.fonts = ["f"]
         config.vscodeVariants = ["a": "b"]
         config.jetbrainsIDEs = ["idea"]
         config.enabledActions = ["x"]

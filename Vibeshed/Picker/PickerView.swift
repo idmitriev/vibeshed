@@ -85,8 +85,8 @@ struct PickerView: View {
                     id: action.id.rawValue,
                     title: action.title,
                     iconSystemName: action.iconName,
-                    // A lone parameter adds nothing the placeholder doesn't already say.
-                    detail: action.parameters.count > 1 ? state.currentParameter?.label : nil
+                    // What's been chosen so far; the placeholder names the parameter being asked.
+                    details: state.confirmedValueLabels
                 )]
             } else {
                 []
@@ -97,7 +97,7 @@ struct PickerView: View {
                     id: action.id.rawValue,
                     title: action.title,
                     iconSystemName: action.iconName,
-                    detail: nil
+                    details: []
                 )]
             } else {
                 []
@@ -186,8 +186,11 @@ struct PickerView: View {
         .accessibilityIdentifier("pickerView")
         .onKeyPress(.downArrow) { state.selectNext(); return .handled }
         .onKeyPress(.upArrow) { state.selectPrevious(); return .handled }
-        .onKeyPress(.return) {
-            coordinator?.handleReturn()
+        .onKeyPress(.return, phases: [.down, .repeat]) { keyPress in
+            let keepOpen = keyPress.modifiers.contains(.shift)
+            // Holding ⇧Return would otherwise fire a run that keeps the picker open again and again.
+            if keepOpen, keyPress.phase == .repeat { return .handled }
+            coordinator?.handleReturn(keepOpen: keepOpen)
             return .handled
         }
         .onKeyPress(.tab) {
@@ -199,6 +202,12 @@ struct PickerView: View {
                   let digit = keyPress.characters.first?.wholeNumberValue
             else { return .ignored }
             coordinator?.handleCmdNumber(digit)
+            return .handled
+        }
+        .onKeyPress(phases: .down) { keyPress in
+            guard keyPress.modifiers == [.command, .shift], let digit = Self.digitKey(of: NSApp.currentEvent)
+            else { return .ignored }
+            coordinator?.handleCmdNumber(digit, keepOpen: true)
             return .handled
         }
         .onKeyPress(.pageDown) { state.selectNextPage(); return .handled }
@@ -266,9 +275,25 @@ struct PickerView: View {
                 listResetToken: state.listResetToken,
                 rowHeight: appearance.rowHeight,
                 topInset: searchBarTotalHeight,
-                onActivate: { id in coordinator?.activateAction(id: id) }
+                onActivate: { id in coordinator?.activateAction(id: id, keepOpen: Self.isShiftHeld) }
             )
         }
+    }
+
+    /// Whether Shift is down right now. Clicks run their action synchronously from the
+    /// tap gesture, so this is the state the click was made in.
+    private static var isShiftHeld: Bool {
+        NSEvent.modifierFlags.contains(.shift)
+    }
+
+    /// The 1–9 of a digit-row key press, read from its key code: with Shift held the key
+    /// types its shifted character instead ("!" on a US layout, "\"" for 2 on a Russian one).
+    private static func digitKey(of event: NSEvent?) -> Int? {
+        guard let event, event.type == .keyDown,
+              let digit = KeyComboParser.keyName(for: event.keyCode).flatMap(Int.init),
+              (1 ... 9).contains(digit)
+        else { return nil }
+        return digit
     }
 
     private var parameterContent: some View {
@@ -276,7 +301,7 @@ struct PickerView: View {
             state: state,
             rowHeight: appearance.rowHeight,
             topInset: searchBarTotalHeight,
-            onConfirm: { coordinator?.handleReturn() }
+            onConfirm: { coordinator?.handleReturn(keepOpen: Self.isShiftHeld) }
         )
     }
 

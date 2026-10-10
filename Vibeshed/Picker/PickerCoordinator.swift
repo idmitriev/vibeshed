@@ -83,12 +83,15 @@ final class PickerCoordinator {
 
     // MARK: - Keyboard handlers
 
-    func handleReturn() {
+    /// `keepOpen` (Shift held: ⇧Return, ⇧double-click, ⌘⇧1–9) runs the action without closing
+    /// the picker. Only what was typed is cleared, so similar actions (several cask
+    /// installs) can be fired one after another.
+    func handleReturn(keepOpen: Bool = false) {
         switch pickerState.mode {
         case .search, .pushedActions:
-            handleReturnInActionList()
+            handleReturnInActionList(keepOpen: keepOpen)
         case .parameterInput:
-            handleReturnInParameterMode()
+            handleReturnInParameterMode(keepOpen: keepOpen)
         }
     }
 
@@ -101,29 +104,29 @@ final class PickerCoordinator {
         }
     }
 
-    func handleCmdNumber(_ number: Int) {
+    func handleCmdNumber(_ number: Int, keepOpen: Bool = false) {
         let index = number - 1
         switch pickerState.mode {
         case .search, .pushedActions:
-            activateAction(at: index)
+            activateAction(at: index, keepOpen: keepOpen)
         case .parameterInput:
             guard index < pickerState.parameterOptions.count else { return }
             pickerState.selectedParameterOptionID = pickerState.parameterOptions[index].id
-            handleReturnInParameterMode()
+            handleReturnInParameterMode(keepOpen: keepOpen)
         }
     }
 
     // MARK: - Return handlers per mode
 
-    private func handleReturnInActionList() {
+    private func handleReturnInActionList(keepOpen: Bool) {
         guard let selectedID = pickerState.selectedActionID,
               let idx = pickerState.actions.firstIndex(where: { $0.id == selectedID })
         else { return }
-        activateAction(at: idx)
+        activateAction(at: idx, keepOpen: keepOpen)
     }
 
     /// Activate an action by ID — used by mouse-click handlers in the list view.
-    func activateAction(id: ActionID) {
+    func activateAction(id: ActionID, keepOpen: Bool = false) {
         switch pickerState.mode {
         case .search, .pushedActions:
             break
@@ -131,10 +134,10 @@ final class PickerCoordinator {
             return
         }
         guard let idx = pickerState.actions.firstIndex(where: { $0.id == id }) else { return }
-        activateAction(at: idx)
+        activateAction(at: idx, keepOpen: keepOpen)
     }
 
-    private func activateAction(at index: Int) {
+    private func activateAction(at index: Int, keepOpen: Bool = false) {
         guard index >= 0, index < pickerState.actions.count else { return }
         let targetItem = pickerState.actions[index]
         pickerState.selectedActionID = targetItem.id
@@ -143,7 +146,8 @@ final class PickerCoordinator {
 
         let requiredParams = action.parameters.filter(\.isRequired)
         if requiredParams.isEmpty {
-            Task { await executeAction(action, values: [:]) }
+            if keepOpen { pickerState.prepareForAnotherRun() }
+            Task { await executeAction(action, values: [:], keepOpen: keepOpen) }
         } else {
             pickerState.enterParameterMode(action: action)
             // Trigger initial fetch for dynamicSelection
@@ -155,7 +159,7 @@ final class PickerCoordinator {
         }
     }
 
-    private func handleReturnInParameterMode() {
+    private func handleReturnInParameterMode(keepOpen: Bool = false) {
         guard let param = pickerState.currentParameter,
               let value = param.confirmableValue(
                   typed: pickerState.parameterQuery.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -163,10 +167,13 @@ final class PickerCoordinator {
               )
         else { return }
         pickerState.confirmParameterValue(value, forParameterID: param.id)
+        if value == pickerState.selectedParameterOptionID {
+            pickerState.bumpActivation(forOption: value)
+        }
 
         // Check if all required params are filled
         if pickerState.allRequiredParametersFilled {
-            executeActiveAction()
+            executeActiveAction(keepOpen: keepOpen)
         } else if let nextIndex = pickerState.nextUnfilledParameterIndex {
             // Pop current parameter mode and advance to next
             _ = pickerState.popMode()
@@ -183,15 +190,16 @@ final class PickerCoordinator {
 
     // MARK: - Action execution
 
-    private func executeActiveAction() {
+    private func executeActiveAction(keepOpen: Bool = false) {
         guard let action = pickerState.activeAction else { return }
         let values = pickerState.collectedValues
+        if keepOpen { pickerState.prepareForAnotherRun() }
         // Close any live preview as committed *before* the reset in executeAction
         // would end it as cancelled — the module must keep, not revert, the choice.
         let previewEnded = endLivePreview(committed: true)
         Task {
             await previewEnded?.value
-            await executeAction(action, values: values)
+            await executeAction(action, values: values, keepOpen: keepOpen)
         }
     }
 
@@ -364,13 +372,14 @@ extension PickerCoordinator {
         pickerState.isLoadingOptions = true
         parameterOptionsGeneration += 1
         let generation = parameterOptionsGeneration
+        let collected = pickerState.collectedValues
         Task { @MainActor in
             let options = await module.provideParameterOptions(
-                for: param.id, in: actionID, query: query
+                for: param.id, in: actionID, query: query, collected: collected
             )
             // Scored off the main actor: option lists can be large (~1,900 emoji).
             let filtered = await Task.detached {
-                let ranked = query.isEmpty ? options : options.fuzzyFiltered(by: query)
+                let ranked = query.isEmpty || param.rankedByModule ? options : options.fuzzyFiltered(by: query)
                 return Array(ranked.prefix(ActionScorer.maxResults))
             }.value
             // Only apply the latest fetch, and only if still in the same parameter mode

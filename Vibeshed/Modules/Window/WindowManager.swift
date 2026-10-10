@@ -30,6 +30,16 @@ struct WindowManager: Sendable {
         WindowListHelper.listWindows(includeMinimized: includeMinimized)
     }
 
+    /// The windows `window/focusWindow` offers: the on-screen ones front to back, then,
+    /// with `includeMinimized`, the minimized ones (`WindowListHelper.minimizedWindows`).
+    func listFocusableWindows(includeMinimized: Bool) async -> [WindowInfo] {
+        let minimized = includeMinimized ? await WindowListHelper.minimizedWindows() : []
+        let onScreen = await MainActor.run { listWindows(includeMinimized: false) }
+        // One unminimized between the two reads would be listed twice.
+        let onScreenIDs = Set(onScreen.map(\.id))
+        return onScreen + minimized.filter { !onScreenIDs.contains($0.id) }
+    }
+
     // MARK: - Get Focused Window
 
     @MainActor
@@ -127,6 +137,22 @@ struct WindowManager: Sendable {
                     kAXMinimizedAttribute as CFString,
                     kCFBooleanTrue
                 )
+                count += 1
+            }
+        }
+        return count
+    }
+
+    /// Brings back every minimized window of the apps in the Dock, except hidden ones;
+    /// returns how many.
+    @MainActor
+    func restoreMinimizedWindows() -> Int {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        var count = 0
+        for app in NSWorkspace.shared.runningApplications
+            where app.activationPolicy == .regular && !app.isHidden && app.processIdentifier != ownPID {
+            for window in AXWindowHelper.windows(for: app.processIdentifier) where AXWindowHelper.isMinimized(window) {
+                AXWindowHelper.deminiaturize(window)
                 count += 1
             }
         }

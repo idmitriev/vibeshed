@@ -324,7 +324,9 @@ modules:
       left: 4
       right: 4
       gap: 4
-    includeMinimized: false
+    # window/focusWindow lists the windows on screen, then the minimized ones
+    # (of apps that aren't hidden). false lists only the windows on screen.
+    includeMinimized: true
     enlargeShrinkStep:
       value: 10
       unit: percent
@@ -335,7 +337,7 @@ modules:
     # runtime via window/toggleFocusBorder.
     focusBorder:
       width: 3.0              # points
-      cornerRadius: 18.0      # points, 0 = sharp corners
+      cornerRadius: 16.0      # the windows' corner radius (macOS 27: 16); the ring follows it, 0 = sharp
       minimumSize: 200        # skip windows narrower/shorter than this (dialogs, popovers)
       pollingInterval: 0.1    # seconds between fallback checks; focus/move/resize are event-driven
 
@@ -481,8 +483,9 @@ modules:
     # wallpaperStyle: glow            # glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset,
     #                                 # arcs, halftone, pulsar, guilloche, sashiko, attractor, bauhaus,
     #                                 # destijl, truchet, terrazzo, circles, isometric, penrose, leaves,
-    #                                 # warp, ascii, polyhedra, maze, dither, pipes, solid,
-    #                                 # or auto (a stable pick per theme).
+    #                                 # warp, ascii, polyhedra, maze, dither, pipes, flow, lens, papercut,
+    #                                 # automata, cyclic, chladni, complex, growth, solid,
+    #                                 # or auto (a stable pick per theme, never flow through growth).
     #                                 # A style chosen with theme/wallpaperStyle overrides this;
     #                                 # a theme can set its own with `wallpaperStyle:`.
     # wallpaperGrain: true            # fine film grain on generated wallpapers
@@ -547,12 +550,42 @@ modules:
     # hooks:
     #   - "sketchybar --reload"
 
+    # theme/switchFont lists the installed fonts among ~50 popular coding fonts; add others
+    # by family name. Terminals get a font's Nerd Font Mono variant when it's installed.
+    # fonts: ["Comic Code", "PragmataPro Mono"]
+
     # VS Code-family editors (display name: Application Support folder); default: all detected
     # vscodeVariants:
     #   "Cursor": "Cursor"
 
     # JetBrains IDEs to theme (default: all detected)
     # jetbrainsIDEs: [idea, webstorm]
+
+  # --- Wallpaper (search wallpaper sites and museum collections, set the result) ---
+  # "Search Wallpapers" asks for a source (All Sources mixes their results), then searches
+  # as you type; Enter downloads the highlighted image and sets it on every screen.
+  # "Random Wallpaper" asks for a source and a subject (Enter on nothing: a featured image).
+  # "Open Wallpaper Source Page" opens where the current wallpaper came from.
+  # One key for a random painting: an alias with the steps filled in, bound as
+  # "alias/Random Painting":
+  #   aliases:
+  #     - alias: "Random Painting"
+  #       action: "wallpaper/random"
+  #       parameters: {source: met}       # no query: a featured painting
+  # artic: the Art Institute of Chicago's image server has turned away apps with a
+  # Cloudflare browser check since June 2026; its results show up again once that ends.
+  wallpaper:
+    sources: [wallhaven, unsplash, artic, rijksmuseum, met]   # order = mixing order
+    maxResultsPerSource: 10
+    orientation: landscape        # landscape, portrait or any
+    scaling: auto                 # auto: photos fill the screen, artwork of another shape
+                                  # is fitted on a matte in its edge color; or fill / fit
+    # downloadDirectory: "~/Pictures/Wallpapers"   # kept forever; default: Application
+                                                   # Support, which keeps the 40 most recent
+    # wallhavenAPIKey: "..."      # optional (wallhaven.cc account settings)
+    wallhavenCategories: [general, anime]   # general, anime, people
+    # unsplashAccessKey: "..."    # needed for Unsplash: https://unsplash.com/oauth/applications
+    # enabledActions: [search, random, openSourcePage]
 
   # --- Audio Control ---
   audio:

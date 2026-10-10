@@ -8,6 +8,7 @@ struct WindowConfig: Codable, Sendable, Equatable {
     /// `horizontalStops`/`verticalStops` above.
     var displays: [DisplayStopsConfig]
     var padding: PaddingConfig
+    /// Whether `window/focusWindow` also offers minimized windows.
     var includeMinimized: Bool
     var enlargeShrinkStep: SizeStop
     /// Look of the focus border and which windows get one; nil = defaults. Whether the
@@ -25,7 +26,7 @@ struct WindowConfig: Codable, Sendable, Equatable {
         ],
         displays: [],
         padding: PaddingConfig(),
-        includeMinimized: false,
+        includeMinimized: true,
         enlargeShrinkStep: SizeStop(value: 10, unit: .percent)
     )
 
@@ -75,9 +76,14 @@ struct WindowConfig: Codable, Sendable, Equatable {
 /// The border is always drawn in the active theme's accent (the system accent when no
 /// theme is applied), so it has no color setting of its own.
 struct FocusBorderConfig: Codable, Sendable, Equatable {
+    /// Corner radius of standard macOS windows: what the window server reports for every
+    /// titled window on macOS 27 (toolbar or not, AppKit or Electron).
+    static let macOSWindowCornerRadius = 16.0
+
     var width: Double = 3.0
-    /// Corner radius (points) of the border's rounded rect. 0 = sharp corners.
-    var cornerRadius: Double = 8.0
+    /// Corner radius (points) of the outlined window's corners. The ring is drawn
+    /// concentric to them, so its outer edge is `cornerRadius + width`. 0 = sharp corners.
+    var cornerRadius: Double = Self.macOSWindowCornerRadius
     /// Only windows at least this many points wide *and* tall get a border — keeps it off
     /// dialogs, popovers, and other small utility windows.
     var minimumSize: Double = 200
@@ -89,7 +95,7 @@ struct FocusBorderConfig: Codable, Sendable, Equatable {
 
     init(
         width: Double = 3.0,
-        cornerRadius: Double = 8.0,
+        cornerRadius: Double = Self.macOSWindowCornerRadius,
         minimumSize: Double = 200,
         pollingInterval: Double = 0.15
     ) {
@@ -109,7 +115,8 @@ struct FocusBorderConfig: Codable, Sendable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         width = try container.decodeIfPresent(Double.self, forKey: .width) ?? 3.0
-        cornerRadius = try container.decodeIfPresent(Double.self, forKey: .cornerRadius) ?? 8.0
+        cornerRadius = try container.decodeIfPresent(Double.self, forKey: .cornerRadius)
+            ?? Self.macOSWindowCornerRadius
         minimumSize = try container.decodeIfPresent(Double.self, forKey: .minimumSize) ?? 200
         pollingInterval = try container.decodeIfPresent(Double.self, forKey: .pollingInterval) ?? 0.15
     }

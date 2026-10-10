@@ -32,11 +32,12 @@ final class SpotifySearchClient: @unchecked Sendable {
         return accessToken != nil
     }
 
+    /// Up to `limit` results of each type; the API caps that at 10 since February 2026.
     func search(
         query: String,
         types: [String],
         limit: Int
-    ) async throws -> SpotifySearchResults {
+    ) async throws -> [SpotifySearchItem] {
         try await ensureAuthenticated()
 
         let token: String = {
@@ -57,6 +58,7 @@ final class SpotifySearchClient: @unchecked Sendable {
             throw SearchError.invalidQuery
         }
 
+        let limit = min(limit, Self.maxSearchLimit)
         let urlString =
             "https://api.spotify.com/v1/search?q=\(encodedQuery)&type=\(typeParam)&limit=\(limit)"
         guard let url = URL(string: urlString) else {
@@ -85,19 +87,19 @@ final class SpotifySearchClient: @unchecked Sendable {
 
     // MARK: - Library
 
-    func isTrackSaved(_ trackId: String) async throws -> Bool {
+    /// `/me/library` takes URIs of any kind; it replaced `/me/tracks` in February 2026.
+    func isInLibrary(_ uri: String) async throws -> Bool {
         try await ensureAuthenticated()
         let token = lockedToken()
         guard !token.isEmpty else { throw SearchError.notAuthenticated }
 
-        let url = URL(string: "https://api.spotify.com/v1/me/tracks/contains?ids=\(trackId)")!
-        var request = URLRequest(url: url)
+        var request = try URLRequest(url: Self.libraryURL("me/library/contains", uri: uri))
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, http.statusCode == 401 {
             try await refreshAccessToken()
-            return try await isTrackSaved(trackId)
+            return try await isInLibrary(uri)
         }
         guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             throw SearchError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0)
@@ -108,28 +110,27 @@ final class SpotifySearchClient: @unchecked Sendable {
         return isSaved
     }
 
-    func saveTrack(_ trackId: String) async throws {
-        try await modifyLibrary(trackId: trackId, method: "PUT")
+    func addToLibrary(_ uri: String) async throws {
+        try await modifyLibrary(uri: uri, method: "PUT")
     }
 
-    func removeSavedTrack(_ trackId: String) async throws {
-        try await modifyLibrary(trackId: trackId, method: "DELETE")
+    func removeFromLibrary(_ uri: String) async throws {
+        try await modifyLibrary(uri: uri, method: "DELETE")
     }
 
-    private func modifyLibrary(trackId: String, method: String) async throws {
+    private func modifyLibrary(uri: String, method: String) async throws {
         try await ensureAuthenticated()
         let token = lockedToken()
         guard !token.isEmpty else { throw SearchError.notAuthenticated }
 
-        let url = URL(string: "https://api.spotify.com/v1/me/tracks?ids=\(trackId)")!
-        var request = URLRequest(url: url)
+        var request = try URLRequest(url: Self.libraryURL("me/library", uri: uri))
         request.httpMethod = method
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         let (_, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, http.statusCode == 401 {
             try await refreshAccessToken()
-            try await modifyLibrary(trackId: trackId, method: method)
+            try await modifyLibrary(uri: uri, method: method)
             return
         }
         guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
@@ -141,6 +142,19 @@ final class SpotifySearchClient: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return accessToken ?? ""
+    }
+
+    /// The most results of each type one search may ask for.
+    static let maxSearchLimit = 10
+
+    /// `https://api.spotify.com/v1/<path>?uris=<uri>`, with the URI's colons encoded.
+    static func libraryURL(_ path: String, uri: String) throws -> URL {
+        guard var components = URLComponents(string: "https://api.spotify.com/v1/" + path),
+              let encoded = uri.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
+        else { throw SearchError.invalidQuery }
+        components.percentEncodedQuery = "uris=" + encoded
+        guard let url = components.url else { throw SearchError.invalidQuery }
+        return url
     }
 
     // MARK: - Authentication

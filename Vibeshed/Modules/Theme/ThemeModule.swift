@@ -24,6 +24,7 @@ actor ThemeModule: ModuleConfigurable {
     private(set) var catalog = ThemeCatalog.Result(themes: [], errors: [])
     private(set) var eventBus: EventBus?
     let applier = ThemeApplier()
+    let fontApplier = FontApplier()
     private let log = Log.module("theme")
     private var appWatchers: [AppLifecycleWatcher] = []
 
@@ -111,6 +112,9 @@ actor ThemeModule: ModuleConfigurable {
         for template in config.templates where template.source.isEmpty || template.target.isEmpty {
             errors.append("Templates need both source and target")
         }
+        if config.fonts.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+            errors.append("Font names cannot be empty")
+        }
         let styles = WallpaperStyle.allCases.map(\.rawValue).joined(separator: ", ")
         let styleNames = [("wallpaperStyle", config.wallpaperStyle)] + config.themes.compactMap { theme in
             theme.wallpaperStyle.map { ("Theme '\(theme.name)': wallpaperStyle", $0) }
@@ -131,6 +135,7 @@ actor ThemeModule: ModuleConfigurable {
             actions += [wallpaperStyleAction(), shuffleWallpaperAction()]
         }
         actions += catalog.themes.map { applyAction($0, isCurrent: $0.slug == current) }
+        actions += fontActions()
 
         guard let enabled = config.enabledActions else { return actions }
         return actions.filter { action in
@@ -145,6 +150,7 @@ actor ThemeModule: ModuleConfigurable {
         query: String
     ) async -> [ParameterOption] {
         if parameterID == "style" { return await wallpaperStyleOptions() }
+        if parameterID == "font" { return fontOptions() }
         guard parameterID == "theme" else { return [] }
         let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
         return catalog.themes.map { theme in
@@ -166,6 +172,9 @@ actor ThemeModule: ModuleConfigurable {
         if actionID == Self.wallpaperStyleActionID {
             return await previewWallpaperStyle(optionID)
         }
+        if actionID == Self.switchFontActionID {
+            return await previewFont(optionID)
+        }
         guard actionID == Self.switchActionID, let theme = catalog.theme(slug: optionID) else { return }
         let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
         let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: nil)
@@ -173,6 +182,9 @@ actor ThemeModule: ModuleConfigurable {
     }
 
     func endParameterPreview(parameterID: String, actionID: ActionID, committed: Bool) async {
+        if actionID == Self.switchFontActionID {
+            return await fontApplier.endPreview(committed: committed)
+        }
         guard actionID == Self.switchActionID || actionID == Self.wallpaperStyleActionID else { return }
         await applier.endPreview(committed: committed)
     }

@@ -66,6 +66,62 @@ enum WindowListHelper {
         return results
     }
 
+    /// Minimized windows of the apps in the Dock (regular apps that aren't hidden), found
+    /// through Accessibility. CGWindowList can't single them out: `listWindows(includeMinimized:
+    /// true)` lists them among every window apps keep ordered out (menu bar strips, closed
+    /// panels, …), all layer 0 and off screen alike: over a hundred with a dozen apps open.
+    ///
+    /// Not main-actor bound: every app is a synchronous round trip, 15–60 ms the first
+    /// time Vibeshed reaches it and 1–2 ms after that, with a short timeout so a hung app
+    /// can't hold the sweep up for long.
+    static func minimizedWindows() async -> [WindowInfo] {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        var found: [MinimizedWindow] = []
+        for app in NSWorkspace.shared.runningApplications
+            where app.activationPolicy == .regular && !app.isHidden && app.processIdentifier != ownPID
+        {
+            let axWindows = AXWindowHelper.windows(for: app.processIdentifier, messagingTimeout: 0.25)
+            for axWindow in axWindows where AXWindowHelper.isMinimized(axWindow) {
+                guard let windowID = AXWindowHelper.windowID(for: axWindow) else { continue }
+                found.append(MinimizedWindow(
+                    id: Int(windowID),
+                    title: AXWindowHelper.title(of: axWindow),
+                    appName: app.localizedName ?? "",
+                    bundleID: app.bundleIdentifier,
+                    pid: app.processIdentifier,
+                    frame: AXWindowHelper.frame(of: axWindow)
+                ))
+            }
+        }
+        let windows = found
+        return await MainActor.run {
+            windows.map { window in
+                WindowInfo(
+                    id: window.id,
+                    title: window.title,
+                    appName: window.appName,
+                    bundleID: window.bundleID,
+                    pid: window.pid,
+                    frame: window.frame,
+                    screenFrame: screenForFrame(window.frame),
+                    isOnScreen: false,
+                    isMinimized: true
+                )
+            }
+        }
+    }
+
+    /// What `minimizedWindows()` reads off the main actor; the screen is looked up on it.
+    private struct MinimizedWindow {
+        let id: Int
+        let title: String
+        let appName: String
+        let bundleID: String?
+        let pid: pid_t
+        /// The frame it comes back to (AX reports a minimized window's restored frame).
+        let frame: CGRect
+    }
+
     /// Current on-screen bounds (CG coordinates) of a single window, or nil if the
     /// window is not on screen. Note the bounds are the window's *live* window-server
     /// rect: during Mission Control / App Exposé windows stay listed but at scattered

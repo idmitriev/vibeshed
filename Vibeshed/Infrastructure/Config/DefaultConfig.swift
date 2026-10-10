@@ -51,7 +51,7 @@ enum DefaultConfig {
             ] + padding
         ),
         Entry("clipboard", "clipboard history, kept on disk (skips copied passwords)"),
-        Entry("theme", "palette themes across macOS and apps"),
+        Entry("theme", "palette themes and coding fonts across macOS and apps"),
         Entry("math", "calculator, unit and currency conversion"),
         Entry("timer", "timers and reminders"),
         Entry("emoji", "search emoji, copy on select"),
@@ -66,6 +66,7 @@ enum DefaultConfig {
         Entry("calendar", "upcoming events (Calendars)"),
         Entry("notes", "search, open and create Apple Notes (Automation)"),
         Entry("meetingPrep", "get ready for the next meeting (Calendars + Screen Recording)"),
+        Entry("wallpaper", "search Wallhaven, Unsplash and museum collections for wallpapers"),
     ]
 
     /// Terminal.app comes with every Mac, but is enabled only for the "Install Homebrew"
@@ -114,7 +115,8 @@ enum DefaultConfig {
         "# folder. See config.example.yaml.",
         "aliases:",
         "  # Homebrew isn't installed. This runs its install script (from brew.sh) in",
-        "  # a new Terminal window; delete it once Homebrew is in place.",
+        "  # a new Terminal window. Once `brew` is in place Vibeshed turns on the",
+        "  # homebrew module below; then this can go.",
         "  - alias: \"Install Homebrew\"",
         "    action: \"terminal/runCommand\"",
         "    icon: \"cup.and.saucer\"",

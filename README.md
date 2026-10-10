@@ -27,6 +27,7 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 
 **Launcher**
 - Fuzzy-matched searchable picker with keyboard navigation and preview pane
+- Hold Shift (⇧Return, ⇧double-click, ⌘⇧1–9) to run an action and keep the picker open, with only the search text cleared — for firing several similar actions in a row, like a batch of cask installs
 - Usage-aware sorting that adapts to how you work
 - Context-sensitive action boosting based on focused app, time of day, audio state
 - Picker colors follow the applied palette theme, live while you browse themes
@@ -58,7 +59,8 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 - Homebrew package search, install, upgrade, and cleanup
 
 **Media & Communication**
-- Spotify search and playback control with OAuth
+- Wallpaper search across Wallhaven, Unsplash and public-domain museum collections, with previews and credits
+- Spotify search that plays songs, albums, artists and playlists, plus playback control (no API setup)
 - System audio volume, mute, device selection, media keys
 - Telegram chat quick-open
 - Zoom meeting join, start, and configured meeting shortcuts
@@ -127,7 +129,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Audio** | Volume, mute, device selection, media key control |
 | **System** | Lock, sleep, restart, shutdown, appearance, screenshots |
 | **Settings** | Open macOS System Settings panes |
-| **Spotify** | Search artists/albums/playlists, playback control |
+| **Spotify** | Search and play songs, albums, artists, playlists; playback control |
 | **GitHub** | Search repos, issues, PRs; view notifications |
 | **VSCode** | Search and open recent projects |
 | **JetBrains** | Search and open IDE projects |
@@ -147,7 +149,8 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Math** | Arithmetic, unit/currency conversion |
 | **Web Search** | Search the web when nothing else matches |
 | **Emoji** | Search and copy/paste emoji |
-| **Theme** | Palette themes applied across macOS and apps, with live preview |
+| **Theme** | Palette themes and coding fonts applied across macOS and apps, with live preview |
+| **Wallpaper** | Search Wallhaven, Unsplash and the Rijksmuseum, Met and Art Institute of Chicago collections, or pick at random; set the result as the wallpaper |
 | **Self** | Open config, reload modules, view logs, quit |
 
 Modules load only when their config section is present. A section added while Vibeshed is running loads its module right away; a removed one takes effect at the next launch. Installing an app with the Homebrew module (for example the `spotify` cask or the `gh` formula) adds the section for the module that works with it. Each module declares the permissions it needs (accessibility, automation, etc.) and the apps it scripts; **Set Up Permissions…** in the menu bar walks through granting them.
@@ -162,7 +165,7 @@ One palette, applied everywhere at once. `theme/switch` lists the themes; moving
 | `accent` | Accent (nearest preset) + text highlight (exact color) | ✓ |
 | `folders` | "Icon, widget & folder color" (macOS 26+), tinted icons for listed folders | ✓ |
 | `pointer` | Pointer fill/outline (needs Full Disk Access) | best-effort |
-| `wallpaper` | Theme image, or one generated from the palette in one of 37 styles | ✓ |
+| `wallpaper` | Theme image, or one generated from the palette in one of 45 styles | ✓ |
 | `iterm` | Every open session, plus a "Vibeshed" profile (your default profile's settings, theme colours) made the default, so new windows and restarts keep the theme | ✓ |
 | `ghostty` | Generated `themes/Vibeshed`, selected with `theme =` in your config; open terminals reload on SIGUSR2 (Ghostty 1.2+) | ✓ |
 | `terminal` | Terminal.app: a "Vibeshed" profile (your default profile's settings, theme colours) made the default and startup profile; open tabs get background, text and cursor colours live, ANSI colours when Terminal next launches | partly |
@@ -195,9 +198,24 @@ modules:
         reload: "pkill -USR1 -x kitty"
 ```
 
-Generated wallpapers come in 37 styles: glow, mesh gradient, waves, ridges, bokeh, low poly, topographic, retro sunset, retro arcs, halftone and solid; eleven from the generative-art canon — Pulsar (after the Unknown Pleasures cover), Guilloché, Sashiko (hitomezashi stitching), a Clifford attractor, Bauhaus, De Stijl, Truchet tiles, Terrazzo, circle packing, isometric terraces and Penrose tiling; and fifteen from classic systems — Leaves (Haiku's screen saver, the BeOS theme's default), Polyhedra (NeXTSTEP BackSpace's module, which could run as the workspace background), Warp Speed (OS/2 Warp), ASCII Art (a shaded `donut.c` torus, the Mandelbrot set or `aafire` flames, in terminal characters), 10 PRINT (the Commodore 64 one-line maze), Dither (a Bayer-dithered planet), Pipes (the Windows NT screen saver), Pebbles (the classic Mac desktop tile, recolored from the theme's desktop color), Desktop Pattern (one-bit 8×8 tiles), Platinum Pinstripes, Clouds (Windows 95's sky in dithered 15-bit color), Azul (XP's ribbons of light), Windows Pattern (the one-bit patterns of Windows 3.0 and 95), Boing Ball (the Amiga demo, in 12-bit color) and Digital Rain (QNX Photon's screen saver). These last eight are made for their own themes, so they stay out of `auto`, and all but Azul are pixel bitmaps that skip film grain. Any style works with any theme; the classic themes default to their own. `theme/wallpaperStyle` browses them on the current theme with live preview, and `theme/shuffleWallpaper` re-rolls the variation. They're painted at full display resolution in 16-bit colour and dithered, so soft gradients don't band.
+Generated wallpapers come in 45 styles: glow, mesh gradient, waves, ridges, bokeh, low poly, topographic, retro sunset, retro arcs, halftone and solid; eleven from the generative-art canon — Pulsar (after the Unknown Pleasures cover), Guilloché, Sashiko (hitomezashi stitching), a Clifford attractor, Bauhaus, De Stijl, Truchet tiles, Terrazzo, circle packing, isometric terraces and Penrose tiling; and fifteen from classic systems — Leaves (Haiku's screen saver, the BeOS theme's default), Polyhedra (NeXTSTEP BackSpace's module, which could run as the workspace background), Warp Speed (OS/2 Warp), ASCII Art (a shaded `donut.c` torus, the Mandelbrot set or `aafire` flames, in terminal characters), 10 PRINT (the Commodore 64 one-line maze), Dither (a Bayer-dithered planet), Pipes (the Windows NT screen saver), Pebbles (the classic Mac desktop tile, recolored from the theme's desktop color), Desktop Pattern (one-bit 8×8 tiles), Platinum Pinstripes, Clouds (Windows 95's sky in dithered 15-bit color), Azul (XP's ribbons of light), Windows Pattern (the one-bit patterns of Windows 3.0 and 95), Boing Ball (the Amiga demo, in 12-bit color) and Digital Rain (QNX Photon's screen saver). These last eight are made for their own themes, so they stay out of `auto`, and all but Azul are pixel bitmaps that skip film grain. Eight more are simulations and fields, opt-in by name rather than picked by `auto` (so no theme's automatic wallpaper changed when they arrived): Flow (evenly spaced streamlines around a disc), Lens (stripes and a sun bent around a black hole), Paper Cut (layered paper sheets with soft shadows), Automata (panels of Wolfram's elementary cellular automata), Cyclic (Griffeath's cyclic automaton, noise turning into square spirals), Chladni (sand on a vibrating plate), Complex (a complex function's phase portrait) and Growth (differential growth, folding like brain coral). Any style works with any theme; the classic themes default to their own. `theme/wallpaperStyle` browses them on the current theme with live preview, and `theme/shuffleWallpaper` re-rolls the variation. They're painted at full display resolution in 16-bit colour and dithered, so soft gradients don't band.
 
 The resolved palette is also exported to `~/Library/Application Support/Vibeshed/Theme/current/` (`colors.toml`, `colors.json`) for scripts.
+
+### Fonts
+
+`theme/switchFont` does the same for coding fonts: it lists the installed ones among ~50 popular picks (JetBrains Mono, Fira Code, Cascadia Code, Iosevka, Monaspace, Geist Mono, Berkeley Mono, SF Mono, …), previews each live in your terminals and editors as you move, and opens on the font your apps already use. Every font is also a direct action (`theme/font.jetbrains-mono`). Editors get the font as published; terminals get its Nerd Font single-width variant ("JetBrainsMono Nerd Font Mono") when that's installed, so prompt and `ls` icons keep working, and families cut for terminals where a font has one (Iosevka Term). Fonts you add under `fonts:` are offered too.
+
+| Target | What changes | Live? |
+|--------|--------------|-------|
+| `iterm` | Font of the "Vibeshed" profile, keeping the weight and size of your default profile's font | ✓ |
+| `ghostty` | The first `font-family` in your config (later ones stay as fallbacks) | ✓ |
+| `terminal` | Font of every open tab and of the "Vibeshed" profile, keeping your size and weight | ✓ |
+| `vscode` | `editor.fontFamily`, and `terminal.integrated.fontFamily` if you set one; fallback fonts are kept | ✓ |
+| `zed` | `buffer_font_family`, `ui_font_family` when it matched the buffer font, `terminal.font_family` if set | ✓ |
+| `jetbrains` | Editor font, terminal and console fonts if set apart, and fonts your color scheme overrides | on restart |
+
+The `targets:` list limits fonts as well as themes, and a theme switch keeps the font.
 
 ## Key Bindings
 

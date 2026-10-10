@@ -106,17 +106,20 @@ actor WindowModule: ModuleConfigurable {
         query: String
     ) async -> [ParameterOption] {
         guard parameterID == "window" else { return [] }
-        let includeMinimized = config.includeMinimized
-        let windows = await MainActor.run {
-            windowManager.listWindows(includeMinimized: includeMinimized)
-        }
-        return windows.map { window in
+        let windows = await windowManager.listFocusableWindows(includeMinimized: config.includeMinimized)
+        return Self.windowOptions(for: windows)
+    }
+
+    /// One option per window, in the given order; minimized ones say so.
+    static func windowOptions(for windows: [WindowInfo]) -> [ParameterOption] {
+        windows.map { window in
             let appURL = window.bundleID.flatMap {
                 NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)
             }
             return ParameterOption(
                 id: String(window.id),
                 label: window.displayLabel,
+                subtitle: window.isMinimized ? "Minimized" : nil,
                 iconName: "macwindow",
                 iconURL: appURL
             )
@@ -289,6 +292,19 @@ extension WindowModule {
                 let count = await MainActor.run { mgr.minimizeAllWindows() }
                 if count == 0 {
                     return .showResult(title: "No Windows", body: "No visible windows to minimize")
+                }
+                return .dismiss
+            },
+            WindowAction(
+                id: ActionID(module: "window", name: "restoreMinimized"),
+                title: "Restore Minimized Windows",
+                subtitle: "Bring every minimized window back from the Dock",
+                iconName: "plus.rectangle.on.rectangle",
+                keywords: ["restore", "unminimize", "show", "all", "windows", "apps", "dock"]
+            ) { _ in
+                let count = await MainActor.run { mgr.restoreMinimizedWindows() }
+                if count == 0 {
+                    return .showResult(title: "No Windows", body: "No minimized windows to restore")
                 }
                 return .dismiss
             },
