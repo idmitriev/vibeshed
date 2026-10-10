@@ -8,6 +8,7 @@ struct WindowConfig: Codable, Sendable, Equatable {
     /// `horizontalStops`/`verticalStops` above.
     var displays: [DisplayStopsConfig]
     var padding: PaddingConfig
+    /// Whether `window/focusWindow` also offers minimized windows.
     var includeMinimized: Bool
     var enlargeShrinkStep: SizeStop
     /// Look of the focus border and which windows get one; nil = defaults. Whether the
@@ -25,7 +26,7 @@ struct WindowConfig: Codable, Sendable, Equatable {
         ],
         displays: [],
         padding: PaddingConfig(),
-        includeMinimized: false,
+        includeMinimized: true,
         enlargeShrinkStep: SizeStop(value: 10, unit: .percent)
     )
 

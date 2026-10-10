@@ -30,6 +30,16 @@ struct WindowManager: Sendable {
         WindowListHelper.listWindows(includeMinimized: includeMinimized)
     }
 
+    /// The windows `window/focusWindow` offers: the on-screen ones front to back, then,
+    /// with `includeMinimized`, the minimized ones (`WindowListHelper.minimizedWindows`).
+    func listFocusableWindows(includeMinimized: Bool) async -> [WindowInfo] {
+        let minimized = includeMinimized ? await WindowListHelper.minimizedWindows() : []
+        let onScreen = await MainActor.run { listWindows(includeMinimized: false) }
+        // One unminimized between the two reads would be listed twice.
+        let onScreenIDs = Set(onScreen.map(\.id))
+        return onScreen + minimized.filter { !onScreenIDs.contains($0.id) }
+    }
+
     // MARK: - Get Focused Window
 
     @MainActor

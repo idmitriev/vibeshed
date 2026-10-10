@@ -53,15 +53,24 @@ enum AXWindowHelper {
         return ""
     }
 
-    /// List all AX windows for a given PID.
-    static func windows(for pid: pid_t) -> [AXUIElement] {
+    /// List all AX windows for a given PID. A `messagingTimeout` (seconds) is given to the
+    /// app element and to every returned window, as in `focusedWindow(for:messagingTimeout:)`.
+    static func windows(for pid: pid_t, messagingTimeout: Float? = nil) -> [AXUIElement] {
         let appElement = AXUIElementCreateApplication(pid)
+        if let messagingTimeout {
+            AXUIElementSetMessagingTimeout(appElement, messagingTimeout)
+        }
         var windowsRef: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(
             appElement, kAXWindowsAttribute as CFString, &windowsRef
         )
         guard result == .success, let axWindows = windowsRef as? [AXUIElement] else {
             return []
+        }
+        if let messagingTimeout {
+            for window in axWindows {
+                AXUIElementSetMessagingTimeout(window, messagingTimeout)
+            }
         }
         return axWindows
     }
