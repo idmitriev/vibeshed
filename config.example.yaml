@@ -324,7 +324,9 @@ modules:
       left: 4
       right: 4
       gap: 4
-    includeMinimized: false
+    # window/focusWindow lists the windows on screen, then the minimized ones
+    # (of apps that aren't hidden). false lists only the windows on screen.
+    includeMinimized: true
     enlargeShrinkStep:
       value: 10
       unit: percent

@@ -143,6 +143,40 @@ extension PickerCoordinatorTests {
         XCTAssertEqual(state.currentParameter?.id, "item")
         XCTAssertEqual(state.parameterOptions.map(\.id), ["met"])
     }
+
+    /// The search-field pill shows what was picked by its label (Search › Met), and only
+    /// what the user confirmed — not a default filled in for them.
+    func testConfirmedValuesShowByLabel() async throws {
+        let (coordinator, state) = try await makeCoordinator(module: ScopedOptionsModule())
+        coordinator.start()
+        state.enterParameterMode(action: MockAction(
+            id: ActionID(module: "scoped", name: "search"),
+            title: "Search",
+            subtitle: "",
+            iconName: nil,
+            relevanceScore: 1,
+            keywords: [],
+            parameters: [
+                ActionParameter(id: "size", label: "Size", type: .text(placeholder: nil), defaultValue: "large"),
+                ActionParameter(
+                    id: "source", label: "Source",
+                    type: .selection([
+                        ParameterOption(id: "all", label: "All"), ParameterOption(id: "met", label: "Met"),
+                    ]),
+                    isRequired: true
+                ),
+                ActionParameter(id: "item", label: "Item", type: .dynamicSelection(hint: ""), isRequired: true),
+            ]
+        ))
+        XCTAssertEqual(state.confirmedValueLabels, [])
+
+        state.selectedParameterOptionID = "met"
+        coordinator.handleReturn()
+        try await Task.sleep(for: .milliseconds(300))
+
+        XCTAssertEqual(state.currentParameter?.id, "item")
+        XCTAssertEqual(state.confirmedValueLabels, ["Met"])
+    }
 }
 
 /// Shift runs (⇧Return, ⇧double-click, ⌘⇧1–9) run the action but leave the picker as it
