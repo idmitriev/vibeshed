@@ -31,10 +31,13 @@ final class PickerCoordinator {
     /// the (cheap) query-dependent modules.
     @ObservationIgnored private var catalogCorpus: [ScorableAction]?
 
-    /// Monotonic id for query pipeline runs. Each `runQuery` claims the next value;
-    /// results whose generation is no longer current are dropped, so a slow older
-    /// query can never overwrite a newer one's results.
+    /// Monotonic id for query pipeline runs. Each `runQuery` (and a fresh open's
+    /// cached list) claims the next value; results whose generation is no longer
+    /// current are dropped, so a slow older query can never overwrite a newer one's results.
     @ObservationIgnored private var queryGeneration = 0
+    /// The text the newest generation ranks: the list on screen, or the one the run
+    /// in flight will show. nil when nothing has ranked the open picker's list yet.
+    @ObservationIgnored private var rankedQuery: String?
     @ObservationIgnored private var runningQueryTask: Task<Void, Never>?
     /// The same guard for dynamic parameter options, whose fetches (e.g. `brew search`)
     /// can finish out of order.
@@ -204,6 +207,10 @@ final class PickerCoordinator {
             .sink { [weak self] query in
                 guard let self else { return }
                 guard case .search = pickerState.mode else { return }
+                // A repeat of what the newest run ranks changes nothing. Compared with
+                // that, not the last debounced text: the initial load ranks text the
+                // debounce never reported, e.g. "s" while "safari" is being typed.
+                guard query != rankedQuery else { return }
                 pickerState.isLoading = true
                 runningQueryTask?.cancel()
                 runningQueryTask = Task { @MainActor [weak self] in
@@ -271,8 +278,7 @@ final class PickerCoordinator {
         let pipelineState = Log.signposter.beginInterval("QueryPipeline")
         defer { Log.signposter.endInterval("QueryPipeline", pipelineState) }
 
-        queryGeneration += 1
-        let generation = queryGeneration
+        let generation = claimGeneration(ranking: query)
         // Stale-guard: a later runQuery superseded this one during an await,
         // or the picker left search mode. Results must be dropped, not displayed.
         func isCurrent() -> Bool {
@@ -328,6 +334,14 @@ final class PickerCoordinator {
 
         pickerState.layoutCorrectionHint = nil
         finish(items, cache, scored: combined, scoring)
+    }
+
+    /// Supersedes every run still in flight for a list that ranks `query`.
+    @discardableResult
+    private func claimGeneration(ranking query: String?) -> Int {
+        queryGeneration += 1
+        rankedQuery = query
+        return queryGeneration
     }
 }
 
@@ -419,13 +433,18 @@ extension PickerCoordinator {
 
     /// Shows cached empty-query results synchronously without triggering any async work.
     /// Called before the show animation so the user sees content immediately.
+    ///
+    /// Starts the session's ranking afresh: a run left over from the last session
+    /// can't land on the new list, and that session's text isn't a repeat any more.
     func showCachedActionsIfAvailable() {
         if let cachedItems = cachedEmptyQueryItems,
            let cachedCache = cachedEmptyQueryActionCache
         {
+            claimGeneration(ranking: "")
             pickerState.updateActions(cachedItems, cache: cachedCache)
             pickerState.isLoading = false
         } else {
+            claimGeneration(ranking: nil)
             pickerState.isLoading = true
         }
     }
