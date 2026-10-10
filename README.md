@@ -143,6 +143,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Zoom** | Join meetings, start personal meeting, configured shortcuts |
 | **Telegram** | Quick-open configured chats and groups |
 | **Calendar** | Upcoming events, join Zoom/Meet links |
+| **Notes** | Search Apple Notes by title or text, open them, start new ones |
 | **MeetingPrep** | Prepare workspace for meetings |
 | **Timer** | Set timers and reminders |
 | **Math** | Arithmetic, unit/currency conversion |
