@@ -8,6 +8,7 @@ struct EmojiAction: Action {
     let relevanceScore: Double
     let keywords: [String]
     let parameters: [ActionParameter]
+    let typesIntoFrontmostApp: Bool
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
@@ -19,6 +20,7 @@ struct EmojiAction: Action {
         relevanceScore: Double = 0.5,
         keywords: [String] = [],
         parameters: [ActionParameter] = [],
+        typesIntoFrontmostApp: Bool = false,
         runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
@@ -28,6 +30,7 @@ struct EmojiAction: Action {
         self.relevanceScore = relevanceScore
         self.keywords = keywords
         self.parameters = parameters
+        self.typesIntoFrontmostApp = typesIntoFrontmostApp
         self.runner = runner
     }
 

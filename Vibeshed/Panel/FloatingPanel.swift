@@ -27,6 +27,13 @@ final class FloatingPanel: NSPanel {
     /// where focus may briefly bounce back to the source app.
     var staysOpenOnResignKey: Bool = false
 
+    /// When true, losing key focus to another app the user didn't switch to (one a
+    /// Shift run launched or focused) takes focus back instead of hiding.
+    /// Reset when the panel hides.
+    var holdsKeyFocus: Bool = false
+
+    private let keyFocusReclaimer = KeyFocusReclaimer()
+
     init(contentRect: NSRect) {
         super.init(
             contentRect: contentRect,
@@ -59,6 +66,7 @@ final class FloatingPanel: NSPanel {
         hidesOnDeactivate = false
 
         contentView?.wantsLayer = true
+        keyFocusReclaimer.start()
     }
 
     override var canBecomeKey: Bool {
@@ -72,6 +80,18 @@ final class FloatingPanel: NSPanel {
     override func resignKey() {
         super.resignKey()
         if staysOpenOnResignKey { return }
+        if holdsKeyFocus, !isHiding, keyFocusReclaimer.shouldReclaim() {
+            // Once the new key window has settled. Vibeshed's own windows (an alert) keep it.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.isVisible, !self.isHiding else { return }
+                if NSApp.keyWindow == nil {
+                    self.makeKey()
+                } else {
+                    self.animateHide()
+                }
+            }
+            return
+        }
         animateHide()
     }
 
@@ -162,6 +182,8 @@ final class FloatingPanel: NSPanel {
         isHiding = true
         isAnimatingShow = false
         staysOpenOnResignKey = false
+        holdsKeyFocus = false
+        keyFocusReclaimer.reset()
         animationGeneration += 1
         let generation = animationGeneration
 

@@ -27,6 +27,7 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 
 **Launcher**
 - Fuzzy-matched searchable picker with keyboard navigation and preview pane
+- Hold Shift (⇧Return, ⇧double-click, ⌘⇧1–9) to run an action and keep the picker open, with only the search text cleared — for firing several similar actions in a row, like a batch of cask installs
 - Usage-aware sorting that adapts to how you work
 - Context-sensitive action boosting based on focused app, time of day, audio state
 - Picker colors follow the applied palette theme, live while you browse themes

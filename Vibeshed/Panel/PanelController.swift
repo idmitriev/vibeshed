@@ -58,6 +58,12 @@ final class PanelController {
         panel?.staysOpenOnResignKey = value
     }
 
+    /// After a Shift run: until the picker hides, an app the action launches or focuses
+    /// doesn't close it by taking keyboard focus — the panel takes focus back.
+    func holdKeyFocusThroughActions() {
+        panel?.holdsKeyFocus = true
+    }
+
     func show() {
         let panel = getOrCreatePanel()
 

@@ -65,6 +65,13 @@ final class PickerState {
         activationCounters[id, default: 0] += 1
     }
 
+    /// The same for parameter options, keyed by option ID.
+    var optionActivationCounters: [String: Int] = [:]
+
+    func bumpActivation(forOption id: String) {
+        optionActivationCounters[id, default: 0] += 1
+    }
+
     // MARK: - Publishers
 
     private let querySubject = PassthroughSubject<String, Never>()
@@ -133,6 +140,23 @@ final class PickerState {
         layoutCorrectionHint = nil
         actionCache = [:]
         activationCounters = [:]
+        optionActivationCounters = [:]
+    }
+
+    /// Readies the picker for another run after one that kept it open (Shift held):
+    /// clears what was typed and, in a parameter step, un-confirms that step's value
+    /// so the next Return picks a new one. The mode and earlier steps' values stay
+    /// as they were.
+    func prepareForAnotherRun() {
+        switch mode {
+        case .search, .pushedActions:
+            query = ""
+        case .parameterInput:
+            if let currentParameter {
+                collectedValues[currentParameter.id] = nil
+            }
+            parameterQuery = ""
+        }
     }
 
     // MARK: - Selection navigation
