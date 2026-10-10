@@ -15,6 +15,19 @@ struct ApplicationManager: Sendable {
         URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Applications"),
     ]
 
+    /// User-facing apps in /System/Library/CoreServices, listed one by one because the rest of that
+    /// tree is agents and helpers. Missing ones are skipped: Keychain Access moved here in macOS 15
+    /// (from /System/Applications/Utilities, where Screen Sharing has been since macOS 14).
+    static let coreServicesApps: [URL] = [
+        "/System/Library/CoreServices/Finder.app",
+        "/System/Library/CoreServices/Applications/Archive Utility.app",
+        "/System/Library/CoreServices/Applications/Directory Utility.app",
+        "/System/Library/CoreServices/Applications/Feedback Assistant.app",
+        "/System/Library/CoreServices/Applications/Keychain Access.app",
+        "/System/Library/CoreServices/Applications/Ticket Viewer.app",
+        "/System/Library/CoreServices/Applications/Wireless Diagnostics.app",
+    ].map { URL(fileURLWithPath: $0) }
+
     @MainActor
     func listInstalledApplications() -> [AppInfo] {
         var seen = Set<String>()
@@ -31,14 +44,12 @@ struct ApplicationManager: Sendable {
         // Single CGWindowList call for all window counts
         let windowCounts = WindowListHelper.countWindowsByPID()
 
-        for dir in Self.applicationDirectories {
-            apps += installedApps(
-                in: dir,
-                runningByBundleID: runningByBundleID,
-                windowCounts: windowCounts,
-                seen: &seen
-            )
-        }
+        apps += installedApps(
+            at: Self.installedAppBundleURLs(),
+            runningByBundleID: runningByBundleID,
+            windowCounts: windowCounts,
+            seen: &seen
+        )
 
         // Add running apps not found in standard directories
         for app in runningApps {
@@ -64,16 +75,16 @@ struct ApplicationManager: Sendable {
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// Apps from `appBundleURLs(in:)` whose ID isn't in `seen` yet; adds each one it returns to `seen`.
+    /// Apps at `bundleURLs` whose ID isn't in `seen` yet; adds each one it returns to `seen`.
     @MainActor
     private func installedApps(
-        in dir: URL,
+        at bundleURLs: [URL],
         runningByBundleID: [String: NSRunningApplication],
         windowCounts: [pid_t: Int],
         seen: inout Set<String>
     ) -> [AppInfo] {
         var apps: [AppInfo] = []
-        for url in Self.appBundleURLs(in: dir) {
+        for url in bundleURLs {
             guard let bundle = Bundle(url: url) else { continue }
             let appID = Self.appID(for: bundle)
             guard !seen.contains(appID) else { continue }
@@ -95,6 +106,16 @@ struct ApplicationManager: Sendable {
             ))
         }
         return apps
+    }
+
+    /// Every app bundle to list, in lookup order: those found in `directories` by `appBundleURLs(in:)`,
+    /// then the `extraApps` that exist.
+    static func installedAppBundleURLs(
+        directories: [URL] = applicationDirectories,
+        extraApps: [URL] = coreServicesApps
+    ) -> [URL] {
+        directories.flatMap(appBundleURLs(in:))
+            + extraApps.filter { FileManager.default.fileExists(atPath: $0.path) }
     }
 
     /// `.app` bundles directly inside `dir` and inside its plain subfolders, one level down
@@ -179,17 +200,47 @@ struct ApplicationManager: Sendable {
 
     // MARK: - Focus Application
 
+    /// What `focusApplication` does with a running app.
+    enum FocusStep: Equatable {
+        /// The AX window query failed (no Accessibility permission, app not responding), so it
+        /// may have windows: activate it, as a reopen could make it open another one.
+        case activate
+        /// No windows. activate() would only switch the menu bar. Opening a running app sends it
+        /// a reopen event, as a Dock click does, so it shows a window (Finder opens a new one).
+        case reopen
+        /// Already frontmost: raise its next window.
+        case cycleWindows
+        /// Activate it, restoring a window first if all of them are minimized.
+        case restoreAndActivate
+    }
+
+    /// `windowCount` is nil when the AX window query failed.
+    static func focusStep(windowCount: Int?, isFrontmost: Bool) -> FocusStep {
+        guard let windowCount else { return .activate }
+        if windowCount == 0 { return .reopen }
+        return isFrontmost ? .cycleWindows : .restoreAndActivate
+    }
+
     @MainActor
-    func focusApplication(_ app: AppInfo) -> Bool {
+    func focusApplication(_ app: AppInfo) async throws -> Bool {
         guard let running = findRunningApp(bundleID: app.id) else {
             log.warning("focusApplication: app not running \(app.id, privacy: .public)")
             return false
         }
 
-        if running == NSWorkspace.shared.frontmostApplication {
-            cycleWindows(for: running)
-        } else {
-            restoreMinimizedWindows(for: running)
+        let axWindows = AXWindowHelper.windowsIfAvailable(for: running.processIdentifier)?
+            .filter(AXWindowHelper.isWindow)
+        let isFrontmost = running == NSWorkspace.shared.frontmostApplication
+        switch Self.focusStep(windowCount: axWindows?.count, isFrontmost: isFrontmost) {
+        case .activate:
+            running.activate(options: [])
+        case .reopen:
+            log.debug("focusApplication: no windows, reopening \(app.id, privacy: .public)")
+            try await launchApplication(app)
+        case .cycleWindows:
+            cycleWindows(axWindows ?? [], of: running)
+        case .restoreAndActivate:
+            restoreMinimizedWindows(axWindows ?? [])
             running.activate(options: [])
         }
         return true
@@ -213,9 +264,8 @@ struct ApplicationManager: Sendable {
     // MARK: - Window Cycling
 
     @MainActor
-    private func cycleWindows(for app: NSRunningApplication) {
+    private func cycleWindows(_ axWindows: [AXUIElement], of app: NSRunningApplication) {
         let pid = app.processIdentifier
-        let axWindows = AXWindowHelper.windows(for: pid)
         guard axWindows.count > 1 else {
             if let only = axWindows.first, AXWindowHelper.isMinimized(only) {
                 AXWindowHelper.deminiaturize(only)
@@ -249,8 +299,7 @@ struct ApplicationManager: Sendable {
         app.activate(options: [])
     }
 
-    private func restoreMinimizedWindows(for app: NSRunningApplication) {
-        let axWindows = AXWindowHelper.windows(for: app.processIdentifier)
+    private func restoreMinimizedWindows(_ axWindows: [AXUIElement]) {
         let allMinimized = !axWindows.isEmpty && axWindows.allSatisfy { AXWindowHelper.isMinimized($0) }
         if allMinimized, let first = axWindows.first {
             AXWindowHelper.deminiaturize(first)
