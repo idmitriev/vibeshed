@@ -6,10 +6,17 @@ import Foundation
 extension PickerCoordinator {
     /// Runs `action`, closing the picker first unless `keepOpen` — a Shift run, which
     /// leaves the picker as the activation set it up for the next run
-    /// (`PickerState.prepareForAnotherRun`), chained actions included.
+    /// (`PickerState.prepareForAnotherRun`), chained actions included. The picker then
+    /// holds on to keyboard focus if an app the action brings forward takes it.
+    ///
+    /// An action that types into the user's app (paste on select) can't run with the
+    /// picker focused, so it closes the picker even on a Shift run.
     func executeAction(_ action: any Action, values: ParameterValues, keepOpen: Bool = false) async {
+        let keepOpen = keepOpen && !action.typesIntoFrontmostApp
         Log.picker.debug("Executing action '\(action.id, privacy: .public)', keepOpen: \(keepOpen)")
-        if !keepOpen {
+        if keepOpen {
+            panelController.holdKeyFocusThroughActions()
+        } else {
             panelController.hideAndReset()
         }
         do {
