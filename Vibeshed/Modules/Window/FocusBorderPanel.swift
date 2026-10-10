@@ -1,7 +1,8 @@
 import AppKit
 import QuartzCore
 
-/// Transparent, click-through, always-on-top panel that draws the focus border. The ring
+/// Transparent, click-through panel that draws the focus border, above other apps' windows
+/// and below the picker (see `NSWindow.Level.focusBorder`). The ring
 /// is a plain `CALayer` border, so moving and restyling it happens in the same transaction
 /// as the window frame change — no view layout pass in between. Never becomes key/main so
 /// it can't steal focus.
@@ -16,7 +17,7 @@ final class FocusBorderPanel: NSPanel {
             defer: false
         )
 
-        level = .floating
+        level = .focusBorder
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         backgroundColor = .clear
         isOpaque = false
