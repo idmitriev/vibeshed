@@ -5,7 +5,8 @@ struct SearchFieldPill: Identifiable {
     let id: String
     let title: String
     let iconSystemName: String?
-    let detail: String?
+    /// Segments after the title, each behind a chevron.
+    let details: [String]
 }
 
 struct PickerSearchField: View {
@@ -26,10 +27,12 @@ struct PickerSearchField: View {
                 .font(.title2)
                 .foregroundStyle(theme.iconTint ?? .secondary)
 
+            // Pills take their full width first; the field keeps enough room to type in.
             ForEach(pills) { pill in
                 PillView(pill: pill) {
                     onRemovePill?(pill)
                 }
+                .layoutPriority(1)
             }
 
             BackspaceTextField(
@@ -38,6 +41,7 @@ struct PickerSearchField: View {
                 hasPills: !pills.isEmpty,
                 onBackspaceEmpty: onBackspaceEmpty
             )
+            .frame(minWidth: pills.isEmpty ? nil : 160)
             .accessibilityIdentifier("pickerSearchField")
 
             if let appIconPath = selectionAppIconPath {
@@ -170,12 +174,14 @@ private struct PillView: View {
                 .font(.caption)
                 .foregroundStyle(theme.iconTint ?? .secondary)
 
+            // Short of room, the chosen values truncate before the action's title.
             Text(pill.title)
                 .font(.callout)
                 .fontWeight(.medium)
                 .lineLimit(1)
+                .layoutPriority(1)
 
-            if let detail = pill.detail {
+            ForEach(Array(pill.details.enumerated()), id: \.offset) { _, detail in
                 Image(systemName: "chevron.right")
                     .font(.caption2)
                     .foregroundStyle(.secondary)

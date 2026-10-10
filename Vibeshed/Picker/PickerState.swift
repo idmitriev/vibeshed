@@ -35,6 +35,9 @@ final class PickerState {
 
     var activeAction: (any Action)?
     var collectedValues: ParameterValues = [:]
+    /// What the user picked or typed for each confirmed parameter, as shown (an option's
+    /// label, not its ID). Defaults and skipped parameters have none.
+    var collectedLabels: [String: String] = [:]
     var currentParameter: ActionParameter?
     var parameterOptions: [ParameterOption] = []
     var selectedParameterOptionID: String? {
@@ -122,6 +125,7 @@ final class PickerState {
         modeStack = []
         activeAction = nil
         collectedValues = [:]
+        collectedLabels = [:]
         currentParameter = nil
         parameterOptions = []
         selectedParameterOptionID = nil
@@ -182,6 +186,7 @@ final class PickerState {
     func enterParameterMode(action: any Action) {
         activeAction = action
         collectedValues = [:]
+        collectedLabels = [:]
         // Pre-fill defaults
         for param in action.parameters {
             if let defaultValue = param.defaultValue {
@@ -225,6 +230,15 @@ final class PickerState {
 
     func confirmParameterValue(_ value: String, forParameterID parameterID: String) {
         collectedValues[parameterID] = value
+        // Capture the label now: dynamic options are replaced once the next parameter loads.
+        collectedLabels[parameterID] = parameterOptions.first { $0.id == value }?.label ?? value
+    }
+
+    /// Labels of the confirmed values in parameter order, for the search-field pill
+    /// (Search Wallpapers › Wallhaven).
+    var confirmedValueLabels: [String] {
+        guard let action = activeAction else { return [] }
+        return action.parameters.compactMap { collectedLabels[$0.id] }.filter { !$0.isEmpty }
     }
 
     var allRequiredParametersFilled: Bool {
