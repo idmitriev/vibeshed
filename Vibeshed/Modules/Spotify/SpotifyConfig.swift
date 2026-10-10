@@ -6,7 +6,8 @@ struct SpotifyConfig: Codable, Sendable, Equatable {
     /// Web API with this ID, and without it only playback actions are available.
     var clientId: String?
 
-    /// Max search results of each type (1-50); the Web API returns at most 10.
+    /// Max search results of each type (1-50). The Web API returns at most 10 of each,
+    /// and `spotify_cli` at most 100 in all.
     var maxSearchResults: Int = 10
 
     /// What types to search: "track", "album", "artist", "playlist".

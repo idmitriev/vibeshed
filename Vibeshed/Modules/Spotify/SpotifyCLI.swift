@@ -22,15 +22,16 @@ struct SpotifyCLI: Sendable {
     /// The tool's results for `query`, up to `limitPerType` of each of `types`, ranked
     /// the way the Spotify app's own search ranks them.
     func search(_ query: String, types: [String], limitPerType: Int) async throws -> [SpotifySearchItem] {
+        guard !types.isEmpty else { return [] }
         // The query has to come straight after `search`, and one starting with a dash
         // reads as a flag (there's no `--`); Spotify ignores the leading space.
         var arguments = ["search", query.hasPrefix("-") ? " " + query : query]
-        // One request covers every type: the limit is shared among them.
-        arguments += ["--limit", String(min(limitPerType * types.count, Self.maxSearchLimit))]
-        if types.count == 1, let type = types.first {
-            arguments += ["--type", type]
-        }
-        let output = try await run(arguments + ["--format", "json"])
+        // `--limit` is one budget for all the `--type`s, which Spotify's ranking hands out
+        // mostly to songs: two results for albums and playlists can both be albums. So a
+        // search for several types asks for all the tool gives and caps each type itself.
+        let limit = types.count == 1 ? min(limitPerType, Self.maxSearchLimit) : Self.maxSearchLimit
+        arguments += ["--type", types.joined(separator: ","), "--limit", String(limit), "--format", "json"]
+        let output = try await run(arguments)
         return try SpotifyCLIParser.searchItems(output, types: types, limitPerType: limitPerType)
     }
 
@@ -66,8 +67,8 @@ struct SpotifyCLI: Sendable {
         throw SpotifyCLIError.notRunning
     }
 
-    /// The most results one search returns.
-    static let maxSearchLimit = 50
+    /// The most results one search returns; past it the tool quietly returns none.
+    static let maxSearchLimit = 100
 
     // MARK: - Running
 

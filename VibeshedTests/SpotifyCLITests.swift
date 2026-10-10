@@ -185,8 +185,27 @@ final class SpotifyModuleSearchTests: XCTestCase {
         XCTAssertEqual(options.first?.label, "Record")
         XCTAssertEqual(options.first?.subtitle, "Album · The Band")
         XCTAssertEqual(options.count, 7)
-        // Ten of each of the four default types, in one search.
-        XCTAssertEqual(try recordedArguments(), ["search", "the band", "--limit", "40", "--format", "json"])
+        // All four default types in one search, with the whole budget to share.
+        XCTAssertEqual(try recordedArguments(), [
+            "search", "the band", "--type", "track,album,artist,playlist", "--limit", "100", "--format", "json",
+        ])
+    }
+
+    /// A budget of two for albums and playlists came back as two albums (or, untyped,
+    /// an artist and a song), leaving no playlist or nothing at all.
+    func testEveryTypeGetsRoomWhateverTheCap() async throws {
+        let cli = try fakeCLI()
+        let module = SpotifyModule(locateCLI: { cli })
+        var config = SpotifyConfig()
+        config.searchTypes = ["album", "playlist"]
+        config.maxSearchResults = 1
+        await module.configDidUpdate(config)
+
+        let options = await module.searchOptions("the band")
+        XCTAssertEqual(options.map(\.id), ["spotify:album:b1", "spotify:playlist:p1"])
+        XCTAssertEqual(try recordedArguments(), [
+            "search", "the band", "--type", "album,playlist", "--limit", "100", "--format", "json",
+        ])
     }
 
     func testOneTypeSearchesOnlyThatTypeAndDashedQueriesStayQueries() async throws {
@@ -200,7 +219,7 @@ final class SpotifyModuleSearchTests: XCTestCase {
         let options = await module.searchOptions("-ish")
         XCTAssertEqual(options.map(\.id), ["spotify:track:t1", "spotify:track:t2"])
         XCTAssertEqual(
-            try recordedArguments(), ["search", " -ish", "--limit", "2", "--type", "track", "--format", "json"]
+            try recordedArguments(), ["search", " -ish", "--type", "track", "--limit", "2", "--format", "json"]
         )
     }
 

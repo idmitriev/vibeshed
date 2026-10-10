@@ -117,7 +117,9 @@ enum SpotifyManager {
     }
 
     /// Plays a song, or an album, artist or playlist from its start — for when
-    /// `spotify_cli` isn't there to do it.
+    /// `spotify_cli` isn't there to do it. The dictionary calls the URI a track's, but
+    /// `play track` takes the others too (shpotify's `play uri` relies on it), while
+    /// `open location` + `play` only shows the page and resumes what was loaded before.
     static func play(_ uri: String) async throws {
         try await runScript("tell application \"Spotify\" to play track \"\(uri.escapedForAppleScript)\"")
     }
