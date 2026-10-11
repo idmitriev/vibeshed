@@ -4,15 +4,31 @@ import OSLog
 private let log = Log.module("applescript")
 
 enum AppleScriptRunner {
+    enum Language: Sendable {
+        case appleScript
+        /// JavaScript for Automation.
+        case javaScript
+
+        var arguments: [String] {
+            switch self {
+            case .appleScript: []
+            case .javaScript: ["-l", "JavaScript"]
+            }
+        }
+    }
+
     // MARK: - Async (with timeout + continuation)
 
     @discardableResult
-    static func run(_ script: String, timeout: TimeInterval = 5) async throws -> String {
+    static func run(_ script: String, language: Language = .appleScript, timeout: TimeInterval = 5) async throws
+        -> String
+    {
         try await withCheckedThrowingContinuation { continuation in
             let gate = ResumeGate(continuation: continuation)
             DispatchQueue.global(qos: .userInitiated).async {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+                process.arguments = language.arguments
 
                 let inputPipe = Pipe()
                 let stdoutPipe = Pipe()
