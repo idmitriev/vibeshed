@@ -199,16 +199,30 @@ struct BrowserManager: Sendable {
         """
     }
 
-    private func chromiumFocusScript(bundleID: String, windowIndex: Int, tabIndex: Int) -> String {
-        """
+    /// Chromium's dictionary calls the window flag `minimized`, not the standard suite's
+    /// `miniaturized` that Safari and iTerm use; Chrome rejects the latter with -1700, failing
+    /// the whole script. Arc has no `active tab index`, a compile-time error that `try` can't
+    /// catch, so it selects the tab with its own `select` command. Un-minimizing and raising
+    /// the window are best-effort: a dictionary without those terms still switches the tab.
+    func chromiumFocusScript(bundleID: String, windowIndex: Int, tabIndex: Int) -> String {
+        let selectTab = bundleID == Self.arcBundleID
+            ? "tell tab \(tabIndex) of w to select"
+            : "set active tab index of w to \(tabIndex)"
+        return """
         tell application id "\(bundleID)"
             set w to window \(windowIndex)
-            if miniaturized of w then set miniaturized of w to false
-            set active tab index of w to \(tabIndex)
-            set index of w to 1
+            try
+                if minimized of w then set minimized of w to false
+            end try
+            \(selectTab)
+            try
+                set index of w to 1
+            end try
         end tell
         """
     }
+
+    private static let arcBundleID = "company.thebrowser.Browser"
 
     private func safariCloseScript(windowIndex: Int, tabIndex: Int) -> String {
         """
