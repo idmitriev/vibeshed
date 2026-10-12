@@ -144,6 +144,15 @@ final class PickerCoordinator {
         pickerState.bumpActivation(for: targetItem.id)
         guard let action = pickerState.actionCache[targetItem.id] else { return }
 
+        // Activating a message dismisses it as Escape does: back to the Shift-run session it
+        // covers, or closed. Running it like an action would close and reset that session.
+        if action is PickerMessageAction {
+            if !pickerState.popMode() {
+                panelController.hideAndReset()
+            }
+            return
+        }
+
         let requiredParams = action.parameters.filter(\.isRequired)
         if requiredParams.isEmpty {
             if keepOpen { pickerState.prepareForAnotherRun() }

@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// An action's result or failure, shown as the picker's only row when it couldn't be
-/// posted as a notification (see `PickerCoordinator.showMessage`). Return dismisses it.
+/// posted as a notification (see `PickerCoordinator.showMessage`). Activating it dismisses
+/// it like Escape (`PickerCoordinator.activateAction`), so `run` is never reached from there.
 struct PickerMessageAction: Action {
     let id: ActionID
     let title: String
@@ -48,10 +49,14 @@ struct PickerMessageAction: Action {
                     iconColor: isFailure ? .orange : Color.primary.opacity(0.5)
                 )
 
-                Text(body)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
+                // Output such as `brew outdated` can run far past the preview's height.
+                ScrollView {
+                    Text(body)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
         )
     }

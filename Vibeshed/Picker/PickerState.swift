@@ -25,7 +25,7 @@ final class PickerState {
         didSet { onLivePreviewContextChange?() }
     }
 
-    private var modeStack: [PickerMode] = []
+    private var modeStack: [ModeStackEntry] = []
 
     /// Fired when anything a live parameter preview depends on changes (mode, highlighted
     /// option). The coordinator uses it to start, advance, or end the preview.
@@ -89,34 +89,6 @@ final class PickerState {
             .debounce(for: .milliseconds(100), scheduler: RunLoop.main)
             .removeDuplicates()
             .eraseToAnyPublisher()
-    }
-
-    // MARK: - Mode navigation
-
-    func pushMode(_ newMode: PickerMode) {
-        modeStack.append(mode)
-        withAnimation(.easeInOut(duration: 0.2)) {
-            mode = newMode
-        }
-        Log.picker.debug("Mode pushed: \(String(describing: newMode), privacy: .public)")
-    }
-
-    /// Returns `true` if a mode was popped, `false` if already at root (search).
-    func popMode() -> Bool {
-        guard let previous = modeStack.popLast() else { return false }
-        withAnimation(.easeInOut(duration: 0.2)) {
-            mode = previous
-        }
-
-        // Restore query state when returning to search
-        if case .search = mode {
-            parameterQuery = ""
-            parameterOptions = []
-            selectedParameterOptionID = nil
-            currentParameter = nil
-            isLoadingOptions = false
-        }
-        return true
     }
 
     // MARK: - Reset
@@ -375,6 +347,73 @@ final class PickerState {
             selectedParameterOptionID = parameterOptions[parameterOptions.index(before: idx)].id
         }
     }
+}
+
+// MARK: - Mode navigation
+
+/// Outside the class body for its length limit; `modeStack` is private to this file.
+extension PickerState {
+    /// Pushes `newMode`. With `restoringList`, popping it also puts back the rows, selection
+    /// and query on screen now — for a list pushed over a session the user is working in,
+    /// which would otherwise be left showing the pushed rows.
+    func pushMode(_ newMode: PickerMode, restoringList: Bool = false) {
+        let covered = restoringList
+            ? CoveredList(actions: actions, cache: actionCache, selectedActionID: selectedActionID, query: query)
+            : nil
+        modeStack.append(ModeStackEntry(mode: mode, coveredList: covered))
+        withAnimation(.easeInOut(duration: 0.2)) {
+            mode = newMode
+        }
+        Log.picker.debug("Mode pushed: \(String(describing: newMode), privacy: .public)")
+    }
+
+    /// Puts `newMode` up with nothing beneath it, so Escape closes the picker rather than
+    /// going back — for a list brought up on a picker that was closed and reset.
+    func showAsRoot(_ newMode: PickerMode) {
+        modeStack = []
+        withAnimation(.easeInOut(duration: 0.2)) {
+            mode = newMode
+        }
+    }
+
+    /// Returns `true` if a mode was popped, `false` if already at root.
+    func popMode() -> Bool {
+        guard let previous = modeStack.popLast() else { return false }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            mode = previous.mode
+        }
+        if let list = previous.coveredList {
+            actions = list.actions
+            actionCache = list.cache
+            selectedActionID = list.selectedActionID
+            if query != list.query {
+                query = list.query
+            }
+        }
+
+        // Restore query state when returning to search
+        if case .search = mode {
+            parameterQuery = ""
+            parameterOptions = []
+            selectedParameterOptionID = nil
+            currentParameter = nil
+            isLoadingOptions = false
+        }
+        return true
+    }
+}
+
+/// A mode to go back to, with the list a `pushMode(_:restoringList:)` covered.
+private struct ModeStackEntry {
+    let mode: PickerMode
+    let coveredList: CoveredList?
+}
+
+private struct CoveredList {
+    let actions: [ActionItem]
+    let cache: [ActionID: any Action]
+    let selectedActionID: ActionID?
+    let query: String
 }
 
 // MARK: - ActionItem

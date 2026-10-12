@@ -13,6 +13,10 @@ final class PanelController {
 
     private(set) var isVisible: Bool = false
 
+    /// Bumped each time the panel is put on screen. With `isVisible`, it tells work that
+    /// outlives an action run whether the picker is still as the run left it.
+    @ObservationIgnored private(set) var presentationCount = 0
+
     /// Tracks whether panel was hidden (orderOut) vs never created.
     /// When true, state is retained and we can skip reset on next show.
     private var isHiddenWithState: Bool = false
@@ -140,6 +144,7 @@ final class PanelController {
     /// Centres the panel on the active screen, puts the overlay behind it, and animates
     /// both in (layout is unavoidable sync work before the animation).
     private func present(_ panel: FloatingPanel) {
+        presentationCount += 1
         let screen = NSScreen.main
         if let screen {
             let screenFrame = screen.visibleFrame
