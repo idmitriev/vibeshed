@@ -121,17 +121,26 @@ extension WallpaperCanvas {
         let baseline = (grid.cellHeight - CTFontGetAscent(font) + CTFontGetDescent(font)) / 2
 
         var batches: [ASCIIBatchKey: [CGPoint]] = [:]
+        // Batches draw in first-seen order: antialiased edges of neighboring glyphs overlap,
+        // and a dictionary's iteration order differs between instances, so iterating it
+        // made the same seed render differently from one draw to the next.
+        var order: [ASCIIBatchKey] = []
         for cell in cells {
             let origin = CGPoint(
                 x: CGFloat(cell.column) * grid.cellWidth,
                 y: height - CGFloat(cell.row + 1) * grid.cellHeight + baseline
             )
-            batches[ASCIIBatchKey(color: cell.color, glyph: cell.glyph), default: []].append(origin)
+            let key = ASCIIBatchKey(color: cell.color, glyph: cell.glyph)
+            if batches[key] == nil {
+                order.append(key)
+            }
+            batches[key, default: []].append(origin)
         }
         context.saveGState()
         context.textMatrix = .identity
         context.setShouldSmoothFonts(false)
-        for (key, positions) in batches {
+        for key in order {
+            let positions = batches[key] ?? []
             context.setFillColor(key.color.cgColor)
             let run = [CGGlyph](repeating: glyphs[key.glyph], count: positions.count)
             CTFontDrawGlyphs(font, run, positions, positions.count, context)
