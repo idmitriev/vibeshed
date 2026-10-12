@@ -244,6 +244,10 @@ final class ThemeBuilderTests: XCTestCase {
         XCTAssertEqual(colors["editor.background"], "#282a36")
         XCTAssertEqual(colors["terminal.ansiBrightWhite"], palette.ansi[15].hex)
         XCTAssertEqual(colors["button.foreground"], palette.accent.contrastingText.hex)
+        for part in ["Background", "Foreground", "Border"] {
+            let noFolder = try XCTUnwrap(colors["statusBar.noFolder\(part)"], "statusBar.noFolder\(part)")
+            XCTAssertEqual(noFolder, colors["statusBar.\(part.lowercased())"], "statusBar.noFolder\(part)")
+        }
         XCTAssertNoThrow(try JSONFormatting.pretty(theme))
     }
 
@@ -359,7 +363,8 @@ final class WallpaperStyleTests: XCTestCase {
         let styles: [WallpaperStyle] = [
             .mesh, .ridges, .bokeh, .lowpoly, .topographic, .pulsar, .guilloche, .sashiko, .attractor, .bauhaus,
             .destijl, .truchet, .terrazzo, .circles, .isometric, .penrose, .maze, .dither, .pipes, .pebbles,
-            .pinstripe, .clouds, .azul, .boing, .rain,
+            .pinstripe, .clouds, .azul, .boing, .rain, .flow, .lens, .papercut, .automata, .cyclic, .chladni,
+            .complex, .growth,
         ]
         for style in styles {
             let one = WallpaperRenderer.draw(palette, size: size, choice: .init(style: style, seed: 1, grain: false))

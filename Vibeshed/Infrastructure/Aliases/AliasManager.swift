@@ -89,22 +89,11 @@ final class AliasManager {
         let actionIDs = Set(actions.map(\.id))
 
         for entry in aliasEntries {
-            let targetID = ActionID(entry.action)
-            let prefilled = entry.parameters ?? [:]
-            let hasQueryPlaceholder = prefilled.values.contains { $0.contains("{query}") }
-                || entry.action.contains("{query}")
-            let isDirectOpen = entry.action.hasPrefix("http://")
-                || entry.action.hasPrefix("https://")
-                || entry.action.hasPrefix("/")
-                || entry.action.hasPrefix("~/")
-
-            if !hasQueryPlaceholder, !isDirectOpen, actionIDs.contains(targetID) {
-                // Target action exists and no dynamic input needed: enrich keywords
+            if Self.enriches(entry, actionIDs: actionIDs) {
                 let extra = [entry.alias, entry.alias.lowercased()]
                     + (entry.keywords ?? [])
-                enrichments[targetID, default: []].append(contentsOf: extra)
+                enrichments[ActionID(entry.action), default: []].append(contentsOf: extra)
             } else {
-                // Target not in module list or needs user input: create synthetic action
                 synthetics.append(buildAction(from: entry))
             }
         }
@@ -113,6 +102,20 @@ final class AliasManager {
             keywordEnrichments: enrichments,
             syntheticActions: synthetics
         )
+    }
+
+    /// Whether `entry` only adds its name and keywords to an action that's already listed,
+    /// rather than getting a picker entry of its own. That leaves out aliases that open a
+    /// URL or folder, or give the action parameters: preset ones, or a `{query}`.
+    nonisolated static func enriches(_ entry: AliasEntry, actionIDs: Set<ActionID>) -> Bool {
+        let isDirectOpen = entry.action.hasPrefix("http://")
+            || entry.action.hasPrefix("https://")
+            || entry.action.hasPrefix("/")
+            || entry.action.hasPrefix("~/")
+        return !isDirectOpen
+            && !entry.action.contains("{query}")
+            && (entry.parameters ?? [:]).isEmpty
+            && actionIDs.contains(ActionID(entry.action))
     }
 
     // MARK: - Private

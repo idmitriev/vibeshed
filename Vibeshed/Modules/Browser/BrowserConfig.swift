@@ -13,3 +13,18 @@ struct BrowserConfig: Codable, Sendable, Equatable {
     /// Whether to show "Close Tab" actions alongside focus actions.
     var showCloseActions: Bool = true
 }
+
+extension BrowserConfig {
+    /// Every key is optional: a missing one keeps its default above instead of failing
+    /// the whole section (see `ApplicationConfig`).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
+        browsers = try container.decodeIfPresent([String].self, forKey: .browsers) ?? defaults.browsers
+        cacheTTLSeconds = try container.decodeIfPresent(Double.self, forKey: .cacheTTLSeconds)
+            ?? defaults.cacheTTLSeconds
+        maxResults = try container.decodeIfPresent(Int.self, forKey: .maxResults) ?? defaults.maxResults
+        showCloseActions = try container.decodeIfPresent(Bool.self, forKey: .showCloseActions)
+            ?? defaults.showCloseActions
+    }
+}

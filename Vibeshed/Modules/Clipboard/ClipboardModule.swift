@@ -146,7 +146,8 @@ actor ClipboardModule: ModuleConfigurable {
                     type: .dynamicSelection(hint: "item"),
                     isRequired: true
                 ),
-            ]
+            ],
+            typesIntoFrontmostApp: pasteOnSelect
         ) { values in
             guard let itemID = values["item"] else {
                 return .showResult(title: "Error", body: "No clipboard item selected")

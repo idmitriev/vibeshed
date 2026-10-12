@@ -75,6 +75,11 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
     /// or context boosts, and survive the result cap. Default `false`.
     var isFallback: Bool { get }
 
+    /// Types into the app the user was in — paste on select posts ⌘V. That needs the
+    /// keyboard focus the picker holds, so a Shift run of such an action closes the
+    /// picker like a plain run instead of keeping it open. Default `false`.
+    var typesIntoFrontmostApp: Bool { get }
+
     @MainActor
     func makeListItemView() -> AnyView?
     @MainActor
@@ -115,6 +120,10 @@ extension Action {
     }
 
     var isFallback: Bool {
+        false
+    }
+
+    var typesIntoFrontmostApp: Bool {
         false
     }
 

@@ -89,6 +89,11 @@ struct ParameterInputView: View {
                                 .fill(isSelected ? theme.accent : Color.clear)
                         )
                         .padding(.horizontal, 8)
+                        .activationPulse(
+                            trigger: state.optionActivationCounters[option.id] ?? 0,
+                            cornerRadius: 8,
+                            inset: 8
+                        )
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             state.selectedParameterOptionID = option.id
@@ -228,7 +233,9 @@ struct ParameterOptionRow: View, Equatable {
     var body: some View {
         HStack(spacing: 12) {
             Group {
-                if let iconURL = option.iconURL {
+                if let iconURL = option.iconURL, !iconURL.isFileURL {
+                    RemoteThumbnail(url: iconURL, placeholderSymbol: option.iconName, symbolColor: iconColor)
+                } else if let iconURL = option.iconURL {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: iconURL.path))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -238,7 +245,8 @@ struct ParameterOptionRow: View, Equatable {
                         .foregroundStyle(iconColor)
                 }
             }
-            .frame(width: 32, height: 32)
+            // Thumbnails get a landscape frame.
+            .frame(width: option.iconURL?.isFileURL == false ? 48 : 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 highlightedLabel
@@ -309,6 +317,34 @@ struct ParameterOptionRow: View, Equatable {
             attributed[attrRange].underlineStyle = .single
         }
         return attributed
+    }
+}
+
+/// A web image (a search result's thumbnail) cropped to its frame, with the symbol
+/// standing in until it loads or if it can't.
+struct RemoteThumbnail: View {
+    let url: URL
+    var placeholderSymbol: String?
+    var symbolColor: Color = .secondary
+
+    var body: some View {
+        // The clear base takes the offered frame; a filling image would otherwise
+        // overhang it, since clipping happens to the image's own (larger) bounds.
+        Color.clear
+            .overlay {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: placeholderSymbol ?? "photo")
+                            .font(.title3)
+                            .foregroundStyle(symbolColor.opacity(phase.error == nil ? 0.4 : 0.8))
+                    }
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 4))
     }
 }
 

@@ -53,15 +53,30 @@ enum AXWindowHelper {
         return ""
     }
 
-    /// List all AX windows for a given PID.
-    static func windows(for pid: pid_t) -> [AXUIElement] {
+    /// List all AX windows for a given PID. A `messagingTimeout` (seconds) is given to the
+    /// app element and to every returned window, as in `focusedWindow(for:messagingTimeout:)`.
+    static func windows(for pid: pid_t, messagingTimeout: Float? = nil) -> [AXUIElement] {
+        windowsIfAvailable(for: pid, messagingTimeout: messagingTimeout) ?? []
+    }
+
+    /// Like `windows(for:messagingTimeout:)`, but nil when the query fails (no Accessibility
+    /// permission, app not responding). A running app with no windows gives an empty list.
+    static func windowsIfAvailable(for pid: pid_t, messagingTimeout: Float? = nil) -> [AXUIElement]? {
         let appElement = AXUIElementCreateApplication(pid)
+        if let messagingTimeout {
+            AXUIElementSetMessagingTimeout(appElement, messagingTimeout)
+        }
         var windowsRef: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(
             appElement, kAXWindowsAttribute as CFString, &windowsRef
         )
         guard result == .success, let axWindows = windowsRef as? [AXUIElement] else {
-            return []
+            return nil
+        }
+        if let messagingTimeout {
+            for window in axWindows {
+                AXUIElementSetMessagingTimeout(window, messagingTimeout)
+            }
         }
         return axWindows
     }
@@ -100,6 +115,17 @@ enum AXWindowHelper {
         AXUIElementSetAttributeValue(
             element, kAXMinimizedAttribute as CFString, kCFBooleanFalse
         )
+    }
+
+    /// True if the element's role is AXWindow. Some apps list other elements among their
+    /// AX windows, e.g. Finder's desktop is an AXScrollArea.
+    static func isWindow(_ element: AXUIElement) -> Bool {
+        var ref: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(
+            element, kAXRoleAttribute as CFString, &ref
+        )
+        guard result == .success, let role = ref as? String else { return false }
+        return role == kAXWindowRole as String
     }
 
     /// True if the AX window's subrole marks it as a normal content window

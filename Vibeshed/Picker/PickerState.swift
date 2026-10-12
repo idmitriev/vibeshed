@@ -35,6 +35,9 @@ final class PickerState {
 
     var activeAction: (any Action)?
     var collectedValues: ParameterValues = [:]
+    /// What the user picked or typed for each confirmed parameter, as shown (an option's
+    /// label, not its ID). Defaults and skipped parameters have none.
+    var collectedLabels: [String: String] = [:]
     var currentParameter: ActionParameter?
     var parameterOptions: [ParameterOption] = []
     var selectedParameterOptionID: String? {
@@ -60,6 +63,13 @@ final class PickerState {
 
     func bumpActivation(for id: ActionID) {
         activationCounters[id, default: 0] += 1
+    }
+
+    /// The same for parameter options, keyed by option ID.
+    var optionActivationCounters: [String: Int] = [:]
+
+    func bumpActivation(forOption id: String) {
+        optionActivationCounters[id, default: 0] += 1
     }
 
     // MARK: - Publishers
@@ -122,6 +132,7 @@ final class PickerState {
         modeStack = []
         activeAction = nil
         collectedValues = [:]
+        collectedLabels = [:]
         currentParameter = nil
         parameterOptions = []
         selectedParameterOptionID = nil
@@ -129,6 +140,23 @@ final class PickerState {
         layoutCorrectionHint = nil
         actionCache = [:]
         activationCounters = [:]
+        optionActivationCounters = [:]
+    }
+
+    /// Readies the picker for another run after one that kept it open (Shift held):
+    /// clears what was typed and, in a parameter step, un-confirms that step's value
+    /// so the next Return picks a new one. The mode and earlier steps' values stay
+    /// as they were.
+    func prepareForAnotherRun() {
+        switch mode {
+        case .search, .pushedActions:
+            query = ""
+        case .parameterInput:
+            if let currentParameter {
+                collectedValues[currentParameter.id] = nil
+            }
+            parameterQuery = ""
+        }
     }
 
     // MARK: - Selection navigation
@@ -182,6 +210,7 @@ final class PickerState {
     func enterParameterMode(action: any Action) {
         activeAction = action
         collectedValues = [:]
+        collectedLabels = [:]
         // Pre-fill defaults
         for param in action.parameters {
             if let defaultValue = param.defaultValue {
@@ -225,6 +254,15 @@ final class PickerState {
 
     func confirmParameterValue(_ value: String, forParameterID parameterID: String) {
         collectedValues[parameterID] = value
+        // Capture the label now: dynamic options are replaced once the next parameter loads.
+        collectedLabels[parameterID] = parameterOptions.first { $0.id == value }?.label ?? value
+    }
+
+    /// Labels of the confirmed values in parameter order, for the search-field pill
+    /// (Search Wallpapers › Wallhaven).
+    var confirmedValueLabels: [String] {
+        guard let action = activeAction else { return [] }
+        return action.parameters.compactMap { collectedLabels[$0.id] }.filter { !$0.isEmpty }
     }
 
     var allRequiredParametersFilled: Bool {

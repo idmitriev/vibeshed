@@ -187,7 +187,8 @@ private struct ActivationPulseModifier: ViewModifier {
     }
 }
 
-private extension View {
+extension View {
+    /// Plays the activation pulse (a quick press-and-glow) each time `trigger` changes.
     func activationPulse(trigger: Int, cornerRadius: CGFloat, inset: CGFloat) -> some View {
         modifier(ActivationPulseModifier(trigger: trigger, cornerRadius: cornerRadius, inset: inset))
     }

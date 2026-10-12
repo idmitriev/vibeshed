@@ -83,7 +83,8 @@ actor EmojiModule: ModuleConfigurable {
                     type: .dynamicSelection(hint: "emoji"),
                     isRequired: true
                 ),
-            ]
+            ],
+            typesIntoFrontmostApp: pasteOnSelect
         ) { values in
             guard let char = values["emoji"], !char.isEmpty else {
                 return .showResult(title: "Error", body: "No emoji selected")
@@ -102,7 +103,8 @@ actor EmojiModule: ModuleConfigurable {
             title: "\(char)  \(entry.name.capitalized)",
             subtitle: pasteOnSelect ? "Paste emoji" : "Copy emoji to clipboard",
             iconName: "face.smiling",
-            keywords: ["emoji", entry.name] + entry.keywords
+            keywords: ["emoji", entry.name] + entry.keywords,
+            typesIntoFrontmostApp: pasteOnSelect
         ) { _ in
             await Self.deliver(char, pasteOnSelect: pasteOnSelect)
             return .dismiss

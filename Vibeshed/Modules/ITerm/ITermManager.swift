@@ -21,9 +21,11 @@ struct ITermSession: Sendable {
 // MARK: - Manager
 
 enum ITermManager {
+    private static let bundleID = "com.googlecode.iterm2"
+
     static func isRunning() -> Bool {
         NSWorkspace.shared.runningApplications.contains {
-            $0.bundleIdentifier == "com.googlecode.iterm2"
+            $0.bundleIdentifier == bundleID
         }
     }
 
@@ -76,13 +78,16 @@ enum ITermManager {
         profile: String?,
         command: String?
     ) async throws {
+        let launched = try await launchIfNeeded()
+        let reuseStartup = launched && isPlain(profile: profile, command: command)
         let profileClause = profilePart(profile)
         let commandClause = commandPart(command)
         let script = """
         tell application "iTerm2"
+            \(launched ? awaitStartupWindowsClause : "")
             if (count of windows) is 0 then
                 create window with \(profileClause)\(commandClause)
-            else
+            else if not \(reuseStartup) then
                 tell current window
                     create tab with \(profileClause)\(commandClause)
                 end tell
@@ -90,7 +95,7 @@ enum ITermManager {
             activate
         end tell
         """
-        try await runScript(script)
+        try await runScript(script, timeout: 15)
     }
 
     /// Creates a new window, optionally with a specific profile
@@ -99,16 +104,61 @@ enum ITermManager {
         profile: String?,
         command: String?
     ) async throws {
+        let launched = try await launchIfNeeded()
+        let reuseStartup = launched && isPlain(profile: profile, command: command)
         let profileClause = profilePart(profile)
         let commandClause = commandPart(command)
         let script = """
         tell application "iTerm2"
-            create window with \(profileClause)\(commandClause)
+            \(launched ? awaitStartupWindowsClause : "")
+            if (count of windows) is 0 or not \(reuseStartup) then
+                create window with \(profileClause)\(commandClause)
+            end if
             activate
         end tell
         """
-        try await runScript(script)
+        try await runScript(script, timeout: 15)
     }
+
+    // MARK: - Launching
+
+    /// Launches iTerm when it isn't running; returns whether it did.
+    private static func launchIfNeeded() async throws -> Bool {
+        guard !isRunning() else { return false }
+        log.debug("iTerm not running, launching it")
+        try await launch()
+        return true
+    }
+
+    /// A plain tab or window (default profile, no command) is what iTerm's own
+    /// startup window already is; scripting another on top of it would leave two.
+    private static func isPlain(profile: String?, command: String?) -> Bool {
+        (profile ?? "").isEmpty && (command ?? "").isEmpty
+    }
+
+    @MainActor
+    private static func launch() async throws {
+        guard let url = NSWorkspace.shared.urlForApplication(
+            withBundleIdentifier: bundleID
+        ) else {
+            throw AppleScriptError.appNotRunning("iTerm2")
+        }
+        try await NSWorkspace.shared.openApplication(
+            at: url,
+            configuration: NSWorkspace.OpenConfiguration()
+        )
+    }
+
+    /// A freshly launched iTerm opens (or restores) its windows a moment after it
+    /// starts answering AppleScript; wait for them so a script's "no windows" branch
+    /// doesn't race them into an extra window. Gives up after 3s, for setups that
+    /// open no window on launch — the script then creates one itself.
+    private static let awaitStartupWindowsClause = """
+    repeat 30 times
+        if (count of windows) > 0 then exit repeat
+        delay 0.1
+    end repeat
+    """
 
     // MARK: - Script Builders
 
@@ -240,11 +290,15 @@ enum ITermManager {
     // MARK: - Script Runner
 
     @discardableResult
-    private static func runScript(_ script: String) async throws -> String {
+    private static func runScript(
+        _ script: String,
+        timeout: TimeInterval = 5
+    ) async throws -> String {
+        // Asking iTerm anything launches it; a stale session row mustn't do that.
         guard isRunning() else {
             log.debug("iTerm not running, skipping script")
             throw AppleScriptError.appNotRunning("iTerm2")
         }
-        return try await AppleScriptRunner.run(script)
+        return try await AppleScriptRunner.run(script, timeout: timeout)
     }
 }

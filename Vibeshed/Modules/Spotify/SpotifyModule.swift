@@ -1,5 +1,6 @@
 import Foundation
 import OSLog
+import SwiftUI
 
 actor SpotifyModule: ModuleConfigurable {
     let id = "spotify"
@@ -16,14 +17,39 @@ actor SpotifyModule: ModuleConfigurable {
         [SpotifyManager.bundleID]
     }
 
-    private var config: SpotifyConfig = .init()
-    private var searchClient: SpotifySearchClient?
-    private let log = Log.module("spotify")
+    /// The search action's parameter: the picked result's URI.
+    static let itemParameterID = "item"
+    /// Shorter queries list nothing yet.
+    static let minimumQueryLength = 2
+    /// How long typing has to pause before a search runs; each one starts a process.
+    static let searchDelay: Duration = .milliseconds(200)
+    /// How long Spotify gets to start up and sign in before a search or play gives up.
+    static let launchTimeout: Duration = .seconds(20)
+    private static let messageOptionID = "message:search"
+
+    private(set) var config: SpotifyConfig = .init()
+    private(set) var searchClient: SpotifySearchClient?
+    let log = Log.module("spotify")
+    /// Finds `spotify_cli`; tests hand in their own.
+    private let locateCLI: @Sendable () -> SpotifyCLI?
+    private var searchGeneration = 0
+    /// The launch in progress, shared by every search and play waiting on it.
+    private var launching: Task<Void, Error>?
+    /// The latest search error, for the message row that reports it.
+    private var lastSearchError: String?
+
+    init(locateCLI: @escaping @Sendable () -> SpotifyCLI? = SpotifyCLI.locate) {
+        self.locateCLI = locateCLI
+    }
 
     func initialize(context: ModuleContext) async throws {
         updateSearchClient()
-        let clientState = searchClient != nil ? "enabled" : "disabled"
-        log.info("Spotify module initialized (searchClient: \(clientState, privacy: .public))")
+        let source = switch backend {
+        case .cli: "spotify_cli"
+        case .webAPI: "Web API"
+        case nil: "none"
+        }
+        log.info("Spotify module initialized (search: \(source, privacy: .public))")
     }
 
     func configDidUpdate(_ config: SpotifyConfig) async {
@@ -46,8 +72,7 @@ actor SpotifyModule: ModuleConfigurable {
         if config.maxSearchResults < 1 || config.maxSearchResults > 50 {
             errors.append("maxSearchResults must be between 1 and 50")
         }
-        let validTypes: Set<String> = ["track", "album", "artist", "playlist"]
-        for searchType in config.searchTypes where !validTypes.contains(searchType) {
+        for searchType in config.searchTypes where SpotifyItemType.searchable[searchType] == nil {
             errors.append("Invalid search type: '\(searchType)'. Valid: track, album, artist, playlist")
         }
         return errors.isEmpty ? .valid : .invalid(errors)
@@ -57,7 +82,14 @@ actor SpotifyModule: ModuleConfigurable {
         await buildActions()
     }
 
-    // MARK: - Private
+    func provideParameterOptions(
+        for parameterID: String,
+        in _: ActionID,
+        query: String
+    ) async -> [ParameterOption] {
+        guard parameterID == Self.itemParameterID else { return [] }
+        return await searchOptions(query)
+    }
 
     private func updateSearchClient() {
         if let clientId = config.clientId,
@@ -69,330 +101,148 @@ actor SpotifyModule: ModuleConfigurable {
         }
     }
 
-    private func buildActions() async -> [SpotifyAction] {
-        let enabled = config.enabledActions
-        var actions: [SpotifyAction] = []
+    // MARK: - Backend
 
-        if config.showNowPlaying {
-            if let action = await buildNowPlayingAction() {
-                actions.append(action)
+    /// Where search and Like go: Spotify's own CLI when the installed app has it,
+    /// else the Web API when a client ID is configured.
+    enum Backend: Sendable {
+        case cli(SpotifyCLI)
+        case webAPI(SpotifySearchClient)
+    }
+
+    var backend: Backend? {
+        if let cli = locateCLI() { return .cli(cli) }
+        return searchClient.map(Backend.webAPI)
+    }
+
+    /// Runs `operation`; if the CLI found Spotify not running, starts it in the
+    /// background and runs `operation` again once it's up.
+    func whileRunning<T: Sendable>(
+        _ cli: SpotifyCLI,
+        _ operation: @Sendable () async throws -> T
+    ) async throws -> T {
+        do {
+            return try await operation()
+        } catch SpotifyCLIError.notRunning {
+            try await launch(cli)
+            return try await operation()
+        }
+    }
+
+    private func launch(_ cli: SpotifyCLI) async throws {
+        if let launching {
+            return try await launching.value
+        }
+        log.info("Spotify isn't running, launching it in the background")
+        let task = Task {
+            try await SpotifyManager.launchInBackground()
+            try await cli.waitUntilReady(timeout: Self.launchTimeout)
+        }
+        launching = task
+        defer { launching = nil }
+        try await task.value
+    }
+
+    // MARK: - Search
+
+    func searchOptions(_ query: String) async -> [ParameterOption] {
+        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= Self.minimumQueryLength, let backend else { return [] }
+        searchGeneration += 1
+        let generation = searchGeneration
+        try? await Task.sleep(for: Self.searchDelay)
+        // A newer query came in meanwhile; the picker drops this answer anyway.
+        guard generation == searchGeneration else { return [] }
+
+        do {
+            return try await search(query, with: backend).map(Self.option(for:))
+        } catch {
+            log.warning("Search failed: \(error.localizedDescription, privacy: .public)")
+            lastSearchError = error.localizedDescription
+            return [Self.messageOption(for: error)]
+        }
+    }
+
+    private func search(_ query: String, with backend: Backend) async throws -> [SpotifySearchItem] {
+        let types = config.searchTypes
+        let limit = config.maxSearchResults
+        switch backend {
+        case let .cli(cli):
+            return try await whileRunning(cli) {
+                try await cli.search(query, types: types, limitPerType: limit)
+            }
+        case let .webAPI(client):
+            return try await client.search(query: query, types: types, limit: limit)
+        }
+    }
+
+    static func option(for item: SpotifySearchItem) -> ParameterOption {
+        ParameterOption(
+            id: item.uri,
+            label: item.name,
+            subtitle: item.subtitle,
+            iconName: item.kind.iconName,
+            iconURL: item.artworkURL,
+            makePreview: { AnyView(SpotifySearchItemPreview(item: item)) }
+        )
+    }
+
+    private static func messageOption(for error: Error) -> ParameterOption {
+        ParameterOption(
+            id: messageOptionID,
+            label: error.localizedDescription,
+            subtitle: error as? SpotifyCLIError == .notRunning ? "Open Spotify and sign in, then search again" : nil,
+            iconName: "exclamationmark.triangle"
+        )
+    }
+
+    // MARK: - Playing
+
+    /// What the search action does with the picked option.
+    func playResult(_ optionID: String) async throws -> ActionResult {
+        if optionID == Self.messageOptionID {
+            return .showResult(title: "Spotify Search", body: lastSearchError ?? "")
+        }
+        try await play(optionID)
+        return .dismiss
+    }
+
+    /// Plays through the CLI, starting Spotify first when it isn't running; AppleScript
+    /// plays it when the CLI is missing or fails.
+    func play(_ uri: String) async throws {
+        if let cli = locateCLI() {
+            do {
+                return try await whileRunning(cli) { try await cli.play(uri) }
+            } catch {
+                let reason = error.localizedDescription
+                log.warning("spotify_cli couldn't play \(uri, privacy: .public): \(reason, privacy: .public)")
             }
         }
-
-        if SpotifyManager.isRunning() {
-            if let action = buildLikeAction() {
-                actions.append(action)
-            }
-            actions.append(contentsOf: buildPlaybackActions())
-        }
-
-        actions.append(contentsOf: buildSearchActions())
-
-        if let enabled {
-            return actions.filter { enabled.contains(actionName($0.id)) }
-        }
-        return actions
-    }
-
-    private func actionName(_ id: ActionID) -> String {
-        id.actionName
-    }
-
-    // MARK: - Now Playing
-
-    private func buildNowPlayingAction() async -> SpotifyAction? {
-        guard SpotifyManager.isRunning(),
-              let np = try? await SpotifyManager.nowPlaying()
-        else { return nil }
-
-        let stateIcon = np.isPlaying ? "pause.circle" : "play.circle"
-        return SpotifyAction(
-            id: ActionID(module: "spotify", name: "nowPlaying"),
-            title: np.trackName,
-            subtitle: "\(np.artistName) — \(np.albumName)",
-            iconName: stateIcon,
-            relevanceScore: 0.95,
-            keywords: [
-                "spotify", "now", "playing", "current", "track",
-                np.trackName.lowercased(), np.artistName.lowercased(),
-            ],
-            artworkURL: np.artworkURL,
-            spotifyItemType: .nowPlaying,
-            durationMs: np.durationMs
-        ) { _ in
-            try await SpotifyManager.playPause()
-            return .dismiss
-        }
-    }
-
-    // MARK: - Like / Unlike
-
-    private func buildLikeAction() -> SpotifyAction? {
-        guard let client = searchClient else { return nil }
-
-        return SpotifyAction(
-            id: ActionID(module: "spotify", name: "likeTrack"),
-            title: "Like / Unlike Current Track",
-            subtitle: "Toggle current track in Liked Songs",
-            iconName: "heart",
-            relevanceScore: 0.8,
-            keywords: ["spotify", "like", "unlike", "save", "heart", "favourite", "favorite", "liked"],
-            spotifyItemType: .control
-        ) { [client] _ in
-            guard let np = try? await SpotifyManager.nowPlaying(),
-                  let trackId = Self.extractTrackId(np.trackID)
-            else {
-                return .showResult(title: "No Track", body: "No track is currently playing")
-            }
-
-            let isSaved = try await client.isTrackSaved(trackId)
-            if isSaved {
-                try await client.removeSavedTrack(trackId)
-                return .showResult(title: "Removed", body: "\(np.trackName) removed from Liked Songs")
-            } else {
-                try await client.saveTrack(trackId)
-                return .showResult(title: "Liked", body: "\(np.trackName) added to Liked Songs")
-            }
-        }
-    }
-
-    private static func extractTrackId(_ spotifyId: String) -> String? {
-        let parts = spotifyId.split(separator: ":")
-        guard parts.count >= 3, parts[1] == "track" else { return nil }
-        return String(parts[2])
-    }
-
-    // MARK: - Playback Actions
-
-    private func buildPlaybackActions() -> [SpotifyAction] {
-        PlaybackControl.all.map { control in
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: control.name),
-                title: control.title,
-                subtitle: control.subtitle,
-                iconName: control.iconName,
-                relevanceScore: control.relevanceScore,
-                keywords: control.keywords,
-                spotifyItemType: .control
-            ) { _ in
-                try await control.command()
-                return .dismiss
-            }
-        }
-    }
-
-    // MARK: - Search Actions
-
-    private func buildSearchActions() -> [SpotifyAction] {
-        var actions: [SpotifyAction] = []
-
-        if let client = searchClient {
-            let config = self.config
-            actions.append(SpotifyAction(
-                id: ActionID(module: "spotify", name: "search"),
-                title: "Search Spotify",
-                subtitle: "Search tracks, albums, artists, playlists",
-                iconName: "magnifyingglass",
-                relevanceScore: 0.9,
-                keywords: ["spotify", "search", "find", "music"],
-                parameters: [
-                    ActionParameter(
-                        id: "query",
-                        label: "Search Query",
-                        type: .text(placeholder: "Search tracks, albums, artists..."),
-                        isRequired: true
-                    ),
-                ],
-                spotifyItemType: .control
-            ) { [client, config] values in
-                guard let query = values["query"], !query.isEmpty else {
-                    return .showResult(title: "Search", body: "Please enter a search query")
-                }
-                let results = try await client.search(
-                    query: query,
-                    types: config.searchTypes,
-                    limit: config.maxSearchResults
-                )
-                let resultActions = Self.buildSearchResultActions(results)
-                if resultActions.isEmpty {
-                    return .showResult(title: "No Results", body: "No results for \"\(query)\"")
-                }
-                return .pushActions(resultActions)
-            })
-        }
-
-        actions.append(SpotifyAction(
-            id: ActionID(module: "spotify", name: "quickSearch"),
-            title: "Open Spotify Search",
-            subtitle: "Search in Spotify app",
-            iconName: "magnifyingglass",
-            relevanceScore: searchClient != nil ? 0.6 : 0.85,
-            keywords: ["spotify", "search", "find", "open"],
-            parameters: [
-                ActionParameter(
-                    id: "query",
-                    label: "Search Query",
-                    type: .text(placeholder: "Search in Spotify..."),
-                    isRequired: true
-                ),
-            ],
-            spotifyItemType: .control
-        ) { values in
-            let query = values["query"] ?? ""
-            let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-            try await SpotifyManager.openURI("spotify:search:\(encoded)")
-            return .dismiss
-        })
-
-        return actions
+        try await SpotifyManager.play(uri)
     }
 }
 
-// MARK: - Search Result Actions
+// MARK: - Library
 
-extension SpotifyModule {
-    private static func buildSearchResultActions(
-        _ results: SpotifySearchResults
-    ) -> [SpotifyAction] {
-        var actions: [SpotifyAction] = []
-        actions.append(contentsOf: buildTrackResults(results.tracks))
-        actions.append(contentsOf: buildAlbumResults(results.albums))
-        actions.append(contentsOf: buildArtistResults(results.artists))
-        actions.append(contentsOf: buildPlaylistResults(results.playlists))
-        return actions
-    }
-
-    private static func buildTrackResults(_ tracks: [SpotifyTrack]) -> [SpotifyAction] {
-        tracks.enumerated().map { index, track in
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "result.track.\(track.id)"),
-                title: track.name,
-                subtitle: "\(track.artistName) — \(track.albumName)",
-                iconName: "music.note",
-                relevanceScore: rankedScore(index: index),
-                keywords: ["track", track.name.lowercased(), track.artistName.lowercased()],
-                artworkURL: track.artworkURL,
-                spotifyItemType: .track,
-                durationMs: track.durationMs
-            ) { _ in
-                try await SpotifyManager.openURI(track.uri)
-                return .dismiss
-            }
+extension SpotifyModule.Backend {
+    func isInLibrary(_ uri: String) async throws -> Bool {
+        switch self {
+        case let .cli(cli): try await cli.isInLibrary(uri)
+        case let .webAPI(client): try await client.isInLibrary(uri)
         }
     }
 
-    private static func buildAlbumResults(_ albums: [SpotifyAlbum]) -> [SpotifyAction] {
-        albums.enumerated().map { index, album in
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "result.album.\(album.id)"),
-                title: album.name,
-                subtitle: album.artistName,
-                iconName: "square.stack",
-                relevanceScore: max(0.3, 0.90 - Double(index) * 0.02),
-                keywords: ["album", album.name.lowercased(), album.artistName.lowercased()],
-                artworkURL: album.artworkURL,
-                spotifyItemType: .album
-            ) { _ in
-                try await SpotifyManager.openURI(album.uri)
-                return .dismiss
-            }
+    func addToLibrary(_ uri: String) async throws {
+        switch self {
+        case let .cli(cli): try await cli.addToLibrary(uri)
+        case let .webAPI(client): try await client.addToLibrary(uri)
         }
     }
 
-    private static func buildArtistResults(_ artists: [SpotifyArtist]) -> [SpotifyAction] {
-        artists.enumerated().map { index, artist in
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "result.artist.\(artist.id)"),
-                title: artist.name,
-                subtitle: "Artist",
-                iconName: "person",
-                relevanceScore: max(0.3, 0.88 - Double(index) * 0.02),
-                keywords: ["artist", artist.name.lowercased()],
-                artworkURL: artist.artworkURL,
-                spotifyItemType: .artist
-            ) { _ in
-                try await SpotifyManager.openURI(artist.uri)
-                return .dismiss
-            }
+    func removeFromLibrary(_ uri: String) async throws {
+        switch self {
+        case let .cli(cli): try await cli.removeFromLibrary(uri)
+        case let .webAPI(client): try await client.removeFromLibrary(uri)
         }
     }
-
-    private static func buildPlaylistResults(_ playlists: [SpotifyPlaylist]) -> [SpotifyAction] {
-        playlists.enumerated().map { index, playlist in
-            SpotifyAction(
-                id: ActionID(module: "spotify", name: "result.playlist.\(playlist.id)"),
-                title: playlist.name,
-                subtitle: "by \(playlist.ownerName) · \(playlist.trackCount) tracks",
-                iconName: "music.note.list",
-                relevanceScore: max(0.3, 0.85 - Double(index) * 0.02),
-                keywords: ["playlist", playlist.name.lowercased(), playlist.ownerName.lowercased()],
-                artworkURL: playlist.artworkURL,
-                spotifyItemType: .playlist
-            ) { _ in
-                try await SpotifyManager.openURI(playlist.uri)
-                return .dismiss
-            }
-        }
-    }
-}
-
-// MARK: - Playback Controls
-
-/// Transport controls offered while Spotify is running.
-private struct PlaybackControl: Sendable {
-    let name: String
-    let title: String
-    let subtitle: String
-    let iconName: String
-    let relevanceScore: Double
-    let keywords: [String]
-    let command: @Sendable () async throws -> Void
-
-    static let all: [PlaybackControl] = [
-        PlaybackControl(
-            name: "playPause",
-            title: "Play / Pause",
-            subtitle: "Toggle Spotify playback",
-            iconName: "playpause",
-            relevanceScore: 0.9,
-            keywords: ["spotify", "play", "pause", "music", "media"],
-            command: { try await SpotifyManager.playPause() }
-        ),
-        PlaybackControl(
-            name: "next",
-            title: "Next Track",
-            subtitle: "Skip to next track in Spotify",
-            iconName: "forward.end",
-            relevanceScore: 0.85,
-            keywords: ["spotify", "next", "skip", "forward", "track"],
-            command: { try await SpotifyManager.nextTrack() }
-        ),
-        PlaybackControl(
-            name: "previous",
-            title: "Previous Track",
-            subtitle: "Go to previous track in Spotify",
-            iconName: "backward.end",
-            relevanceScore: 0.85,
-            keywords: ["spotify", "previous", "back", "rewind", "track"],
-            command: { try await SpotifyManager.previousTrack() }
-        ),
-        PlaybackControl(
-            name: "shuffle",
-            title: "Toggle Shuffle",
-            subtitle: "Toggle shuffle mode in Spotify",
-            iconName: "shuffle",
-            relevanceScore: 0.7,
-            keywords: ["spotify", "shuffle", "random"],
-            command: { try await SpotifyManager.toggleShuffle() }
-        ),
-        PlaybackControl(
-            name: "repeat",
-            title: "Toggle Repeat",
-            subtitle: "Toggle repeat mode in Spotify",
-            iconName: "repeat",
-            relevanceScore: 0.7,
-            keywords: ["spotify", "repeat", "loop"],
-            command: { try await SpotifyManager.toggleRepeat() }
-        ),
-    ]
 }

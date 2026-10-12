@@ -4,13 +4,25 @@ import Foundation
 /// for file length; `executeAction` is internal (not private) because the
 /// coordinator's return handlers call it.
 extension PickerCoordinator {
-    func executeAction(_ action: any Action, values: ParameterValues) async {
-        Log.picker.debug("Executing action '\(action.id, privacy: .public)'")
-        panelController.hideAndReset()
+    /// Runs `action`, closing the picker first unless `keepOpen` — a Shift run, which
+    /// leaves the picker as the activation set it up for the next run
+    /// (`PickerState.prepareForAnotherRun`), chained actions included. The picker then
+    /// holds on to keyboard focus if an app the action brings forward takes it.
+    ///
+    /// An action that types into the user's app (paste on select) can't run with the
+    /// picker focused, so it closes the picker even on a Shift run.
+    func executeAction(_ action: any Action, values: ParameterValues, keepOpen: Bool = false) async {
+        let keepOpen = keepOpen && !action.typesIntoFrontmostApp
+        Log.picker.debug("Executing action '\(action.id, privacy: .public)', keepOpen: \(keepOpen)")
+        if keepOpen {
+            panelController.holdKeyFocusThroughActions()
+        } else {
+            panelController.hideAndReset()
+        }
         do {
             let result = try await action.run(with: values)
             usageTracker?.recordUsage(actionID: action.id)
-            await handleActionResult(result, of: action)
+            await handleActionResult(result, of: action, keepOpen: keepOpen)
         } catch {
             Log.picker
                 .error(
@@ -25,7 +37,7 @@ extension PickerCoordinator {
         }
     }
 
-    private func handleActionResult(_ result: ActionResult, of action: any Action) async {
+    private func handleActionResult(_ result: ActionResult, of action: any Action, keepOpen: Bool) async {
         switch result {
         case .dismiss:
             break
@@ -34,7 +46,11 @@ extension PickerCoordinator {
             await showMessage(PickerMessageAction(source: action.id, title: title, body: body, isFailure: false))
 
         case .keepOpen:
-            panelController.showRetainingState()
+            // A run that kept the picker open has nothing to bring back — and if the
+            // picker was closed since, that was the user's doing.
+            if !keepOpen {
+                panelController.showRetainingState()
+            }
 
         case let .pushActions(actions):
             showPushedActions(actions)
@@ -45,7 +61,7 @@ extension PickerCoordinator {
                     Log.picker.error("Chained action '\(actionID, privacy: .public)' not found")
                     return
                 }
-                await executeAction(action, values: chainValues)
+                await executeAction(action, values: chainValues, keepOpen: keepOpen)
             }
         }
     }
@@ -65,6 +81,9 @@ extension PickerCoordinator {
         }
         pickerState.pushMode(.pushedActions)
         pickerState.updateActions(items, cache: cache)
-        panelController.showRetainingState()
+        // Re-presenting a picker that's still up would replay its show animation.
+        if !panelController.isVisible {
+            panelController.showRetainingState()
+        }
     }
 }

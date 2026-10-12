@@ -5,6 +5,7 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
     case glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset, arcs, halftone
     case pulsar, guilloche, sashiko, attractor
     case bauhaus, destijl, truchet, terrazzo, circles, isometric, penrose
+    case flow, lens, papercut, automata, cyclic, chladni, complex, growth
     case leaves, warp, ascii, polyhedra, maze, dither, pipes
     case pebbles, macpattern, pinstripe
     case clouds, azul, winpattern, boing, rain
@@ -13,9 +14,18 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
     /// Config value that picks a style per theme (stable, so each theme keeps its look).
     static let automatic = "auto"
 
-    /// What `auto` chooses from. Period pieces are left out: they're made for their own
-    /// themes, and adding them would reshuffle every theme's stable pick.
-    static let varied: [WallpaperStyle] = allCases.filter { $0 != .solid && !$0.isPeriodPiece }
+    /// What `auto` chooses from.
+    static let varied: [WallpaperStyle] = allCases.filter(\.joinsAutomatic)
+
+    /// Whether `auto` may pick this style. Period pieces stay out, since they're made for
+    /// their own themes, and so do styles added after the pool was settled: growing it
+    /// would reshuffle every theme's stable pick. Those are opt-in, by name.
+    var joinsAutomatic: Bool {
+        switch self {
+        case .solid, .flow, .lens, .papercut, .automata, .cyclic, .chladni, .complex, .growth: false
+        default: !isPeriodPiece
+        }
+    }
 
     /// Styles drawn in whole-pixel bitmaps, where film grain would spoil the hard edges.
     var isPixelBitmap: Bool {
@@ -53,6 +63,14 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .circles: "Circle Packing"
         case .isometric: "Isometric Terraces"
         case .penrose: "Penrose"
+        case .flow: "Flow"
+        case .lens: "Lens"
+        case .papercut: "Paper Cut"
+        case .automata: "Automata"
+        case .cyclic: "Cyclic"
+        case .chladni: "Chladni"
+        case .complex: "Complex"
+        case .growth: "Growth"
         case .leaves: "Leaves"
         case .warp: "Warp Speed"
         case .ascii: "ASCII Art"
@@ -95,6 +113,14 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .circles: "Circles grown until they touch: solid, ringed and outlined"
         case .isometric: "Isometric blocks stacked to a noise heightmap, shaded on three faces"
         case .penrose: "Penrose's thin and thick rhombs, a tiling that never repeats"
+        case .flow: "Evenly spaced streamlines through a noise field, tapering where they crowd, around a disc"
+        case .lens: "Tilted bands and a sun bent around a black hole by a gravitational lens"
+        case .papercut: "Layered paper sheets with soft shadows, parting around a sun"
+        case .automata: "Panels of elementary cellular automata, each running its own Wolfram rule"
+        case .cyclic: "Griffeath's cyclic cellular automaton: noise that organizes itself into square spirals"
+        case .chladni: "Sand gathering on the still lines of a vibrating plate"
+        case .complex: "A complex function's phase portrait: zeros and poles become pinwheels"
+        case .growth: "Differential growth: a folding ring drawn at every stage, like brain coral"
         case .leaves: "Haiku's Leaves screen saver: gradient leaves piling up on the desktop"
         case .warp: "Star streaks at warp speed, after OS/2 Warp"
         case .ascii: "Terminal-character art: donut.c's lit torus, the Mandelbrot set or aafire's flames"
@@ -137,6 +163,14 @@ enum WallpaperStyle: String, CaseIterable, Sendable {
         case .circles: "circles.hexagonpath"
         case .isometric: "square.stack.3d.up"
         case .penrose: "rhombus"
+        case .flow: "wind"
+        case .lens: "camera.aperture"
+        case .papercut: "square.3.layers.3d.down.right"
+        case .automata: "rectangle.split.3x3"
+        case .cyclic: "arrow.triangle.2.circlepath"
+        case .chladni: "waveform.path"
+        case .complex: "function"
+        case .growth: "brain"
         case .leaves: "leaf"
         case .warp: "sparkles"
         case .ascii: "terminal"

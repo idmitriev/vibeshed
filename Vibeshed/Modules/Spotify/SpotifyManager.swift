@@ -109,16 +109,32 @@ enum SpotifyManager {
         )
     }
 
-    // MARK: - Open URI
+    // MARK: - URIs
 
-    static func openURI(_ uri: String) async throws {
-        let escaped = uri.escapedForAppleScript
-        try await runScript("""
-        tell application "Spotify"
-            open location "\(escaped)"
-            play
-        end tell
-        """)
+    /// Shows a page (a search, an album, …) without touching playback.
+    static func navigate(to uri: String) async throws {
+        try await runScript("tell application \"Spotify\" to open location \"\(uri.escapedForAppleScript)\"")
+    }
+
+    /// Plays a song, or an album, artist or playlist from its start — for when
+    /// `spotify_cli` isn't there to do it. The dictionary calls the URI a track's, but
+    /// `play track` takes the others too (shpotify's `play uri` relies on it), while
+    /// `open location` + `play` only shows the page and resumes what was loaded before.
+    static func play(_ uri: String) async throws {
+        try await runScript("tell application \"Spotify\" to play track \"\(uri.escapedForAppleScript)\"")
+    }
+
+    // MARK: - Launching
+
+    /// Starts Spotify without bringing it in front of the picker.
+    @MainActor
+    static func launchInBackground() async throws {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            throw AppleScriptError.appNotRunning("Spotify")
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        try await NSWorkspace.shared.openApplication(at: url, configuration: configuration)
     }
 
     // MARK: - Private: AppleScript Execution

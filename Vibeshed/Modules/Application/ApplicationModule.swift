@@ -113,7 +113,7 @@ actor ApplicationModule: ModuleConfigurable {
                 return .showResult(title: "Error", body: "Application not found")
             }
             if app.isRunning {
-                let focused = await MainActor.run { mgr.focusApplication(app) }
+                let focused = try await mgr.focusApplication(app)
                 if !focused {
                     return .showResult(title: "Error", body: "Failed to focus \(app.name)")
                 }
@@ -203,7 +203,7 @@ actor ApplicationModule: ModuleConfigurable {
                     try await mgr.launchApplication(app)
                     return .dismiss
                 }
-                let focused = await MainActor.run { mgr.focusApplication(current) }
+                let focused = try await mgr.focusApplication(current)
                 if !focused {
                     return .showResult(title: "Error", body: "Failed to focus \(app.name)")
                 }

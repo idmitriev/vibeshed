@@ -261,6 +261,16 @@ aliases:
     parameters:
       query: "{query}"
 
+  # Aliases with preset parameters run the action with them, as a separate picker
+  # entry. The first-launch config adds this one when Homebrew isn't installed.
+  - alias: "Install Homebrew"
+    action: "terminal/runCommand"
+    icon: "cup.and.saucer"
+    subtitle: "Run the install script from brew.sh in Terminal"
+    keywords: ["homebrew", "brew", "package manager"]
+    parameters:
+      command: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+
   # URL aliases — open URLs directly in a browser
   - alias: "Google"
     action: "https://www.google.com/search?q={query}"
@@ -314,7 +324,9 @@ modules:
       left: 4
       right: 4
       gap: 4
-    includeMinimized: false
+    # window/focusWindow lists the windows on screen, then the minimized ones
+    # (of apps that aren't hidden). false lists only the windows on screen.
+    includeMinimized: true
     enlargeShrinkStep:
       value: 10
       unit: percent
@@ -325,7 +337,7 @@ modules:
     # runtime via window/toggleFocusBorder.
     focusBorder:
       width: 3.0              # points
-      cornerRadius: 18.0      # points, 0 = sharp corners
+      cornerRadius: 16.0      # the windows' corner radius (macOS 27: 16); the ring follows it, 0 = sharp
       minimumSize: 200        # skip windows narrower/shorter than this (dialogs, popovers)
       pollingInterval: 0.1    # seconds between fallback checks; focus/move/resize are event-driven
 
@@ -456,7 +468,7 @@ modules:
   # --- Theme ---
   # Palette themes applied across macOS and apps in one go: appearance, accent +
   # text highlight, folder color, pointer, wallpaper, the Vibeshed picker, iTerm, Ghostty,
-  # VS Code/Cursor/Windsurf, Zed, JetBrains, Claude Code, plus your own templates.
+  # Terminal, VS Code/Cursor/Windsurf, Zed, JetBrains, Neovim, Claude Code, plus your own templates.
   #   theme/switch        browse themes; each previews live as you move, Return applies, Esc reverts
   #   theme/apply.<slug>  apply one directly (e.g. theme/apply.tokyo-night — bind it or alias it)
   #   theme/next, theme/previous, theme/reapply, theme/fromWallpaper
@@ -471,18 +483,21 @@ modules:
     # wallpaperStyle: glow            # glow, mesh, waves, ridges, bokeh, lowpoly, topographic, sunset,
     #                                 # arcs, halftone, pulsar, guilloche, sashiko, attractor, bauhaus,
     #                                 # destijl, truchet, terrazzo, circles, isometric, penrose, leaves,
-    #                                 # warp, ascii, polyhedra, maze, dither, pipes, solid,
-    #                                 # or auto (a stable pick per theme).
+    #                                 # warp, ascii, polyhedra, maze, dither, pipes, flow, lens, papercut,
+    #                                 # automata, cyclic, chladni, complex, growth, solid,
+    #                                 # or auto (a stable pick per theme, never flow through growth).
     #                                 # A style chosen with theme/wallpaperStyle overrides this;
     #                                 # a theme can set its own with `wallpaperStyle:`.
     # wallpaperGrain: true            # fine film grain on generated wallpapers
 
     # What a theme is applied to (default: all but github, which changes an account setting):
-    # targets: [appearance, accent, folders, pointer, wallpaper, iterm, ghostty, vscode, zed,
-    #           jetbrains, claude, bat, lsd, micro, btop, github, templates, hooks]
+    # targets: [appearance, accent, folders, pointer, wallpaper, iterm, ghostty, terminal, vscode,
+    #           zed, jetbrains, neovim, claude, bat, lsd, micro, btop, github, templates, hooks]
     # ghostty writes ~/.config/ghostty/themes/Vibeshed, sets `theme = Vibeshed` in Ghostty's config
     # and reloads open terminals (Ghostty 1.2+). Colors your Ghostty config sets itself
     # (background, palette, …) still override the theme's.
+    # neovim writes ~/.config/nvim/colors/vibeshed.lua; select it once with
+    # `vim.cmd.colorscheme("vibeshed")` and every running Neovim using it retints live.
     # bat/lsd/micro get generated themes on each switch (bat: select once with --theme=Vibeshed).
     # fzf needs nothing: configured with ANSI colour slots it follows the terminal palette.
 
@@ -493,6 +508,10 @@ modules:
     # iTerm: the "Vibeshed" profile (your default profile + theme colors) becomes iTerm's
     # default so new windows and restarts keep the theme; false gives the default back.
     # itermDefaultProfile: true
+    # Terminal.app: same idea with a "Vibeshed" profile in Terminal's settings (default and
+    # startup profile). Open tabs get background/text/cursor colors live; ANSI colors arrive
+    # when Terminal next launches (its AppleScript can't set them).
+    # terminalDefaultProfile: true
 
     # Folders that also get a palette-tinted custom icon (on top of the system folder color).
     # folders:
@@ -514,6 +533,8 @@ modules:
     #       vscode: "Tokyo Night"
     #       jetbrains: "_@user_Tokyo Night"
     #       ghostty: "TokyoNight Night"             # any name from `ghostty +list-themes`
+    #       terminal: "Clear Dark"                  # one of Terminal's own profiles
+    #       neovim: "tokyonight-night"              # an installed colorscheme, loaded as `vibeshed`
     #       github: "dark_dimmed"                   # also opts this theme into the github target
 
     # Templates for any other app, in Omarchy's placeholder syntax:
@@ -529,12 +550,42 @@ modules:
     # hooks:
     #   - "sketchybar --reload"
 
+    # theme/switchFont lists the installed fonts among ~50 popular coding fonts; add others
+    # by family name. Terminals get a font's Nerd Font Mono variant when it's installed.
+    # fonts: ["Comic Code", "PragmataPro Mono"]
+
     # VS Code-family editors (display name: Application Support folder); default: all detected
     # vscodeVariants:
     #   "Cursor": "Cursor"
 
     # JetBrains IDEs to theme (default: all detected)
     # jetbrainsIDEs: [idea, webstorm]
+
+  # --- Wallpaper (search wallpaper sites and museum collections, set the result) ---
+  # "Search Wallpapers" asks for a source (All Sources mixes their results), then searches
+  # as you type; Enter downloads the highlighted image and sets it on every screen.
+  # "Random Wallpaper" asks for a source and a subject (Enter on nothing: a featured image).
+  # "Open Wallpaper Source Page" opens where the current wallpaper came from.
+  # One key for a random painting: an alias with the steps filled in, bound as
+  # "alias/Random Painting":
+  #   aliases:
+  #     - alias: "Random Painting"
+  #       action: "wallpaper/random"
+  #       parameters: {source: met}       # no query: a featured painting
+  # artic: the Art Institute of Chicago's image server has turned away apps with a
+  # Cloudflare browser check since June 2026; its results show up again once that ends.
+  wallpaper:
+    sources: [wallhaven, unsplash, artic, rijksmuseum, met]   # order = mixing order
+    maxResultsPerSource: 10
+    orientation: landscape        # landscape, portrait or any
+    scaling: auto                 # auto: photos fill the screen, artwork of another shape
+                                  # is fitted on a matte in its edge color; or fill / fit
+    # downloadDirectory: "~/Pictures/Wallpapers"   # kept forever; default: Application
+                                                   # Support, which keeps the 40 most recent
+    # wallhavenAPIKey: "..."      # optional (wallhaven.cc account settings)
+    wallhavenCategories: [general, anime]   # general, anime, people
+    # unsplashAccessKey: "..."    # needed for Unsplash: https://unsplash.com/oauth/applications
+    # enabledActions: [search, random, openSourcePage]
 
   # --- Audio Control ---
   audio:
@@ -603,6 +654,14 @@ modules:
       "Top": "btop"
       "Lazygit": "lazygit"
     # enabledActions: [newTab, runCommand, cmd, terminal]   # full names or families (cmd, terminal)
+
+  # --- Terminal.app (theming is the theme module's `terminal` target) ---
+  # New Window, Run Command and the commands below, each in a new window (Terminal's
+  # AppleScript can't open a tab). The shell stays open when the command exits.
+  terminal:
+    commands:
+      "Top": "top -o cpu"
+    # enabledActions: [newWindow, runCommand, cmd]   # full names or the cmd family
 
   # --- Claude (Claude Code CLI + Claude Desktop) ---
   anthropic:
@@ -714,6 +773,16 @@ modules:
     minVisitCount: 3           # minimum visits to include a history entry
     cacheTTLSeconds: 300       # re-read bookmarks/history every 5 minutes
 
+  # --- Apple Notes ---
+  # Search Notes (titles and text), New Note, and your latest notes in the main search.
+  # Scripts Notes, so macOS asks once to let Vibeshed control it. The main search lists
+  # notes only once Notes has run since Vibeshed started; it never launches Notes.
+  notes:
+    maxResults: 100            # latest notes in the main search (0 = none; Search Notes has all)
+    searchContent: true        # Search Notes matches note text too, not just titles
+    # newNoteFolder: "Inbox"   # folder for New Note (default: Notes' default folder)
+    # enabledActions: [search, create, note]   # full names or the note family
+
   # --- Timers & Reminders ---
   timer:
     defaultSound: "Glass"                # macOS system sound name
@@ -782,9 +851,11 @@ modules:
 # ---------------------------------------------------------------------------
 # Layout Correction
 # ---------------------------------------------------------------------------
-# When a query matches nothing but transliterating it from another keyboard
-# layout (e.g. Cyrillic typed while the wrong layout was active) would match,
-# the picker retries with the corrected text and shows a hint banner.
+# When a query matches nothing (web search aside) but retyping it on your Latin
+# layout would match, the picker retries with the corrected text and shows a
+# hint banner — e.g. "ыфафкш" → "safari". Works for every keyboard layout you
+# have enabled (Russian, Ukrainian, Greek, Hebrew, Arabic, Georgian…) plus the
+# Korean (2-Set), Japanese (romaji) and Chinese (Zhuyin) input methods.
 # Enabled by default; set enabled: false to turn it off.
 # ---------------------------------------------------------------------------
 layoutCorrection:

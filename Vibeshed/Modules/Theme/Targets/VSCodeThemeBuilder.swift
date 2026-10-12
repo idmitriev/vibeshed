@@ -111,6 +111,9 @@ enum VSCodeThemeBuilder {
             "titleBar.border": tones.border,
             "statusBar.background": tones.sidebar, "statusBar.foreground": tones.fg,
             "statusBar.border": tones.border, "statusBar.debuggingBackground": palette.orange.hex,
+            // VS Code uses these instead when no folder is open (e.g. a lone file); its default background is purple.
+            "statusBar.noFolderBackground": tones.sidebar, "statusBar.noFolderForeground": tones.fg,
+            "statusBar.noFolderBorder": tones.border,
             "statusBarItem.remoteBackground": tones.accent, "statusBarItem.remoteForeground": tones.onAccent,
             "panel.background": tones.sidebar, "panel.border": tones.border,
             "panelTitle.activeBorder": tones.accent, "panelTitle.activeForeground": tones.fg,

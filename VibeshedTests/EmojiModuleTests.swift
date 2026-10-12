@@ -34,6 +34,21 @@ final class EmojiModuleTests: XCTestCase {
         XCTAssertTrue(top.contains("🚗"), "got \(top)")
     }
 
+    /// Pasting types into the user's app, so a Shift run must not keep the picker focused.
+    func testActionsTypeIntoFrontmostAppOnlyWhenPasting() async {
+        let module = EmojiModule()
+        let copyID = ActionID(module: "emoji", name: "copy.person-shrugging")
+        for pasteOnSelect in [false, true] {
+            var config = EmojiConfig()
+            config.pasteOnSelect = pasteOnSelect
+            await module.configDidUpdate(config)
+            let findAction = await module.action(id: find)
+            let copyAction = await module.action(id: copyID)
+            XCTAssertEqual(findAction?.typesIntoFrontmostApp, pasteOnSelect)
+            XCTAssertEqual(copyAction?.typesIntoFrontmostApp, pasteOnSelect)
+        }
+    }
+
     func testActionsResolvableByID() async {
         let module = EmojiModule()
         let copy = await module.action(id: ActionID(module: "emoji", name: "copy.person-shrugging"))

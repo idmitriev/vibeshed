@@ -53,6 +53,9 @@ enum WallpaperRenderer {
         .sashiko: { $0.paintSashiko() }, .attractor: { $0.paintAttractor() }, .bauhaus: { $0.paintBauhaus() },
         .destijl: { $0.paintDeStijl() }, .truchet: { $0.paintTruchet() }, .terrazzo: { $0.paintTerrazzo() },
         .circles: { $0.paintCircles() }, .isometric: { $0.paintIsometric() }, .penrose: { $0.paintPenrose() },
+        .flow: { $0.paintFlow() }, .lens: { $0.paintLens() }, .papercut: { $0.paintPaperCut() },
+        .automata: { $0.paintAutomata() }, .cyclic: { $0.paintCyclic() }, .chladni: { $0.paintChladni() },
+        .complex: { $0.paintComplex() }, .growth: { $0.paintGrowth() },
         .leaves: { $0.paintLeaves() }, .warp: { $0.paintWarp() }, .ascii: { $0.paintASCII() },
         .polyhedra: { $0.paintPolyhedra() }, .maze: { $0.paintMaze() }, .dither: { $0.paintDither() },
         .pipes: { $0.paintPipes() }, .pebbles: { $0.paintPebbles() }, .macpattern: { $0.paintDesktopPattern() },
@@ -150,12 +153,14 @@ struct WallpaperCanvas {
     var surface: ThemeColor { isDark ? palette.background : palette.darkBackground }
 
     /// The accent and the palette hues closest to it — colors that sit well together.
-    func harmony(_ count: Int) -> [ThemeColor] {
+    /// `keepingTwin` keeps a hue that is the accent's own color (most themes set the accent
+    /// to one of their hues), right after it, so the set leans harder on the accent.
+    func harmony(_ count: Int, keepingTwin: Bool = false) -> [ThemeColor] {
         let accentHue = palette.accent.hsl.hue
         let hues = [palette.red, palette.orange, palette.yellow, palette.green, palette.cyan, palette.blue]
             + [palette.magenta]
         return Array(([palette.accent] + hues
-            .filter { $0 != palette.accent && $0.hsl.saturation > 0.12 }
+            .filter { (keepingTwin || $0 != palette.accent) && $0.hsl.saturation > 0.12 }
             .sorted { ThemeColor.hueDistance($0.hsl.hue, accentHue) < ThemeColor.hueDistance($1.hsl.hue, accentHue) })
             .prefix(count))
     }

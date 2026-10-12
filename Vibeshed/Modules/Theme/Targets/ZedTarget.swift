@@ -10,16 +10,17 @@ struct ZedTarget: ThemeTarget {
     var supportsPreview: Bool { true }
 
     static let themeName = "Vibeshed"
+    static let bundleID = "dev.zed.Zed"
 
-    private static var configDir: String {
+    static var configDir: String {
         ThemeFiles.home.appendingPathComponent(".config/zed").path
     }
 
-    private static var settingsPath: String { "\(configDir)/settings.json" }
+    static var settingsPath: String { "\(configDir)/settings.json" }
     private static var themePath: String { "\(configDir)/themes/vibeshed.json" }
 
     func apply(_ request: ThemeApplyRequest) async -> ThemeTargetOutcome {
-        guard ThemeFiles.exists(Self.configDir) || ThemeApps.isInstalled("dev.zed.Zed") else {
+        guard ThemeFiles.exists(Self.configDir) || ThemeApps.isInstalled(Self.bundleID) else {
             return .skipped("not installed")
         }
         do {

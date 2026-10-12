@@ -116,6 +116,41 @@ enum JetBrainsXML {
         try save(document, to: path)
     }
 
+    /// Sets `<option name="<name>" value="…"/>` in an application component (font options).
+    /// `onlyIfSet` changes only an option the file already has — one the IDE otherwise
+    /// derives from another setting, like the terminal font following the editor's.
+    static func setOption(
+        _ name: String,
+        _ value: String,
+        component componentName: String,
+        at path: String,
+        onlyIfSet: Bool
+    ) throws {
+        if onlyIfSet, !ThemeFiles.exists(path) { return }
+        let document = try load(path, fallback: "<application/>")
+        let existing = try? document.nodes(forXPath: "//component[@name='\(componentName)']").first as? XMLElement
+        if onlyIfSet, existing == nil { return }
+        let component = existing ?? component(named: componentName, in: document)
+        if let option = component.elements(forName: "option")
+            .first(where: { $0.attribute(forName: "name")?.stringValue == name })
+        {
+            setAttribute("value", value, on: option)
+        } else {
+            guard !onlyIfSet else { return }
+            // The IDE migrates font options saved without a VERSION, resetting the font.
+            if existing == nil { component.addChild(option("VERSION", "1")) }
+            component.addChild(option(name, value))
+        }
+        try save(document, to: path)
+    }
+
+    private static func option(_ name: String, _ value: String) -> XMLElement {
+        let element = XMLElement(name: "option")
+        setAttribute("name", name, on: element)
+        setAttribute("value", value, on: element)
+        return element
+    }
+
     private static func load(_ path: String, fallback: String) throws -> XMLDocument {
         guard ThemeFiles.exists(path) else { return try XMLDocument(xmlString: fallback) }
         // Never replace a file we couldn't parse.
@@ -144,12 +179,11 @@ enum JetBrainsXML {
 
     /// Sets one attribute, keeping the element's others.
     private static func setAttribute(_ name: String, _ value: String, on element: XMLElement) {
-        var attributes: [String: String] = [:]
-        for attribute in element.attributes ?? [] {
-            if let key = attribute.name { attributes[key] = attribute.stringValue ?? "" }
+        if let attribute = element.attribute(forName: name) {
+            attribute.stringValue = value
+        } else if let attribute = XMLNode.attribute(withName: name, stringValue: value) as? XMLNode {
+            element.addAttribute(attribute)
         }
-        attributes[name] = value
-        element.setAttributesWith(attributes)
     }
 
     private static func save(_ document: XMLDocument, to path: String) throws {

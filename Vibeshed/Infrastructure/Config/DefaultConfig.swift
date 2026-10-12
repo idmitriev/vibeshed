@@ -5,9 +5,10 @@ import Foundation
 /// Caps Lock is the modifier for the picker and window shortcuts. Enables the modules
 /// backed by macOS itself plus one for each piece of software found on this Mac (see
 /// `SoftwareIntegration`), and lists the rest commented out: modules for software that
-/// isn't installed, and ones that need Calendars or Full Disk Access. The permissions
-/// the enabled modules need are asked for right after (see `PermissionSetup`). It
-/// leaves the system default browser alone.
+/// isn't installed, and ones that need Calendars or Full Disk Access. Without Homebrew,
+/// it adds an "Install Homebrew" alias and the Terminal module it runs in. The
+/// permissions the enabled modules need are asked for right after (see
+/// `PermissionSetup`). It leaves the system default browser alone.
 enum DefaultConfig {
     struct Entry: Sendable {
         let moduleID: String
@@ -50,7 +51,7 @@ enum DefaultConfig {
             ] + padding
         ),
         Entry("clipboard", "clipboard history, kept on disk (skips copied passwords)"),
-        Entry("theme", "palette themes across macOS and apps"),
+        Entry("theme", "palette themes and coding fonts across macOS and apps"),
         Entry("math", "calculator, unit and currency conversion"),
         Entry("timer", "timers and reminders"),
         Entry("emoji", "search emoji, copy on select"),
@@ -63,28 +64,67 @@ enum DefaultConfig {
         Entry("menu", "the frontmost app's menu items (Accessibility)"),
         Entry("bookmark", "browser bookmarks/history (Full Disk Access for Safari)"),
         Entry("calendar", "upcoming events (Calendars)"),
+        Entry("notes", "search, open and create Apple Notes (Automation)"),
         Entry("meetingPrep", "get ready for the next meeting (Calendars + Screen Recording)"),
+        Entry("wallpaper", "search Wallhaven, Unsplash and museum collections for wallpapers"),
     ]
+
+    /// Terminal.app comes with every Mac, but is enabled only for the "Install Homebrew"
+    /// alias; otherwise it's listed with `optionalModules`.
+    static let terminal = Entry("terminal", "new Terminal.app windows and commands (Automation)")
+
+    /// Homebrew's install script, as brew.sh gives it.
+    static let homebrewInstallCommand =
+        #"/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)""#
 
     /// The config for a Mac where `detected` turned up.
     static func yaml(detected: [DetectedIntegration]) -> String {
+        let detectedIDs = Set(detected.map(\.moduleID))
+        let needsHomebrew = !detectedIDs.contains("homebrew")
+
         var lines = [header]
+        if needsHomebrew {
+            lines += installHomebrewAlias
+        }
+        lines += modulesIntro
         lines += builtInModules.flatMap { sectionLines(for: $0) }
+        if needsHomebrew {
+            lines += ["", "  # Runs the \"Install Homebrew\" alias:"] + sectionLines(for: terminal)
+        }
 
         if !detected.isEmpty {
             lines += ["", "  # Found on this Mac:"]
             lines += detected.flatMap { sectionLines(for: Entry($0)) }
         }
 
-        let detectedIDs = Set(detected.map(\.moduleID))
         let missing = SoftwareIntegration.all
             .filter { !detectedIDs.contains($0.moduleID) }
             .map { Entry($0.moduleID, $0.summary) }
+        let more = optionalModules + (needsHomebrew ? [] : [terminal]) + missing
         lines += ["", "  # More modules — uncomment to enable:"]
-        lines += (optionalModules + missing).map { moduleLine($0.moduleID, $0.summary, indent: "  ", commented: true) }
+        lines += more.map { moduleLine($0.moduleID, $0.summary, indent: "  ", commented: true) }
 
         return lines.joined(separator: "\n") + "\n"
     }
+
+    /// An `aliases:` section with a picker entry that runs Homebrew's install script in
+    /// a new Terminal window.
+    private static let installHomebrewAlias = [
+        "",
+        "# Picker entries of your own: an action with preset parameters, a URL or a",
+        "# folder. See config.example.yaml.",
+        "aliases:",
+        "  # Homebrew isn't installed. This runs its install script (from brew.sh) in",
+        "  # a new Terminal window. Once `brew` is in place Vibeshed turns on the",
+        "  # homebrew module below; then this can go.",
+        "  - alias: \"Install Homebrew\"",
+        "    action: \"terminal/runCommand\"",
+        "    icon: \"cup.and.saucer\"",
+        "    subtitle: \"Run the install script from brew.sh in Terminal\"",
+        "    keywords: [\"homebrew\", \"brew\", \"package manager\"]",
+        "    parameters:",
+        "      command: '\(homebrewInstallCommand)'",
+    ]
 
     /// A module's section under `modules:`, whose children sit `indent` deep: its key line
     /// and the settings below it.
@@ -148,9 +188,12 @@ enum DefaultConfig {
     urlRouting:
       registerAsDefaultBrowser: false
       rules: []
-
-    # A module loads only when its section is present. An empty section
-    # enables it with default settings.
-    modules:
     """
+
+    private static let modulesIntro = [
+        "",
+        "# A module loads only when its section is present. An empty section",
+        "# enables it with default settings.",
+        "modules:",
+    ]
 }

@@ -24,8 +24,9 @@ actor ThemeModule: ModuleConfigurable {
     private(set) var catalog = ThemeCatalog.Result(themes: [], errors: [])
     private(set) var eventBus: EventBus?
     let applier = ThemeApplier()
+    let fontApplier = FontApplier()
     private let log = Log.module("theme")
-    private var itermWatcher: AppLaunchWatcher?
+    private var appWatchers: [AppLifecycleWatcher] = []
 
     /// The scripted targets that are on: appearance through System Events, iTerm's
     /// colors through iTerm, and the github target through browser tabs.
@@ -39,23 +40,35 @@ actor ThemeModule: ModuleConfigurable {
     func initialize(context: ModuleContext) async throws {
         eventBus = context.eventBus
         rebuildCatalog()
-        itermWatcher = await MainActor.run {
-            AppLaunchWatcher(bundleID: ITermTarget.bundleID) { [weak self] in
-                Task { await self?.recolorLaunchedITerm() }
+        // Windows iTerm and Terminal restore keep the profile they were created with, so
+        // recolor every session once the app has launched (new ones use the Vibeshed
+        // default profile). A quitting Terminal may have written back its own copy of the
+        // Vibeshed profile (see `TerminalTarget`), so that gets rewritten.
+        let watched: [(String, AppLifecycleWatcher.Event, ThemeTargetID, Duration)] = [
+            (ITermTarget.bundleID, .launch, .iterm, .seconds(2.5)),
+            (TerminalTarget.bundleID, .launch, .terminal, .seconds(1.5)),
+            (TerminalTarget.bundleID, .terminate, .terminal, .zero),
+        ]
+        appWatchers = await MainActor.run {
+            watched.map { bundleID, event, target, delay in
+                AppLifecycleWatcher(bundleID: bundleID, on: event) { [weak self] in
+                    Task { await self?.reapply(target, after: delay) }
+                }
             }
         }
     }
 
     func teardown() async {
-        await itermWatcher?.stop()
+        for watcher in appWatchers {
+            await watcher.stop()
+        }
     }
 
-    /// Windows iTerm restores keep the profile they were created with, so recolor
-    /// every session once iTerm has launched (new ones use the Vibeshed default profile).
-    private func recolorLaunchedITerm() async {
-        guard config.enabledTargets.contains(.iterm), let theme = await currentTheme() else { return }
-        try? await Task.sleep(for: .seconds(2.5))
-        let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: [.iterm])
+    /// Resolves the theme after the delay, so a switch made meanwhile isn't undone.
+    private func reapply(_ target: ThemeTargetID, after delay: Duration) async {
+        try? await Task.sleep(for: delay)
+        guard config.enabledTargets.contains(target), let theme = await currentTheme() else { return }
+        let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: [target])
         _ = await applier.apply(theme, config: config, options: options)
     }
 
@@ -99,6 +112,9 @@ actor ThemeModule: ModuleConfigurable {
         for template in config.templates where template.source.isEmpty || template.target.isEmpty {
             errors.append("Templates need both source and target")
         }
+        if config.fonts.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+            errors.append("Font names cannot be empty")
+        }
         let styles = WallpaperStyle.allCases.map(\.rawValue).joined(separator: ", ")
         let styleNames = [("wallpaperStyle", config.wallpaperStyle)] + config.themes.compactMap { theme in
             theme.wallpaperStyle.map { ("Theme '\(theme.name)': wallpaperStyle", $0) }
@@ -119,6 +135,7 @@ actor ThemeModule: ModuleConfigurable {
             actions += [wallpaperStyleAction(), shuffleWallpaperAction()]
         }
         actions += catalog.themes.map { applyAction($0, isCurrent: $0.slug == current) }
+        actions += fontActions()
 
         guard let enabled = config.enabledActions else { return actions }
         return actions.filter { action in
@@ -133,6 +150,7 @@ actor ThemeModule: ModuleConfigurable {
         query: String
     ) async -> [ParameterOption] {
         if parameterID == "style" { return await wallpaperStyleOptions() }
+        if parameterID == "font" { return fontOptions() }
         guard parameterID == "theme" else { return [] }
         let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
         return catalog.themes.map { theme in
@@ -154,6 +172,9 @@ actor ThemeModule: ModuleConfigurable {
         if actionID == Self.wallpaperStyleActionID {
             return await previewWallpaperStyle(optionID)
         }
+        if actionID == Self.switchFontActionID {
+            return await previewFont(optionID)
+        }
         guard actionID == Self.switchActionID, let theme = catalog.theme(slug: optionID) else { return }
         let current = await MainActor.run { ActiveTheme.shared.committed?.slug }
         let options = ThemeApplier.Options(wallpaper: wallpaperChoice(for: theme), only: nil)
@@ -161,6 +182,9 @@ actor ThemeModule: ModuleConfigurable {
     }
 
     func endParameterPreview(parameterID: String, actionID: ActionID, committed: Bool) async {
+        if actionID == Self.switchFontActionID {
+            return await fontApplier.endPreview(committed: committed)
+        }
         guard actionID == Self.switchActionID || actionID == Self.wallpaperStyleActionID else { return }
         await applier.endPreview(committed: committed)
     }

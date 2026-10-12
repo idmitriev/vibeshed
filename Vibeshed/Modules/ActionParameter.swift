@@ -10,6 +10,10 @@ struct ActionParameter: Sendable, Identifiable {
     /// (`Module.previewParameterOption`) so it can apply it live, and tells it whether
     /// the preview ended in a commit or a cancel (`endParameterPreview`).
     let livePreview: Bool
+    /// For dynamic selections whose options already answer the query, like a web search's
+    /// results: the picker lists them in the module's order instead of fuzzy-matching
+    /// their labels against the query, which would drop hits whose titles don't contain it.
+    let rankedByModule: Bool
 
     init(
         id: String,
@@ -17,7 +21,8 @@ struct ActionParameter: Sendable, Identifiable {
         type: ParameterType,
         isRequired: Bool = false,
         defaultValue: String? = nil,
-        livePreview: Bool = false
+        livePreview: Bool = false,
+        rankedByModule: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -25,6 +30,7 @@ struct ActionParameter: Sendable, Identifiable {
         self.isRequired = isRequired
         self.defaultValue = defaultValue
         self.livePreview = livePreview
+        self.rankedByModule = rankedByModule
     }
 }
 
@@ -42,6 +48,8 @@ struct ParameterOption: Sendable, Identifiable {
     let label: String
     let subtitle: String?
     let iconName: String?
+    /// A file shows its Finder icon (an app bundle, say); a web URL is loaded as an image
+    /// (a thumbnail).
     let iconURL: URL?
     /// Extra search terms, prefix-matched like action keywords (never shown).
     let keywords: [String]
