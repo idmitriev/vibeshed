@@ -77,8 +77,23 @@ final class PickerCoordinatorTests: XCTestCase {
     ) async throws {
         await coordinator.loadInitialActions().value // fills the empty-query cache
         state.query = query
-        try await Task.sleep(for: .milliseconds(300)) // past the debounce
-        XCTAssertEqual(state.actions.map(\.title), ["Safari"])
+        try await waitForTitles(["Safari"], in: state)
+    }
+
+    /// Waits up to two seconds for the list to show `titles`. A fixed sleep past the
+    /// debounce flaked on a stalled CI runner: the sleep and the debounce both expire
+    /// during the stall, and the sleep can resume before the run lands. A query that
+    /// is dropped still fails, since the list never changes.
+    private func waitForTitles(
+        _ titles: [String],
+        in state: PickerState,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async throws {
+        for _ in 0 ..< 200 where state.actions.map(\.title) != titles {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertEqual(state.actions.map(\.title), titles, file: file, line: line)
     }
 
     /// The 2026-10-04 report: "safari" typed right after opening, while the list kept
@@ -118,9 +133,8 @@ final class PickerCoordinatorTests: XCTestCase {
         openFresh(coordinator, state)
         XCTAssertEqual(state.actions.first?.title, "Screenshot (Interactive)", "the cached empty-query list")
         state.query = "safari" // URIManager sets it right after show()
-        try await Task.sleep(for: .milliseconds(400)) // past the debounce; no initial load runs here
 
-        XCTAssertEqual(state.actions.map(\.title), ["Safari"])
+        try await waitForTitles(["Safari"], in: state) // no initial load runs here
     }
 
     func testSlowParameterOptionsDontOverwriteNewerOnes() async throws {
