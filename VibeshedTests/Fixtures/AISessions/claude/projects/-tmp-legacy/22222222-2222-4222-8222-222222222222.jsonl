@@ -1,0 +1,2 @@
+{"parentUuid":null,"isSidechain":false,"type":"user","message":{"role":"user","content":"explain the reader"},"uuid":"u1","timestamp":"2025-06-01T10:00:00.000Z","cwd":"/tmp/legacy","sessionId":"22222222-2222-4222-8222-222222222222","version":"0.2.70"}
+{"parentUuid":"u1","isSidechain":false,"type":"assistant","message":{"model":"claude-3-5-sonnet-20241022","role":"assistant","content":[{"type":"text","text":"It reads history.jsonl."}]},"uuid":"a1","timestamp":"2025-06-01T10:00:05.000Z","cwd":"/tmp/legacy","sessionId":"22222222-2222-4222-8222-222222222222","version":"0.2.70"}

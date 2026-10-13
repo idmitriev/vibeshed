@@ -7,17 +7,20 @@ private let log = Log.module("openai")
 ///
 /// Two files describe a Codex session. `session_index.jsonl` is a flat, current index
 /// of thread ids to human titles, and each thread's `sessions/<y>/<m>/<d>/rollout-*.jsonl`
-/// transcript opens with a `session_meta` record carrying the working directory, git
-/// branch and model. The index is read in full because it is small; transcripts are
-/// only opened for the handful of threads actually being shown.
+/// transcript opens with a `session_meta` record carrying the working directory and git
+/// branch, then records a `turn_context` with the model on every turn. The index is
+/// read in full because it is small; transcripts are only opened, at the head and the
+/// tail, for the handful of threads actually being shown.
 enum OpenAISessionReader {
-    private static var codexDirectory: URL {
+    static var codexDirectory: URL {
         FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".codex")
     }
 
-    static func readSessions(limit: Int) -> [AISession] {
-        let root = codexDirectory
+    static func readSessions(
+        limit: Int,
+        root: URL = codexDirectory
+    ) -> [AISession] {
         let transcripts = transcriptIndex(root: root)
         let titled = indexedThreads(root: root)
 
@@ -160,7 +163,9 @@ enum OpenAISessionReader {
         return results
     }
 
-    /// The `session_meta` and first `turn_context` records at the head of a transcript.
+    /// The working directory and branch from the `session_meta` record at the head of
+    /// a transcript, and the model from its newest `turn_context`, so a thread that
+    /// switched models mid-way shows the one it last ran on.
     private struct TranscriptMeta {
         let cwd: String?
         let model: String?
@@ -176,27 +181,47 @@ enum OpenAISessionReader {
 
         init(path: String) {
             var cwd: String?
-            var model: String?
             var branch: String?
-            // Both records sit at the very top of the transcript, ahead of the
+            var firstModel: String?
+            // The header sits at the very top of the transcript, ahead of the
             // conversation itself.
             for record in AIJSONL.headObjects(atPath: path, limit: 8) {
-                guard let payload = record["payload"] as? [String: Any] else {
-                    continue
-                }
+                let payload = record["payload"] as? [String: Any] ?? [:]
                 switch record["type"] as? String {
                 case "session_meta":
                     cwd = payload["cwd"] as? String
-                    branch = (payload["git"] as? [String: Any])?["branch"]
-                        as? String
+                    branch = Self.branch(in: payload)
                 case "turn_context":
-                    model = payload["model"] as? String
+                    firstModel = firstModel ?? payload["model"] as? String
+                case nil:
+                    // Older Codex builds open with an untyped header that
+                    // carries `git` at the top level and no model.
+                    branch = branch ?? Self.branch(in: record)
                 default:
                     continue
                 }
-                if cwd != nil, model != nil { break }
             }
-            self.init(cwd: cwd, model: model, branch: branch)
+            var latestModel: String?
+            AIJSONL.scanTail(
+                atPath: path, containing: [#""turn_context""#]
+            ) { record in
+                guard record["type"] as? String == "turn_context",
+                      let payload = record["payload"] as? [String: Any],
+                      let model = payload["model"] as? String
+                else { return false }
+                latestModel = model
+                return true
+            }
+            self.init(
+                cwd: cwd,
+                model: (latestModel ?? firstModel)
+                    .map(OpenAIModelName.displayName(for:)),
+                branch: branch
+            )
+        }
+
+        private static func branch(in record: [String: Any]) -> String? {
+            (record["git"] as? [String: Any])?["branch"] as? String
         }
     }
 }

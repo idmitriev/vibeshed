@@ -1,0 +1,4 @@
+{"id":"0199bbbb-0000-7000-8000-000000000002","timestamp":"2026-02-03T15:05:08.179Z","instructions":null,"git":{"commit_hash":"616960ba","branch":"main"}}
+{"record_type":"state"}
+{"type":"message","role":"user","content":[{"type":"input_text","text":"<environment_context>\n  <cwd>/tmp/legacy</cwd>\n</environment_context>"}]}
+{"record_type":"state"}

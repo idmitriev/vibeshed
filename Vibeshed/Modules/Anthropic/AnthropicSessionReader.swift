@@ -4,11 +4,31 @@ import OSLog
 private let log = Log.module("anthropic")
 
 /// Reads Claude session history from disk: the Claude Code CLI's `history.jsonl` and
-/// Claude Desktop's per-session metadata files.
+/// Claude Desktop's per-session metadata files, plus the model and branch from each
+/// listed session's transcript.
 enum AnthropicSessionReader {
+    /// Where the CLI and the desktop app keep session state.
+    struct Locations {
+        /// `~/.claude`: `history.jsonl` and the `projects/` transcripts.
+        var claudeDirectory: URL
+        /// Claude Desktop's per-session metadata.
+        var desktopSessionsDirectory: URL
+
+        static var standard: Locations {
+            let home = FileManager.default.homeDirectoryForCurrentUser
+            return Locations(
+                claudeDirectory: home.appendingPathComponent(".claude"),
+                desktopSessionsDirectory: home.appendingPathComponent(
+                    "Library/Application Support/Claude/claude-code-sessions"
+                )
+            )
+        }
+    }
+
     static func readSessions(
         sources: [String],
-        limit: Int
+        limit: Int,
+        locations: Locations = .standard
     ) -> [AISession] {
         let wantsDesktop = sources.contains(AnthropicProvider.claudeDesktop.id)
         let wantsCode = sources.contains(AnthropicProvider.claudeCode.id)
@@ -16,13 +36,14 @@ enum AnthropicSessionReader {
         // Desktop metadata is read first even when only CLI sessions are wanted:
         // it carries human-written titles for sessions the CLI only knows by prompt.
         let desktopMeta = (wantsDesktop || wantsCode)
-            ? readDesktopMetadata() : []
+            ? readDesktopMetadata(base: locations.desktopSessionsDirectory) : []
 
         var sessions: [AISession] = []
         if wantsCode {
             sessions += readClaudeCodeSessions(
                 titles: titleLookup(desktopMeta),
-                limit: limit
+                limit: limit,
+                claudeDirectory: locations.claudeDirectory
             )
         }
         if wantsDesktop {
@@ -34,17 +55,22 @@ enum AnthropicSessionReader {
 
         sessions.sort { $0.timestamp > $1.timestamp }
         log.debug("Anthropic sessions found: \(sessions.count, privacy: .public)")
-        return Array(sessions.prefix(limit))
+        // Desktop sessions run on the CLI too, so both kinds have a transcript.
+        return AnthropicTranscripts.enrich(
+            Array(sessions.prefix(limit)),
+            projectsDirectory: locations.claudeDirectory
+                .appendingPathComponent("projects")
+        )
     }
 
     // MARK: - Claude Code CLI
 
     private static func readClaudeCodeSessions(
         titles: [String: String],
-        limit: Int
+        limit: Int,
+        claudeDirectory: URL
     ) -> [AISession] {
-        let path = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude/history.jsonl").path
+        let path = claudeDirectory.appendingPathComponent("history.jsonl").path
         let entries = AIJSONL.objects(atPath: path).compactMap(CLIEntry.init)
         guard !entries.isEmpty else {
             log.debug("Claude Code history.jsonl missing or empty")
@@ -98,7 +124,8 @@ enum AnthropicSessionReader {
                 source: AnthropicProvider.claudeDesktop,
                 title: meta.title ?? "Session \(meta.sessionID.prefix(8))",
                 project: meta.cwd,
-                model: meta.model,
+                model: meta.model.map(AnthropicModelName.displayName(for:)),
+                branch: meta.branch,
                 timestamp: Date(timeIntervalSince1970: meta.lastActivityAt / 1000)
             )
         }
@@ -118,11 +145,7 @@ enum AnthropicSessionReader {
     }
 
     /// Walks `…/Claude/claude-code-sessions/<account>/<session>/*.json`.
-    private static func readDesktopMetadata() -> [DesktopMeta] {
-        let base = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(
-                "Library/Application Support/Claude/claude-code-sessions"
-            )
+    private static func readDesktopMetadata(base: URL) -> [DesktopMeta] {
         let fm = FileManager.default
         guard fm.fileExists(atPath: base.path) else {
             log.debug("Claude Desktop sessions directory not found")
@@ -187,6 +210,8 @@ private struct DesktopMeta {
     let title: String?
     let cwd: String?
     let model: String?
+    /// Set for sessions the app started in a worktree it created.
+    let branch: String?
     let lastActivityAt: Double
     let isArchived: Bool
 
@@ -200,6 +225,7 @@ private struct DesktopMeta {
         title = json["title"] as? String
         cwd = json["cwd"] as? String
         model = json["model"] as? String
+        branch = json["branch"] as? String
         isArchived = json["isArchived"] as? Bool ?? false
     }
 }
