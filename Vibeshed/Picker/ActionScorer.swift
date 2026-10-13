@@ -13,6 +13,9 @@ struct ScorableAction: Sendable {
     let scheduledStart: Date?
     let scheduledEnd: Date?
     let isFallback: Bool
+    /// The words a query must start, for actions that require a word-prefix match; nil
+    /// for every other action.
+    let prefixWords: [String]?
 
     init(action: any Action, extraKeywords: [String] = []) {
         self.action = action
@@ -21,6 +24,9 @@ struct ScorableAction: Sendable {
         self.scheduledStart = action.scheduledStart
         self.scheduledEnd = action.scheduledEnd
         self.isFallback = action.isFallback
+        self.prefixWords = action.requiresWordPrefixMatch
+            ? WordPrefixMatch.words(in: [action.title, action.subtitle] + combined)
+            : nil
         self.target = FuzzyMatcher.ScoreTarget(
             title: action.title,
             subtitle: action.subtitle,
@@ -62,6 +68,9 @@ enum ActionScorer {
         queryChars: [Character],
         scoring: ScoringContext
     ) -> Evaluation? {
+        if let words = scorable.prefixWords, !WordPrefixMatch.admits(queryLower: queryLower, words: words) {
+            return nil
+        }
         let action = scorable.action
         let usageBoost = scoring.usageBoost(for: action.id)
         guard let result = FuzzyMatcher.score(
@@ -182,5 +191,34 @@ enum ActionScorer {
             normalized.removeLast()
         }
         return normalized
+    }
+}
+
+/// The stricter match for actions with `requiresWordPrefixMatch`: the query needs
+/// `minimumQueryLength` characters, and each of its words must start one of the action's
+/// words. "satis" and "web sat" find "Make the website satisfying"; "sa" and "mes" don't,
+/// though the fuzzy matcher alone would take both.
+enum WordPrefixMatch {
+    static let minimumQueryLength = 3
+
+    /// Lowercased letter-and-digit runs, without repeats: "feat/font-switching" gives
+    /// "feat", "font", "switching"; "#66" gives "66".
+    static func words(in strings: [String]) -> [String] {
+        var seen: Set<String> = []
+        return strings.flatMap { string in
+            string.lowercased()
+                .split { !$0.isLetter && !$0.isNumber }
+                .map(String.init)
+        }
+        .filter { seen.insert($0).inserted }
+    }
+
+    static func admits(queryLower: String, words: [String]) -> Bool {
+        guard queryLower.trimmingCharacters(in: .whitespaces).count >= minimumQueryLength else { return false }
+        let queryWords = Self.words(in: [queryLower])
+        guard !queryWords.isEmpty else { return false }
+        return queryWords.allSatisfy { queryWord in
+            words.contains { $0.hasPrefix(queryWord) }
+        }
     }
 }

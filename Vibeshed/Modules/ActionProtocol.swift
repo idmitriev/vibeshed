@@ -75,6 +75,12 @@ protocol Action: Sendable, Identifiable where ID == ActionID {
     /// or context boosts, and survive the result cap. Default `false`.
     var isFallback: Bool { get }
 
+    /// Matches only a query of 3+ characters whose every word starts a word of the
+    /// title, subtitle or keywords (see `WordPrefixMatch`), so long titles that fuzzy-match
+    /// almost any short query (prefetched pull requests) stay out of the way of apps.
+    /// Default `false`.
+    var requiresWordPrefixMatch: Bool { get }
+
     /// Types into the app the user was in — paste on select posts ⌘V. That needs the
     /// keyboard focus the picker holds, so a Shift run of such an action closes the
     /// picker like a plain run instead of keeping it open. Default `false`.
@@ -120,6 +126,10 @@ extension Action {
     }
 
     var isFallback: Bool {
+        false
+    }
+
+    var requiresWordPrefixMatch: Bool {
         false
     }
 
