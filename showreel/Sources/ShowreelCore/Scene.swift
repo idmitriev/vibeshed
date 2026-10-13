@@ -101,6 +101,8 @@ public struct Setup: Decodable, Sendable {
     public var wallpaper: String?
     /// `hidden` turns on Dock autohide.
     public var dock: Visibility?
+    /// `hidden` turns on menu bar autohide: no clock or status icons on camera.
+    public var menuBar: Visibility?
     public var desktopIcons: Visibility?
     /// Widgets on the desktop (calendar, weather…).
     public var desktopWidgets: Visibility?
@@ -131,7 +133,7 @@ public struct Setup: Decodable, Sendable {
     public var events: [EventSetup] = []
 
     enum CodingKeys: String, CodingKey {
-        case display, appearance, wallpaper, dock, desktopIcons, desktopWidgets, locale, quitApps, apps, focus
+        case display, appearance, wallpaper, dock, menuBar, desktopIcons, desktopWidgets, locale, quitApps, apps, focus
         case clipboard, cursor, prepare, shell, vibeshed, settle, actions, sync, events
     }
 
@@ -143,6 +145,7 @@ public struct Setup: Decodable, Sendable {
         appearance = try container.decodeIfPresent(Appearance.self, forKey: .appearance)
         wallpaper = try container.decodeIfPresent(String.self, forKey: .wallpaper)
         dock = try container.decodeIfPresent(Visibility.self, forKey: .dock)
+        menuBar = try container.decodeIfPresent(Visibility.self, forKey: .menuBar)
         desktopIcons = try container.decodeIfPresent(Visibility.self, forKey: .desktopIcons)
         desktopWidgets = try container.decodeIfPresent(Visibility.self, forKey: .desktopWidgets)
         locale = try container.decodeIfPresent(String.self, forKey: .locale)

@@ -7,9 +7,13 @@ enum SystemDialogs {
     /// Owners of the dialogs seen so far: screen recording / accessibility
     /// confirmations (universalAccessAuthWarn), consent alerts
     /// (UserNotificationCenter), password prompts (SecurityAgent) and
-    /// Gatekeeper's first-launch check (CoreServicesUIAgent).
+    /// Gatekeeper's first-launch check (CoreServicesUIAgent). System Settings too:
+    /// a confirmation's "Open System Settings" leads there, and on macOS 27 its
+    /// admin password prompt is a sheet in its own window. No scene shows it, so
+    /// while it's open someone is answering a prompt.
     static let owners: Set<String> = [
         "universalAccessAuthWarn", "UserNotificationCenter", "SecurityAgent", "CoreServicesUIAgent",
+        "System Settings",
     ]
 
     static func current() -> WindowInfo? {

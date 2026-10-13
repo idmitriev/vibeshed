@@ -1,0 +1,16 @@
+# Merged over site-videos.yaml for the lap's search (scenes/site-lap.yaml): the
+# modules its queries reach.
+
+modules:
+  calendar:
+    includedCalendars: ["Showreel"]   # the scene's sample event only
+    showOpenCalendarAction: false
+  github:
+    defaultOwner: "idmitriev"
+    searchTypes: [pr]
+    showRepos: false
+    showNotifications: false        # needs a token; public PR search doesn't
+  anthropic:
+    sources: [claudeCode]
+    showLaunchers: false
+    terminalApp: "terminal"         # 0.10.0 resumes CLI sessions in Terminal or iTerm

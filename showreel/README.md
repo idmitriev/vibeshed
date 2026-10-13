@@ -115,6 +115,7 @@ inside the repo. Every field has a default.
 | `appearance` | — | `dark` / `light` |
 | `wallpaper` | — | image file, or a solid color like `"#120d16"` |
 | `dock` | — | `hidden` (autohide) / `shown` |
+| `menuBar` | — | `hidden` (autohide) / `shown` |
 | `desktopIcons` | — | `hidden` / `shown` |
 | `desktopWidgets` | — | `hidden` / `shown` (calendar, weather… on the desktop) |
 | `locale` | — | region format, e.g. `en_US` (how apps write numbers), set before apps launch |
@@ -153,7 +154,8 @@ seconds around the actions.
 | `drag` | `drag: { from: [100, 100], to: [600, 400], duration: 0.6 }` |
 | `scroll` | `scroll: { at: [700, 500], dy: 10 }` (lines; positive scrolls down) |
 | `screenshot` | `screenshot: name` (display), `{ name, window: picker }` (window + shadow, transparent), `{ name, region: picker, padding: 80 }` or `region: [x, y, w, h]` |
-| `waitFor` | `waitFor: picker`, `waitFor: Safari`, `{ window: picker, gone: true, timeout: 3 }`, `{ result: Calculator }` (the picker's top result starts with it — check it before every Return: a stale list could run Sleep), `{ window: Google Chrome, title: Hacker News, timeout: 15 }` (a page that loaded) |
+| `waitFor` | `waitFor: picker`, `waitFor: Safari`, `{ window: picker, gone: true, timeout: 3 }`, `{ result: Calculator }` (the picker's top result starts with it — check it before every Return: a stale list could run Sleep; with `fresh: true` it also waits for the top row to change from the one before the last `type`, and only warns if the same row stays on top), `{ window: Google Chrome, title: Hacker News, timeout: 15 }` (a page that loaded) |
+| `select` | `select: "Tile Right: Ghostty"` — press ↓ to the picker row whose title starts with it, once the list is still, and check the preview shows it |
 | `marker` | `marker: opened` — a named moment for outputs |
 | `waitForUser` | `waitForUser: 120` — wait while someone answers system dialogs in the VM (the only step that runs while one is up) |
 | `focus` | `focus: Safari` |
@@ -234,6 +236,39 @@ the clip has no visible edge:
 ```html
 <video src="launcher.mp4" autoplay muted loop playsinline poster="launcher-poster.png"></video>
 ```
+
+## Website lap
+
+`scenes/site-lap.yaml` is the redesigned site's video: search, themes and
+windows in one continuous take that starts and ends on the same empty desktop
+(Vibeshed Glow, every window minimized, no Dock or menu bar), so it loops with
+no seam. It uses `configs/site-videos.yaml` with `configs/site-search.yaml`
+over it, on a base VM with Vibeshed 0.10.0, Spotify, Zed, Ghostty and btop,
+Spotify and Claude Code signed in, and a Claude Code session in
+`~/code/vibeshed`. Prepare it once:
+
+```bash
+scripts/showreel record site-permissions site-search-permissions
+```
+
+```bash
+scripts/showreel record site-lap-warmup
+```
+
+```bash
+scripts/showreel record site-lap
+```
+
+```bash
+scripts/site-videos.sh
+```
+
+The permission scenes bring up the Automation and Calendar prompts for you to
+Allow. The warm-up teaches the picker the lap's results (Vibeshed ranks by
+usage) and renders each theme's wallpaper once, off camera. `site-videos.sh`
+zooms search in on the picker, paces each part, and writes the lap, an 800 px
+cut, a poster and each part on its own to `out/site-videos/`, then prints an
+SSIM check of the last frame against the first.
 
 ## Gotchas
 

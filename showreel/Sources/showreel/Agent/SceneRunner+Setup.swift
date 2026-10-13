@@ -38,6 +38,9 @@ extension SceneRunner {
         if let dock = setup.dock {
             try setDefault(domain: "com.apple.dock", key: "autohide", to: dock == .hidden, restart: "Dock")
         }
+        if let menuBar = setup.menuBar {
+            try setMenuBarAutohide(menuBar == .hidden)
+        }
         if let icons = setup.desktopIcons {
             try setDefault(domain: "com.apple.finder", key: "CreateDesktop", to: icons == .shown, restart: "Finder")
         }
@@ -139,6 +142,20 @@ extension SceneRunner {
         for screen in NSScreen.screens {
             try NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:])
         }
+    }
+
+    /// The global `_HIHideMenuBar` default, then the notification System Settings posts so
+    /// the running session picks it up (no System Events, which would need Automation).
+    private func setMenuBarAutohide(_ hidden: Bool) throws {
+        let current = try Shell.capture(["/usr/bin/defaults", "read", "-g", "_HIHideMenuBar"], check: false)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard ["1", "true"].contains(current) != hidden else { return }
+        try Shell.capture(["/usr/bin/defaults", "write", "-g", "_HIHideMenuBar", "-bool", hidden ? "true" : "false"])
+        DistributedNotificationCenter.default().postNotificationName(
+            NSNotification.Name("AppleInterfaceMenuBarHidingChangedNotification"), object: nil,
+            userInfo: nil, deliverImmediately: true
+        )
+        Log.info("menu bar autohide = \(hidden)")
     }
 
     private func setDefault(domain: String, key: String, to value: Bool, restart process: String) throws {

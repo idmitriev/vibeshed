@@ -1,0 +1,41 @@
+# Not a video: brings up the prompts the lap's search needs, in one sitting.
+# The agent asks for Calendar (to create the sample event), Vibeshed asks for
+# Calendar (Grant Calendar Access) and to control Terminal (resuming a Claude
+# Code session). Answer each in the VM with Allow; nothing is typed while a
+# dialog or System Settings is up.
+title: "Warm-up: permission prompts for the search video"
+
+setup:
+  display: { width: 1600, height: 1000 }
+  vibeshed:
+    config: [../configs/site-videos.yaml, ../configs/site-search.yaml]
+  apps:
+    - { app: Safari, open: "https://en.wikipedia.org/wiki/Caps_Lock" }
+    - { app: Spotify }
+  events:
+    - { title: "Pairing session", in: 5, minutes: 30, url: "https://zoom.us/j/4815162342", location: "https://zoom.us/j/4815162342" }
+
+record: { video: false, pauseOnDialogs: true }
+
+actions:
+  - open: vibeshed://picker
+  - waitForUser: 900
+  - press: escape
+  - wait: 1
+  # Vibeshed's own Calendar prompt.
+  - open: vibeshed://picker
+  - waitFor: picker
+  - wait: 0.8
+  - type: { text: grant calendar, cps: 20 }
+  - waitFor: { result: Grant Calendar Access, timeout: 5 }
+  - press: return
+  - waitForUser: 900
+  # Resuming the Claude Code session makes Vibeshed ask to control Terminal.
+  - open: vibeshed://picker
+  - waitFor: picker
+  - wait: 0.8
+  - type: { text: mind, cps: 20 }
+  - waitFor: { result: teach the picker to read my mind, timeout: 5 }
+  - press: return
+  - waitForUser: 900
+  - wait: 3

@@ -46,6 +46,7 @@ enum CalendarFixtures {
         let calendar = EKCalendar(for: .event, eventStore: store)
         calendar.title = calendarName
         calendar.source = source
+        calendar.cgColor = CGColor(srgbRed: 0.83, green: 0.14, blue: 0.36, alpha: 1)   // Vibeshed's raspberry
         try store.saveCalendar(calendar, commit: true)
         return calendar
     }

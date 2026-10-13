@@ -37,6 +37,9 @@ public enum SceneAction: Sendable, Equatable {
     /// waits: the paused stretch isn't in the take at all, and markers set
     /// during it land on the cut.
     case recording(RecordingControl)
+    /// Highlight the picker row whose title starts with this (any case), pressing
+    /// ↓ from the top: for warm-ups that teach the picker's ranking, not for takes.
+    case select(String)
 }
 
 public enum RecordingControl: String, Decodable, Sendable {
@@ -80,6 +83,7 @@ extension SceneAction: Decodable {
         "focus": { try .focus($0.decode(String.self, forKey: $1)) },
         "window": { try .window($0.decode(WindowPlacement.self, forKey: $1)) },
         "recording": { try .recording($0.decode(RecordingControl.self, forKey: $1)) },
+        "select": { try .select($0.decode(String.self, forKey: $1)) },
     ]
 }
 

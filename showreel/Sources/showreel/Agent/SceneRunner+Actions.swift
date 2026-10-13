@@ -18,8 +18,9 @@ extension SceneRunner {
         case let .focus(app):
             try await Windows.bringToFront(Apps.open(app, activate: true))
         case let .window(placement):
-            guard let app = Apps.running(placement.app) else { throw AgentError("\(placement.app) isn't running") }
-            try Windows.place(app, frame: placement.frame)
+            try place(placement)
+        case let .select(title):
+            try await selectRow(title)
         default:
             break
         }
@@ -44,6 +45,11 @@ extension SceneRunner {
         return true
     }
 
+    private func place(_ placement: WindowPlacement) throws {
+        guard let app = Apps.running(placement.app) else { throw AgentError("\(placement.app) isn't running") }
+        try Windows.place(app, frame: placement.frame)
+    }
+
     /// A click on a window lands in its middle.
     private func resolved(_ click: Click) throws -> Click {
         guard let target = click.window else { return click }
@@ -62,6 +68,7 @@ extension SceneRunner {
         case let .drag(drag): "drag \(drag.from.x),\(drag.from.y) → \(drag.to.x),\(drag.to.y)"
         case let .scroll(scroll): "scroll \(scroll.dy)"
         case let .recording(control): "\(control.rawValue) recording"
+        case let .select(title): "select the row “\(title)”"
         default: describeOther(action)
         }
     }
@@ -163,13 +170,57 @@ extension SceneRunner {
         title.map { $0.lowercased().hasPrefix(text.lowercased()) } ?? false
     }
 
+    /// Presses ↓ from the top row down to the first one titled `title` (a prefix), once
+    /// the list has settled: two readings 0.35 s apart agree, so a re-ranking can't move
+    /// the row between reading and pressing.
+    private func selectRow(_ title: String, timeout: Double = 6) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        var titles: [String] = []
+        var previous: [String]?
+        while Date() < deadline {
+            titles = PickerResults.rowTitles()
+            defer { previous = titles }
+            if titles == previous, let index = titles.firstIndex(where: { topResult($0, startsWith: title) }) {
+                if index > 0 {
+                    try await Keyboard.press(KeyPress(chord: .parse("down"), times: index, interval: 0.12))
+                }
+                try await confirmPreview(title)
+                return
+            }
+            try await Task.sleep(for: .milliseconds(350))
+        }
+        Log.info("picker list:\n" + PickerResults.treeSummary())
+        throw AgentError("no picker row “\(title)” (rows: \(titles.prefix(8).joined(separator: " | ")))")
+    }
+
+    /// Waits for the preview pane to show `title`: proof the highlight is on that row
+    /// (a list that refreshes, like a meeting's countdown, puts it back on the top row).
+    private func confirmPreview(_ title: String, timeout: Double = 3) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if PickerResults.previewTexts().contains(where: { topResult($0, startsWith: title) }) { return }
+            try await Task.sleep(for: .milliseconds(150))
+        }
+        throw AgentError("the preview doesn't show “\(title)”: the highlight isn't on that row")
+    }
+
     func waitForUser(_ seconds: Double) async throws {
         let deadline = Date().addingTimeInterval(seconds)
         try await Task.sleep(for: .seconds(1.5))   // a prompt the last step triggered may still be coming
         var announced: Set<String> = []
+        var clearSince: Date?
         while Date() < deadline {
             // Notification banners too: someone at the VM can clear them while the take waits.
-            guard let dialog = SystemDialogs.current() ?? SystemDialogs.banner() else { return }
+            guard let dialog = SystemDialogs.current() ?? SystemDialogs.banner() else {
+                // Clear for a moment, not an instant: answering one prompt can open
+                // another (an "Open System Settings" button, then its password sheet).
+                let since = clearSince ?? Date()
+                clearSince = since
+                if Date().timeIntervalSince(since) >= 2.5 { return }
+                try await Task.sleep(for: .milliseconds(250))
+                continue
+            }
+            clearSince = nil
             if announced.insert(dialog.owner).inserted {
                 let ask = dialog.owner == "Notification Center"
                     ? "clear the notifications in the VM's top-right corner…"
