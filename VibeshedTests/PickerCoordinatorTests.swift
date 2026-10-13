@@ -84,7 +84,7 @@ final class PickerCoordinatorTests: XCTestCase {
     /// debounce flaked on a stalled CI runner: the sleep and the debounce both expire
     /// during the stall, and the sleep can resume before the run lands. A query that
     /// is dropped still fails, since the list never changes.
-    private func waitForTitles(
+    func waitForTitles(
         _ titles: [String],
         in state: PickerState,
         file: StaticString = #filePath,

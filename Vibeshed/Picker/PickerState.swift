@@ -19,6 +19,14 @@ final class PickerState {
     /// alone can't signal that, since the new first row may carry the same ID.
     private(set) var listResetToken: Int = 0
 
+    /// Bumped when a refresh keeps the selected row but moves it, so the list view
+    /// scrolls it back into view; its ID is unchanged, so no selection `onChange` fires.
+    private(set) var selectionRevealToken: Int = 0
+
+    /// The search text the rows on screen were ranked for. nil when they aren't a
+    /// ranking of the field: the cached list shown at open, pushed rows, a message.
+    @ObservationIgnored private(set) var listQuery: String?
+
     // MARK: - Mode state machine
 
     var mode: PickerMode = .search {
@@ -102,6 +110,8 @@ final class PickerState {
         actions = []
         selectedActionID = nil
         listResetToken = 0
+        selectionRevealToken = 0
+        listQuery = nil
         isLoading = false
         mode = .search
         modeStack = []
@@ -156,27 +166,34 @@ final class PickerState {
 
     // MARK: - Action list updates (with selection stability)
 
-    /// Replaces the action list. Selection only survives an update that leaves the
-    /// list identical (same IDs, same order) — a background refresh re-delivering
-    /// the same results. Any change to the results snaps the selection back to the
-    /// first row, so the user is never left pointing at a moved or stale item.
+    /// Replaces the action list. `query` is the search text the rows were ranked for
+    /// (nil for rows that aren't a ranking of the field).
+    ///
+    /// A list ranked for the same text as the one on screen is a refresh: a module
+    /// reported new actions, or the picker came back with its state. Refreshes re-rank
+    /// (the catalog fan-out answers in a different order each time, scores move with
+    /// the clock), so the highlighted row stays highlighted wherever it lands, matched
+    /// by ID; if it's gone, the row now in its place takes over. Anything else (new
+    /// text, the first ranking after the cached list, pushed rows) starts on the first row.
     func updateActions(
         _ newActions: [ActionItem],
         cache: [ActionID: any Action] = [:],
-        preservingSelection: Bool = true
+        rankedFor query: String? = nil
     ) {
-        let previousSelection = selectedActionID
-        let listUnchanged = actions.count == newActions.count
-            && zip(actions, newActions).allSatisfy { $0.id == $1.id }
+        let isRefresh = query != nil && query == listQuery
+        let selectedIndex = selectedActionID.flatMap { id in actions.firstIndex { $0.id == id } }
         actions = newActions
         actionCache = cache
-        if preservingSelection, listUnchanged, let prev = previousSelection,
-           newActions.contains(where: { $0.id == prev })
-        {
-            selectedActionID = prev
-        } else {
+        listQuery = query
+        guard isRefresh, let selectedIndex, !newActions.isEmpty else {
             selectedActionID = newActions.first?.id
             listResetToken &+= 1
+            return
+        }
+        if let newIndex = newActions.firstIndex(where: { $0.id == selectedActionID }) {
+            if newIndex != selectedIndex { selectionRevealToken &+= 1 }
+        } else {
+            selectedActionID = newActions[min(selectedIndex, newActions.count - 1)].id
         }
     }
 
@@ -361,7 +378,10 @@ extension PickerState {
     /// which would otherwise be left showing the pushed rows.
     func pushMode(_ newMode: PickerMode, restoringList: Bool = false) {
         let covered = restoringList
-            ? CoveredList(actions: actions, cache: actionCache, selectedActionID: selectedActionID, query: query)
+            ? CoveredList(
+                actions: actions, cache: actionCache, selectedActionID: selectedActionID,
+                listQuery: listQuery, query: query
+            )
             : nil
         modeStack.append(ModeStackEntry(mode: mode, coveredList: covered))
         withAnimation(.easeInOut(duration: 0.2)) {
@@ -389,6 +409,7 @@ extension PickerState {
             actions = list.actions
             actionCache = list.cache
             selectedActionID = list.selectedActionID
+            listQuery = list.listQuery
             if query != list.query {
                 query = list.query
             }
@@ -416,6 +437,7 @@ private struct CoveredList {
     let actions: [ActionItem]
     let cache: [ActionID: any Action]
     let selectedActionID: ActionID?
+    let listQuery: String?
     let query: String
 }
 

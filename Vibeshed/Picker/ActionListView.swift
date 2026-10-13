@@ -7,6 +7,8 @@ struct ActionListView: View {
     var activationCounters: [ActionID: Int] = [:]
     /// Changes when the results changed and selection snapped back to the first row.
     var listResetToken: Int = 0
+    /// Changes when a refresh moved the selected row without changing the selection.
+    var selectionRevealToken: Int = 0
     var rowHeight: CGFloat = 52
     var topInset: CGFloat = 0
     var onActivate: ((ActionID) -> Void)?
@@ -76,6 +78,13 @@ struct ActionListView: View {
                     // `onChange` arms the tracker for this scroll.
                     scrollTracker.scrollToStarting()
                     proxy.scrollTo(firstID, anchor: .top)
+                    DispatchQueue.main.async { scrollTracker.scrollToApplied() }
+                }
+            }
+            .onChange(of: selectionRevealToken) { _, _ in
+                if let id = selectedID {
+                    scrollTracker.scrollToStarting()
+                    proxy.scrollTo(id, anchor: nil)
                     DispatchQueue.main.async { scrollTracker.scrollToApplied() }
                 }
             }
