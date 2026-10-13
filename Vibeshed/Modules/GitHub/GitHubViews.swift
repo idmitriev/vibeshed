@@ -77,7 +77,7 @@ struct GitHubActionPreviewView: View {
     var body: some View {
         PreviewLayout(moduleName: "github") {
             PreviewHeader(title: action.title, subtitle: action.subtitle) {
-                avatarHero
+                GitHubAvatarHero(action: action)
             }
 
             badgeRow
@@ -93,38 +93,6 @@ struct GitHubActionPreviewView: View {
 
             metadataSection
         }
-    }
-
-    @ViewBuilder
-    private var avatarHero: some View {
-        if let avatarURL = action.avatarURL,
-           let url = URL(string: avatarURL)
-        {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case let .success(image):
-                    image.resizable().aspectRatio(contentMode: .fill)
-                default:
-                    previewFallbackIcon
-                }
-            }
-            .frame(width: 72, height: 72)
-            .clipShape(action.githubItemType == .repo
-                ? AnyShape(RoundedRectangle(cornerRadius: 10))
-                : AnyShape(Circle()))
-        } else {
-            previewFallbackIcon
-        }
-    }
-
-    private var previewFallbackIcon: some View {
-        Image(
-            systemName: action.iconName
-                ?? "chevron.left.forwardslash.chevron.right"
-        )
-        .font(.system(size: 56))
-        .foregroundStyle(.secondary)
-        .frame(width: 72, height: 72)
     }
 
     private var badgeRow: some View {
@@ -234,6 +202,43 @@ struct GitHubActionPreviewView: View {
             return display.string(from: date)
         }
         return isoDate
+    }
+}
+
+/// The preview's 72 pt picture: the owner's avatar (rounded square for a repo, a circle
+/// for people), or the action's symbol while it loads or when there's none.
+struct GitHubAvatarHero: View {
+    let action: GitHubAction
+
+    var body: some View {
+        if let avatarURL = action.avatarURL,
+           let url = URL(string: avatarURL)
+        {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case let .success(image):
+                    image.resizable().aspectRatio(contentMode: .fill)
+                default:
+                    fallbackIcon
+                }
+            }
+            .frame(width: 72, height: 72)
+            .clipShape(action.githubItemType == .repo
+                ? AnyShape(RoundedRectangle(cornerRadius: 10))
+                : AnyShape(Circle()))
+        } else {
+            fallbackIcon
+        }
+    }
+
+    private var fallbackIcon: some View {
+        Image(
+            systemName: action.iconName
+                ?? "chevron.left.forwardslash.chevron.right"
+        )
+        .font(.system(size: 56))
+        .foregroundStyle(.secondary)
+        .frame(width: 72, height: 72)
     }
 }
 

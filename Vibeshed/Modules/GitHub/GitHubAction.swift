@@ -26,6 +26,10 @@ struct GitHubAction: Action {
     let createdAt: String?
     let repoStars: Int?
     let repoLanguage: String?
+    /// Set on the open pull requests listed in the main search, which get their own preview.
+    let pullRequest: GitHubPullRequest?
+    let requiresWordPrefixMatch: Bool
+    let deduplicationKey: String?
 
     private let runner: @Sendable (ParameterValues) async throws -> ActionResult
 
@@ -47,6 +51,9 @@ struct GitHubAction: Action {
         createdAt: String? = nil,
         repoStars: Int? = nil,
         repoLanguage: String? = nil,
+        pullRequest: GitHubPullRequest? = nil,
+        requiresWordPrefixMatch: Bool = false,
+        deduplicationKey: String? = nil,
         runner: @escaping @Sendable (ParameterValues) async throws -> ActionResult
     ) {
         self.id = id
@@ -66,6 +73,9 @@ struct GitHubAction: Action {
         self.createdAt = createdAt
         self.repoStars = repoStars
         self.repoLanguage = repoLanguage
+        self.pullRequest = pullRequest
+        self.requiresWordPrefixMatch = requiresWordPrefixMatch
+        self.deduplicationKey = deduplicationKey
         self.runner = runner
     }
 
@@ -80,6 +90,9 @@ struct GitHubAction: Action {
 
     @MainActor
     func makePreviewView() -> AnyView? {
-        AnyView(GitHubActionPreviewView(action: self))
+        if let pullRequest {
+            return AnyView(GitHubPullRequestPreviewView(action: self, pullRequest: pullRequest))
+        }
+        return AnyView(GitHubActionPreviewView(action: self))
     }
 }
