@@ -17,9 +17,11 @@ final class PanelController {
     /// outlives an action run whether the picker is still as the run left it.
     @ObservationIgnored private(set) var presentationCount = 0
 
-    /// Tracks whether panel was hidden (orderOut) vs never created.
-    /// When true, state is retained and we can skip reset on next show.
-    private var isHiddenWithState: Bool = false
+    /// When the toggle hotkey last hid the picker, as system uptime. Its state is kept for
+    /// `picker.resetAfter` seconds from then: reopened sooner, it's where the user left it.
+    /// nil once it's shown again, and after every other way of closing it (Escape at the
+    /// root, ⌘Escape, a click outside, a run), so the next show starts fresh.
+    private var stateKeptSince: TimeInterval?
 
     /// What kind of load to perform after the show animation completes.
     private enum DeferredLoad {
@@ -68,11 +70,15 @@ final class PanelController {
         panel?.holdsKeyFocus = true
     }
 
-    func show() {
+    /// Shows the picker where the toggle hotkey left it, if that was within
+    /// `picker.resetAfter`, and otherwise on a fresh search. `fresh` always starts
+    /// afresh, for an entry point with its own target (a keybinding's parameter step, a
+    /// `vibeshed://picker?q=` query).
+    func show(fresh: Bool = false) {
         let panel = getOrCreatePanel()
 
         // Determine load strategy but defer actual heavy work until animation finishes
-        if isHiddenWithState {
+        if !fresh, keepsHiddenState {
             deferredLoad = .refresh
         } else {
             pickerState.reset()
@@ -81,20 +87,23 @@ final class PanelController {
             coordinator?.showCachedActionsIfAvailable()
             deferredLoad = .initial
         }
-        isHiddenWithState = false
+        stateKeptSince = nil
 
         // Start animation — heavy work fires in onShowAnimationDidComplete
         present(panel)
         isVisible = true
+        // A parameter step kept from before: its live preview ended with the hide.
+        coordinator?.syncLivePreview()
         Log.picker.debug("Panel shown")
     }
 
+    /// The toggle hotkey's hide: the state stays for a reopen within `picker.resetAfter`.
     func hide() {
         guard let panel, isVisible else { return }
-        isHiddenWithState = true
         deferredLoad = nil
         panel.animateHide()
         isVisible = false
+        stateKeptSince = ProcessInfo.processInfo.systemUptime
         coordinator?.syncLivePreview()
         Log.picker.debug("Panel hidden")
     }
@@ -106,19 +115,25 @@ final class PanelController {
         deferredLoad = nil
         present(panel)
         isVisible = true
-        isHiddenWithState = false
+        stateKeptSince = nil
     }
 
-    /// Called after action execution — resets state so next show is fresh.
-    func hideAndReset() {
+    /// Closes the picker as Escape at the root does — for a run, or a message dismissed —
+    /// so the next show starts fresh. The reset itself waits for that show: done now, it
+    /// would swap the step or list for an empty one while the panel fades out.
+    func close() {
         guard let panel, isVisible else { return }
-        isHiddenWithState = false
         deferredLoad = nil
-        pickerState.reset()
-        coordinator?.clearContext()
         panel.animateHide()
         isVisible = false
-        Log.picker.debug("Panel hidden (state reset)")
+        Log.picker.debug("Panel closed")
+    }
+
+    private var keepsHiddenState: Bool {
+        guard let stateKeptSince else { return false }
+        return configManager.config.picker.keepsState(
+            hiddenFor: ProcessInfo.processInfo.systemUptime - stateKeptSince
+        )
     }
 
     /// Fades the overlay out while a live preview (e.g. `theme/switch`) is changing the
@@ -258,7 +273,7 @@ final class PanelController {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.isVisible = false
-                self?.isHiddenWithState = false
+                self?.stateKeptSince = nil
             }
         }
 

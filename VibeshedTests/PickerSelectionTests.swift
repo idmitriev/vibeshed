@@ -67,7 +67,7 @@ final class PickerSelectionTests: XCTestCase {
         let state = PickerState()
         state.updateActions(rows("a", "b"), rankedFor: "pr")
         state.selectNext()
-        state.pushMode(.pushedActions, restoringList: true)
+        state.pushMode(.pushedActions)
         state.updateActions(rows("message"))
         XCTAssertTrue(state.popMode())
 

@@ -33,7 +33,9 @@ final class PickerState {
         didSet { onLivePreviewContextChange?() }
     }
 
-    private var modeStack: [ModeStackEntry] = []
+    /// The levels Escape goes back through, nearest last. Empty at the root: the
+    /// search, or a list or step that came up on its own (see `showAsRoot`).
+    private var modeStack: [CoveredLevel] = []
 
     /// Fired when anything a live parameter preview depends on changes (mode, highlighted
     /// option). The coordinator uses it to start, advance, or end the preview.
@@ -203,7 +205,9 @@ final class PickerState {
 
     // MARK: - Parameter flow
 
-    func enterParameterMode(action: any Action) {
+    /// Starts collecting `action`'s parameters. `asRoot` puts the first step up with
+    /// nothing beneath it, for an action that wasn't picked from a list (a keybinding's).
+    func enterParameterMode(action: any Action, asRoot: Bool = false) {
         activeAction = action
         collectedValues = [:]
         collectedLabels = [:]
@@ -213,10 +217,13 @@ final class PickerState {
                 collectedValues[param.id] = defaultValue
             }
         }
-        advanceToNextParameter(startingFrom: 0)
+        advanceToNextParameter(startingFrom: 0, asRoot: asRoot)
     }
 
-    func advanceToNextParameter(startingFrom index: Int) {
+    /// Moves to the first required parameter from `index` on that has no value yet. It
+    /// takes the place of the action's step on screen, so Escape goes back to where the
+    /// action was picked rather than through the values already given.
+    func advanceToNextParameter(startingFrom index: Int, asRoot: Bool = false) {
         guard let action = activeAction else { return }
         let params = action.parameters
         for paramIndex in index ..< params.count {
@@ -227,7 +234,14 @@ final class PickerState {
                 parameterOptions = []
                 selectedParameterOptionID = nil
                 isLoadingOptions = false
-                pushMode(.parameterInput(actionID: action.id, parameterIndex: paramIndex))
+                let step = PickerMode.parameterInput(actionID: action.id, parameterIndex: paramIndex)
+                if asRoot {
+                    showAsRoot(step)
+                } else if case let .parameterInput(actionID, _) = mode, actionID == action.id {
+                    setMode(step)
+                } else {
+                    pushMode(step)
+                }
 
                 // Pre-populate static selection options
                 if case let .selection(options) = param.type {
@@ -376,68 +390,73 @@ final class PickerState {
 // MARK: - Mode navigation
 
 /// Outside the class body for its length limit; `modeStack` is private to this file.
+///
+/// Escape goes back one level, to where the user came from in this picker session, and
+/// closes the picker at the root. A parameter step or a pushed list is a level over the
+/// list it was reached from. One that came up on its own — a run's results after the run
+/// closed the picker, the browser chooser, a keybinding's parameter step — is the root:
+/// going "back" would only flash a list the user never saw before closing.
 extension PickerState {
-    /// Pushes `newMode`. With `restoringList`, popping it also puts back the rows, selection
-    /// and query on screen now — for a list pushed over a session the user is working in,
-    /// which would otherwise be left showing the pushed rows.
-    func pushMode(_ newMode: PickerMode, restoringList: Bool = false) {
-        let covered = restoringList
-            ? CoveredList(
-                actions: actions, cache: actionCache, selectedActionID: selectedActionID,
-                listQuery: listQuery, query: query
-            )
-            : nil
-        modeStack.append(ModeStackEntry(mode: mode, coveredList: covered))
-        withAnimation(.easeInOut(duration: 0.2)) {
-            mode = newMode
-        }
+    /// Whether Escape goes back a level rather than closing the picker.
+    var canGoBack: Bool {
+        !modeStack.isEmpty
+    }
+
+    /// Pushes `newMode` over the level on screen. Popping it puts that level back as it is
+    /// now — its rows, selection and query — whatever the new one shows meanwhile.
+    func pushMode(_ newMode: PickerMode) {
+        modeStack.append(CoveredLevel(
+            mode: mode, actions: actions, cache: actionCache, selectedActionID: selectedActionID,
+            listQuery: listQuery, query: query
+        ))
+        setMode(newMode)
         Log.picker.debug("Mode pushed: \(String(describing: newMode), privacy: .public)")
     }
 
     /// Puts `newMode` up with nothing beneath it, so Escape closes the picker rather than
-    /// going back — for a list brought up on a picker that was closed and reset.
+    /// going back.
     func showAsRoot(_ newMode: PickerMode) {
         modeStack = []
+        setMode(newMode)
+        if !newMode.isParameterStep { clearParameterStep() }
+    }
+
+    /// Goes back one level. Returns `false`, changing nothing, at the root.
+    func popMode() -> Bool {
+        guard let previous = modeStack.popLast() else { return false }
+        setMode(previous.mode)
+        actions = previous.actions
+        actionCache = previous.cache
+        selectedActionID = previous.selectedActionID
+        listQuery = previous.listQuery
+        if query != previous.query {
+            query = previous.query
+        }
+        if !previous.mode.isParameterStep { clearParameterStep() }
+        return true
+    }
+
+    /// Changes the level on screen, leaving the ones beneath as they are.
+    private func setMode(_ newMode: PickerMode) {
         withAnimation(.easeInOut(duration: 0.2)) {
             mode = newMode
         }
     }
 
-    /// Returns `true` if a mode was popped, `false` if already at root.
-    func popMode() -> Bool {
-        guard let previous = modeStack.popLast() else { return false }
-        withAnimation(.easeInOut(duration: 0.2)) {
-            mode = previous.mode
-        }
-        if let list = previous.coveredList {
-            actions = list.actions
-            actionCache = list.cache
-            selectedActionID = list.selectedActionID
-            listQuery = list.listQuery
-            if query != list.query {
-                query = list.query
-            }
-        }
-
-        // Restore query state when returning to search
-        if case .search = mode {
-            parameterQuery = ""
-            parameterOptions = []
-            selectedParameterOptionID = nil
-            currentParameter = nil
-            isLoadingOptions = false
-        }
-        return true
+    /// Drops the step that was left. Its action and values stay until another action's
+    /// steps start.
+    private func clearParameterStep() {
+        parameterQuery = ""
+        parameterOptions = []
+        selectedParameterOptionID = nil
+        currentParameter = nil
+        isLoadingOptions = false
     }
 }
 
-/// A mode to go back to, with the list a `pushMode(_:restoringList:)` covered.
-private struct ModeStackEntry {
+/// A level beneath the one on screen, as it was when something was pushed over it.
+private struct CoveredLevel {
     let mode: PickerMode
-    let coveredList: CoveredList?
-}
-
-private struct CoveredList {
     let actions: [ActionItem]
     let cache: [ActionID: any Action]
     let selectedActionID: ActionID?

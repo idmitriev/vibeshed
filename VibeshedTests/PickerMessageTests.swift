@@ -45,7 +45,7 @@ final class PickerMessageTests: XCTestCase {
     }
 
     private func showMessage(over state: PickerState) {
-        state.pushMode(.pushedActions, restoringList: true)
+        state.pushMode(.pushedActions)
         state.updateActions([ActionItem(pushed: message)], cache: [message.id: message])
         state.query = "typed over the message"
     }

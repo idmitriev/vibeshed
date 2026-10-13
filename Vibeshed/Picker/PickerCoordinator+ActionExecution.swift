@@ -23,7 +23,7 @@ extension PickerCoordinator {
         if keepOpen {
             panelController.holdKeyFocusThroughActions()
         } else {
-            panelController.hideAndReset()
+            panelController.close()
         }
         let run = ActionRun(keptOpen: keepOpen, presentation: panelController.presentationCount)
         do {
@@ -61,9 +61,10 @@ extension PickerCoordinator {
 
         case .keepOpen:
             // A run that kept the picker open has nothing to bring back — and if the
-            // picker was closed since, that was the user's doing.
-            if !keepOpen {
-                panelController.showRetainingState()
+            // picker was closed since, that was the user's doing. One the run closed
+            // comes back fresh, as it would have opened next.
+            if !keepOpen, !panelController.isVisible {
+                panelController.show()
             }
 
         case let .pushActions(actions):
@@ -72,11 +73,14 @@ extension PickerCoordinator {
             for action in actions {
                 cache[action.id] = action
             }
-            pickerState.pushMode(.pushedActions)
-            pickerState.updateActions(items, cache: cache)
-            // Re-presenting a picker that's still up would replay its show animation.
-            if !panelController.isVisible {
-                panelController.showRetainingState()
+            if panelController.isVisible {
+                // Over the session on screen — the one a Shift run left open, or one opened
+                // while the run went on: Escape goes back to it.
+                pickerState.pushMode(.pushedActions)
+                pickerState.updateActions(items, cache: cache)
+            } else {
+                // The run closed the picker, so the results are all there is to go back to.
+                presentRootList(items, cache: cache)
             }
 
         case let .chain(actionID, chainValues):
@@ -110,12 +114,24 @@ extension PickerCoordinator {
         let item = ActionItem(pushed: message)
         if run.keptOpen {
             // Over the session the Shift run left open: Escape goes back to it as it was.
-            pickerState.pushMode(.pushedActions, restoringList: true)
+            pickerState.pushMode(.pushedActions)
             pickerState.updateActions([item], cache: [message.id: message])
         } else {
-            // The picker was closed and reset: Escape closes it again.
-            pickerState.showAsRoot(.pushedActions)
-            pickerState.updateActions([item], cache: [message.id: message])
+            // The run closed the picker: Escape closes it again.
+            presentRootList([item], cache: [message.id: message])
+        }
+    }
+
+    /// Shows `items` as the only level of a fresh picker — the state a closing run left
+    /// behind goes — so Escape closes the list. For lists that come up on their own: a
+    /// run's results, the browser chooser.
+    func presentRootList(_ items: [ActionItem], cache: [ActionID: any Action]) {
+        pickerState.reset()
+        clearContext()
+        pickerState.showAsRoot(.pushedActions)
+        pickerState.updateActions(items, cache: cache)
+        // Re-presenting a picker that's still up would replay its show animation.
+        if !panelController.isVisible {
             panelController.showRetainingState()
         }
     }

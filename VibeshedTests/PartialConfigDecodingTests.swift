@@ -111,6 +111,11 @@ final class PartialConfigDecodingTests: XCTestCase {
         try assertDecodes("enabled: false", as: AppConfig.LayoutCorrectionConfig(enabled: false))
     }
 
+    func testEmptyPickerSectionKeepsTheDefaultDelay() throws {
+        try assertDecodes("{}", as: AppConfig.PickerConfig())
+        try assertDecodes("resetAfter: 0", as: AppConfig.PickerConfig(resetAfter: 0))
+    }
+
     func testAppearanceSectionWithOnlyAWidth() throws {
         try assertDecodes("panelWidth: 900", as: AppConfig.AppearanceConfig(panelWidth: 900))
     }

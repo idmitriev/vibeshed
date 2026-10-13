@@ -67,10 +67,11 @@ final class PickerCoordinator {
     // MARK: - Public API
 
     /// Shows the picker in parameter-input mode for the given action.
-    /// Called from keybinding executor when an action has required parameters.
+    /// Called from keybinding executor when an action has required parameters. The step
+    /// opens on a fresh picker with nothing beneath it, so Escape closes it.
     func showForParameterInput(action: any Action) {
-        panelController.show()
-        pickerState.enterParameterMode(action: action)
+        panelController.show(fresh: true)
+        pickerState.enterParameterMode(action: action, asRoot: true)
         // Trigger initial fetch for dynamicSelection
         if let param = pickerState.currentParameter,
            case .dynamicSelection = param.type
@@ -100,6 +101,15 @@ final class PickerCoordinator {
         case .parameterInput:
             handleReturnInParameterMode(keepOpen: keepOpen)
         }
+    }
+
+    /// Backspace on an empty field, or the ✕ on the action's pill: back one level. A step
+    /// with nothing beneath it (a keybinding's) gives way to a fresh search instead.
+    @discardableResult
+    func goBack() -> Task<Void, Never>? {
+        guard !pickerState.popMode(), pickerState.mode.isParameterStep else { return nil }
+        pickerState.showAsRoot(.search)
+        return loadInitialActions()
     }
 
     func handleTab() {
@@ -155,7 +165,7 @@ final class PickerCoordinator {
         // covers, or closed. Running it like an action would close and reset that session.
         if action is PickerMessageAction {
             if !pickerState.popMode() {
-                panelController.hideAndReset()
+                panelController.close()
             }
             return
         }
@@ -194,8 +204,6 @@ final class PickerCoordinator {
         if pickerState.allRequiredParametersFilled {
             executeActiveAction(keepOpen: keepOpen)
         } else if let nextIndex = pickerState.nextUnfilledParameterIndex {
-            // Pop current parameter mode and advance to next
-            _ = pickerState.popMode()
             pickerState.advanceToNextParameter(startingFrom: nextIndex)
             // Trigger fetch for dynamicSelection
             if let nextParam = pickerState.currentParameter,

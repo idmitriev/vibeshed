@@ -136,8 +136,8 @@ struct PickerView: View {
                         text: searchBinding,
                         placeholder: searchPlaceholder,
                         pills: searchFieldPills,
-                        onRemovePill: { _ in _ = state.popMode() },
-                        onBackspaceEmpty: { _ = state.popMode() },
+                        onRemovePill: { _ in coordinator?.goBack() },
+                        onBackspaceEmpty: { coordinator?.goBack() },
                         selectionIconSystemName: selectionIconSystemName,
                         selectionAppIconPath: selectionAppIconPath
                     )
