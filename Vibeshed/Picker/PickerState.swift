@@ -46,6 +46,10 @@ final class PickerState {
 
     var isLoadingOptions: Bool = false
     var layoutCorrectionHint: LayoutCorrectionHint?
+    /// The text the list ranks: the field's, or its layout correction when one shows.
+    var rankedText: String {
+        layoutCorrectionHint?.correctedQuery ?? query
+    }
 
     var parameterQuery: String = "" {
         didSet { parameterQuerySubject.send(parameterQuery) }

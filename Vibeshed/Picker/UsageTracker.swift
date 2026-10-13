@@ -5,6 +5,7 @@ import Foundation
 final class UsageTracker {
     private(set) var usageCounts: [String: Int] = [:]
     private(set) var lastUsedDates: [String: Date] = [:]
+    private(set) var queryHistory = QueryHistory()
 
     private let storageURL: URL
     private var saveTask: Task<Void, Never>?
@@ -16,20 +17,27 @@ final class UsageTracker {
         load()
     }
 
-    func recordUsage(actionID: ActionID) {
+    /// `query` is what was typed in the search field when the action was picked from
+    /// the list; nil when it ran some other way (a chain, a pushed list).
+    func recordUsage(actionID: ActionID, query: String? = nil, at now: Date = Date()) {
         let key = actionID.rawValue
         usageCounts[key, default: 0] += 1
-        lastUsedDates[key] = Date()
+        lastUsedDates[key] = now
+        if let query {
+            queryHistory.record(query: query, actionID: key, at: now)
+        }
         scheduleSave()
     }
 
     func makeScoringContext(query: String, systemContext: SystemContext? = nil) -> ScoringContext {
-        ScoringContext(
+        var context = ScoringContext(
             usageCounts: usageCounts,
             lastUsedDates: lastUsedDates,
             query: query,
             systemContext: systemContext
         )
+        context.queryAffinity = queryHistory.shares(for: query, now: context.now)
+        return context
     }
 
     // MARK: - Persistence
@@ -43,6 +51,7 @@ final class UsageTracker {
             let stored = try decoder.decode(StoredUsage.self, from: data)
             usageCounts = stored.counts
             lastUsedDates = stored.lastUsed
+            queryHistory = stored.queries ?? QueryHistory()
             Log.picker.info("Loaded usage data: \(self.usageCounts.count, privacy: .public) actions tracked")
         } catch {
             Log.picker.error("Failed to load usage data: \(error.localizedDescription, privacy: .public)")
@@ -59,7 +68,9 @@ final class UsageTracker {
     }
 
     func save() {
-        let stored = StoredUsage(counts: usageCounts, lastUsed: lastUsedDates)
+        let stored = StoredUsage(
+            counts: usageCounts, lastUsed: lastUsedDates, queries: queryHistory.pruned(at: Date())
+        )
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
@@ -77,4 +88,6 @@ final class UsageTracker {
 private struct StoredUsage: Codable {
     let counts: [String: Int]
     let lastUsed: [String: Date]
+    /// Optional: files written before query history existed don't have it.
+    let queries: QueryHistory?
 }

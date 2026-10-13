@@ -1,10 +1,10 @@
 @testable import Vibeshed
 import XCTest
 
-/// `FuzzyMatcher.match` is a single normalized subsequence scorer (start-of-string,
-/// word-boundary, and consecutive bonuses, then normalized to 0...1). These tests
-/// pin the behavioral contract — exact anchors where the value is well-defined, and
-/// ordering properties for the bonus heuristics.
+/// `FuzzyMatcher.match` scores the best in-order alignment of the query by where its
+/// chunks start (text start, word start, inside a word, scattered), normalized to
+/// 0...1. These tests pin the behavioral contract — exact anchors where the value is
+/// well-defined, and ordering properties for the heuristics.
 final class FuzzyMatcherTests: XCTestCase {
     private let acc = 0.0001
 
@@ -48,6 +48,76 @@ final class FuzzyMatcherTests: XCTestCase {
         XCTAssertGreaterThan(boundary, midWord)
     }
 
+    func testExactMatchScoresOne() {
+        XCTAssertEqual(FuzzyMatcher.match(query: "spotify", against: "Spotify")?.score ?? -1, 1, accuracy: acc)
+    }
+
+    /// The best placement wins, not the leftmost: "theme" is the word in "Switch Theme…",
+    /// not the t…h of "Switch" — so it scores as the word does in "Reapply Theme".
+    func testFindsTheBestAlignmentNotTheLeftmost() throws {
+        let title = "Switch Theme…"
+        let result = try XCTUnwrap(FuzzyMatcher.match(query: "theme", against: title))
+        XCTAssertEqual(result.matchedRanges.map { String(title[$0]) }, ["Theme"])
+        let reapply = try XCTUnwrap(FuzzyMatcher.match(query: "theme", against: "Reapply Theme")?.score)
+        XCTAssertEqual(result.score, reapply, accuracy: acc)
+    }
+
+    /// The start of the text beats a later word, which beats an initialism, which beats
+    /// a substring inside a word.
+    func testMatchClassesRankInOrder() throws {
+        func score(_ query: String, _ target: String) throws -> Double {
+            try XCTUnwrap(FuzzyMatcher.match(query: query, against: target)?.score)
+        }
+        let start = try score("spot", "Spotify")
+        let laterWord = try score("spot", "Siri & Spotlight")
+        let initials = try score("spsl", "Siri & Spotlight Settings List")
+        let inWord = try score("pot", "Spotify")
+        XCTAssertGreaterThan(start, laterWord)
+        XCTAssertGreaterThan(laterWord, initials)
+        XCTAssertGreaterThan(initials, inWord)
+    }
+
+    /// Letters picked up inside a word after a skip are coincidence: "mind" scattered
+    /// through "Minimize Window" or "Minimized" loses to "mind" as a word, and "pr"
+    /// scattered in "Pairing" loses to the initials of "Pull Requests".
+    func testScatteredHitsLoseToWordMatches() throws {
+        func score(_ query: String, _ target: String) throws -> Double {
+            try XCTUnwrap(FuzzyMatcher.match(query: query, against: target)?.score)
+        }
+        let word = try score("mind", "teach the picker to read my mind")
+        XCTAssertGreaterThan(word, try score("mind", "Minimize Window"))
+        XCTAssertGreaterThan(word, try score("mind", "Restore Minimized Windows"))
+        XCTAssertGreaterThan(try score("pr", "Search Pull Requests"), try score("pr", "Pairing session"))
+    }
+
+    /// Punctuation and a capital after a lowercase letter start words.
+    func testWordStarts() throws {
+        func score(_ query: String, _ target: String) throws -> Double {
+            try XCTUnwrap(FuzzyMatcher.match(query: query, against: target)?.score)
+        }
+        XCTAssertEqual(
+            try score("restore", "Toggle Maximize/Restore"), try score("restore", "Toggle Maximize Restore"),
+            accuracy: acc
+        )
+        XCTAssertGreaterThan(try score("hub", "GitHub"), try score("hub", "Github"))
+        XCTAssertEqual(
+            try score("spot", "Siri & Spotlight"), try score("spot", "Siri a Spotlight"), accuracy: acc
+        )
+    }
+
+    /// Of titles holding the same word, the shorter one wins.
+    func testShorterTitleBreaksTies() throws {
+        let short = try XCTUnwrap(FuzzyMatcher.match(query: "grid", against: "Attach Window to Grid")?.score)
+        let long = try XCTUnwrap(FuzzyMatcher.match(query: "grid", against: "Attach All Windows to Grid")?.score)
+        XCTAssertGreaterThan(short, long)
+    }
+
+    func testHighlightsInitials() throws {
+        let title = "Search Pull Requests"
+        let result = try XCTUnwrap(FuzzyMatcher.match(query: "pr", against: title))
+        XCTAssertEqual(result.matchedRanges.map { String(title[$0]) }, ["P", "R"])
+    }
+
     // MARK: - score()
 
     func testScoreEmptyQueryUsesRelevanceAndUsage() {
@@ -69,8 +139,9 @@ final class FuzzyMatcherTests: XCTestCase {
             query: "kw", target: .init(title: "x", subtitle: "y", keywords: ["kwd"], relevanceScore: 0),
             usageBoost: 0
         )
-        // Only the keyword bonus contributes: exact keywords count more than prefixes.
-        XCTAssertEqual(exact?.score ?? -1, 0.25, accuracy: acc)
+        // Only the keyword bonus contributes: an exact keyword counts as an exact title
+        // (the title weight), a prefix much less.
+        XCTAssertEqual(exact?.score ?? -1, 0.4, accuracy: acc)
         XCTAssertEqual(prefix?.score ?? -1, 0.1, accuracy: acc)
         XCTAssertEqual(exact?.titleRanges.count, 0)
     }

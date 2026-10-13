@@ -1,114 +1,64 @@
 import Foundation
 
+/// Scores how well a typed query matches an action's title, subtitle and keywords.
+///
+/// Titles and subtitles are matched by `align` (FuzzyMatcher+Alignment): the query
+/// must appear in order, and the best placement wins rather than the leftmost one,
+/// so "theme" lands on the word in "Switch Theme…" instead of the t…h in "Switch".
+/// A match that starts the text beats one that starts a later word, which beats one
+/// inside a word; letters picked up inside a word after a skip count against it.
 enum FuzzyMatcher {
     struct MatchResult {
         let score: Double
         let matchedRanges: [Range<String.Index>]
     }
 
+    /// How a typed query's terms add up (see `score`).
+    enum Weight {
+        static let title = 0.4
+        static let subtitle = 0.1
+        /// A keyword equal to the query is a deliberate synonym ("car" on 🚗
+        /// Automobile), so it counts as much as an exact title — more than any partial
+        /// title match. A keyword the query only starts is a weaker hint.
+        static let exactKeyword = title
+        static let keywordPrefix = 0.1
+        static let relevance = 0.15
+        /// Usage of an action under any query only breaks ties between comparable
+        /// matches. What the user picks after typing a given query is the stronger
+        /// signal, applied by `ActionScorer` (see `QueryHistory`).
+        static let usage = 0.05
+        /// With nothing typed the list is a launchpad: usage leads, relevance follows.
+        static let emptyQueryRelevance = 0.4
+        static let emptyQueryUsage = 0.6
+    }
+
     /// Fuzzy match a query against a target string.
     /// Returns nil if the query cannot be matched, otherwise returns a score (0..1) and highlight ranges.
     static func match(query: String, against target: String) -> MatchResult? {
-        match(
-            queryChars: Array(query.lowercased()),
-            against: Array(target.lowercased()),
-            original: target
+        match(Query(query), against: SearchText(target))
+    }
+
+    /// Core matcher over precomputed forms. The per-keystroke scoring path builds the
+    /// `SearchText`s once per action (see `ScorableAction`).
+    static func match(_ query: Query, against text: SearchText) -> MatchResult? {
+        guard let alignment = align(query.codes, in: text, wantIndices: true) else { return nil }
+        return MatchResult(
+            score: alignment.quality,
+            matchedRanges: buildRanges(from: alignment.indices, in: text.original)
         )
     }
 
-    /// Core matcher over pre-lowercased character arrays. The per-keystroke scoring
-    /// path precomputes these once per action (see `ScorableAction`) instead of
-    /// re-lowercasing every title/subtitle/keyword on each keystroke.
-    /// `original` is the un-lowercased target, used to build highlight ranges.
-    static func match(
-        queryChars: [Character],
-        against targetChars: [Character],
-        original: String
-    ) -> MatchResult? {
-        guard !queryChars.isEmpty else {
-            return MatchResult(score: 1.0, matchedRanges: [])
-        }
-        guard !targetChars.isEmpty else { return nil }
-
-        var qIdx = 0
-        var matchedIndices: [Int] = []
-        var totalScore: Double = 0
-
-        for (tIdx, tChar) in targetChars.enumerated() {
-            guard qIdx < queryChars.count else { break }
-            if tChar == queryChars[qIdx] {
-                matchedIndices.append(tIdx)
-                addMatchScore(to: &totalScore, at: tIdx, in: targetChars, matchedIndices: matchedIndices)
-                qIdx += 1
-            }
-        }
-
-        // All query characters must match
-        guard qIdx == queryChars.count else { return nil }
-
-        // Penalty for gaps between matches
-        if let first = matchedIndices.first, let last = matchedIndices.last, matchedIndices.count >= 2 {
-            let totalGap = last - first - (matchedIndices.count - 1)
-            totalScore -= Double(totalGap) * 0.02
-        }
-
-        // Normalize score to 0..1 range
-        let maxPossible = Double(queryChars.count) * 0.35 + 0.2
-        let normalizedScore = min(1.0, max(0.0, totalScore / maxPossible))
-
-        // Build ranges for highlighting
-        let matchedRanges = buildRanges(from: matchedIndices, in: original)
-
-        return MatchResult(score: normalizedScore, matchedRanges: matchedRanges)
-    }
-
-    /// Scores one query character matched at `tIdx`; `matchedIndices` already includes it.
-    private static func addMatchScore(
-        to totalScore: inout Double,
-        at tIdx: Int,
-        in targetChars: [Character],
-        matchedIndices: [Int]
-    ) {
-        // Bonus: match at start of target
-        if tIdx == 0 {
-            totalScore += 0.2
-        }
-
-        // Bonus: match at start of word (after space, dash, dot, etc.)
-        if tIdx > 0 {
-            let prevChar = targetChars[tIdx - 1]
-            if prevChar == " " || prevChar == "-" || prevChar == "." || prevChar == "_" {
-                totalScore += 0.15
-            }
-        }
-
-        // Bonus: consecutive match
-        if matchedIndices.count >= 2,
-           matchedIndices[matchedIndices.count - 1] == matchedIndices[matchedIndices.count - 2] + 1
-        {
-            totalScore += 0.1
-        }
-
-        // Base score for matching
-        totalScore += 0.05
-    }
-
-    /// Precomputed lowercase forms of one action's searchable fields. Built once
-    /// per action when the corpus is (re)fetched so per-keystroke scoring does no
-    /// string lowercasing or `Array(String)` conversion.
+    /// Precomputed searchable forms of one action's fields. Built once per action
+    /// when the corpus is (re)fetched so per-keystroke scoring does no string work.
     struct ScoreTarget: Sendable {
-        let title: String
-        let titleChars: [Character]
-        let subtitle: String
-        let subtitleChars: [Character]
+        let title: SearchText
+        let subtitle: SearchText
         let keywordsLower: [String]
         let relevanceScore: Double
 
         init(title: String, subtitle: String, keywords: [String], relevanceScore: Double) {
-            self.title = title
-            self.titleChars = Array(title.lowercased())
-            self.subtitle = subtitle
-            self.subtitleChars = Array(subtitle.lowercased())
+            self.title = SearchText(title)
+            self.subtitle = SearchText(subtitle)
             self.keywordsLower = keywords.map { $0.lowercased() }
             self.relevanceScore = relevanceScore
         }
@@ -121,58 +71,42 @@ enum FuzzyMatcher {
         target: ScoreTarget,
         usageBoost: Double
     ) -> (score: Double, titleRanges: [Range<String.Index>])? {
-        let queryLower = query.lowercased()
-        return score(
-            queryLower: queryLower,
-            queryChars: Array(queryLower),
-            target: target,
-            usageBoost: usageBoost
-        )
+        score(Query(query), target: target, usageBoost: usageBoost)
     }
 
-    /// Precomputed-input variant of `score` — the per-keystroke hot path. All
-    /// lowercased forms come in ready-made so no string transforms happen here.
+    /// Precomputed-input variant of `score` — the per-keystroke hot path.
     static func score(
-        queryLower: String,
-        queryChars: [Character],
+        _ query: Query,
         target: ScoreTarget,
         usageBoost: Double
     ) -> (score: Double, titleRanges: [Range<String.Index>])? {
-        guard !queryChars.isEmpty else {
+        guard !query.isEmpty else {
             // No query: score based on relevance and usage only
-            let score = target.relevanceScore * 0.4 + usageBoost * 0.6
+            let score = target.relevanceScore * Weight.emptyQueryRelevance + usageBoost * Weight.emptyQueryUsage
             return (score: score, titleRanges: [])
         }
 
-        let titleMatch = match(
-            queryChars: queryChars, against: target.titleChars, original: target.title
-        )
-        let subtitleMatch = match(
-            queryChars: queryChars, against: target.subtitleChars, original: target.subtitle
-        )
-        // An exact keyword is a deliberate synonym ("car" on 🚗 Automobile), so it must
-        // outrank scattered fuzzy title hits; a keyword prefix is a weaker signal.
-        let keywordBonus: Double = if target.keywordsLower.contains(queryLower) {
-            0.25
-        } else if target.keywordsLower.contains(where: { $0.hasPrefix(queryLower) }) {
-            0.1
+        let titleMatch = match(query, against: target.title)
+        // Subtitles aren't highlighted, so skip tracing the alignment.
+        let subtitleScore = align(query.codes, in: target.subtitle, wantIndices: false)?.quality
+        let keywordBonus: Double = if target.keywordsLower.contains(query.lowered) {
+            Weight.exactKeyword
+        } else if target.keywordsLower.contains(where: { $0.hasPrefix(query.lowered) }) {
+            Weight.keywordPrefix
         } else {
             0
         }
 
         // Must match at least title, subtitle, or keyword
-        guard titleMatch != nil || subtitleMatch != nil || keywordBonus > 0 else {
+        guard titleMatch != nil || subtitleScore != nil || keywordBonus > 0 else {
             return nil
         }
 
-        let titleScore = titleMatch?.score ?? 0
-        let subtitleScore = subtitleMatch?.score ?? 0
-
-        let combined = titleScore * 0.4
-            + subtitleScore * 0.1
+        let combined = (titleMatch?.score ?? 0) * Weight.title
+            + (subtitleScore ?? 0) * Weight.subtitle
             + keywordBonus
-            + target.relevanceScore * 0.15
-            + usageBoost * 0.25
+            + target.relevanceScore * Weight.relevance
+            + usageBoost * Weight.usage
 
         return (
             score: combined,

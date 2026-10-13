@@ -42,31 +42,37 @@ enum ActionScorer {
 
     typealias RankKey = (isFallback: Bool, score: Double)
 
+    /// Weight of an action's share of the picks made for what's typed
+    /// (`ScoringContext.queryAffinity`). Enough for a habit to lift its action over
+    /// any closer text match — a single pick adds half of it — while an event about
+    /// to start (`ImminenceScorer`) still comes first.
+    static let affinityWeight = 0.5
+
     /// One action's score, split into its terms. `final` is what ranking sorts by.
     struct Evaluation {
         /// Fuzzy match incl. weighted relevance and usage (see `FuzzyMatcher.score`).
         let fuzzy: Double
         /// Raw usage boost fed into `fuzzy`.
         let usage: Double
+        /// Weighted share of the picks made for this query.
+        let affinity: Double
         let context: Double
         let imminence: Double
         let titleRanges: [Range<String.Index>]
 
-        var final: Double { fuzzy + context + imminence }
+        var final: Double { fuzzy + affinity + context + imminence }
     }
 
     /// Scores one action; nil when it doesn't match the query at all.
     static func evaluate(
         _ scorable: ScorableAction,
-        queryLower: String,
-        queryChars: [Character],
+        query: FuzzyMatcher.Query,
         scoring: ScoringContext
     ) -> Evaluation? {
         let action = scorable.action
         let usageBoost = scoring.usageBoost(for: action.id)
         guard let result = FuzzyMatcher.score(
-            queryLower: queryLower,
-            queryChars: queryChars,
+            query,
             target: scorable.target,
             usageBoost: usageBoost
         ) else { return nil }
@@ -88,6 +94,7 @@ enum ActionScorer {
         return Evaluation(
             fuzzy: result.score,
             usage: usageBoost,
+            affinity: affinityWeight * (scoring.queryAffinity[action.id.rawValue] ?? 0),
             context: contextBoost,
             imminence: imminenceBoost,
             titleRanges: result.titleRanges
@@ -101,16 +108,13 @@ enum ActionScorer {
         query: String,
         scoring: ScoringContext
     ) -> ([ActionItem], [ActionID: any Action]) {
-        let queryLower = query.lowercased()
-        let queryChars = Array(queryLower)
+        let query = FuzzyMatcher.Query(query)
 
         var scored: [(item: ActionItem, action: any Action, score: Double, isFallback: Bool)] = []
         var cache: [ActionID: any Action] = [:]
 
         for scorable in corpus {
-            guard let eval = evaluate(
-                scorable, queryLower: queryLower, queryChars: queryChars, scoring: scoring
-            ) else { continue }
+            guard let eval = evaluate(scorable, query: query, scoring: scoring) else { continue }
             let action = scorable.action
             let finalScore = eval.final
             let item = ActionItem(
