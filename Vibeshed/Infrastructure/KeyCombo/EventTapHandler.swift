@@ -4,7 +4,7 @@ import Foundation
 import os
 
 final class EventTapHandler: @unchecked Sendable {
-    private let executor: @Sendable (ActionID) -> Void
+    let executor: @Sendable (ActionID) -> Void
     private let focusedAppTracker: FocusedAppTracker
 
     private var tapPort: CFMachPort?
@@ -24,9 +24,10 @@ final class EventTapHandler: @unchecked Sendable {
     private let capsLockForwarder: CapsLockForwarder
 
     /// Feeds the keystroke visualizer. Owns its own lock.
-    private let keystrokes = KeystrokeReporter()
+    let keystrokes = KeystrokeReporter()
 
     // Modifier hold state — only accessed from tap callback thread
+    var capsLockPresses = CapsLockComboPresses()
     private var spaceHeld = false
     private var spaceUsedAsModifier = false
     private var tabHeld = false
@@ -223,6 +224,9 @@ extension EventTapHandler {
             SystemCapsLock.turnOff()
             return nil
         }
+        if !isInjected(event), endsCapsLockComboInExcludedApp(event: event, type: type) {
+            return nil
+        }
         if type == .keyDown, !isInjected(event) {
             let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
             keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .passedThrough)
@@ -278,6 +282,10 @@ extension EventTapHandler {
             event.flags = event.flags.subtracting(.maskAlphaShift)
         }
 
+        // Before the Space/Tab hold, so capslock+space fires even with a Space layer bound
+        if handleCapsLockCombo(event: event, keyCode: keyCode, focusedApp: focusedApp, tables: tables) {
+            return nil
+        }
         if beginModifierHold(keyCode: keyCode, tables: tables) {
             return nil // Suppress space/tab until we know if it's a modifier
         }
@@ -303,25 +311,13 @@ extension EventTapHandler {
         return false
     }
 
-    /// CapsLock / Space / Tab + key combos. True when the key press was consumed.
+    /// Space / Tab + key combos. True when the key press was consumed.
     private func handleModifierCombo(
         event: CGEvent,
         keyCode: UInt16,
         focusedApp: String,
         tables: BindingTables
     ) -> Bool {
-        // Caps-lock modifier combos (state from IOKit HID)
-        if CapsLockMonitor.shared.isPressed,
-           let actionID = tables.capsLock[keyCode]?.resolve(focusedApp: focusedApp)
-        {
-            Log.keybindings.info(
-                "CapsLock+\(keyCode, privacy: .public) → \(actionID.rawValue, privacy: .public)"
-            )
-            keystrokes.reportKeyDown(event, keyCode: keyCode, heldKey: .capsLock, outcome: .binding(actionID))
-            executor(actionID)
-            return true
-        }
-
         // Space modifier combos
         if spaceHeld, keyCode != Self.spaceKeyCode,
            let actionID = tables.space[keyCode]?.resolve(focusedApp: focusedApp)
@@ -412,6 +408,10 @@ extension EventTapHandler {
         if keyCode == CapsLockForwarder.keyCode, !currentTables().capsLock.isEmpty {
             CapsLockMonitor.shared.setForwardedPressed(false)
             return nil
+        }
+
+        if capsLockPresses.keyUp(keyCode) {
+            return nil // The app never saw this combo key go down
         }
 
         // Strip alphaShift so held capslock doesn't uppercase letters
