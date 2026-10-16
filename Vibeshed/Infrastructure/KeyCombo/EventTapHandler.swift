@@ -149,7 +149,7 @@ final class EventTapHandler: @unchecked Sendable {
 
     /// The tables as of now, for one event's lookups. Copying is cheap (the
     /// dictionaries are copy-on-write) and keeps the lock hold to a single read.
-    private func currentTables() -> BindingTables {
+    func currentTables() -> BindingTables {
         os_unfair_lock_lock(&lock)
         defer { os_unfair_lock_unlock(&lock) }
         return tables
@@ -231,30 +231,6 @@ extension EventTapHandler {
             let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
             keystrokes.reportKeyDown(event, keyCode: keyCode, outcome: .passedThrough)
         }
-        return Unmanaged.passUnretained(event)
-    }
-
-    private func handleFlagsChanged(event: CGEvent) -> Unmanaged<CGEvent>? {
-        // CapsLock state is tracked via IOKit HID (CapsLockMonitor).
-        // Suppress the capslock flagsChanged event when we have
-        // capslock bindings to prevent the LED toggle.
-        if !currentTables().capsLock.isEmpty {
-            let keyCode = UInt16(
-                event.getIntegerValueField(.keyboardEventKeycode)
-            )
-            if keyCode == UInt16(kVK_CapsLock) {
-                // Keep the system toggle off so excluded apps (e.g. UTM, which
-                // syncs its guest to it) start from a known state.
-                SystemCapsLock.turnOff()
-                return nil
-            }
-            // Also strip alphaShift from other modifier events
-            // so held capslock doesn't affect letter case.
-            if event.flags.contains(.maskAlphaShift) {
-                event.flags = event.flags.subtracting(.maskAlphaShift)
-            }
-        }
-
         return Unmanaged.passUnretained(event)
     }
 
