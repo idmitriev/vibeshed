@@ -123,6 +123,9 @@ final class ConfigManager {
         config.appearance = decodeSection(
             "appearance", from: rootMapping, decoder: decoder
         ) ?? config.appearance
+        config.picker = decodeSection(
+            "picker", from: rootMapping, decoder: decoder
+        ) ?? config.picker
         config.urlRouting = decodeSection(
             "urlRouting", from: rootMapping, decoder: decoder
         ) ?? config.urlRouting

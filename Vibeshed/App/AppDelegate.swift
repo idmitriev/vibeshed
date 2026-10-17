@@ -73,14 +73,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             configManager: configManager,
             moduleRegistry: moduleRegistry,
             showPicker: { query in
-                panel.show()
+                // A query is a new search, not one for the list the picker was left on.
+                panel.show(fresh: query != nil)
                 if let query {
                     picker.query = query
                 }
             },
             togglePicker: { panel.toggle() },
             showURLChooser: { _, actions in
-                Self.showURLChooser(actions, panel: panel, picker: picker)
+                Self.showURLChooser(actions, panel: panel, coordinator: coordinator)
             }
         )
         super.init()
@@ -325,11 +326,13 @@ extension AppDelegate {
 
 extension AppDelegate {
     /// Shows the picker listing browser choices for a URL that no routing rule claimed.
-    private static func showURLChooser(_ actions: [any Action], panel: PanelController, picker: PickerState) {
+    /// Escape closes it, opening nothing.
+    private static func showURLChooser(
+        _ actions: [any Action],
+        panel: PanelController,
+        coordinator: PickerCoordinator
+    ) {
         NSApp.activate(ignoringOtherApps: true)
-        panel.show()
-        panel.setStaysOpenOnResignKey(true)
-        picker.query = ""
         let items = actions.map { action in
             ActionItem(
                 id: action.id,
@@ -347,7 +350,7 @@ extension AppDelegate {
         for action in actions {
             cache[action.id] = action
         }
-        picker.pushMode(.pushedActions)
-        picker.updateActions(items, cache: cache)
+        coordinator.presentRootList(items, cache: cache)
+        panel.setStaysOpenOnResignKey(true)
     }
 }

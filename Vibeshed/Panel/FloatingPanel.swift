@@ -1,9 +1,11 @@
 import AppKit
+import Carbon.HIToolbox
 import QuartzCore
 import SwiftUI
 
 final class FloatingPanel: NSPanel {
     /// Called on Escape. Return `true` if handled (e.g. mode popped), `false` to close the panel.
+    /// ⌘Escape closes it from any level without asking.
     var onEscape: (() -> Bool)?
 
     /// Called before animated hide/dismiss begins. Used so PanelController can update state.
@@ -100,6 +102,21 @@ final class FloatingPanel: NSPanel {
             return
         }
         animateHide()
+    }
+
+    /// The modifiers that make up a chord. Lock and key-type state (Caps Lock on,
+    /// `.numericPad`, `.function`) is in `deviceIndependentFlagsMask` too, and must not
+    /// stop ⌘Escape from matching.
+    private static let chordModifiers: NSEvent.ModifierFlags = [.command, .shift, .option, .control]
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.type == .keyDown, event.keyCode == UInt16(kVK_Escape),
+           event.modifierFlags.intersection(Self.chordModifiers) == .command
+        {
+            animateHide()
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
     }
 
     func setSwiftUIContent(_ view: some View) {

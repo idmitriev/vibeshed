@@ -2,6 +2,7 @@ import Foundation
 
 struct AppConfig: Sendable, Equatable {
     var appearance: AppearanceConfig = .init()
+    var picker: PickerConfig = .init()
     var keybindings: [KeyBindingEntry] = []
     /// Bundle IDs where every keybinding and remap is suppressed — the event
     /// tap passes input straight through while one of these apps is focused.
@@ -14,6 +15,12 @@ struct AppConfig: Sendable, Equatable {
 
     struct LayoutCorrectionConfig: Codable, Sendable, Equatable {
         var enabled: Bool = true
+    }
+
+    struct PickerConfig: Codable, Sendable, Equatable {
+        /// Seconds a picker hidden by the toggle hotkey keeps its place: reopened sooner,
+        /// it's where it was left; later, it opens on a fresh search. 0 always opens fresh.
+        var resetAfter: Double = 10
     }
 
     struct AppearanceConfig: Codable, Sendable, Equatable {
@@ -33,6 +40,18 @@ extension AppConfig.LayoutCorrectionConfig {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? Self().enabled
+    }
+}
+
+extension AppConfig.PickerConfig {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        resetAfter = try container.decodeIfPresent(Double.self, forKey: .resetAfter) ?? Self().resetAfter
+    }
+
+    /// Whether a picker the toggle hotkey hid `elapsed` seconds ago reopens where it was.
+    func keepsState(hiddenFor elapsed: TimeInterval) -> Bool {
+        elapsed < resetAfter
     }
 }
 

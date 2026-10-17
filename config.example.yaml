@@ -35,6 +35,23 @@ appearance:
   # Reduce Motion turns blur/iris into a fade; Reduce Transparency drops the blur.
 
 # ---------------------------------------------------------------------------
+# Picker
+# ---------------------------------------------------------------------------
+# Esc goes back one level — from a parameter step or a pushed list to the list
+# you picked it from — and closes the picker at the first level. ⌘Esc closes it
+# from any level. A list or step that opens on its own (a run's results, like
+# GitHub searches, the browser chooser, a keybinding's parameter step) is the
+# first level, so Esc closes it. Live previews (theme/switch, fonts) revert on
+# every way out. Esc, ⌘Esc, a click outside and running an action all leave the
+# picker to open on a fresh search next time.
+# ---------------------------------------------------------------------------
+picker:
+  # Hidden with the toggle hotkey instead, the picker keeps its place for this
+  # many seconds: reopen sooner and you're back where you were, later and it
+  # opens on a fresh search. 0 always opens fresh.
+  resetAfter: 10
+
+# ---------------------------------------------------------------------------
 # Keybindings & Remaps
 # ---------------------------------------------------------------------------
 # Each entry has `combo` + either `action` (triggers a vibeshed action) or

@@ -58,7 +58,8 @@
 - [ ] No results message shown for nonsense queries
 - [ ] Escape closes picker
 - [ ] Clicking outside picker closes it
-- [ ] Picker state preserved when toggling off/on quickly
+- [ ] Picker state preserved when toggling off/on within `picker.resetAfter` (10 s); after that, or after Escape, a click outside or a run, it opens on a fresh search
+- [ ] Reopened within `picker.resetAfter` on a live-preview step (`theme/switch`), the highlighted option previews again
 - [ ] Picker opens fast (< 200ms to first frame)
 
 ## 5. Picker — Navigation
@@ -79,7 +80,12 @@
 - [ ] Typing filters parameter options
 - [ ] Selecting parameter option executes action
 - [ ] Backspace on empty field removes pill (goes back)
-- [ ] Escape in parameter mode goes back to search
+- [ ] Escape in parameter mode goes back to search, with the list and query it was picked from
+- [ ] ⌘Escape closes the picker from a parameter step or pushed list; the next open is a fresh search
+- [ ] A keybinding's parameter step: Escape closes the picker in one press; Backspace on the empty field drops to a fresh search
+- [ ] A run's pushed results (GitHub "Search Pull Requests"): Escape closes the picker in one press, with no flash of the search list
+- [ ] Browser chooser (unrouted URL): Escape closes it in one press
+- [ ] `theme/switch` reverts on Escape, ⌘Escape, Backspace on the empty field, the toggle hotkey and a click outside
 - [ ] Dynamic parameter options load correctly (e.g. window list)
 
 ## 7. Picker — Fuzzy Search & Sorting

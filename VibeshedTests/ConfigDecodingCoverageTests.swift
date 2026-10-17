@@ -167,6 +167,7 @@ final class ConfigDecodingCoverageTests: XCTestCase {
             overlay: AppConfig.OverlayConfig()
         ))
         try assertRoundTrip(AppConfig.LayoutCorrectionConfig(enabled: false))
+        try assertRoundTrip(AppConfig.PickerConfig(resetAfter: 3))
         try assertRoundTrip(URLRoutingConfig(
             rules: [URLRoutingRule(pattern: "p", browser: "b", profile: nil, action: nil)],
             defaultBrowser: "b",
@@ -190,6 +191,7 @@ final class ConfigDecodingCoverageTests: XCTestCase {
         let yaml = try String(contentsOf: Self.exampleConfigURL, encoding: .utf8)
         let root = try XCTUnwrap(Yams.compose(yaml: yaml)?.mapping)
         _ = try decodeSection(AppConfig.AppearanceConfig.self, "appearance", in: root)
+        _ = try decodeSection(AppConfig.PickerConfig.self, "picker", in: root)
         _ = try decodeSection([KeyBindingEntry].self, "keybindings", in: root)
         _ = try decodeSection([String].self, "keybindingExclusions", in: root)
         _ = try decodeSection([AliasEntry].self, "aliases", in: root)
