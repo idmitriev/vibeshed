@@ -41,6 +41,7 @@ struct AISession: Sendable {
     let title: String
     let lastPrompt: String?
     let project: String?
+    /// Display name of the model the session last ran on, e.g. "Opus 5.5".
     let model: String?
     /// Git branch the session was working on, when the surface records it.
     let branch: String?
@@ -66,6 +67,22 @@ struct AISession: Sendable {
         self.model = model
         self.branch = branch
         self.timestamp = timestamp
+    }
+
+    /// A copy with the model and branch replaced by fresher values, such as ones read
+    /// from the session's transcript. A nil argument keeps the current value.
+    func updating(model: String?, branch: String?) -> AISession {
+        AISession(
+            sessionID: sessionID,
+            cliSessionID: cliSessionID,
+            source: source,
+            title: title,
+            lastPrompt: lastPrompt,
+            project: project,
+            model: model ?? self.model,
+            branch: branch ?? self.branch,
+            timestamp: timestamp
+        )
     }
 
     /// Whether `query` matches this session's title, project or last prompt.

@@ -1,0 +1,11 @@
+{
+  "sessionId": "local_77777777-7777-4777-8777-777777777777",
+  "cliSessionId": "77777777-7777-4777-8777-777777777777",
+  "title": "Session without a transcript",
+  "cwd": "/tmp/vibeshed-worktrees/kept",
+  "model": "claude-opus-4-6",
+  "branch": "claude/kept-worktree",
+  "createdAt": 1791640000000,
+  "lastActivityAt": 1791650000000,
+  "isArchived": false
+}

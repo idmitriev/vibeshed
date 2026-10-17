@@ -24,6 +24,8 @@ let package = Package(
             name: "VibeshedTests",
             dependencies: ["Vibeshed"],
             path: "VibeshedTests",
+            // Read from the source tree via #filePath, not bundled.
+            exclude: ["Fixtures"],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
     ]

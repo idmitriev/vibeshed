@@ -1,0 +1,11 @@
+{
+  "sessionId": "local_55555555-5555-4555-8555-555555555555",
+  "cliSessionId": "55555555-5555-4555-8555-555555555555",
+  "title": "Worktree session",
+  "cwd": "/tmp/vibeshed-worktrees/brave",
+  "model": "claude-opus-4-6",
+  "branch": "claude/brave-worktree",
+  "createdAt": 1791740000000,
+  "lastActivityAt": 1791750000000,
+  "isArchived": false
+}

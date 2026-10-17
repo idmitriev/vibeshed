@@ -93,6 +93,102 @@ final class AIJSONLTests: XCTestCase {
         XCTAssertEqual(objects[1]["type"] as? String, "turn_context")
     }
 
+    // MARK: - Tail scanning
+
+    func testTailScanVisitsNewestFirstAndStops() throws {
+        // No trailing newline: the last line is still the newest record.
+        let path = try write(
+            """
+            {"n":1}
+            {"n":2}
+            {"n":3}
+            """
+        )
+        var seen: [Int] = []
+        AIJSONL.scanTail(atPath: path) { json in
+            seen.append(json["n"] as? Int ?? 0)
+            return seen.count == 2
+        }
+        XCTAssertEqual(seen, [3, 2])
+    }
+
+    /// A record behind a line several read windows long must still be reached, and
+    /// the long line must arrive whole: each chunk boundary lands at an arbitrary
+    /// byte inside it, often mid-character.
+    func testTailScanJoinsLinesSpanningChunks() throws {
+        let emojiCount = 80_000
+        let long = String(repeating: "🙂", count: emojiCount)
+        let path = try write(
+            """
+            {"type":"target","model":"m"}
+            {"type":"output","text":"\(long)"}
+            {"type":"trailer"}
+
+            """
+        )
+        var types: [String] = []
+        var outputLength = 0
+        AIJSONL.scanTail(atPath: path) { json in
+            types.append(json["type"] as? String ?? "?")
+            if json["type"] as? String == "output" {
+                outputLength = (json["text"] as? String)?.count ?? 0
+            }
+            return json["model"] != nil
+        }
+        XCTAssertEqual(types, ["trailer", "output", "target"])
+        XCTAssertEqual(outputLength, emojiCount)
+    }
+
+    func testTailScanSkipsLinesWithoutNeedles() throws {
+        let path = try write(
+            """
+            {"type":"turn_context","model":"gpt-5.4"}
+            {"type":"event_msg"}
+            {"type":"response_item"}
+
+            """
+        )
+        var visited: [String] = []
+        AIJSONL.scanTail(atPath: path, containing: [#""turn_context""#]) { json in
+            visited.append(json["type"] as? String ?? "?")
+            return false
+        }
+        XCTAssertEqual(visited, ["turn_context"])
+    }
+
+    func testTailScanGivesUpPastByteCap() throws {
+        let padding = String(repeating: "y", count: 10 * 1024)
+        let path = try write(
+            """
+            {"type":"distant"}
+            {"type":"padding","pad":"\(padding)"}
+            {"type":"recent"}
+
+            """
+        )
+        var visited: [String] = []
+        AIJSONL.scanTail(atPath: path, maxBytes: 4 * 1024) { json in
+            visited.append(json["type"] as? String ?? "?")
+            return false
+        }
+        // The padding line is cut by the cap, so it is not parsed either.
+        XCTAssertEqual(visited, ["recent"])
+    }
+
+    func testTailScanOfMissingOrEmptyFileVisitsNothing() throws {
+        let empty = try write("", name: "empty.jsonl")
+        var visits = 0
+        AIJSONL.scanTail(atPath: "/no/such/file.jsonl") { _ in
+            visits += 1
+            return false
+        }
+        AIJSONL.scanTail(atPath: empty) { _ in
+            visits += 1
+            return false
+        }
+        XCTAssertEqual(visits, 0)
+    }
+
     func testAsSessionTitleTrimsAndTruncates() {
         XCTAssertNil("   ".asSessionTitle())
         XCTAssertEqual("  hello  ".asSessionTitle(), "hello")
