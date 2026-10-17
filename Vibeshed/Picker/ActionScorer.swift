@@ -75,7 +75,7 @@ enum ActionScorer {
         query: FuzzyMatcher.Query,
         scoring: ScoringContext
     ) -> Evaluation? {
-        if let words = scorable.prefixWords, !WordPrefixMatch.admits(queryLower: queryLower, words: words) {
+        if let words = scorable.prefixWords, !WordPrefixMatch.admits(queryLower: query.lowered, words: words) {
             return nil
         }
         let action = scorable.action
