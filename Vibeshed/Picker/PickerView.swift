@@ -273,6 +273,7 @@ struct PickerView: View {
                 actionCache: state.actionCache,
                 activationCounters: state.activationCounters,
                 listResetToken: state.listResetToken,
+                selectionRevealToken: state.selectionRevealToken,
                 rowHeight: appearance.rowHeight,
                 topInset: searchBarTotalHeight,
                 onActivate: { id in coordinator?.activateAction(id: id, keepOpen: Self.isShiftHeld) }

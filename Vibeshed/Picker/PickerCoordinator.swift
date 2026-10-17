@@ -316,7 +316,7 @@ final class PickerCoordinator {
             scored combined: [ScorableAction],
             _ scoring: ScoringContext
         ) {
-            pickerState.updateActions(items, cache: cache, preservingSelection: options.preservingSelection)
+            pickerState.updateActions(items, cache: cache, rankedFor: query)
             ActionListDebugDump.schedule(query: query, displayed: items, corpus: combined, scoring: scoring)
             if options.clearsLoading { pickerState.isLoading = false }
             if options.updatesEmptyCacheWhenEmpty, query.isEmpty {
@@ -400,6 +400,7 @@ extension PickerCoordinator {
            let cachedCache = cachedEmptyQueryActionCache
         {
             claimGeneration(ranking: "")
+            // Not ranked for this session, so its first ranking starts on its own top row.
             pickerState.updateActions(cachedItems, cache: cachedCache)
             pickerState.isLoading = false
         } else {

@@ -18,8 +18,6 @@ struct QueryOptions {
     /// Re-fetch the catalog corpus from modules instead of reusing the cached one.
     /// Keystrokes pass `false`; show/refresh paths pass `true`.
     var refreshCorpus: Bool
-    /// Keep the current selection across the list update.
-    var preservingSelection = true
     /// Set `isLoading = false` when finished.
     var clearsLoading: Bool
     /// Refresh the empty-query cache when the query is empty.
