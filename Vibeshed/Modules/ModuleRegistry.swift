@@ -142,18 +142,27 @@ final class ModuleRegistry {
     func catalogActions(scoring: ScoringContext) async -> [any Action] {
         let signpostState = Log.signposter.beginInterval("ModuleCatalog")
         defer { Log.signposter.endInterval("ModuleCatalog", signpostState) }
-        let catalogModules = modules.values.filter { !type(of: $0).isQueryDependent }
-        return await fanOut(modules: Array(catalogModules), query: "", scoring: scoring)
+        let catalogModules = modulesInIDOrder.filter { !type(of: $0).isQueryDependent }
+        return await fanOut(modules: catalogModules, query: "", scoring: scoring)
     }
 
     /// Queries modules whose actions are computed from the query text (e.g. math).
     /// Called per keystroke — these modules must be fast.
     func searchActions(query: String, scoring: ScoringContext) async -> [any Action] {
-        let searchModules = modules.values.filter { type(of: $0).isQueryDependent }
+        let searchModules = modulesInIDOrder.filter { type(of: $0).isQueryDependent }
         guard !searchModules.isEmpty else { return [] }
-        return await fanOut(modules: Array(searchModules), query: query, scoring: scoring)
+        return await fanOut(modules: searchModules, query: query, scoring: scoring)
     }
 
+    /// Loaded modules sorted by ID: a fixed order for `fanOut`, unlike `modules.values`.
+    private var modulesInIDOrder: [any Module] {
+        modules.sorted { $0.key < $1.key }.map(\.value)
+    }
+
+    /// Queries `allModules` concurrently and returns their actions in `allModules`
+    /// order, each module's own order kept. Equal-score rows rank in this order (see
+    /// `ActionScorer.ranksBefore`), so completion order must not leak into it or tied
+    /// rows reshuffle on every refetch.
     private func fanOut(
         modules allModules: [any Module],
         query: String,
@@ -161,10 +170,10 @@ final class ModuleRegistry {
     ) async -> [any Action] {
         let timeout = moduleQueryTimeout
 
-        return await withTaskGroup(of: [any Action].self) { group in
-            for module in allModules {
+        return await withTaskGroup(of: (index: Int, actions: [any Action]).self) { group in
+            for (index, module) in allModules.enumerated() {
                 group.addTask {
-                    guard await module.isEnabled else { return [] }
+                    guard await module.isEnabled else { return (index, []) }
                     let moduleID = await module.id
                     let start = CFAbsoluteTimeGetCurrent()
                     do {
@@ -176,21 +185,21 @@ final class ModuleRegistry {
                         Log.perf.debug(
                             "\(moduleID, privacy: .public): \(ms, format: .fixed(precision: 1))ms (\(count) actions)"
                         )
-                        return actions
+                        return (index, actions)
                     } catch {
                         let ms = (CFAbsoluteTimeGetCurrent() - start) * 1000
                         Log.perf.warning(
                             "\(moduleID, privacy: .public): timed out after \(ms, format: .fixed(precision: 1))ms"
                         )
-                        return []
+                        return (index, [])
                     }
                 }
             }
-            var results: [any Action] = []
-            for await batch in group {
-                results.append(contentsOf: batch)
+            var batches = [[any Action]](repeating: [], count: allModules.count)
+            for await (index, actions) in group {
+                batches[index] = actions
             }
-            return results
+            return batches.flatMap { $0 }
         }
     }
 

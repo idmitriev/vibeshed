@@ -39,6 +39,15 @@ final class ActionScorerTests: XCTestCase {
         XCTAssertEqual(cache.count, 3)
     }
 
+    func testTiedScoresKeepCorpusOrder() {
+        let names = (0 ..< 40).reversed().map { "a\($0)" }
+        let actions: [any Action] = names.map { StubAction(id: ActionID("m/\($0)"), title: "Same") }
+        let (items, _) = ActionScorer.scoreAndRank(
+            allActions: actions, enrichments: [:], query: "same", scoring: scoring("same")
+        )
+        XCTAssertEqual(items.map(\.id.actionName), names)
+    }
+
     func testNonMatchingActionsDroppedForNonEmptyQuery() {
         let actions: [any Action] = [
             StubAction(id: ActionID("m/settings"), title: "Settings"),

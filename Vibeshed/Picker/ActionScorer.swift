@@ -46,7 +46,8 @@ enum ActionScorer {
     /// Maximum rendered results — nobody scrolls past 200 in a launcher.
     static let maxResults = 200
 
-    typealias RankKey = (isFallback: Bool, score: Double)
+    /// `order` is the action's position in the corpus, the final tie-break.
+    typealias RankKey = (isFallback: Bool, score: Double, order: Int)
 
     /// One action's score, split into its terms. `final` is what ranking sorts by.
     struct Evaluation {
@@ -113,10 +114,10 @@ enum ActionScorer {
         let queryLower = query.lowercased()
         let queryChars = Array(queryLower)
 
-        var scored: [(item: ActionItem, action: any Action, score: Double, isFallback: Bool)] = []
+        var scored: [(item: ActionItem, action: any Action, score: Double, isFallback: Bool, order: Int)] = []
         var cache: [ActionID: any Action] = [:]
 
-        for scorable in corpus {
+        for (order, scorable) in corpus.enumerated() {
             guard let eval = evaluate(
                 scorable, queryLower: queryLower, queryChars: queryChars, scoring: scoring
             ) else { continue }
@@ -134,11 +135,13 @@ enum ActionScorer {
                 keywords: scorable.keywords,
                 titleHighlightRanges: eval.titleRanges.isEmpty ? nil : eval.titleRanges
             )
-            scored.append((item: item, action: action, score: finalScore, isFallback: scorable.isFallback))
+            scored.append((
+                item: item, action: action, score: finalScore, isFallback: scorable.isFallback, order: order
+            ))
             cache[action.id] = action
         }
 
-        scored.sort { ranksBefore(($0.isFallback, $0.score), ($1.isFallback, $1.score)) }
+        scored.sort { ranksBefore(($0.isFallback, $0.score, $0.order), ($1.isFallback, $1.score, $1.order)) }
 
         // Collapse actions sharing a deduplication key (e.g. a browser tab and a
         // bookmark/history entry for the same URL). Higher-scored entries are kept
@@ -164,10 +167,14 @@ enum ActionScorer {
         return (scored.map(\.item), cache)
     }
 
-    /// Ranking order: non-fallback actions before fallbacks, then higher score first.
+    /// Ranking order: non-fallback actions before fallbacks, then higher score first,
+    /// then corpus order. The last is explicit because `sort` isn't documented as
+    /// stable, and it keeps tied rows from reshuffling when the catalog is refetched
+    /// (`ModuleRegistry` hands it over in a fixed module order).
     static func ranksBefore(_ lhs: RankKey, _ rhs: RankKey) -> Bool {
         if lhs.isFallback != rhs.isFallback { return rhs.isFallback }
-        return lhs.score > rhs.score
+        if lhs.score != rhs.score { return lhs.score > rhs.score }
+        return lhs.order < rhs.order
     }
 
     /// Convenience over the corpus variant for callers holding raw actions —

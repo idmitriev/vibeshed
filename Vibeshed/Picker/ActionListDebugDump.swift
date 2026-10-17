@@ -26,7 +26,7 @@ extension ActionListDebugDump {
     static let fileURL = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".config/vibeshed/last-actions.txt")
 
-    private typealias Entry = (scorable: ScorableAction, eval: ActionScorer.Evaluation)
+    private typealias Entry = (scorable: ScorableAction, eval: ActionScorer.Evaluation, order: Int)
 
     static func write(
         query: String,
@@ -55,13 +55,13 @@ extension ActionListDebugDump {
     ) -> String {
         let queryLower = scoring.query.lowercased()
         let queryChars = Array(queryLower)
-        var matched: [Entry] = corpus.compactMap { scorable in
+        var matched: [Entry] = corpus.enumerated().compactMap { order, scorable in
             ActionScorer.evaluate(scorable, queryLower: queryLower, queryChars: queryChars, scoring: scoring)
-                .map { (scorable, $0) }
+                .map { (scorable, $0, order) }
         }
         matched.sort {
             ActionScorer.ranksBefore(
-                ($0.scorable.isFallback, $0.eval.final), ($1.scorable.isFallback, $1.eval.final)
+                ($0.scorable.isFallback, $0.eval.final, $0.order), ($1.scorable.isFallback, $1.eval.final, $1.order)
             )
         }
 
@@ -149,7 +149,7 @@ extension ActionListDebugDump {
 
     private static func row(rank: Int, entry: Entry?, id: ActionID, scoring: ScoringContext) -> String {
         let uses = scoring.usageCounts[id.rawValue] ?? 0
-        guard let (scorable, eval) = entry else {
+        guard let (scorable, eval, _) = entry else {
             return [pad("\(rank)", 4), "(not found in scored corpus)", id.rawValue].joined(separator: " ")
         }
         let action = scorable.action
