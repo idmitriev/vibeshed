@@ -104,9 +104,14 @@ final class FloatingPanel: NSPanel {
         animateHide()
     }
 
+    /// The modifiers that make up a chord. Lock and key-type state (Caps Lock on,
+    /// `.numericPad`, `.function`) is in `deviceIndependentFlagsMask` too, and must not
+    /// stop ⌘Escape from matching.
+    private static let chordModifiers: NSEvent.ModifierFlags = [.command, .shift, .option, .control]
+
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if event.type == .keyDown, event.keyCode == UInt16(kVK_Escape),
-           event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command
+           event.modifierFlags.intersection(Self.chordModifiers) == .command
         {
             animateHide()
             return true
