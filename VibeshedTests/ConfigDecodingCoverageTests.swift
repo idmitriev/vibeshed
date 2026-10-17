@@ -30,7 +30,8 @@ final class ConfigDecodingCoverageTests: XCTestCase {
         ))
         try assertRoundTrip(GitHubConfig(
             token: "t", defaultOwner: "o", repoOwners: ["r"], maxResults: 1, searchTypes: ["pr"],
-            enabledActions: ["x"], showRepos: false, showNotifications: false
+            enabledActions: ["x"], showRepos: false, showNotifications: false, useGitHubCLI: false, ghPath: "/g",
+            showPullRequests: false, pullRequestFilters: ["assignee"], maxPullRequests: 2, pullRequestRefresh: 60
         ))
         try assertRoundTrip(HomebrewConfig(brewPath: "/b", enabledActions: ["x"]))
         try assertRoundTrip(ITermConfig(

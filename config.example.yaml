@@ -617,12 +617,18 @@ modules:
   # Token: https://github.com/settings/tokens (repo, notifications scopes)
   github:
     token: null               # set to increase rate limit & enable notifications
+    useGitHubCLI: true        # no token? use the GitHub CLI's login (`gh auth token`)
+    ghPath: null              # where gh is, if not /opt/homebrew/bin or /usr/local/bin
     defaultOwner: null        # e.g. "myorg" — scopes searches to org by default
     repoOwners: null          # fetch repos from multiple orgs/users: ["org1", "user1"]
     maxResults: 10
     searchTypes: [repo, issue, pr]
     showRepos: true           # list your repos as searchable picker actions
     showNotifications: true
+    showPullRequests: true    # your open pull requests in the main search ("satis" finds "Make … satisfying")
+    pullRequestFilters: [author, review-requested]  # also: assignee, involves, mentions
+    maxPullRequests: 50       # per filter, 1–100
+    pullRequestRefresh: 120   # seconds before a picker open refreshes the list
 
   # --- VSCode / Cursor / Windsurf ---
   vscode:

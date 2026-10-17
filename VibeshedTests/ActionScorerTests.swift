@@ -12,6 +12,7 @@ private struct StubAction: Action {
     var scheduledStart: Date?
     var scheduledEnd: Date?
     var isFallback = false
+    var requiresWordPrefixMatch = false
     func run(with _: ParameterValues) async throws -> ActionResult {
         .dismiss
     }
@@ -239,5 +240,61 @@ final class ActionScorerTests: XCTestCase {
         XCTAssertEqual(ActionScorer.normalizeURL("https://A.com/Path/"), "https://a.com/path")
         XCTAssertEqual(ActionScorer.normalizeURL("https://x.com/#frag"), "https://x.com")
         XCTAssertEqual(ActionScorer.normalizeURL("https://x.com///"), "https://x.com")
+    }
+
+    // MARK: - Word-prefix matching
+
+    /// Apps and long pull request titles side by side: the fuzzy matcher alone would put
+    /// the pull requests right under the app for most two- and three-letter queries.
+    private var appsAndPullRequests: [any Action] {
+        [
+            StubAction(id: ActionID("application/safari"), title: "Safari", relevanceScore: 0.75),
+            StubAction(id: ActionID("application/messages"), title: "Messages", relevanceScore: 0.75),
+            StubAction(id: ActionID("application/finder"), title: "Finder", relevanceScore: 0.75),
+            StubAction(
+                id: ActionID("github/pr.1"), title: "Make the website satisfying",
+                subtitle: "idmitriev/vibeshed #81", relevanceScore: 0.5, requiresWordPrefixMatch: true
+            ),
+            StubAction(
+                id: ActionID("github/pr.2"), title: "fix: report Vibeshed's quit by launching apps through open",
+                subtitle: "idmitriev/vibeshed #48", relevanceScore: 0.5, keywords: ["fix", "quit", "not", "reported"],
+                requiresWordPrefixMatch: true
+            ),
+        ]
+    }
+
+    private func ranked(_ query: String) -> [String] {
+        ActionScorer.scoreAndRank(
+            allActions: appsAndPullRequests, enrichments: [:], query: query, scoring: scoring(query)
+        ).0.map(\.id.rawValue)
+    }
+
+    func testWordPrefixActionsStayOutOfShortQueries() {
+        let shortQueries = [("s", "safari"), ("sa", "safari"), ("saf", "safari"), ("mes", "messages"), ("fi", "finder")]
+        for (query, app) in shortQueries {
+            let ids = ranked(query)
+            XCTAssertEqual(ids.first, "application/\(app)", query)
+            XCTAssertFalse(ids.contains { $0.hasPrefix("github/") }, "\(query): \(ids)")
+        }
+        XCTAssertFalse(ranked("").contains { $0.hasPrefix("github/") }, "not in the empty-query list")
+    }
+
+    func testWordPrefixActionsMatchWholeWordStarts() {
+        XCTAssertEqual(ranked("satis"), ["github/pr.1"])
+        XCTAssertEqual(ranked("web sat"), ["github/pr.1"])
+        XCTAssertEqual(ranked("#81"), ["github/pr.1"], "the number in the subtitle")
+        XCTAssertEqual(Set(ranked("vibeshed")), ["github/pr.1", "github/pr.2"], "the repo in the subtitle")
+        XCTAssertEqual(ranked("reported"), ["github/pr.2"], "a keyword word")
+        XCTAssertEqual(ranked("ebsite"), [], "inside a word isn't a word start")
+    }
+
+    func testWordsSplitOnPunctuationWithoutRepeats() {
+        XCTAssertEqual(
+            WordPrefixMatch.words(in: ["Fix: fix the #66 font-switching", "feat/font"]),
+            ["fix", "the", "66", "font", "switching", "feat"]
+        )
+        XCTAssertFalse(WordPrefixMatch.admits(queryLower: "  a ", words: ["abc"]))
+        XCTAssertFalse(WordPrefixMatch.admits(queryLower: "---", words: ["abc"]))
+        XCTAssertTrue(WordPrefixMatch.admits(queryLower: "ab c", words: ["abc", "cd"]))
     }
 }
