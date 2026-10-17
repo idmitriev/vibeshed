@@ -12,7 +12,12 @@ extension PickerCoordinator {
     ///
     /// An action that types into the user's app (paste on select) can't run with the
     /// picker focused, so it closes the picker even on a Shift run.
-    func executeAction(_ action: any Action, values: ParameterValues, keepOpen: Bool = false) async {
+    ///
+    /// `query` is what was typed to pick the action from the search list, recorded with
+    /// its usage so that query brings it up again; nil when it ran some other way.
+    func executeAction(
+        _ action: any Action, values: ParameterValues, keepOpen: Bool = false, pickedFor query: String? = nil
+    ) async {
         let keepOpen = keepOpen && !action.typesIntoFrontmostApp
         Log.picker.debug("Executing action '\(action.id, privacy: .public)', keepOpen: \(keepOpen)")
         if keepOpen {
@@ -23,7 +28,7 @@ extension PickerCoordinator {
         let run = ActionRun(keptOpen: keepOpen, presentation: panelController.presentationCount)
         do {
             let result = try await action.run(with: values)
-            usageTracker?.recordUsage(actionID: action.id)
+            usageTracker?.recordUsage(actionID: action.id, query: action.isFallback ? nil : query)
             await handleActionResult(result, of: action, run: run)
         } catch {
             Log.picker

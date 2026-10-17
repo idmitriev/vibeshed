@@ -48,6 +48,9 @@ final class PickerCoordinator {
 
     @ObservationIgnored var livePreview: LivePreviewSession?
     @ObservationIgnored var livePreviewTask: Task<Void, Never>?
+    /// The action picked from the search list and what was typed to find it, for the
+    /// usage tracker's query history once its parameters are filled in.
+    @ObservationIgnored private var pick: (actionID: ActionID, query: String)?
 
     init(
         pickerState: PickerState,
@@ -157,10 +160,13 @@ final class PickerCoordinator {
             return
         }
 
+        // Read before a Shift run clears the field.
+        pick = pickerState.mode == .search ? (action.id, pickerState.rankedText) : nil
         let requiredParams = action.parameters.filter(\.isRequired)
         if requiredParams.isEmpty {
             if keepOpen { pickerState.prepareForAnotherRun() }
-            Task { await executeAction(action, values: [:], keepOpen: keepOpen) }
+            let query = pick?.query
+            Task { await executeAction(action, values: [:], keepOpen: keepOpen, pickedFor: query) }
         } else {
             pickerState.enterParameterMode(action: action)
             // Trigger initial fetch for dynamicSelection
@@ -206,13 +212,14 @@ final class PickerCoordinator {
     private func executeActiveAction(keepOpen: Bool = false) {
         guard let action = pickerState.activeAction else { return }
         let values = pickerState.collectedValues
+        let query = pick?.actionID == action.id ? pick?.query : nil
         if keepOpen { pickerState.prepareForAnotherRun() }
         // Close any live preview as committed *before* the reset in executeAction
         // would end it as cancelled — the module must keep, not revert, the choice.
         let previewEnded = endLivePreview(committed: true)
         Task {
             await previewEnded?.value
-            await executeAction(action, values: values, keepOpen: keepOpen)
+            await executeAction(action, values: values, keepOpen: keepOpen, pickedFor: query)
         }
     }
 

@@ -8,6 +8,8 @@ struct ScoringContext: Sendable {
     /// Reference "now" for every time-based term (usage recency, event imminence),
     /// captured once per query so a single ranking pass is internally consistent.
     var now: Date = .init()
+    /// Each action's share of the picks made after typing `query` (see `QueryHistory`).
+    var queryAffinity: [String: Double] = [:]
 
     func recencyScore(for actionID: ActionID) -> Double {
         guard let lastUsed = lastUsedDates[actionID.rawValue] else { return 0 }

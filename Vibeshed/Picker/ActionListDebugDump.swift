@@ -6,7 +6,7 @@ import Foundation
 ///
 /// Re-ranks the whole scored corpus uncapped via `ActionScorer.evaluate` — the same
 /// math the picker uses — so it also lists what fell below the display cap and what
-/// was collapsed as a duplicate. `fuzzy + ctx + immin` equals `final`.
+/// was collapsed as a duplicate. `fuzzy + affin + ctx + immin` equals `final`.
 enum ActionListDebugDump {
     /// Writes the dump in the background. No-op outside DEBUG builds.
     static func schedule(query: String, displayed: [ActionItem], corpus: [ScorableAction], scoring: ScoringContext) {
@@ -53,11 +53,9 @@ extension ActionListDebugDump {
         corpus: [ScorableAction],
         scoring: ScoringContext
     ) -> String {
-        let queryLower = scoring.query.lowercased()
-        let queryChars = Array(queryLower)
+        let typed = FuzzyMatcher.Query(scoring.query)
         var matched: [Entry] = corpus.compactMap { scorable in
-            ActionScorer.evaluate(scorable, queryLower: queryLower, queryChars: queryChars, scoring: scoring)
-                .map { (scorable, $0) }
+            ActionScorer.evaluate(scorable, query: typed, scoring: scoring).map { (scorable, $0) }
         }
         matched.sort {
             ActionScorer.ranksBefore(
@@ -119,11 +117,15 @@ extension ActionListDebugDump {
                     + " muted=\(ctx.isOutputMuted) spotify=\(ctx.isSpotifyRunning) windows=\(ctx.visibleWindowCount)"
             )
         }
+        typealias Weight = FuzzyMatcher.Weight
         lines.append(
-            "fuzzy = title*0.4 + subtitle*0.1 + keyword(0.1) + relevance*0.15 + usage*0.25"
-                + "  (empty query: relevance*0.4 + usage*0.6)"
+            "fuzzy = title*\(Weight.title) + subtitle*\(Weight.subtitle)"
+                + " + keyword(\(Weight.exactKeyword) exact, \(Weight.keywordPrefix) prefix)"
+                + " + relevance*\(Weight.relevance) + usage*\(Weight.usage)"
+                + "  (empty query: relevance*\(Weight.emptyQueryRelevance) + usage*\(Weight.emptyQueryUsage))"
         )
         lines.append("usage = recency*0.6 + frequency*0.4")
+        lines.append("affin = \(ActionScorer.affinityWeight) * share of the picks made after typing this query")
         return lines
     }
 
@@ -137,7 +139,8 @@ extension ActionListDebugDump {
         var lines = ["", "== \(title) =="]
         lines.append([
             pad("#", 4), pad("final", 7), pad("fuzzy", 7), pad("relev", 6), pad("usage", 6),
-            pad("uses", 5), pad("ctx", 6), pad("immin", 6), pad("action id", 44), "title — subtitle",
+            pad("uses", 5), pad("affin", 6), pad("ctx", 6), pad("immin", 6), pad("action id", 44),
+            "title — subtitle",
         ].joined(separator: " "))
         for (offset, row) in entries.enumerated() {
             var line = self.row(rank: start + offset, entry: row.entry, id: row.id, scoring: scoring)
@@ -157,7 +160,8 @@ extension ActionListDebugDump {
         return [
             pad("\(rank)", 4), pad(num(eval.final), 7), pad(num(eval.fuzzy), 7),
             pad(num(scorable.target.relevanceScore), 6), pad(num(eval.usage), 6), pad("\(uses)", 5),
-            pad(num(eval.context), 6), pad(num(eval.imminence), 6), pad(id.rawValue, 44), label,
+            pad(num(eval.affinity), 6), pad(num(eval.context), 6), pad(num(eval.imminence), 6),
+            pad(id.rawValue, 44), label,
         ].joined(separator: " ")
     }
 

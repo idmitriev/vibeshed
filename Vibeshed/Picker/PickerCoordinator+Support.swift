@@ -84,8 +84,7 @@ extension [ParameterOption] {
     /// label and subtitle, prefix-matched keywords), best match first with ties in
     /// module order, and label highlights set.
     func fuzzyFiltered(by query: String) -> [ParameterOption] {
-        let queryLower = query.lowercased()
-        let queryChars = [Character](queryLower)
+        let typed = FuzzyMatcher.Query(query)
         var scored: [(option: ParameterOption, score: Double, index: Int)] = []
         for (index, option) in enumerated() {
             let target = FuzzyMatcher.ScoreTarget(
@@ -94,9 +93,7 @@ extension [ParameterOption] {
                 keywords: option.keywords,
                 relevanceScore: 0
             )
-            guard let result = FuzzyMatcher.score(
-                queryLower: queryLower, queryChars: queryChars, target: target, usageBoost: 0
-            ) else { continue }
+            guard let result = FuzzyMatcher.score(typed, target: target, usageBoost: 0) else { continue }
             var opt = option
             opt.labelHighlightRanges = result.titleRanges.isEmpty ? nil : result.titleRanges
             scored.append((option: opt, score: result.score, index: index))

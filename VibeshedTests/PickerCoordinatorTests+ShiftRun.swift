@@ -115,7 +115,7 @@ extension PickerCoordinatorTests {
 }
 
 /// Every run's values, in order.
-private actor RunLog {
+actor RunLog {
     private(set) var values: [ParameterValues] = []
 
     func append(_ runValues: ParameterValues) {
@@ -123,7 +123,7 @@ private actor RunLog {
     }
 }
 
-private struct RecordingAction: Action {
+struct RecordingAction: Action {
     let id: ActionID
     var title: String {
         id.actionName
