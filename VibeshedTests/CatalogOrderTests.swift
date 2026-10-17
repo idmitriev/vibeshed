@@ -1,9 +1,10 @@
 @testable import Vibeshed
 import XCTest
 
-/// Equal-score rows must rank the same on every catalog refetch. The fan-out used to
-/// collect modules' actions in completion order, so a dynamic refresh reshuffled tied
-/// rows under the user whenever modules answered in a different order.
+/// Equal-score rows must rank the same on every catalog refetch. The module fan-out
+/// and the browser tab listing used to collect results in completion order, so a
+/// dynamic refresh reshuffled tied rows under the user whenever modules (or browsers)
+/// answered in a different order.
 @MainActor
 final class CatalogOrderTests: XCTestCase {
     private let scoring = ScoringContext(
@@ -50,6 +51,39 @@ final class CatalogOrderTests: XCTestCase {
             "bravo/first", "bravo/second",
             "charlie/first", "charlie/second",
             "delta/first", "delta/second",
+        ])
+    }
+
+    /// The browser module lists every browser's tabs at once, and all its tabs tie.
+    func testTabListingKeepsBrowserOrderWhenBrowsersAnswerInAnotherOrder() async {
+        let browsers = [
+            (name: "Safari", bundleID: "com.apple.Safari"),
+            (name: "Broken", bundleID: "com.example.broken"),
+            (name: "Chrome", bundleID: "com.google.Chrome"),
+        ]
+
+        func listedIDs(delays: [String: Duration]) async -> [String] {
+            let tabs = await BrowserManager.collectTabs(from: browsers) { browser in
+                try await Task.sleep(for: delays[browser.name] ?? .zero)
+                guard browser.name != "Broken" else { throw AppleScriptError.appNotRunning(browser.name) }
+                return (1 ... 2).map { index in
+                    TabInfo(
+                        id: "\(browser.bundleID):1:\(index)", title: "Tab", url: "https://example.com/\(index)",
+                        windowIndex: 1, tabIndex: index,
+                        browserBundleID: browser.bundleID, browserName: browser.name
+                    )
+                }
+            }
+            return tabs.map(\.id)
+        }
+
+        let first = await listedIDs(delays: ["Safari": .zero, "Chrome": .milliseconds(80)])
+        let second = await listedIDs(delays: ["Safari": .milliseconds(80), "Chrome": .zero])
+
+        XCTAssertEqual(second, first)
+        XCTAssertEqual(first, [
+            "com.apple.Safari:1:1", "com.apple.Safari:1:2",
+            "com.google.Chrome:1:1", "com.google.Chrome:1:2",
         ])
     }
 }

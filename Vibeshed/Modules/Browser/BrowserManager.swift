@@ -29,26 +29,40 @@ struct BrowserManager: Sendable {
     }
 
     func listAllTabs(browsers: [(name: String, bundleID: String)]) async -> [TabInfo] {
-        await withTaskGroup(of: [TabInfo].self, returning: [TabInfo].self) { group in
-            for browser in browsers {
-                guard BrowserRegistry.isRunning(browser.bundleID) else { continue }
+        let running = browsers.filter { BrowserRegistry.isRunning($0.bundleID) }
+        return await Self.collectTabs(from: running) { browser in
+            try await self.listTabs(for: browser.bundleID, browserName: browser.name)
+        }
+    }
+
+    /// Lists every browser's tabs concurrently and returns them in `browsers` order,
+    /// each browser's own tab order kept. All tabs share one relevance, so they tie in
+    /// the picker's ranking: completion order would reshuffle them on every refetch and
+    /// change which tabs `maxResults` keeps. A browser that fails contributes no tabs.
+    static func collectTabs(
+        from browsers: [(name: String, bundleID: String)],
+        listing: @escaping @Sendable ((name: String, bundleID: String)) async throws -> [TabInfo]
+    ) async -> [TabInfo] {
+        await withTaskGroup(of: (index: Int, tabs: [TabInfo]).self) { group in
+            for (index, browser) in browsers.enumerated() {
                 group.addTask {
                     do {
-                        return try await self.listTabs(for: browser.bundleID, browserName: browser.name)
+                        let tabs = try await listing(browser)
+                        return (index, tabs)
                     } catch {
                         let reason = error.localizedDescription
                         log.warning(
                             "listAllTabs: failed for \(browser.name, privacy: .public): \(reason, privacy: .public)"
                         )
-                        return []
+                        return (index, [])
                     }
                 }
             }
-            var all: [TabInfo] = []
-            for await tabs in group {
-                all.append(contentsOf: tabs)
+            var batches = [[TabInfo]](repeating: [], count: browsers.count)
+            for await (index, tabs) in group {
+                batches[index] = tabs
             }
-            return all
+            return batches.flatMap { $0 }
         }
     }
 
