@@ -97,6 +97,11 @@ final class GitHubAPIClient: @unchecked Sendable {
         self.token = token
     }
 
+    /// Whether requests are made as a user, which `@me` searches and GraphQL need.
+    var hasToken: Bool {
+        token?.isEmpty == false
+    }
+
     // MARK: - Public
 
     func searchRepos(
@@ -185,7 +190,7 @@ final class GitHubAPIClient: @unchecked Sendable {
         return GitHubResponseParser.parseNotifications(json)
     }
 
-    // MARK: - Private: Request Building
+    // MARK: - Request Building
 
     private func scopedQuery(
         _ query: String,
@@ -202,7 +207,8 @@ final class GitHubAPIClient: @unchecked Sendable {
         return "org:\(owner) \(query)"
     }
 
-    private func makeRequest(
+    /// Internal, as is `performRequest`, for the pull request listing in GitHubPullRequests.swift.
+    func makeRequest(
         path: String,
         queryItems: [(String, String)]
     ) throws -> URLRequest {
@@ -231,7 +237,7 @@ final class GitHubAPIClient: @unchecked Sendable {
         return request
     }
 
-    private func performRequest(_ request: URLRequest) async throws -> Any {
+    func performRequest(_ request: URLRequest) async throws -> Any {
         let method = request.httpMethod ?? "GET"
         let path = request.url?.path ?? ""
         log.debug("GitHub API: \(method, privacy: .public) \(path, privacy: .public)")

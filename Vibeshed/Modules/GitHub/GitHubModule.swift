@@ -3,6 +3,13 @@ import Foundation
 import OSLog
 import SwiftUI
 
+/// GitHub through its REST and GraphQL APIs: search actions, notifications, your repos,
+/// and your open pull requests as rows of the main search.
+///
+/// Requests go as the user when config.yaml has a token or, failing that, the GitHub CLI
+/// is signed in (`useGitHubCLI`). Repos and pull requests are listed in the background,
+/// never while the picker waits: after each config change, and pull requests again on the
+/// first picker open after `pullRequestRefresh` seconds (see GitHubModule+PullRequests).
 actor GitHubModule: ModuleConfigurable {
     let id = "github"
     let displayName = "GitHub"
@@ -14,35 +21,71 @@ actor GitHubModule: ModuleConfigurable {
         .init()
     }
 
-    private var config: GitHubConfig = .init()
-    private var context: ModuleContext?
-    private var apiClient: GitHubAPIClient = .init(token: nil)
+    // Internal (not private) where GitHubModule+PullRequests uses them.
+    var config: GitHubConfig = .init()
+    var context: ModuleContext?
+    var apiClient: GitHubAPIClient = .init(token: nil)
     private var cachedRepos: [GitHubRepo] = []
-    private let log = Log.module("github")
+    let log = Log.module("github")
 
-    func initialize(context: ModuleContext) async throws {
-        self.context = context
-        updateAPIClient()
-        await fetchRepos()
-        let tokenState = config.token != nil ? "configured" : "none"
-        log.info("GitHub module initialized (token: \(tokenState, privacy: .public))")
+    /// Where `apiClient`'s token came from.
+    var credentialSource: GitHubCredentialSource = .none
+    /// Set when the GitHub CLI's token stopped working, so the next refresh asks gh again.
+    var credentialsStale = false
+    /// Whether the first config has been applied; it arrives after `initialize`.
+    private var hasAppliedConfig = false
+    /// Bumped by each reload; work started for an older config drops its results.
+    var configGeneration = 0
+    var reloadTask: Task<Void, Never>?
+
+    var listing: GitHubPullRequestListing = .empty
+    var pullRequestsListedAt = Date.distantPast
+    /// When to try again after a failed listing; nil while the last one worked.
+    var pullRequestRetryAt: Date?
+    var pullRequestTask: Task<Void, Never>?
+
+    /// Reads the GitHub CLI's token, given `ghPath`.
+    let tokenReader: @Sendable (_ ghPath: String?) async -> String?
+    /// Lists open pull requests: the API by default, a stand-in in tests.
+    let pullRequestFetcher: @Sendable (GitHubAPIClient, GitHubConfig) async throws -> GitHubPullRequestListing
+
+    init(
+        tokenReader: @escaping @Sendable (_ ghPath: String?) async -> String? = {
+            await GitHubCLI.authToken(customPath: $0)
+        },
+        pullRequestFetcher: @escaping @Sendable (GitHubAPIClient, GitHubConfig) async throws
+            -> GitHubPullRequestListing = { try await GitHubModule.fetchOpenPullRequests(client: $0, config: $1) }
+    ) {
+        self.tokenReader = tokenReader
+        self.pullRequestFetcher = pullRequestFetcher
     }
 
+    /// Lists nothing yet: the config, which says what to list and as whom, comes next.
+    func initialize(context: ModuleContext) async throws {
+        self.context = context
+        log.info("GitHub module initialized")
+    }
+
+    func teardown() async {
+        reloadTask?.cancel()
+        pullRequestTask?.cancel()
+    }
+
+    /// The first config, and any change to who's asking or what's listed, reloads in the
+    /// background; the rest (maxResults, searchTypes, …) apply to the next picker open.
     func configDidUpdate(_ config: GitHubConfig) async {
-        let oldToken = self.config.token
-        let oldOwner = self.config.defaultOwner
-        let oldRepoOwners = self.config.repoOwners
-        let oldShowRepos = self.config.showRepos
+        let oldConfig = self.config
         self.config = config
-        if config.token != oldToken {
-            updateAPIClient()
-            log.info("API client updated (token changed)")
-        }
-        if config.token != oldToken || config.defaultOwner != oldOwner
-            || config.repoOwners != oldRepoOwners || config.showRepos != oldShowRepos
-        {
-            await fetchRepos()
-        }
+        guard !hasAppliedConfig || Self.needsReload(from: oldConfig, to: config) else { return }
+        hasAppliedConfig = true
+        reload()
+    }
+
+    private static func needsReload(from old: GitHubConfig, to new: GitHubConfig) -> Bool {
+        old.token != new.token || old.useGitHubCLI != new.useGitHubCLI || old.ghPath != new.ghPath
+            || old.defaultOwner != new.defaultOwner || old.repoOwners != new.repoOwners
+            || old.showRepos != new.showRepos || old.showPullRequests != new.showPullRequests
+            || old.pullRequestFilters != new.pullRequestFilters || old.maxPullRequests != new.maxPullRequests
     }
 
     static func validate(
@@ -75,21 +118,21 @@ actor GitHubModule: ModuleConfigurable {
                 errors.append("repoOwners contains duplicate entries")
             }
         }
+        errors += pullRequestErrors(config)
         return errors.isEmpty ? .valid : .invalid(errors)
     }
 
+    /// Never waits on GitHub: the picker's 2 s module timeout would drop every row. A due
+    /// pull request refresh starts here and lands through `.moduleActionsChanged`.
     func provideActions(
         query: String,
         scoring: ScoringContext
     ) async -> [any Action] {
-        buildActions()
+        refreshPullRequestsIfDue()
+        return buildActions() + pullRequestActions()
     }
 
     // MARK: - Private
-
-    private func updateAPIClient() {
-        apiClient = GitHubAPIClient(token: config.token)
-    }
 
     /// Resolved owners for repo fetching.
     /// Falls back: repoOwners → [defaultOwner] → [nil] (authenticated user).
@@ -100,10 +143,10 @@ actor GitHubModule: ModuleConfigurable {
         return [config.defaultOwner]
     }
 
-    private func fetchRepos() async {
+    func fetchRepos() async {
         let owners = resolvedRepoOwners
         guard config.showRepos,
-              config.token != nil || owners.contains(where: { $0 != nil })
+              apiClient.hasToken || owners.contains(where: { $0 != nil })
         else {
             cachedRepos = []
             return
@@ -390,7 +433,7 @@ extension GitHubModule {
     }
 
     private func buildNotificationsAction() -> GitHubAction? {
-        guard config.showNotifications, config.token != nil else {
+        guard config.showNotifications, apiClient.hasToken else {
             return nil
         }
         let client = apiClient

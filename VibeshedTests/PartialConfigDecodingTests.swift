@@ -72,6 +72,7 @@ final class PartialConfigDecodingTests: XCTestCase {
         try assertDecodes("showAllDayEvents: true", as: CalendarConfig(showAllDayEvents: true))
         try assertDecodes("pollingInterval: 2", as: ClipboardConfig(pollingInterval: 2))
         try assertDecodes("token: ghp_x", as: GitHubConfig(token: "ghp_x"))
+        try assertDecodes("showPullRequests: false", as: GitHubConfig(showPullRequests: false))
         try assertDecodes("enabledActions: [update]", as: HomebrewConfig(enabledActions: ["update"]))
         try assertDecodes("showJobName: false", as: ITermConfig(showJobName: false))
         try assertDecodes("openInNewWindow: true", as: JetBrainsConfig(openInNewWindow: true))
