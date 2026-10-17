@@ -17,7 +17,16 @@ final class CapsLockMonitor: @unchecked Sendable {
     // Guarded by `lock`
     private var hidPressed = false
     private var forwardedPressed = false
+    /// Off once `stop()` has run, so a callback already in flight on the HID
+    /// thread can't leave `hidPressed` stuck on.
+    private var isMonitoring = false
     private let lock = NSLock()
+
+    /// The HID callbacks run on a thread of their own. On the main run loop a
+    /// busy main thread registered capslock late, and the event tap (on its own
+    /// thread) handed a combo key typed meanwhile to the focused app as a plain
+    /// press. Created on first `start()`, then kept for the app's lifetime.
+    private lazy var hidRunLoop: CFRunLoop = Self.startHIDThread()
 
     /// HID usage code for CapsLock (keyboard page 0x07, usage 0x39 = 57)
     private let capsLockHIDUsage: UInt32 = 0x39
@@ -66,9 +75,13 @@ final class CapsLockMonitor: @unchecked Sendable {
             context
         )
 
+        lock.lock()
+        isMonitoring = true
+        lock.unlock()
+
         IOHIDManagerScheduleWithRunLoop(
             manager,
-            CFRunLoopGetMain(),
+            hidRunLoop,
             CFRunLoopMode.commonModes.rawValue
         )
 
@@ -84,10 +97,13 @@ final class CapsLockMonitor: @unchecked Sendable {
             // Clean up — unschedule and discard the manager
             IOHIDManagerUnscheduleFromRunLoop(
                 manager,
-                CFRunLoopGetMain(),
+                hidRunLoop,
                 CFRunLoopMode.commonModes.rawValue
             )
             hidManager = nil
+            lock.lock()
+            isMonitoring = false
+            lock.unlock()
             return false
         }
 
@@ -116,13 +132,14 @@ final class CapsLockMonitor: @unchecked Sendable {
 
         IOHIDManagerUnscheduleFromRunLoop(
             manager,
-            CFRunLoopGetMain(),
+            hidRunLoop,
             CFRunLoopMode.commonModes.rawValue
         )
         IOHIDManagerClose(manager, IOOptionBits(kIOHIDOptionsTypeNone))
         hidManager = nil
 
         lock.lock()
+        isMonitoring = false
         hidPressed = false
         forwardedPressed = false
         lock.unlock()
@@ -130,6 +147,7 @@ final class CapsLockMonitor: @unchecked Sendable {
         Log.keybindings.info("CapsLockMonitor stopped")
     }
 
+    /// Called on the HID thread.
     private func handleHIDValue(_ value: IOHIDValue) {
         let element = IOHIDValueGetElement(value)
         let usagePage = IOHIDElementGetUsagePage(element)
@@ -139,20 +157,25 @@ final class CapsLockMonitor: @unchecked Sendable {
         guard usage == capsLockHIDUsage else { return }
 
         let pressed = IOHIDValueGetIntegerValue(value) != 0
-        update { $0.hidPressed = pressed }
+        let lag = Self.milliseconds(since: IOHIDValueGetTimeStamp(value))
+        update(detail: "HID, \(lag) ms after the key") { monitor in
+            guard monitor.isMonitoring else { return }
+            monitor.hidPressed = pressed
+        }
     }
 
     /// Applies `change` under the lock and, if the combined state flipped,
     /// logs it and posts `stateChanged` on the main thread.
-    private func update(_ change: (CapsLockMonitor) -> Void) {
+    private func update(detail: String? = nil, _ change: (CapsLockMonitor) -> Void) {
         lock.lock()
         let wasPressed = hidPressed || forwardedPressed
         change(self)
         let pressed = hidPressed || forwardedPressed
-        let source = forwardedPressed ? "forwarded F18" : "HID"
+        let source = forwardedPressed ? "forwarded F18" : detail ?? "HID"
         lock.unlock()
 
         guard pressed != wasPressed else { return }
+        // The lag says whether a leaked combo key beat capslock to the event tap.
         Log.keybindings.info(
             "CapsLock: \(pressed ? "DOWN" : "UP", privacy: .public) (\(source, privacy: .public))"
         )
@@ -163,5 +186,38 @@ final class CapsLockMonitor: @unchecked Sendable {
                 NotificationCenter.default.post(name: Self.stateChanged, object: nil)
             }
         }
+    }
+
+    // MARK: - HID Thread
+
+    private static func startHIDThread() -> CFRunLoop {
+        final class RunLoopBox: @unchecked Sendable {
+            var runLoop: CFRunLoop?
+        }
+        let box = RunLoopBox()
+        let ready = DispatchSemaphore(value: 0)
+        let thread = Thread {
+            box.runLoop = CFRunLoopGetCurrent()
+            // A run loop with nothing scheduled returns at once; the port keeps
+            // it alive between a stop() and the next start().
+            RunLoop.current.add(NSMachPort(), forMode: .default)
+            ready.signal()
+            CFRunLoopRun()
+        }
+        thread.name = "com.ivandmitriev.Vibeshed.capslock"
+        thread.qualityOfService = .userInteractive
+        thread.start()
+        ready.wait()
+        guard let runLoop = box.runLoop else { preconditionFailure("HID thread started without a run loop") }
+        return runLoop
+    }
+
+    /// Time from `machTime` (a HID value's timestamp) until now.
+    private static func milliseconds(since machTime: UInt64) -> UInt64 {
+        let now = mach_absolute_time()
+        guard now > machTime else { return 0 }
+        var timebase = mach_timebase_info_data_t()
+        mach_timebase_info(&timebase)
+        return (now - machTime) * UInt64(timebase.numer) / UInt64(timebase.denom) / 1_000_000
     }
 }

@@ -17,7 +17,7 @@ final class CapsLockForwarder: @unchecked Sendable {
     private var lock = os_unfair_lock()
     private var enabled = false
 
-    // Main thread only (CapsLockMonitor posts from its main-run-loop HID callback)
+    // Main thread only (CapsLockMonitor posts stateChanged on main)
     private var observer: NSObjectProtocol?
     private var isForwarding = false
 
