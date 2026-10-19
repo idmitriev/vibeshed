@@ -80,8 +80,8 @@ final class ConfigDecodingCoverageTests: XCTestCase {
         ))
     }
 
-    /// The configs that already had their own decoders.
-    func testEveryFieldIsDecodedByEarlierDecoders() throws {
+    /// The AI vendor configs, which all have their own decoders.
+    func testEveryFieldIsDecodedInAIConfigs() throws {
         try assertRoundTrip(changed(AnthropicConfig()) {
             $0.maxResults = 1
             $0.sources = ["claudeCode"]
@@ -101,6 +101,18 @@ final class ConfigDecodingCoverageTests: XCTestCase {
             $0.codexPath = "/c"
             $0.terminalApp = "terminal"
         })
+        try assertRoundTrip(changed(OpenCodeConfig()) {
+            $0.maxResults = 1
+            $0.sources = ["x"]
+            $0.enabledActions = ["x"]
+            $0.showLaunchers = false
+            $0.opencodePath = "/c"
+            $0.terminalApp = "terminal"
+        })
+    }
+
+    /// The configs that already had their own decoders.
+    func testEveryFieldIsDecodedByEarlierDecoders() throws {
         try assertRoundTrip(changed(EmojiConfig()) { $0.pasteOnSelect = true })
         try assertRoundTrip(changed(GhosttyConfig()) {
             $0.maxResults = 1
@@ -249,6 +261,7 @@ private extension ConfigDecodingCoverageTests {
             "terminal": ModuleSection(TerminalModule.self),
             "anthropic": ModuleSection(AISessionsModule<AnthropicProvider>.self),
             "openai": ModuleSection(AISessionsModule<OpenAIProvider>.self),
+            "opencode": ModuleSection(AISessionsModule<OpenCodeProvider>.self),
             "telegram": ModuleSection(TelegramModule.self),
             "zoom": ModuleSection(ZoomModule.self),
             "calendar": ModuleSection(CalendarModule.self),

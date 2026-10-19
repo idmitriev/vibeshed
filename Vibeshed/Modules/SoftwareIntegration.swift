@@ -167,6 +167,17 @@ extension SoftwareIntegration {
             ]
         ),
         SoftwareIntegration(
+            moduleID: "opencode",
+            summary: "OpenCode sessions from the CLI and desktop app",
+            probes: [
+                .app(OpenCodeProvider.appBundleID, "OpenCode"),
+                .path("~/.local/share/opencode", "OpenCode"),
+                .path("~/.opencode/bin/opencode", "OpenCode"),
+                .path("/opt/homebrew/bin/opencode", "OpenCode"),
+                .path("/usr/local/bin/opencode", "OpenCode"),
+            ]
+        ),
+        SoftwareIntegration(
             moduleID: "vscode",
             summary: "recent VS Code, Cursor and Windsurf projects",
             probes: [

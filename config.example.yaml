@@ -715,6 +715,17 @@ modules:
     terminalApp: "iterm"
     # codexPath: "/opt/homebrew/bin/codex"    # custom CLI path (auto-detected)
 
+  # --- OpenCode (OpenCode CLI + OpenCode desktop app) ---
+  opencode:
+    maxResults: 20
+    sources:
+      - opencode
+    showLaunchers: true
+    # Sessions always resume in a terminal (opencode --session <id>): the
+    # desktop app has no URL that opens a session.
+    terminalApp: "iterm"
+    # opencodePath: "/opt/homebrew/bin/opencode"  # custom CLI path (auto-detected)
+
   # --- Telegram ---
   telegram:
     showLaunchAction: true

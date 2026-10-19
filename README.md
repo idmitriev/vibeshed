@@ -56,7 +56,7 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 - VSCode, JetBrains, and Zed project/workspace search
 - iTerm session management and command execution
 - GitHub repo/issue/PR search and notifications
-- AI session search and resume across Claude Code, Claude Desktop, and Codex
+- AI session search and resume across Claude Code, Claude Desktop, Codex, and OpenCode
 - Homebrew package search, install, upgrade, and cleanup
 
 **Media & Communication**
@@ -104,7 +104,7 @@ Configuration lives at `~/.config/vibeshed/config.yaml`. On first launch Vibeshe
 Windows and the tiling grid (two side-by-side splits) get 4pt of padding and gaps. The default browser is left alone, and these modules are enabled:
 
 - the ones backed by macOS itself: apps, system actions, settings panes, audio, processes, performance, windows, tiling, clipboard history, themes, math, timers, emoji and web search;
-- one for each app it finds on the Mac: browser tabs, Homebrew, Claude, ChatGPT/Codex, VS Code (and Cursor, Windsurf), JetBrains IDEs, Zed, iTerm, Ghostty, Spotify, Telegram, Zoom and GitHub (via the `gh` CLI or GitHub Desktop).
+- one for each app it finds on the Mac: browser tabs, Homebrew, Claude, ChatGPT/Codex, OpenCode, VS Code (and Cursor, Windsurf), JetBrains IDEs, Zed, iTerm, Ghostty, Spotify, Telegram, Zoom and GitHub (via the `gh` CLI or GitHub Desktop).
 
 Without Homebrew, it also adds an **Install Homebrew** alias that runs the [brew.sh](https://brew.sh) install script in a new Terminal window, and enables the Terminal module that alias runs in.
 
@@ -139,6 +139,7 @@ The app watches the config file for changes and hot-reloads automatically.
 | **Terminal** | New Terminal.app windows, Run Command, quick commands |
 | **Claude** | Resume Claude Code/Desktop sessions, start new ones, jump to sessions awaiting input |
 | **Codex** | Resume Codex threads with project/branch/model context, start new sessions |
+| **OpenCode** | Resume OpenCode sessions in a terminal with project/model context, start new sessions |
 | **Zed** | Search and open recent workspaces |
 | **Homebrew** | Search, install, uninstall, upgrade packages and casks |
 | **Zoom** | Join meetings, start personal meeting, configured shortcuts |
