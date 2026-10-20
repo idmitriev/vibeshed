@@ -1,0 +1,148 @@
+# The website's theme montage (https://claude.ai/artifact/6s5cSP7V1WAu1dncwuRPz5,
+# Build → Assets): VS Code, Ghostty running btop, and the picker's Switch Theme
+# list, on each theme's own wallpaper, in six themes: Vibeshed Glow, Tokyo
+# Night, Catppuccin Latte, Dracula, Mac OS 9 and Amiga Workbench 1.3. One full
+# 2× screen each; scripts/site-stills.sh lays them out as the montage.
+#
+# Inside Switch Theme each shot types the theme's name, so it's the top row and
+# the list starts unscrolled: a list opened scrolled to the current theme shows
+# rows in the strip above the floating search bar. The highlight doesn't always
+# follow the filter to the top row ("tokyo night" once left it on Tokyo Night
+# Storm), so ↑ takes it there. Each theme is applied before the picker opens,
+# so the preview matches what's committed.
+#
+# Base VM: as for scenes/site-lap.yaml, plus a run of
+# scenes/site-stills-warmup.yaml once.
+title: "Site: the theme montage"
+
+setup:
+  display: { width: 1600, height: 1000 }
+  locale: en_US
+  dock: hidden
+  menuBar: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: [../configs/site-videos.yaml, ../configs/site-search.yaml, ../configs/site-stills.yaml]
+    reset: false
+  # VS Code top left and Ghostty bottom right, each showing around the picker in the
+  # middle, with the wallpaper bare in the other two corners.
+  apps:
+    - { app: Visual Studio Code, open: ~/code/vibeshed }
+    - { app: Visual Studio Code, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift, frame: [40, 50, 860, 620] }
+    - { app: Ghostty, frame: [760, 360, 800, 600] }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.vibeshed-glow
+    - wait: 1.5
+    - type: { text: "clear; btop", cps: 60 }
+    - press: return
+    - wait: 1
+    - focus: Visual Studio Code
+  settle: 2
+
+record: { video: false, pauseOnDialogs: true }
+
+actions:
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 20 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 0.8
+  - type: { text: vibeshed glow, cps: 40 }
+  - waitFor: { result: Vibeshed Glow }
+  - press: { keys: up, times: 4, interval: 0.15 }   # ↑ stops at the top row
+  - wait: 3.5
+  - screenshot: montage-vibeshed-glow
+  - press: cmd+escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.tokyo-night
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 20 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 0.8
+  - type: { text: tokyo night, cps: 40 }
+  - waitFor: { result: Tokyo Night }
+  - press: { keys: up, times: 4, interval: 0.15 }   # ↑ stops at the top row
+  - wait: 3.5
+  - screenshot: montage-tokyo-night
+  - press: cmd+escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.catppuccin-latte
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 20 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 0.8
+  - type: { text: catppuccin latte, cps: 40 }
+  - waitFor: { result: Catppuccin Latte }
+  - press: { keys: up, times: 4, interval: 0.15 }   # ↑ stops at the top row
+  - wait: 3.5
+  - screenshot: montage-catppuccin-latte
+  - press: cmd+escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.dracula
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 20 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 0.8
+  - type: { text: dracula, cps: 40 }
+  - waitFor: { result: Dracula }
+  - press: { keys: up, times: 4, interval: 0.15 }   # ↑ stops at the top row
+  - wait: 3.5
+  - screenshot: montage-dracula
+  - press: cmd+escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.mac-os-9
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 20 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 0.8
+  - type: { text: mac os 9, cps: 40 }
+  - waitFor: { result: Mac OS 9 }
+  - press: { keys: up, times: 4, interval: 0.15 }   # ↑ stops at the top row
+  - wait: 3.5
+  - screenshot: montage-mac-os-9
+  - press: cmd+escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.amiga-workbench-1-3
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 20 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 0.8
+  - type: { text: amiga, cps: 40 }
+  - waitFor: { result: Amiga Workbench 1.3 }
+  - press: { keys: up, times: 4, interval: 0.15 }   # ↑ stops at the top row
+  - wait: 3.5
+  - screenshot: montage-amiga-workbench-1-3
+  - press: cmd+escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.vibeshed-glow   # leave the base on home base
+  - wait: 4

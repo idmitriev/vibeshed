@@ -1,0 +1,135 @@
+# The website's picker stills (https://claude.ai/artifact/6s5cSP7V1WAu1dncwuRPz5,
+# Build → Assets): the picker at 2× in the site's sunset palette (Vibeshed
+# Glow), Tokyo Night, Catppuccin Latte and Mac OS 9, with two demo queries to
+# choose from: `satis` (what Spotify is playing, its album art in the preview,
+# a nod to the headline) and `my` (the Claude Code session, with its project,
+# branch and model). Each gives two pictures: the picker window alone with its
+# shadow on a transparent background, and the picker on that theme's wallpaper.
+#
+# Base VM: as for scenes/site-lap.yaml, plus a run of
+# scenes/site-stills-warmup.yaml once. The windows sit minimized: their apps
+# still feed the results, and the wallpaper stays clear behind the picker.
+title: "Site: the picker in four themes"
+
+setup:
+  display: { width: 1600, height: 1000 }
+  locale: en_US
+  dock: hidden
+  menuBar: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: [../configs/site-videos.yaml, ../configs/site-search.yaml, ../configs/site-stills.yaml]
+    reset: false
+  apps:
+    - { app: Spotify, frame: [840, 560, 720, 400] }
+    - { app: Safari, open: "https://en.wikipedia.org/wiki/Caps_Lock", frame: [40, 60, 700, 480] }
+    - { app: Ghostty, frame: [760, 360, 800, 600] }
+    - { app: Zed, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift, frame: [300, 120, 760, 560] }
+    - { app: Visual Studio Code, open: ~/code/vibeshed }
+    - { app: Visual Studio Code, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift, frame: [40, 50, 860, 620] }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.vibeshed-glow
+    - shell: open -a Safari "https://ivandmitriev.com/vibeshed/"
+    - shell: open "spotify:track:2PzU4IB8Dr6mxV3lHuaG34"
+    - wait: 5
+    - open: vibeshed://window/minimizeAll
+    - wait: 2.5
+  settle: 2
+
+record: { video: false, pauseOnDialogs: true }
+
+actions:
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - waitFor: { result: "(I Can't Get No) Satisfaction" }
+  - wait: 2.4                                   # the preview slides in after the list holds still
+  - screenshot: { name: picker-music-vibeshed-glow, window: picker }
+  - screenshot: { name: picker-music-vibeshed-glow-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: my, cps: 16 }
+  - waitFor: { result: "teach the picker to read my mind" }
+  - wait: 2.4
+  - screenshot: { name: picker-session-vibeshed-glow, window: picker }
+  - screenshot: { name: picker-session-vibeshed-glow-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.tokyo-night
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - waitFor: { result: "(I Can't Get No) Satisfaction" }
+  - wait: 2.4
+  - screenshot: { name: picker-music-tokyo-night, window: picker }
+  - screenshot: { name: picker-music-tokyo-night-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: my, cps: 16 }
+  - waitFor: { result: "teach the picker to read my mind" }
+  - wait: 2.4
+  - screenshot: { name: picker-session-tokyo-night, window: picker }
+  - screenshot: { name: picker-session-tokyo-night-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.catppuccin-latte
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - waitFor: { result: "(I Can't Get No) Satisfaction" }
+  - wait: 2.4
+  - screenshot: { name: picker-music-catppuccin-latte, window: picker }
+  - screenshot: { name: picker-music-catppuccin-latte-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: my, cps: 16 }
+  - waitFor: { result: "teach the picker to read my mind" }
+  - wait: 2.4
+  - screenshot: { name: picker-session-catppuccin-latte, window: picker }
+  - screenshot: { name: picker-session-catppuccin-latte-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.mac-os-9
+  - wait: 5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - waitFor: { result: "(I Can't Get No) Satisfaction" }
+  - wait: 2.4
+  - screenshot: { name: picker-music-mac-os-9, window: picker }
+  - screenshot: { name: picker-music-mac-os-9-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: my, cps: 16 }
+  - waitFor: { result: "teach the picker to read my mind" }
+  - wait: 2.4
+  - screenshot: { name: picker-session-mac-os-9, window: picker }
+  - screenshot: { name: picker-session-mac-os-9-desktop, region: picker, padding: 120 }
+  - press: escape
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+
+  - open: vibeshed://theme/apply.vibeshed-glow   # leave the base on home base
+  - wait: 4

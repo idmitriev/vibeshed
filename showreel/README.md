@@ -270,6 +270,28 @@ zooms search in on the picker, paces each part, and writes the lap, an 800 px
 cut, a poster and each part on its own to `out/site-videos/`, then prints an
 SSIM check of the last frame against the first.
 
+The site's stills come from the same base, with VS Code added
+(`configs/site-stills.yaml` puts it among the theme targets). Open VS Code once
+in the VM by hand first: trust `~/code/vibeshed` and close its Welcome tab.
+
+```bash
+scripts/showreel record site-stills-warmup
+```
+
+```bash
+scripts/showreel record site-picker-themes site-theme-montage
+```
+
+```bash
+scripts/site-stills.sh
+```
+
+`site-picker-themes` shoots the picker in four themes with two demo queries,
+alone on transparency and on each theme's wallpaper; `site-theme-montage`
+shoots VS Code, Ghostty and the picker's theme list in six themes.
+`site-stills.sh` converts them to sRGB, writes WebP beside each PNG or JPEG,
+and lays the six screens out as a 3×2 montage in `out/site-stills/`.
+
 ## Gotchas
 
 - The VM must be logged in to its desktop: the agent needs the GUI session.
