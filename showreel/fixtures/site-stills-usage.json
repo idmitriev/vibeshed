@@ -1,0 +1,62 @@
+{
+  "counts": {
+    "spotify/nowPlaying": 50,
+    "browser/tab.com.apple.Safari:1:1": 44,
+    "anthropic/session.3pcir5nxzhxi0": 38,
+    "zed/project.hn6attp733vd": 32,
+    "github/searchPRs": 26,
+    "application/app.com.spotify.client": 22,
+    "theme/switch": 18,
+    "application/app.com.apple.Safari": 6,
+    "anthropic/search": 3,
+    "theme/switchFont": 2,
+    "theme/wallpaperStyle": 2
+  },
+  "lastUsed": {
+    "spotify/nowPlaying": "2026-10-20T09:00:00Z",
+    "browser/tab.com.apple.Safari:1:1": "2026-10-20T09:00:00Z",
+    "anthropic/session.3pcir5nxzhxi0": "2026-10-20T09:00:00Z",
+    "zed/project.hn6attp733vd": "2026-10-20T09:00:00Z",
+    "github/searchPRs": "2026-10-20T09:00:00Z",
+    "application/app.com.spotify.client": "2026-10-20T09:00:00Z",
+    "theme/switch": "2026-10-20T09:00:00Z",
+    "application/app.com.apple.Safari": "2026-10-20T09:00:00Z",
+    "anthropic/search": "2026-10-20T09:00:00Z",
+    "theme/switchFont": "2026-10-20T09:00:00Z",
+    "theme/wallpaperStyle": "2026-10-20T09:00:00Z"
+  },
+  "queries": {
+    "picks": {
+      "spotify/nowPlaying": {
+        "satis": {
+          "weight": 6,
+          "lastUsed": "2026-10-20T09:00:00Z"
+        }
+      },
+      "theme/switch": {
+        "satis": {
+          "weight": 3,
+          "lastUsed": "2026-10-20T09:00:00Z"
+        }
+      },
+      "theme/switchFont": {
+        "satis": {
+          "weight": 2,
+          "lastUsed": "2026-10-20T09:00:00Z"
+        }
+      },
+      "theme/wallpaperStyle": {
+        "satis": {
+          "weight": 1.5,
+          "lastUsed": "2026-10-20T09:00:00Z"
+        }
+      },
+      "anthropic/session.3pcir5nxzhxi0": {
+        "my": {
+          "weight": 6,
+          "lastUsed": "2026-10-20T09:00:00Z"
+        }
+      }
+    }
+  }
+}
