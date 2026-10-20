@@ -285,6 +285,13 @@
     update();
   }
 
+  // The USDC addresses sit in a closed block; any link to #usdc opens it.
+  const usdc = $('#usdc');
+  const openUsdc = () => { if (usdc) usdc.open = true; };
+  document.addEventListener('click', (e) => { if (e.target.closest('a[href="#usdc"]')) openUsdc(); });
+  addEventListener('hashchange', () => { if (location.hash === '#usdc') openUsdc(); });
+  if (location.hash === '#usdc') openUsdc();
+
   // --- Send to my Mac ------------------------------------------------------------------
 
   const send = $('#send');

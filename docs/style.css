@@ -249,9 +249,14 @@ h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); font-weight: 750; line-height: 0.9
 .note-text ol { display: flex; flex-direction: column; gap: 4px; color: var(--ink-2); }
 .ways { display: flex; flex-direction: column; gap: 20px; }
 .way { padding: clamp(18px, 3vw, 28px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; gap: 14px; }
-.way > div { display: flex; flex-direction: column; gap: 14px; }
+.way-oc > div { display: flex; flex-direction: column; gap: 14px; }
+.way-usdc { display: block; }
+.way-usdc > * + * { margin-top: 14px; }
 .way-free ul { display: flex; flex-direction: column; gap: 6px; }
-[data-primary="usdc"] .way-usdc { order: -1; }
+.way-usdc summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding-right: 32px; position: relative; cursor: pointer; list-style: none; }
+.way-usdc summary::-webkit-details-marker { display: none; }
+.way-usdc summary::after { content: "+"; position: absolute; right: 0; top: -4px; font: 400 1.5rem var(--font-mono); color: var(--accent); }
+.way-usdc[open] summary::after { content: "−"; }
 [data-primary="usdc"] .oc-live,
 [data-primary="opencollective"] .oc-pending { display: none !important; }
 .wallets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
