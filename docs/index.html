@@ -104,20 +104,11 @@
       </div>
     </div>
 
-    <div class="picker" id="picker">
-      <div class="picker-search">
-        <span class="picker-keys" aria-hidden="true"><kbd>⇪</kbd><kbd>Space</kbd></span>
-        <label class="sr-only" for="pk-input">Try the picker: type to search the demo</label>
-        <input id="pk-input" type="text" role="combobox" autocomplete="off" autocapitalize="off" spellcheck="false"
-          aria-expanded="true" aria-controls="pk-list" aria-autocomplete="list" aria-describedby="pk-help"
-          placeholder="Try me: spot, tile, tokyo, 2+2">
-      </div>
-      <ul class="picker-list" id="pk-list" role="listbox" aria-label="Results" tabindex="-1"></ul>
-      <div class="picker-foot">
-        <span id="pk-help">↑↓ select · ↩ run · esc is the safe word</span>
-        <span class="picker-said" id="pk-said" aria-live="polite"></span>
-      </div>
-    </div>
+    <figure class="shot hero-shot">
+      <img src="img/shot-spotify.webp" width="1124" height="712" fetchpriority="high"
+        alt="The Vibeshed picker after typing “spot”: Spotify is running, and the highlighted row, (I Can’t Get No) Satisfaction by the Rolling Stones, shows the album art and Now playing in the preview.">
+      <figcaption><kbd>⇪</kbd><kbd>Space</kbd>, then <code>spot</code>. A real frame from the lap below.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -160,31 +151,39 @@
 
     <ul class="jobs">
       <li>
+        <img src="img/shot-tab.webp" width="800" height="506" loading="lazy" decoding="async"
+          alt="The picker after typing “caps”: the Safari tab “Caps Lock - Wikipedia” is highlighted, with en.wikipedia.org in the preview.">
         <h3>Whatever you’re into.</h3>
         <p>Apps, windows, Safari and Chrome tabs, bookmarks, and VS Code, JetBrains and Zed projects. It learns what you reach for.</p>
-        <p class="keys"><kbd>⇪</kbd><kbd>Space</kbd></p>
+        <p class="keys"><kbd>⇪</kbd><kbd>Space</kbd><code>caps</code></p>
       </li>
       <li>
+        <img src="img/shot-claude.webp" width="800" height="506" loading="lazy" decoding="async"
+          alt="The picker after typing “my mind”: the Claude Code session “teach the picker to read my mind” in ~/code/vibeshed, with its project and date in the preview.">
         <h3>Your agents are waiting.</h3>
         <p>Resume Claude Code, Claude Desktop and Codex sessions by project and branch, and jump straight to the one that needs you.</p>
-        <p class="keys"><code>claude</code><code>codex</code></p>
+        <p class="keys"><code>my mind</code></p>
       </li>
       <li>
+        <img src="img/shot-grid.webp" width="800" height="500" loading="lazy" decoding="async"
+          alt="A Mac desktop with Safari, Ghostty, Zed and Spotify tiled into a 2×2 grid, 4 pt apart.">
         <h3>Try every position.</h3>
         <p>Caps Lock + W A S D cycles a window’s size against each edge. Arrows move focus. M maximizes, and M again puts it back.</p>
         <p class="keys"><kbd>⇪</kbd><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>M</kbd></p>
       </li>
       <li>
+        <img src="img/shot-meeting.webp" width="800" height="506" loading="lazy" decoding="async"
+          alt="The picker after typing “pair”: the event “Pairing session”, in 4 minutes, with its time, calendar and Zoom link in the preview.">
+        <h3>Never late again.</h3>
+        <p>Upcoming events with one-key Zoom and Meet joins. Meeting Prep hides the distractions before you share your screen.</p>
+        <p class="keys"><code>pair</code></p>
+      </li>
+      <li class="plain">
         <h3>Music on cue.</h3>
         <p>Search Spotify for songs, albums, artists and playlists and play them, no API setup. Volume, output devices and media keys too.</p>
         <p class="keys"><code>spot</code></p>
       </li>
-      <li>
-        <h3>Never late again.</h3>
-        <p>Upcoming events with one-key Zoom and Meet joins. Meeting Prep hides the distractions before you share your screen.</p>
-        <p class="keys"><code>join</code></p>
-      </li>
-      <li>
+      <li class="plain">
         <h3>The rest, built in.</h3>
         <p>Clipboard history, math and currency, timers, emoji, Homebrew, GitHub pull requests and Apple Notes. <span data-stat="modules">35</span> modules, each loaded only when you ask for it.</p>
         <p class="keys"><code>2+2</code><code>brew</code></p>

@@ -1,4 +1,4 @@
-/* Vibeshed: one page. Colors are tokens on :root; press-T and the picker demo override
+/* Vibeshed: one page. Colors are tokens on :root; press-T and the theme chips override
    them with a built-in theme's palette (see site.js), so everything below reads tokens only. */
 
 @font-face {
@@ -148,33 +148,11 @@ h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); font-weight: 750; line-height: 0.9
 .fine { font-size: 0.82rem; color: var(--ink-2); }
 .fine strong { color: var(--ink); font-weight: 650; }
 
-/* The picker demo */
-.picker {
-  min-width: 0; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
-  box-shadow: 0 30px 70px rgba(20, 10, 20, 0.22);
-}
-.picker-search { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.picker-keys { display: flex; gap: 4px; }
-.picker-keys kbd { font-size: 0.66rem; color: var(--ink-2); }
-.picker-search input {
-  flex: 1; min-width: 0; font: 400 1.15rem var(--font-body); color: var(--ink); background: transparent; border: 0; outline: 0; padding: 4px 0;
-  caret-color: var(--accent);
-}
-.picker-search input::placeholder { color: var(--ink-2); opacity: 0.8; }
-.picker:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
-.picker-list { list-style: none; margin: 0; padding: 6px; height: 336px; overflow-y: auto; overscroll-behavior: contain; }
-.picker-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; cursor: pointer; }
-.picker-list li:hover { background: color-mix(in srgb, var(--sel) 55%, transparent); }
-.picker-list li[aria-selected="true"] { background: var(--sel); color: var(--sel-ink); }
-.picker-list .ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font: 700 0.8rem var(--font-mono); color: #fff; overflow: hidden; }
-.picker-list .ico.swatch { display: flex; }
-.picker-list .ico.swatch i { flex: 1; }
-.picker-list .t { display: block; font-size: 0.95rem; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.picker-list .s { display: block; font-size: 0.76rem; opacity: 0.72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.picker-list .h { font: 0.72rem var(--font-mono); opacity: 0.7; }
-.picker-list .empty { display: block; padding: 18px 10px; color: var(--ink-2); cursor: default; }
-.picker-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 8px 14px; border-top: 1px solid var(--line); font: 0.7rem var(--font-mono); color: var(--ink-2); }
-.picker-said { color: var(--accent); }
+/* Real frames from the lap. They keep their own colors when the page wears a theme. */
+.shot { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.shot img { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(20, 10, 20, 0.22); }
+.shot figcaption { font-size: 0.85rem; color: var(--ink-2); }
+.shot figcaption kbd { font-size: 0.7rem; }
 
 /* Numbers strip */
 .strip { border-block: 1px solid var(--line); background: var(--sunk); }
@@ -206,8 +184,9 @@ h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); font-weight: 750; line-height: 0.9
 .player-keys .on { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
 .player-keys .rest { opacity: 0.55; }
 
-.jobs { list-style: none; padding: 0; margin-top: clamp(40px, 6vw, 64px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.jobs { list-style: none; padding: 0; margin-top: clamp(40px, 6vw, 64px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
 .jobs li { display: flex; flex-direction: column; gap: 8px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.jobs img { display: block; width: 100%; height: auto; margin-bottom: 8px; border-radius: 10px; border: 1px solid var(--line); }
 .jobs p { color: var(--ink-2); font-size: 0.95rem; }
 .jobs .keys { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 6px; }
 
@@ -320,7 +299,6 @@ h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); font-weight: 750; line-height: 0.9
 
 @media (max-width: 960px) {
   .hero-grid, .split, .player { grid-template-columns: minmax(0, 1fr); }
-  .picker-list { height: 300px; }
 }
 @media (max-width: 720px) {
   .nav-links .wide { display: none; }
