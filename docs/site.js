@@ -75,8 +75,52 @@
       root.dataset.theme = t.name;
     }
     root.style.colorScheme = root.dataset.mode;
+    shots(t ? t.name : null);
     $$('#chips .chip').forEach((chip) => chip.setAttribute('aria-pressed', String(Number(chip.dataset.index) === i)));
     rove();
+  }
+
+  // Real screenshots exist for a few themes (docs/ASSETS.md): the hero picker in four, the
+  // VS Code + btop + theme list screen in six. Wearing one of those swaps them in.
+  const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '');
+  const PICKER_SHOTS = ['Tokyo Night', 'Catppuccin Latte', 'Mac OS 9'];
+  const THEME_SHOTS = {
+    'Tokyo Night': 'Topographic', 'Catppuccin Latte': 'Sashiko', Dracula: '10 PRINT',
+    'Mac OS 9': 'Desktop Pattern', 'Amiga Workbench 1.3': 'Boing Ball grid',
+  };
+  const heroShot = $('#hero-picker');
+  const heroNote = $('#hero-picker-note');
+  const themeShot = $('#theme-shot');
+  const themeNote = $('#theme-shot-note');
+  const montage = themeShot && { src: themeShot.getAttribute('src'), alt: themeShot.alt, note: themeNote.innerHTML };
+
+  function shots(name) {
+    if (heroShot) {
+      const own = PICKER_SHOTS.includes(name);
+      const label = own ? name : 'its own Vibeshed Glow palette';
+      heroShot.src = `img/picker/music-${own ? slug(name) : 'vibeshed-glow'}.webp`;
+      heroShot.alt = `Vibeshed’s picker in ${label}: the query ‘satis’ finds (I Can’t Get No) Satisfaction playing in Spotify, with its album art in the preview.`;
+      heroNote.textContent = own ? `In ${name}, as the app draws it.` : name ? `Shown in Vibeshed Glow; the app has ${name} too.` : '';
+      if (!name) heroNote.innerHTML = 'Press <kbd>T</kbd> to see it in other themes.';
+    }
+    if (themeShot) {
+      const wallpaper = THEME_SHOTS[name];
+      if (wallpaper) {
+        themeShot.src = `img/themes/${slug(name)}.webp`;
+        themeShot.width = 1600;
+        themeShot.height = 1000;
+        themeShot.dataset.single = '';
+        themeShot.alt = `${name} on its ${wallpaper} wallpaper, repainting VS Code, Ghostty running btop and the picker’s theme list.`;
+        themeNote.textContent = `${name} on its ${wallpaper} wallpaper, as the app applies it.`;
+      } else if (themeShot.hasAttribute('data-single')) {
+        themeShot.src = montage.src;
+        themeShot.width = 2328;
+        themeShot.height = 974;
+        delete themeShot.dataset.single;
+        themeShot.alt = montage.alt;
+        themeNote.innerHTML = montage.note;
+      }
+    }
   }
 
   // The chips are one Tab stop: the pressed chip (or the first), with arrow keys moving inside.

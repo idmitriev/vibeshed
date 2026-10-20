@@ -105,9 +105,9 @@
     </div>
 
     <figure class="shot hero-shot">
-      <img src="img/shot-spotify.webp" width="1124" height="712" fetchpriority="high"
-        alt="The Vibeshed picker after typing “spot”: Spotify is running, and the highlighted row, (I Can’t Get No) Satisfaction by the Rolling Stones, shows the album art and Now playing in the preview.">
-      <figcaption><kbd>⇪</kbd><kbd>Space</kbd>, then <code>spot</code>. A real frame from the lap below.</figcaption>
+      <img id="hero-picker" src="img/picker/music-vibeshed-glow.webp" width="1584" height="1072" fetchpriority="high"
+        alt="Vibeshed’s picker in its own Vibeshed Glow palette: the query ‘satis’ finds (I Can’t Get No) Satisfaction playing in Spotify, with its album art in the preview.">
+      <figcaption><kbd>⇪</kbd><kbd>Space</kbd>, then <code>satis</code>. <span id="hero-picker-note">Press <kbd>T</kbd> to see it in other themes.</span></figcaption>
     </figure>
   </div>
 </section>
@@ -199,6 +199,11 @@
       <h2 id="themes-h">Comes in <span data-stat="themes">73</span> colors.</h2>
       <p>One palette across macOS, your wallpaper, Ghostty, iTerm, VS Code, Zed, Neovim and Claude Code. Preview live. Esc is the safe word.</p>
     </div>
+    <figure class="shot montage">
+      <img id="theme-shot" src="img/themes/montage.webp" width="2328" height="974" loading="lazy" decoding="async"
+        alt="Six themes, each repainting VS Code, Ghostty running btop and the picker’s theme list on its own wallpaper: Vibeshed Glow, Tokyo Night, Catppuccin Latte, Dracula, Mac OS 9 and Amiga Workbench 1.3.">
+      <figcaption id="theme-shot-note">VS Code, btop in Ghostty and the theme list, in six of the <span data-stat="themes">73</span>.</figcaption>
+    </figure>
     <p class="try">Press <kbd>T</kbd> and this page tries one on. <kbd>⇧</kbd><kbd>T</kbd> goes back, <kbd>Esc</kbd> takes it off. Or pick one:</p>
     <div class="chips" id="chips" role="group" aria-label="Themes"></div>
     <div class="chips-foot">
