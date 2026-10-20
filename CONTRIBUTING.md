@@ -5,7 +5,7 @@ Thanks for taking a look. Vibeshed is a small personal project built in the open
 ## Quick start
 
 ```bash
-git clone https://github.com/idmitriev/vibeshed.git
+git clone https://github.com/vibeshed/vibeshed.git
 cd vibeshed
 make build
 make run-debug   # logs in this terminal

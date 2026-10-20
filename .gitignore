@@ -39,3 +39,4 @@ credentials.json
 release/
 *.zip
 *.dmg
+__pycache__/

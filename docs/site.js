@@ -1,0 +1,614 @@
+// Vibeshed's one page: themes (press T), the picker demo, the video lap, the download panel,
+// Send to my Mac and the copy buttons. No dependencies; every part works on its own.
+(() => {
+  'use strict';
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const root = document.documentElement;
+  const handheld = root.classList.contains('handheld');
+  const calm = matchMedia('(prefers-reduced-motion: reduce)');
+  const prefersDark = matchMedia('(prefers-color-scheme: dark)');
+  const OPEN_COLLECTIVE = 'https://opencollective.com/ivan-dmitriev';
+  const support = $('#support');
+  const panel = $('#dl-panel');
+
+  // Typing in a field, or a modifier held: page shortcuts stay out of the way.
+  const typing = (e) => {
+    const el = e.target;
+    return e.metaKey || e.ctrlKey || e.altKey || (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
+  };
+
+  // --- Colors --------------------------------------------------------------------------
+
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const hex = (c) => '#' + c.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+  const mix = (a, b, t) => hex(rgb(a).map((v, i) => v + (rgb(b)[i] - v) * t));
+  const lum = (h) => {
+    const [r, g, b] = rgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  const readableOn = (bg, prefer) => [prefer, '#ffffff', '#000000'].find((c) => contrast(c, bg) >= 4.5)
+    || (contrast('#ffffff', bg) > contrast('#000000', bg) ? '#ffffff' : '#000000');
+  // Nudge a color toward `to` until it reads on every background given.
+  const legible = (color, to, backgrounds, ratio = 4.5) => {
+    for (let t = 0; t <= 1; t += 0.1) {
+      const c = mix(color, to, t);
+      if (backgrounds.every((bg) => contrast(c, bg) >= ratio)) return c;
+    }
+    return to;
+  };
+
+  // --- Themes: the page wears a built-in palette ----------------------------------------
+
+  // Shown first in the chips and in the order T steps through: the lap's lineup, then the rest.
+  const LINEUP = ['Tokyo Night', 'Catppuccin Latte', 'Gruvbox', 'Dracula', 'Mac OS 9', 'Windows 95', 'Amiga Workbench 1.3'];
+  const TOKENS = ['--bg', '--surface', '--sunk', '--ink', '--ink-2', '--line', '--accent', '--btn', '--btn-ink', '--sel', '--sel-ink', '--glow'];
+  let themes = [];
+  let worn = -1; // the theme the page wears; -1 is the site's own palette
+  let shown = -1; // what's on screen, which differs from `worn` while the picker previews one
+
+  const siteMode = () => root.dataset.scheme || (prefersDark.matches ? 'dark' : 'light');
+
+  function paint(i) {
+    shown = i;
+    const t = themes[i];
+    if (!t) {
+      TOKENS.forEach((k) => root.style.removeProperty(k));
+      root.dataset.mode = siteMode();
+      delete root.dataset.theme;
+    } else {
+      const dark = t.mode === 'dark';
+      const surface = dark ? mix(t.bg, t.fg, 0.06) : mix(t.bg, '#ffffff', 0.6);
+      const sunk = mix(t.bg, t.fg, dark ? 0.03 : 0.04);
+      const sel = t.sel || mix(surface, t.accent, 0.18);
+      const set = {
+        '--bg': t.bg, '--surface': surface, '--sunk': sunk, '--ink': t.fg,
+        '--ink-2': legible(t.muted, t.fg, [t.bg, surface, sunk]),
+        '--line': mix(t.bg, t.fg, 0.14),
+        '--accent': legible(t.accent, t.fg, [t.bg, surface, sunk]),
+        '--btn': t.accent, '--btn-ink': readableOn(t.accent, t.bg),
+        '--sel': sel, '--sel-ink': readableOn(sel, t.fg),
+        '--glow': t.accent + '40',
+      };
+      Object.entries(set).forEach(([k, v]) => root.style.setProperty(k, v));
+      root.dataset.mode = t.mode;
+      root.dataset.theme = t.name;
+    }
+    root.style.colorScheme = root.dataset.mode;
+    $$('#chips .chip').forEach((chip) => chip.setAttribute('aria-pressed', String(Number(chip.dataset.index) === i)));
+    rove();
+  }
+
+  // The chips are one Tab stop: the pressed chip (or the first), with arrow keys moving inside.
+  function rove(focus) {
+    const chips = $$('#chips .chip').filter((c) => !c.hidden);
+    if (!chips.length) return;
+    const current = focus || chips.find((c) => c.getAttribute('aria-pressed') === 'true') || chips[0];
+    chips.forEach((c) => { c.tabIndex = c === current ? 0 : -1; });
+    if (focus) focus.focus();
+  }
+
+  function wear(i, announce = true) {
+    worn = i;
+    paint(i);
+    const status = $('#wearing');
+    if (status && announce) status.textContent = i < 0 ? 'Wearing: Vibeshed, the site’s own palette.' : `Wearing: ${themes[i].name}. Esc takes it off.`;
+  }
+
+  function step(by) {
+    if (!themes.length) return;
+    const order = themes.map((_, i) => i);
+    const at = worn < 0 ? -1 : order.indexOf(worn);
+    // From the site palette, T starts at the first theme and Shift-T at the last.
+    const next = at < 0 ? (by > 0 ? 0 : order.length - 1) : (at + by + order.length) % order.length;
+    wear(order[next]);
+  }
+
+  function buildChips() {
+    const box = $('#chips');
+    const more = $('#chips-more');
+    if (!box) return;
+    themes.forEach((t, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.dataset.index = String(i);
+      b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = `<span class="dot" aria-hidden="true"><i style="background:${t.bg}"></i><i style="background:${t.accent}"></i></span>`;
+      b.append(t.name);
+      if (i >= LINEUP.length + 9) b.hidden = true;
+      b.addEventListener('click', () => wear(worn === i ? -1 : i));
+      box.append(b);
+    });
+    box.addEventListener('keydown', (e) => {
+      const chips = $$('.chip', box).filter((c) => !c.hidden);
+      const at = chips.indexOf(document.activeElement);
+      const to = { ArrowRight: at + 1, ArrowDown: at + 1, ArrowLeft: at - 1, ArrowUp: at - 1, Home: 0, End: chips.length - 1 }[e.key];
+      if (at < 0 || to === undefined) return;
+      e.preventDefault();
+      rove(chips[(to + chips.length) % chips.length]);
+    });
+    if (more && themes.length > LINEUP.length + 9) {
+      more.hidden = false;
+      more.addEventListener('click', () => {
+        const open = more.getAttribute('aria-expanded') !== 'true';
+        $$('.chip', box).forEach((c, i) => { if (i >= LINEUP.length + 9) c.hidden = !open; });
+        more.setAttribute('aria-expanded', String(open));
+        more.firstChild.textContent = open ? 'Show fewer' : 'Show all ';
+        more.querySelector('[data-stat]').hidden = open;
+        rove();
+      });
+    }
+  }
+
+  prefersDark.addEventListener('change', () => { if (worn < 0) paint(-1); });
+
+  // --- The picker demo -----------------------------------------------------------------
+
+  const input = $('#pk-input');
+  const list = $('#pk-list');
+  const said = $('#pk-said');
+  let results = [];
+  let active = 0;
+
+  const say = (text) => { if (said) said.textContent = text; };
+  const onYourMac = (what) => () => say(`${what} On your Mac, for real.`);
+
+  const ITEMS = [
+    { t: 'Spotify', s: 'Application', ico: ['#1db954', 'S'], k: 'music app', run: onYourMac('Spotify opens.'), home: true },
+    { t: '(I Can’t Get No) Satisfaction - Mono', s: 'The Rolling Stones · Spotify', ico: ['#1db954', '♫'], k: 'song track play spotify rolling stones', run: onYourMac('Now playing.'), home: true },
+    { t: 'Caps Lock - Wikipedia', s: 'Safari tab · en.wikipedia.org', ico: ['#1a73e8', 'W'], k: 'tab safari browser', run: onYourMac('Safari jumps to the tab.'), home: true },
+    { t: 'Pairing session', s: 'Calendar · in 4 min · Zoom', ico: ['#e8590c', '4'], k: 'meeting event join zoom calendar', run: onYourMac('Zoom joins the call.'), home: true },
+    { t: 'teach the picker to read my mind', s: 'Claude Code · ~/code/vibeshed', ico: ['#d97757', 'C'], k: 'claude session ai agent resume', run: onYourMac('The session resumes in your terminal.'), home: true },
+    { t: 'Tile Left Half', s: 'Window · ⇪ A cycles widths', ico: ['#3a6fd8', '◧'], k: 'window tile left split', run: onYourMac('The window snaps left.'), home: true },
+    { t: 'Switch Theme', s: 'Theme · preview live, esc is the safe word', ico: ['#d4245c', '◐'], k: 'theme palette colors', run: () => { input.value = 'theme '; search(); }, home: true },
+    { t: 'Download Vibeshed', s: 'Self · free, Apple silicon only', ico: ['#d81e5b', '↓'], k: 'download install get mac', run: () => getIt() },
+    { t: 'Maximize', s: 'Window · ⇪ M, and again to restore', ico: ['#3a6fd8', '□'], k: 'window maximize zoom fullscreen', run: onYourMac('The window fills the screen.') },
+    { t: 'Tile Grid', s: 'Tiling · 2×2', ico: ['#3a6fd8', '⊞'], k: 'grid window tiling', run: onYourMac('Four windows, four cells.') },
+    { t: 'Restore Minimized Windows', s: 'Window', ico: ['#3a6fd8', '↺'], k: 'restore window unminimize', run: onYourMac('Everything comes back.') },
+    { t: 'Minimize All Windows', s: 'Window', ico: ['#3a6fd8', '_'], k: 'min all minimize window desk', run: onYourMac('The desk is clear.') },
+    { t: '#66 feat(theme): Switch Font', s: 'GitHub pull request · merged', ico: ['#24292f', '#'], k: 'pull request pr github font', run: onYourMac('The pull request opens.') },
+    { t: 'Toggle Dark Mode', s: 'System', ico: ['#24121f', '◑'], k: 'dark light appearance mode night', run: () => toggleDark() },
+    { t: 'Clipboard History', s: 'Clipboard', ico: ['#6e5868', '⎘'], k: 'clipboard paste copy history', run: onYourMac('Your clipboard history opens.') },
+    { t: 'Set a Timer', s: 'Timer · 25 min', ico: ['#2f8f5b', '◷'], k: 'timer reminder pomodoro', run: onYourMac('The timer starts.') },
+    { t: 'Install a cask', s: 'Homebrew', ico: ['#b98a00', 'B'], k: 'brew homebrew install cask', run: onYourMac('Homebrew installs it.') },
+    { t: 'Lock Screen', s: 'System', ico: ['#24121f', '⏻'], k: 'lock screen sleep', run: onYourMac('The screen locks.') },
+    { t: 'Tip the developer', s: 'Support · optional, appreciated', ico: ['#d4245c', '♥'], k: 'tip donate support money', run: () => { location.hash = '#support'; } },
+  ];
+
+  // Arithmetic only: numbers, + - * / % ^ and parentheses, read by a tiny parser (no eval).
+  function calc(q) {
+    if (!/^[\d\s.+\-*/%^()]+$/.test(q) || !/\d/.test(q) || !/[+\-*/%^]/.test(q)) return null;
+    const tokens = q.match(/\d*\.?\d+|[+\-*/%^()]/g) || [];
+    let at = 0;
+    const peek = () => tokens[at];
+    const take = () => tokens[at++];
+    const atom = () => {
+      const tok = take();
+      if (tok === '(') { const v = sum(); if (take() !== ')') throw Error(); return v; }
+      if (tok === '-') return -atom();
+      const v = parseFloat(tok);
+      if (Number.isNaN(v)) throw Error();
+      return v;
+    };
+    const power = () => { const b = atom(); return peek() === '^' ? (take(), b ** power()) : b; };
+    const product = () => {
+      let v = power();
+      while (['*', '/', '%'].includes(peek())) { const op = take(); const r = power(); v = op === '*' ? v * r : op === '/' ? v / r : v % r; }
+      return v;
+    };
+    const sum = () => {
+      let v = product();
+      while (['+', '-'].includes(peek())) { const op = take(); const r = product(); v = op === '+' ? v + r : v - r; }
+      return v;
+    };
+    try {
+      const v = sum();
+      return at === tokens.length && Number.isFinite(v) ? Math.round(v * 1e10) / 1e10 : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Fuzzy match, roughly the app's: whole prefix > word prefix > substring > letters in order.
+  function score(text, q) {
+    const s = text.toLowerCase();
+    if (s.startsWith(q)) return 300 - s.length / 100;
+    if (s.split(/[\s\-·(]+/).some((w) => w.startsWith(q))) return 200;
+    const at = s.indexOf(q);
+    if (at >= 0) return 150 - at;
+    let i = 0;
+    let gaps = 0;
+    for (const ch of s) {
+      if (ch === q[i]) i++;
+      else if (i > 0) gaps++;
+      if (i === q.length) return Math.max(1, 60 - gaps);
+    }
+    return 0;
+  }
+
+  function themeItems() {
+    return themes.map((t, i) => ({
+      t: t.name, s: `Theme · ${t.mode}`, swatch: [t.bg, t.accent], k: 'theme', theme: i,
+      run: () => { wear(i); say(`Wearing ${t.name}. Esc on the page takes it off.`); },
+    }));
+  }
+
+  function search() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      results = ITEMS.filter((it) => it.home);
+    } else {
+      const sum = calc(q);
+      const scored = [...ITEMS, ...themeItems()].map((it) => {
+        const own = score(it.t, q);
+        const kw = Math.max(0, ...it.k.split(' ').map((w) => (w.startsWith(q) ? 100 : 0)), q.startsWith('theme') && it.theme !== undefined ? 90 : 0);
+        return [Math.max(own, kw), it];
+      }).filter(([s]) => s > 0).sort((a, b) => b[0] - a[0]).map(([, it]) => it);
+      results = sum === null ? scored : [{ t: `= ${sum}`, s: 'Math · ↩ copies it', ico: ['#2f8f5b', '='], run: () => copyText(String(sum)).then(() => say(`Copied ${sum}.`)) }, ...scored];
+    }
+    active = 0;
+    render();
+  }
+
+  function render() {
+    list.replaceChildren(...results.slice(0, 60).map((it, i) => {
+      const li = document.createElement('li');
+      li.id = `pk-opt-${i}`;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', String(i === active));
+      const ico = document.createElement('span');
+      ico.setAttribute('aria-hidden', 'true');
+      if (it.swatch) {
+        ico.className = 'ico swatch';
+        ico.innerHTML = `<i style="background:${it.swatch[0]}"></i><i style="background:${it.swatch[1]}"></i>`;
+      } else {
+        ico.className = 'ico';
+        ico.style.background = it.ico[0];
+        ico.textContent = it.ico[1];
+      }
+      const text = document.createElement('span');
+      const t = document.createElement('span');
+      t.className = 't';
+      t.textContent = it.t;
+      const s = document.createElement('span');
+      s.className = 's';
+      s.textContent = it.s;
+      text.append(t, s);
+      const h = document.createElement('span');
+      h.className = 'h';
+      h.setAttribute('aria-hidden', 'true');
+      h.textContent = i === active ? '↩' : i < 9 ? `⌘${i + 1}` : '';
+      li.append(ico, text, h);
+      li.addEventListener('mousemove', () => { if (active !== i) select(i); });
+      li.addEventListener('click', () => { select(i); runActive(); });
+      return li;
+    }));
+    if (!results.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Nothing yet. Try spot, tile, tokyo or 2+2.';
+      list.append(li);
+      input.removeAttribute('aria-activedescendant');
+    } else {
+      input.setAttribute('aria-activedescendant', `pk-opt-${active}`);
+    }
+    preview();
+  }
+
+  function select(i) {
+    if (!results.length) return;
+    active = (i + results.length) % results.length;
+    $$('li[role="option"]', list).forEach((li, j) => {
+      li.setAttribute('aria-selected', String(j === active));
+      li.querySelector('.h').textContent = j === active ? '↩' : j < 9 ? `⌘${j + 1}` : '';
+    });
+    input.setAttribute('aria-activedescendant', `pk-opt-${active}`);
+    const li = list.children[active];
+    if (li) {
+      const top = li.offsetTop - list.offsetTop;
+      if (top < list.scrollTop) list.scrollTop = top - 6;
+      else if (top + li.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = top + li.offsetHeight - list.clientHeight + 6;
+    }
+    preview();
+  }
+
+  // Like the app: a highlighted theme repaints everything until you move on or press Esc.
+  function preview() {
+    const it = results[active];
+    const want = it && it.theme !== undefined && document.activeElement === input ? it.theme : worn;
+    if (want !== shown) paint(want);
+  }
+
+  function runActive() {
+    const it = results[active];
+    if (it) it.run();
+  }
+
+  if (input && list) {
+    input.addEventListener('input', search);
+    input.addEventListener('focus', preview);
+    input.addEventListener('blur', () => { if (shown !== worn) paint(worn); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); select(active + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); select(active - 1); }
+      else if (e.key === 'Enter') { e.preventDefault(); runActive(); }
+      else if (e.key === 'Escape') {
+        e.preventDefault();
+        if (shown !== worn) { paint(worn); say('Back where you were.'); }
+        else if (input.value) { input.value = ''; search(); }
+        else input.blur();
+      } else if (e.metaKey && /^[1-9]$/.test(e.key) && results[Number(e.key) - 1]) {
+        e.preventDefault();
+        select(Number(e.key) - 1);
+        runActive();
+      }
+    });
+    search();
+  }
+
+  function toggleDark() {
+    root.dataset.scheme = siteMode() === 'dark' ? 'light' : 'dark';
+    wear(-1);
+    say(`${root.dataset.scheme === 'dark' ? 'After hours' : 'Lights on'}.`);
+  }
+
+  // --- Theme data ----------------------------------------------------------------------
+
+  fetch('themes.json').then((r) => r.json()).then((data) => {
+    const lineup = LINEUP.map((name) => data.themes.find((t) => t.name === name)).filter(Boolean);
+    themes = [...lineup, ...data.themes.filter((t) => !LINEUP.includes(t.name))];
+    Object.entries(data.stats || {}).forEach(([k, v]) => $$(`[data-stat="${k}"]`).forEach((el) => { el.textContent = v; }));
+    buildChips();
+    rove();
+    if (input && input.value) search();
+  }).catch(() => {});
+
+  paint(-1);
+
+  // --- Keyboard: D downloads, T tries on a theme, Esc takes it off -----------------------
+
+  document.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented || typing(e) || (panel && panel.open)) return;
+    if (e.key === 'd' || e.key === 'D') {
+      if (handheld) return;
+      e.preventDefault();
+      getIt();
+    } else if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      step(e.shiftKey ? -1 : 1);
+    } else if (e.key === 'Escape' && worn >= 0) {
+      wear(-1);
+    }
+  });
+
+  // --- Download panel ------------------------------------------------------------------
+
+  let ready;
+  function openPanel() {
+    if (!panel || panel.open) return;
+    const spin = $('.spin', panel);
+    const title = $('#dl-title');
+    spin.classList.remove('done');
+    title.textContent = 'Your download is starting';
+    clearTimeout(ready);
+    ready = setTimeout(() => {
+      spin.classList.add('done');
+      title.textContent = 'Your download has started';
+    }, 2500);
+    panel.showModal();
+  }
+
+  function getIt() {
+    if (handheld) { $('#send').click(); return; }
+    const link = $('a.btn[data-download]');
+    if (link) link.click();
+  }
+
+  // The link downloads the file itself; the panel opens beside it and never blocks it.
+  $$('a[data-download]').forEach((a) => a.addEventListener('click', () => {
+    if (!a.hasAttribute('data-retry')) openPanel();
+  }));
+
+  // The one ask: frequency and amount, then Open Collective (or USDC until it's approved).
+  if (panel) {
+    const give = $('#give');
+    const note = $('#give-note');
+    const other = $('.other', panel);
+    const otherInput = $('input', other);
+    let freq = 'once';
+    let amt = '5';
+    const update = () => {
+      const oc = support && support.dataset.primary === 'opencollective';
+      const dollars = amt === 'other' ? Math.max(1, Math.round(Number(otherInput.value) || 0)) : Number(amt);
+      const monthly = freq === 'monthly';
+      if (oc) {
+        give.href = `${OPEN_COLLECTIVE}/donate?amount=${dollars}${monthly ? '&interval=month' : ''}`;
+        give.textContent = `Tip $${dollars}${monthly ? ' a month' : ''}`;
+        note.textContent = `${monthly ? 'Monthly · cancel anytime' : 'One-time · no account needed'} · card or PayPal`;
+      } else {
+        give.href = '#usdc';
+        give.textContent = `Tip $${dollars} in USDC`;
+        note.textContent = monthly
+          ? 'Monthly tips by card arrive with Open Collective soon. For now, USDC is one-time.'
+          : 'USDC on Base, Polygon, Arbitrum, Ethereum or Solana.';
+      }
+    };
+    $$('.seg button', panel).forEach((b) => b.addEventListener('click', () => {
+      freq = b.dataset.freq;
+      $$('.seg button', panel).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      update();
+    }));
+    $$('.amounts button', panel).forEach((b) => b.addEventListener('click', () => {
+      amt = b.dataset.amt;
+      $$('.amounts button', panel).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      other.hidden = amt !== 'other';
+      if (amt === 'other') otherInput.focus();
+      update();
+    }));
+    otherInput.addEventListener('input', update);
+    give.addEventListener('click', () => { if (give.getAttribute('href').startsWith('#')) panel.close(); });
+    panel.addEventListener('click', (e) => { if (e.target === panel) panel.close(); }); // a click on the backdrop
+    update();
+  }
+
+  // --- Send to my Mac ------------------------------------------------------------------
+
+  const send = $('#send');
+  if (send) {
+    send.addEventListener('click', (e) => {
+      if (!navigator.share) return; // the mailto link does it
+      e.preventDefault();
+      navigator.share({
+        title: 'Vibeshed',
+        text: 'Vibeshed, a free keyboard launcher for macOS (Apple silicon only). Open this on your Mac:',
+        url: 'https://vibeshed.dev/',
+      }).catch((err) => { if (err.name !== 'AbortError') location.href = send.href; });
+    });
+  }
+
+  // --- Copy buttons --------------------------------------------------------------------
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.append(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    area.remove();
+    return ok ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+  }
+
+  $$('button[data-copy]').forEach((b) => {
+    const label = b.textContent;
+    b.addEventListener('click', () => {
+      copyText(b.dataset.copy).then(() => {
+        b.textContent = 'Copied';
+        b.dataset.done = '';
+      }, () => {
+        b.textContent = 'Select and copy it';
+      }).finally(() => setTimeout(() => { b.textContent = label; delete b.dataset.done; }, 2000));
+    });
+  });
+
+  // --- The latest release --------------------------------------------------------------
+
+  fetch('latest.json', { cache: 'no-cache' }).then((r) => r.json()).then((latest) => {
+    const size = `${(latest.size / 1e6).toFixed(1)} MB`;
+    $$('[data-latest="version"]').forEach((el) => { el.textContent = latest.version; });
+    $$('[data-latest="size"]').forEach((el) => { el.textContent = size; });
+    $$('[data-latest="file"]').forEach((el) => { el.textContent = latest.file; });
+    $$('a[data-download]').forEach((a) => { a.href = latest.url; });
+  }).catch(() => {});
+
+  // --- The video lap -------------------------------------------------------------------
+
+  const player = $('#player');
+  if (player) {
+    const video = $('video', player);
+    const toggle = $('.player-toggle', player);
+    const line = $('.player-line', player);
+    const print = $('.player-print', player);
+    const keys = $('.player-keys', player);
+    const chapter = $('.player-n', player);
+    const CLIPS = [
+      { at: 0, line: 'Whatever you’re into.', print: 'Apps, tracks, tabs, meetings, pull requests and AI sessions, from one search bar. Each with a preview.', rest: ['⇪', 'Space'] },
+      { at: 19.6, line: 'Comes in 73 colors.', print: 'One palette across macOS, your wallpaper, terminal and editor. Preview live. Esc is the safe word.', rest: ['⇪', 'Space'] },
+      { at: 38.67, line: 'Try every position.', print: 'Tile, focus, maximize and grid every window from the keyboard, 4 pt apart.', rest: ['⇪', '←', '→', 'M', 'P'] },
+    ];
+    // Lap times, checked against the take: each key lights as it's pressed.
+    const CUES = [
+      [0.8, ['⇪', 'Space']], [1.4, ['spot']], [3.3, ['↓']], [6.3, ['caps']], [8.3, ['pair']], [10.8, ['my mind']],
+      [13.3, ['pull', '↩']], [14.3, ['font']], [15.8, ['↩']], [17.9, ['esc']],
+      [19.6, ['⇪', 'Space']], [20.0, ['restore', '↩']], [21.8, ['⇪', 'Space']], [22.3, ['switch theme', '↩']],
+      [24.4, ['tok']], [26.9, ['latte']], [28.4, ['gruv']], [29.9, ['drac']], [31.8, ['os 9']], [33.9, ['95']], [35.8, ['amiga']], [37.3, ['esc']],
+      [38.8, ['⇪', 'Space']], [39.2, ['left', '↩']], [40.2, ['↓']], [43.2, ['↩']], [44.0, ['⇪', '←']], [44.6, ['⇪', '→']],
+      [45.8, ['⇪', 'M']], [46.8, ['⇪', 'M']], [47.9, ['⇪', 'P']], [48.4, ['saf']], [49.8, ['↩']],
+      [50.8, ['⇪', 'Space']], [51.2, ['grid', '↩']], [53.4, ['⇪', 'Space']], [53.9, ['min all', '↩']],
+    ];
+    const LIT = 0.9; // seconds a key stays lit
+    const KEYS = new Set(['⇪', 'Space', '↓', '↩', 'esc', '←', '→', 'M', 'P']);
+    const themesStat = $('[data-stat="themes"]');
+    let wants = !calm.matches; // play when in view; the Pause button and reduced motion turn it off
+    let inView = false;
+    let clip = -1;
+    let state = '';
+
+    const render = () => {
+      const t = video.currentTime;
+      let c = CLIPS.length - 1;
+      while (c > 0 && CLIPS[c].at > t) c--;
+      if (c !== clip) {
+        clip = c;
+        line.textContent = CLIPS[c].line.replace('73', themesStat ? themesStat.textContent : '73');
+        print.textContent = CLIPS[c].print;
+        chapter.textContent = String(c + 1);
+      }
+      let q = -1;
+      while (q + 1 < CUES.length && CUES[q + 1][0] <= t) q++;
+      const lit = q >= 0 && t - CUES[q][0] < LIT && CUES[q][0] >= CLIPS[c].at;
+      const next = lit ? `cue${q}` : `rest${c}`;
+      if (next !== state) {
+        state = next;
+        keys.replaceChildren(...(lit ? CUES[q][1] : CLIPS[c].rest).map((k) => {
+          const el = document.createElement(KEYS.has(k) ? 'kbd' : 'code');
+          el.textContent = k;
+          el.className = lit ? 'on' : 'rest';
+          return el;
+        }));
+      }
+    };
+    const tick = () => { render(); if (!video.paused) requestAnimationFrame(tick); };
+
+    const label = () => {
+      const text = wants ? 'Pause' : calm.matches ? 'Play one lap' : 'Play';
+      toggle.textContent = text;
+      toggle.setAttribute('aria-label', `${text} the demo`);
+    };
+    const sync = () => {
+      if (wants && inView && !document.hidden) video.play().then(label, label);
+      else video.pause();
+      label();
+    };
+    const setCalm = () => {
+      video.loop = !calm.matches; // with reduced motion, a press plays one lap
+      if (calm.matches) wants = false;
+      sync();
+    };
+
+    video.addEventListener('play', () => requestAnimationFrame(tick));
+    video.addEventListener('pause', label);
+    video.addEventListener('seeked', render);
+    video.addEventListener('ended', () => { wants = false; video.currentTime = 0; sync(); });
+    toggle.addEventListener('click', () => {
+      wants = !wants;
+      if (wants && calm.matches) inView = true; // a press always plays, even half in view
+      sync();
+    });
+    document.addEventListener('visibilitychange', sync);
+    calm.addEventListener('change', setCalm);
+
+    if ('IntersectionObserver' in window) {
+      // Start fetching as it comes into view; play once half of it is on screen.
+      new IntersectionObserver((entries, observer) => {
+        if (entries.some((e) => e.isIntersecting)) { video.preload = 'auto'; observer.disconnect(); }
+      }).observe(video);
+      new IntersectionObserver((entries) => {
+        const e = entries[entries.length - 1];
+        inView = e.isIntersecting && e.intersectionRatio >= 0.5;
+        sync();
+      }, { threshold: [0, 0.5, 1] }).observe(video);
+    } else {
+      inView = true;
+    }
+    video.loop = !calm.matches;
+    render();
+    label();
+  }
+})();

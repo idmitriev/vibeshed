@@ -1,89 +1,450 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vibeshed — Keyboard-driven macOS Launcher</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Vibeshed: satisfaction in a few keystrokes</title>
+  <meta name="description" content="A free, open-source keyboard launcher for macOS that satisfies all your desires: apps, windows, browser tabs, Claude Code sessions, music and 73 themes, all one Caps Lock away. Apple silicon only.">
+  <link rel="canonical" href="https://vibeshed.dev/">
+  <meta name="theme-color" content="#fff8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#120d16" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Vibeshed">
+  <meta property="og:url" content="https://vibeshed.dev/">
+  <meta property="og:title" content="Vibeshed: satisfaction in a few keystrokes">
+  <meta property="og:description" content="A free, open-source keyboard launcher for macOS. Apps, windows, tabs, AI sessions, music and 73 themes, all one Caps Lock away.">
+  <meta property="og:image" content="https://vibeshed.dev/img/social-card.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Satisfaction in a few keystrokes: the Vibeshed wand icon over Caps Lock and Space keycaps">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Vibeshed: satisfaction in a few keystrokes">
+  <meta name="twitter:description" content="A free, open-source keyboard launcher for macOS. Apple silicon only.">
+  <meta name="twitter:image" content="https://vibeshed.dev/img/social-card.jpg">
+  <meta name="twitter:image:alt" content="Satisfaction in a few keystrokes: the Vibeshed wand icon over Caps Lock and Space keycaps">
+
+  <link rel="icon" type="image/png" href="img/icon-128.png">
+  <link rel="apple-touch-icon" href="img/icon-128.png">
+  <link rel="preload" href="fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="icon.png">
+  <script>
+    // Phones and tablets can't install a Mac app, so they get "Send to my Mac" instead of Download.
+    (function () {
+      var ua = navigator.userAgent;
+      var touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+      var phone = /iPhone|iPod|iPad|Android|Mobile|Windows Phone/i.test(ua);
+      if (phone || touchMac) document.documentElement.classList.add('handheld');
+    })();
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Vibeshed",
+    "description": "A keyboard launcher for macOS: apps, windows, browser tabs, AI sessions, music and palette themes, from one picker.",
+    "url": "https://vibeshed.dev/",
+    "image": "https://vibeshed.dev/img/social-card.jpg",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS 14 or later, Apple silicon",
+    "softwareVersion": "0.11.0",
+    "fileSize": "4.7 MB",
+    "downloadUrl": "https://github.com/vibeshed/vibeshed/releases/download/v0.11.0/Vibeshed-0.11.0.zip",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Ivan Dmitriev" },
+    "sameAs": ["https://github.com/vibeshed/vibeshed"]
+  }
+  </script>
 </head>
 <body>
-  <header class="hero">
-    <img src="icon.png" alt="Vibeshed icon" class="hero-icon" width="160" height="160">
-    <h1>Vibeshed</h1>
-    <p class="tagline">A keyboard-driven macOS launcher built with SwiftUI</p>
-    <p class="subtitle">Control your Mac with keystrokes. Manage windows, switch apps, search browser tabs, control Spotify, and more from a single floating picker.</p>
-    <div class="cta">
-      <a href="https://github.com/idmitriev/vibeshed" class="btn btn-primary">View on GitHub</a>
-      <a href="https://github.com/idmitriev/vibeshed#installation" class="btn btn-secondary">Install</a>
-    </div>
-  </header>
+<a class="skip" href="#main">Skip to content</a>
 
-  <main>
-    <section class="features">
-      <h2>Features</h2>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon">&#x2728;</div>
-          <h3>Smart Launcher</h3>
-          <p>Fuzzy search with usage-aware sorting and context-sensitive action boosting. Adapts to how you work.</p>
+<header class="nav">
+  <div class="wrap nav-row">
+    <a class="wordmark" href="#top" aria-label="Vibeshed, back to top"><img src="img/icon-128.png" alt="" width="28" height="28">vibeshed</a>
+    <nav aria-label="Sections">
+      <ul class="nav-links">
+        <li class="wide"><a href="#features">Features</a></li>
+        <li class="wide"><a href="#themes">Themes <kbd aria-hidden="true">T</kbd></a></li>
+        <li class="wide"><a href="https://github.com/vibeshed/vibeshed">GitHub</a></li>
+        <li><a class="tip-link" href="#support"><span aria-hidden="true">♥</span> Tip</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-sm mac-only" data-download href="https://github.com/vibeshed/vibeshed/releases/download/v0.11.0/Vibeshed-0.11.0.zip">Download <kbd aria-hidden="true">D</kbd></a>
+    <a class="btn btn-sm hand-only" href="#get">Get it</a>
+  </div>
+</header>
+
+<main id="main">
+<section class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="after-hours">After hours · </span>Free · open source · Apple silicon only</p>
+      <h1>Satisfaction in a few keystrokes.</h1>
+      <p class="lede">A keyboard launcher for macOS that satisfies all your desires: apps, windows, browser tabs, Claude Code sessions, music and <span data-stat="themes">73</span> themes, all one Caps Lock away.</p>
+
+      <div class="get" id="get">
+        <div class="cta">
+          <a class="btn btn-big mac-only" data-download href="https://github.com/vibeshed/vibeshed/releases/download/v0.11.0/Vibeshed-0.11.0.zip">Download for Mac <small data-latest="version">0.11.0</small> <kbd aria-hidden="true">D</kbd></a>
+          <a class="btn btn-big hand-only" id="send" href="mailto:?subject=Vibeshed%20for%20my%20Mac&amp;body=Vibeshed%2C%20a%20free%20keyboard%20launcher%20for%20macOS%20(Apple%20silicon%20only)%3A%20https%3A%2F%2Fvibeshed.dev%2F">Send to my Mac</a>
+          <span class="sticker" aria-hidden="true">0 telemetry</span>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x25A3;</div>
-          <h3>Window Management</h3>
-          <p>Tile, resize, cycle sizes, maximize/restore. Anchor to edges, split halves, focus by title.</p>
+        <div class="hand-only hand-links">
+          <a class="btn btn-quiet" href="https://github.com/vibeshed/vibeshed">Star on GitHub</a>
+          <a class="btn btn-quiet" href="#support"><span aria-hidden="true">♥</span> Tip</a>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F310;</div>
-          <h3>Browser Control</h3>
-          <p>Search and switch tabs across Safari and Chrome. Bookmarks, history, per-URL routing to browser profiles.</p>
+        <div class="brew">
+          <code><span class="prompt" aria-hidden="true">$ </span>brew install --cask idmitriev/tap/vibeshed</code>
+          <button type="button" class="copy" data-copy="brew install --cask idmitriev/tap/vibeshed" aria-label="Copy the Homebrew command">Copy</button>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F4CB;</div>
-          <h3>Clipboard History</h3>
-          <p>Persistent clipboard history with search, paste, and regex-based exclusion patterns.</p>
+        <p class="fine"><strong>Apple silicon only</strong> · macOS 14 or later · signed, notarized and discreet · <span data-latest="size">4.7 MB</span> · no account</p>
+      </div>
+    </div>
+
+    <div class="picker" id="picker">
+      <div class="picker-search">
+        <span class="picker-keys" aria-hidden="true"><kbd>⇪</kbd><kbd>Space</kbd></span>
+        <label class="sr-only" for="pk-input">Try the picker: type to search the demo</label>
+        <input id="pk-input" type="text" role="combobox" autocomplete="off" autocapitalize="off" spellcheck="false"
+          aria-expanded="true" aria-controls="pk-list" aria-autocomplete="list" aria-describedby="pk-help"
+          placeholder="Try me: spot, tile, tokyo, 2+2">
+      </div>
+      <ul class="picker-list" id="pk-list" role="listbox" aria-label="Results" tabindex="-1"></ul>
+      <div class="picker-foot">
+        <span id="pk-help">↑↓ select · ↩ run · esc is the safe word</span>
+        <span class="picker-said" id="pk-said" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="strip" aria-label="Vibeshed in numbers">
+  <ul class="wrap stats">
+    <li><b data-stat="modules">35</b> modules</li>
+    <li><b data-stat="themes">73</b> themes</li>
+    <li><b data-stat="wallpapers">45</b> wallpaper styles</li>
+    <li><b data-stat="fonts">50</b> coding fonts</li>
+    <li><b>0</b> telemetry</li>
+  </ul>
+</section>
+
+<section class="section" id="features" aria-labelledby="features-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="label">Features</p>
+      <h2 id="features-h">56 seconds, no mouse.</h2>
+      <p>Search, themes and windows, recorded in one take on a real Mac. It loops, because once is never enough.</p>
+    </div>
+
+    <div class="player" id="player">
+      <div class="player-frame">
+        <video muted playsinline loop preload="none" poster="video/lap-poster.jpg" width="1600" height="1000"
+          aria-label="Vibeshed demo: search, themes and windows" aria-describedby="lap-desc">
+          <source src="video/lap-800.mp4" type="video/mp4" media="(max-width: 700px)">
+          <source src="video/lap.mp4" type="video/mp4">
+          <source src="video/lap.webm" type="video/webm">
+        </video>
+        <button type="button" class="player-toggle" aria-label="Pause the demo">Pause</button>
+      </div>
+      <div class="player-side" aria-live="off">
+        <p class="player-chapter"><span class="player-n">1</span> of 3</p>
+        <h3 class="player-line">Whatever you’re into.</h3>
+        <p class="player-print">Apps, tracks, tabs, meetings, pull requests and AI sessions, from one search bar. Each with a preview.</p>
+        <div class="player-keys"><kbd class="rest">⇪</kbd><kbd class="rest">Space</kbd></div>
+      </div>
+      <p class="sr-only" id="lap-desc">A 56-second loop of Vibeshed on an empty Mac desktop. Search finds Spotify, a Safari tab, a meeting, a Claude Code session and a pull request, each with a preview. Then the windows come back and seven themes repaint the terminal, editor, wallpaper and picker. Finally the windows are tiled, maximized, put in a grid and minimized, leaving the empty desktop again.</p>
+    </div>
+
+    <ul class="jobs">
+      <li>
+        <h3>Whatever you’re into.</h3>
+        <p>Apps, windows, Safari and Chrome tabs, bookmarks, and VS Code, JetBrains and Zed projects. It learns what you reach for.</p>
+        <p class="keys"><kbd>⇪</kbd><kbd>Space</kbd></p>
+      </li>
+      <li>
+        <h3>Your agents are waiting.</h3>
+        <p>Resume Claude Code, Claude Desktop and Codex sessions by project and branch, and jump straight to the one that needs you.</p>
+        <p class="keys"><code>claude</code><code>codex</code></p>
+      </li>
+      <li>
+        <h3>Try every position.</h3>
+        <p>Caps Lock + W A S D cycles a window’s size against each edge. Arrows move focus. M maximizes, and M again puts it back.</p>
+        <p class="keys"><kbd>⇪</kbd><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>M</kbd></p>
+      </li>
+      <li>
+        <h3>Music on cue.</h3>
+        <p>Search Spotify for songs, albums, artists and playlists and play them, no API setup. Volume, output devices and media keys too.</p>
+        <p class="keys"><code>spot</code></p>
+      </li>
+      <li>
+        <h3>Never late again.</h3>
+        <p>Upcoming events with one-key Zoom and Meet joins. Meeting Prep hides the distractions before you share your screen.</p>
+        <p class="keys"><code>join</code></p>
+      </li>
+      <li>
+        <h3>The rest, built in.</h3>
+        <p>Clipboard history, math and currency, timers, emoji, Homebrew, GitHub pull requests and Apple Notes. <span data-stat="modules">35</span> modules, each loaded only when you ask for it.</p>
+        <p class="keys"><code>2+2</code><code>brew</code></p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="section band" id="themes" aria-labelledby="themes-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="label">Themes</p>
+      <h2 id="themes-h">Comes in <span data-stat="themes">73</span> colors.</h2>
+      <p>One palette across macOS, your wallpaper, Ghostty, iTerm, VS Code, Zed, Neovim and Claude Code. Preview live. Esc is the safe word.</p>
+    </div>
+    <p class="try">Press <kbd>T</kbd> and this page tries one on. <kbd>⇧</kbd><kbd>T</kbd> goes back, <kbd>Esc</kbd> takes it off. Or pick one:</p>
+    <div class="chips" id="chips" role="group" aria-label="Themes"></div>
+    <div class="chips-foot">
+      <button type="button" class="btn btn-quiet" id="chips-more" hidden aria-controls="chips" aria-expanded="false">Show all <span data-stat="themes">73</span></button>
+      <p class="wearing" id="wearing" aria-live="polite">Wearing: Vibeshed, the site’s own palette.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="config" aria-labelledby="config-h">
+  <div class="wrap split">
+    <div class="sec-head">
+      <p class="label">Config</p>
+      <h2 id="config-h">Strictly text.</h2>
+      <p>One YAML file, reloaded the moment you save. No settings window, on purpose.</p>
+      <ul class="ticks">
+        <li><strong>Hot reload.</strong> Save the file and the change is live; new modules load on the spot.</li>
+        <li><strong><code>vibeshed://</code> URLs.</strong> Anything in the picker can be run from a script, a shortcut or a link.</li>
+        <li><strong>Per-app remaps.</strong> Bind keys for one app only, mouse buttons included.</li>
+        <li><strong>Aliases.</strong> Your own names and keywords for any action.</li>
+      </ul>
+      <p><a href="https://github.com/vibeshed/vibeshed/blob/main/config.example.yaml">Every option, in config.example.yaml</a></p>
+    </div>
+<pre class="code" tabindex="0" aria-label="Example config.yaml"><code><span class="c"># ~/.config/vibeshed/config.yaml</span>
+keybindings:
+  - combo: <span class="s">"capslock+space"</span>
+    action: <span class="s">"app/togglePicker"</span>
+  - combo: <span class="s">"cmd+,"</span>
+    remap: <span class="s">"ctrl+shift+tab"</span>   <span class="c"># previous tab…</span>
+    app: <span class="s">"com.apple.Safari"</span>      <span class="c"># …only in Safari</span>
+
+modules:
+  theme:
+    wallpaperStyle: auto       <span class="c"># each theme brings its own</span></code></pre>
+  </div>
+</section>
+
+<section class="section" id="principles" aria-labelledby="principles-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="label">Principles</p>
+      <h2 id="principles-h">House rules.</h2>
+    </div>
+    <ul class="rules">
+      <li><h3>Whisper-quiet.</h3><p>Menu bar only, no Dock icon, no Electron.</p></li>
+      <li><h3>Discreet by design.</h3><p>No telemetry; your history stays on your Mac.</p></li>
+      <li><h3>Native.</h3><p>Swift and SwiftUI, with one runtime dependency.</p></li>
+      <li><h3>Free.</h3><p>MIT-licensed. No store, no paid tier, no account.</p></li>
+    </ul>
+    <div class="nongoals">
+      <h3>What it won’t do</h3>
+      <ul>
+        <li>No extension store or plugin marketplace: modules ship in the app.</li>
+        <li>No AI chat inside the picker, no cloud sync, no phone companion.</li>
+        <li>No settings window. If YAML is a dealbreaker, this is the wrong tool.</li>
+        <li>No Intel, Linux or Windows. Apple silicon Macs only.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq" aria-labelledby="faq-h">
+  <div class="wrap narrow">
+    <div class="sec-head">
+      <p class="label">FAQ</p>
+      <h2 id="faq-h">Questions, answered.</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Why does it ask for Accessibility and Input Monitoring?</summary>
+        <p>Accessibility lets Vibeshed move, resize and focus windows and read app menus. Input Monitoring lets it notice Caps Lock being held, so Caps Lock can work as a modifier. Some modules ask for more: Automation to talk to apps like Safari and Spotify, and Screen Recording for live window previews. A welcome window asks for each one in turn, and only for the modules you have turned on.</p>
+      </details>
+      <details>
+        <summary>Does it phone home?</summary>
+        <p>No. There is no telemetry, analytics or crash reporting in the app. It goes online only when you ask it to: currency rates for conversions, and Spotify, GitHub and wallpaper searches. Your history and usage stay on disk on your Mac.</p>
+      </details>
+      <details>
+        <summary>Is it really free?</summary>
+        <p>Yes. It’s MIT-licensed, with no paid tier, no account and no features held back. Tips are optional and buy nothing extra.</p>
+      </details>
+      <details>
+        <summary>Does it run on Intel Macs?</summary>
+        <p>No. Vibeshed runs on Apple silicon Macs (M1 or later) with macOS 14 Sonoma or later. The release is an Apple silicon build, and Homebrew won’t install it on Intel.</p>
+      </details>
+      <details>
+        <summary>How do I uninstall it?</summary>
+        <p><code>brew uninstall --zap --cask vibeshed</code>. No hard feelings.</p>
+        <p>Without Homebrew: quit it from the menu bar, move Vibeshed from Applications to the Bin, and delete <code>~/.config/vibeshed</code>.</p>
+      </details>
+      <details>
+        <summary>How is it different from Raycast or Alfred?</summary>
+        <p>It’s smaller and stricter: free and open source, configured in one text file, with its modules built in rather than sold or installed from a store. It also manages windows and themes itself. If you want an extension store, AI chat or cloud sync, Raycast is the better pick.</p>
+      </details>
+      <details>
+        <summary>Is the icon what I think it is?</summary>
+        <p>It’s a magic wand. Draw your own conclusions.</p>
+      </details>
+      <details>
+        <summary>Will it get me in trouble at work?</summary>
+        <p>It’s MIT-licensed, signed, notarized and sends nothing anywhere. The icon stays between you and IT.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- To make Open Collective the main way to give once it's approved, change data-primary to "opencollective". -->
+<section class="section band" id="support" data-primary="usdc" aria-labelledby="support-h">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="label">Support</p>
+      <h2 id="support-h">Free, no strings attached.</h2>
+    </div>
+
+    <div class="note">
+      <!-- TODO(owner): replace the placeholder with a square photo (at least 400 px) and the draft note with your own words. -->
+      <div class="photo" role="img" aria-label="Photo placeholder">Photo<br>coming soon</div>
+      <div class="note-text">
+        <p>Vibeshed costs nothing and always will: no store, no paid tier, no account. It’s made by one person, Ivan, after hours. Tips pay the $99 a year Apple charges to sign and notarize every release, then buy time for new tricks.</p>
+        <h3>Where tips go, in order</h3>
+        <ol>
+          <li>The $99 a year Apple Developer membership that signs and notarizes every release.</li>
+          <li>The vibeshed.dev domain.</li>
+          <li>Test hardware.</li>
+          <li>Time for new tricks.</li>
+        </ol>
+        <p class="muted">Features will never be paywalled.</p>
+      </div>
+    </div>
+
+    <div class="ways">
+      <div class="way way-oc">
+        <h3>Card, PayPal or bank transfer</h3>
+        <div class="oc-live">
+          <p>Through Open Collective, one-time or monthly, no account needed. Every contribution shows on its public ledger.</p>
+          <p class="cta">
+            <a class="btn" href="https://opencollective.com/ivan-dmitriev/donate">Tip once</a>
+            <a class="btn btn-quiet" href="https://opencollective.com/ivan-dmitriev/donate?interval=month">Tip monthly</a>
+          </p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F3B5;</div>
-          <h3>Spotify &amp; Audio</h3>
-          <p>Search and play music. Control volume, mute, select audio devices, media keys.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F6E0;</div>
-          <h3>Developer Tools</h3>
-          <p>VSCode, JetBrains, iTerm, Ghostty, GitHub, and AI session search. Open projects, run commands, browse PRs.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x2328;</div>
-          <h3>Key Remapping</h3>
-          <p>Global and per-app key combos. Remap keys, bind mouse buttons, use Caps Lock as hyper key.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F3A8;</div>
-          <h3>Palette Themes</h3>
-          <p>One palette across macOS, terminals, editors and the picker, previewed live as you browse.</p>
+        <div class="oc-pending">
+          <p>Coming soon through <a href="https://opencollective.com/ivan-dmitriev">Open Collective</a>, one-time or monthly, once its host approves the project. Until then, USDC works today.</p>
         </div>
       </div>
-    </section>
 
-    <section class="install">
-      <h2>Get Started</h2>
-      <p>Requires macOS 14 (Sonoma) or later and Swift 5.9+.</p>
-      <pre><code>git clone https://github.com/idmitriev/vibeshed.git
-cd vibeshed
-make build
-make run</code></pre>
-      <p>The app lives in your menu bar. Configure it at <code>~/.config/vibeshed/config.yaml</code>. See <a href="https://github.com/idmitriev/vibeshed/blob/main/config.example.yaml">config.example.yaml</a> for all options.</p>
-    </section>
+      <div class="way way-usdc" id="usdc">
+        <h3>Hold crypto? Send USDC.</h3>
+        <div class="wallets">
+          <div class="wallet">
+            <p class="networks"><span>Base</span><span>Polygon</span><span>Arbitrum</span><span>Ethereum</span></p>
+            <img src="img/qr-evm.svg" width="164" height="164" alt="QR code of the USDC address for Base, Polygon, Arbitrum and Ethereum">
+            <p class="addr-label">One address for all four networks:</p>
+            <code class="addr">0x9Ee642a541b96B85D4D4e5f17333b3121fD1E55A</code>
+            <button type="button" class="copy" data-copy="0x9Ee642a541b96B85D4D4e5f17333b3121fD1E55A" aria-label="Copy the address for Base, Polygon, Arbitrum and Ethereum">Copy address</button>
+          </div>
+          <div class="wallet">
+            <p class="networks"><span>Solana</span></p>
+            <img src="img/qr-solana.svg" width="164" height="164" alt="QR code of the USDC address for Solana">
+            <p class="addr-label">Solana only:</p>
+            <code class="addr">FFW7o79fpujjarCn87gorHcZzUzjzBpF6h4zfJDGpGEH</code>
+            <button type="button" class="copy" data-copy="FFW7o79fpujjarCn87gorHcZzUzjzBpF6h4zfJDGpGEH" aria-label="Copy the Solana address">Copy address</button>
+          </div>
+        </div>
+        <p class="warn"><strong>Pick the network named here, and check the whole address, not just its ends.</strong> USDC only, on these networks only.</p>
+        <p class="muted small">These addresses are signed in <a href="https://github.com/vibeshed/vibeshed/blob/main/DONATE.md">DONATE.md</a> in the repo. We never post addresses in issues or messages, and we don’t issue or endorse any token.</p>
+      </div>
 
-    <section class="modules">
-      <h2>22 Modules</h2>
-      <p>Window, Application, Browser, Bookmark, Clipboard, Audio, System, Spotify, GitHub, VSCode, JetBrains, iTerm, Ghostty, AI, Telegram, Calendar, Meeting Prep, Timer, Math, Theme, Zoom, and Self. Each module loads only when configured and declares its own permissions.</p>
-    </section>
-  </main>
+      <div class="way way-free">
+        <h3>Free ways to help</h3>
+        <ul>
+          <li><a href="https://github.com/vibeshed/vibeshed">Star the repo</a> or tell a friend.</li>
+          <li><a href="https://github.com/vibeshed/vibeshed/issues">Report a bug</a> or ask for a feature.</li>
+          <li><a href="https://github.com/vibeshed/vibeshed/blob/main/CONTRIBUTING.md">Write a module or a theme.</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <footer>
-    <p>Built with SwiftUI &middot; <a href="https://github.com/idmitriev/vibeshed">GitHub</a> &middot; <a href="https://github.com/idmitriev/vibeshed/tree/main/docs/wallpapers">Wallpapers</a> &middot; <a href="https://github.com/idmitriev/vibeshed/blob/main/LICENSE">MIT License</a></p>
-  </footer>
+<section class="section last" aria-labelledby="last-h">
+  <div class="wrap">
+    <h2 id="last-h">Every desire, one keystroke away.</h2>
+    <p class="cta center">
+      <a class="btn btn-big mac-only" data-download href="https://github.com/vibeshed/vibeshed/releases/download/v0.11.0/Vibeshed-0.11.0.zip">Download for Mac <small data-latest="version">0.11.0</small></a>
+      <a class="btn btn-big hand-only" href="#get">Send to my Mac</a>
+    </p>
+    <p class="fine center">Apple silicon only · macOS 14 or later · free and open source</p>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <a class="wordmark" href="#top"><img src="img/icon-128.png" alt="" width="24" height="24">vibeshed</a>
+    <ul class="footer-links">
+      <li><a href="https://github.com/vibeshed/vibeshed/releases">Release notes</a></li>
+      <li><a href="https://github.com/vibeshed/vibeshed#readme">Docs</a></li>
+      <li><a href="https://github.com/vibeshed/vibeshed/issues">Issues</a></li>
+      <li><a href="https://github.com/vibeshed/vibeshed">Source</a></li>
+      <li><a href="#support"><span aria-hidden="true">♥</span> Tip</a></li>
+      <li><a href="https://github.com/vibeshed/vibeshed/blob/main/LICENSE">MIT License</a></li>
+    </ul>
+    <p class="small">No cookies: Cloudflare Web Analytics counts visits without them.</p>
+    <p class="small">Good vibes only.</p>
+  </div>
+</footer>
+
+<dialog class="panel" id="dl-panel" aria-labelledby="dl-title">
+  <form method="dialog" class="panel-close"><button type="submit" aria-label="Close">×</button></form>
+  <div class="dl-status">
+    <span class="spin" aria-hidden="true"></span>
+    <div>
+      <h2 id="dl-title">Your download is starting</h2>
+      <p class="muted"><span data-latest="file">Vibeshed-0.11.0.zip</span> · <span data-latest="size">4.7 MB</span> · <a data-download data-retry href="https://github.com/vibeshed/vibeshed/releases/download/v0.11.0/Vibeshed-0.11.0.zip">Download again</a></p>
+    </div>
+  </div>
+  <p class="small">Prefer Homebrew? <code>brew install --cask idmitriev/tap/vibeshed</code></p>
+
+  <h3>Set up in a minute</h3>
+  <ol class="setup">
+    <li>Unzip and drag Vibeshed to Applications.</li>
+    <li>Open it and allow what it asks for, one permission at a time.</li>
+    <li>Press <kbd>Caps Lock</kbd> <kbd>Space</kbd>.</li>
+  </ol>
+
+  <div class="ask">
+    <h3>Satisfaction guaranteed, or your $0 back.</h3>
+    <p>Vibeshed is free. If you’d like to tip anyway, a few dollars keeps it signed, notarized and buzzing.</p>
+    <div class="seg" role="group" aria-label="How often">
+      <button type="button" data-freq="once" aria-pressed="true">One-time</button>
+      <button type="button" data-freq="monthly" aria-pressed="false">Monthly</button>
+    </div>
+    <div class="amounts" role="group" aria-label="Amount">
+      <button type="button" data-amt="3" aria-pressed="false">$3</button>
+      <button type="button" data-amt="5" aria-pressed="true">$5</button>
+      <button type="button" data-amt="10" aria-pressed="false">$10</button>
+      <button type="button" data-amt="other" aria-pressed="false">Other</button>
+      <label class="other" hidden>$<input type="number" min="1" max="1000" step="1" value="20" inputmode="numeric" aria-label="Amount in dollars"></label>
+    </div>
+    <a class="btn give" id="give" href="#usdc">Tip $5</a>
+    <p class="small muted" id="give-note">One-time · no account needed</p>
+  </div>
+  <p class="small">No cash? <a href="https://github.com/vibeshed/vibeshed">Star the repo</a> or tell a friend.</p>
+</dialog>
+
+<script src="site.js" defer></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c84d8d98cf2341aa8cdd3a83c37989fb"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
