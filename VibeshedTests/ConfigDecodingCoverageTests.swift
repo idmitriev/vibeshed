@@ -163,7 +163,7 @@ final class ConfigDecodingCoverageTests: XCTestCase {
 
     func testEveryFieldIsDecodedInTopLevelSections() throws {
         try assertRoundTrip(AppConfig.AppearanceConfig(
-            panelWidth: 1, panelHeight: 2, cornerRadius: 3, rowHeight: 4, searchBarHeight: 5,
+            panelWidth: 1, panelHeight: 2, cornerRadius: 3, rowHeight: 4, searchBarHeight: 5, fill: 0.5,
             overlay: AppConfig.OverlayConfig()
         ))
         try assertRoundTrip(AppConfig.LayoutCorrectionConfig(enabled: false))
