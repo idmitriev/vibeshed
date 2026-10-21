@@ -62,25 +62,35 @@ again.”
 
 ## `img/picker/`: the picker in four themes
 
-The picker at 2× with one of two demo queries, in the site's own palette
-(`vibeshed-glow`, the sunset colors) and three built-in themes:
-`tokyo-night`, `catppuccin-latte` and `mac-os-9`. Pick one query for the
-whole page.
+The picker at 2× in three states, in the site's own palette (`vibeshed-glow`,
+the sunset colors) and three built-in themes: `tokyo-night`,
+`catppuccin-latte` and `mac-os-9`. Pick one state for the whole page;
+`launch` shows the widest range.
 
-- `music-<theme>`: `satis`, Spotify playing “(I Can’t Get No) Satisfaction”,
-  album art and a Now playing pill in the preview. It answers the headline.
-- `session-<theme>`: `my`, the Claude Code session “teach the picker to read
-  my mind”, with project, branch `feat/mind-reading` and model Opus 5.5 in the
-  preview.
+- `launch-<theme>`: the picker as it opens, nothing typed. The list is what
+  you reach for most: “(I Can’t Get No) Satisfaction” playing in Spotify (album
+  art and a Now playing pill in the preview), the Claude Code session, a
+  project file in Zed, Search Pull Requests, Switch Theme, a Safari tab and
+  Spotify's controls.
+- `music-<theme>`: `satis` typed, the same track first, then Switch Theme,
+  Search Spotify and Switch Font; the lower rows are window commands. It
+  answers the headline.
+- `session-<theme>`: `my` typed, the Claude Code session “teach the picker to
+  read my mind”, with project, branch `feat/mind-reading` and model Opus 5.5 in
+  the preview.
+
+The lists come from a seeded usage history
+(`showreel/fixtures/site-stills-usage.json` on `feat/showreel`), so window
+commands the video rehearsals ran don't crowd them.
 
 | Files | Size | What |
 | --- | --- | --- |
 | `<query>-<theme>.webp` | 1584×1072 | the picker window alone, its shadow on transparency; show at 792 px wide |
 | `<query>-<theme>-desktop.webp` | 2064×1552 | the picker on that theme's generated wallpaper, 120 pt around it; show at 1032 px wide |
 
-Alt text, for example: “Vibeshed's picker in Tokyo Night: the query ‘satis’
-finds (I Can’t Get No) Satisfaction playing in Spotify, with its album art in
-the preview.”
+Alt text, for example: “Vibeshed's picker in Tokyo Night, just opened: (I Can’t
+Get No) Satisfaction playing in Spotify with its album art, then a Claude Code
+session, a project, pull requests, themes and a Safari tab.”
 
 ## `img/themes/`: the theme montage
 
