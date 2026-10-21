@@ -4,7 +4,7 @@ title: Launch an app from the picker
 setup:
   display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
   appearance: dark
-  wallpaper: ../../docs/wallpapers/vibeshed-sunset-macbook.jpg
+  wallpaper: ../../../docs/wallpapers/vibeshed-sunset-macbook.jpg
   dock: hidden
   desktopIcons: hidden
   desktopWidgets: hidden

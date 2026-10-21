@@ -4,7 +4,7 @@ title: Tile windows from the keyboard
 setup:
   display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
   appearance: dark
-  wallpaper: ../../docs/wallpapers/vibeshed-midnight-macbook.jpg
+  wallpaper: ../../../docs/wallpapers/vibeshed-midnight-macbook.jpg
   dock: hidden
   desktopIcons: hidden
   desktopWidgets: hidden

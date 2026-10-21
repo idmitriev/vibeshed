@@ -28,7 +28,7 @@ outputs:                      # cut on the host with ffmpeg
 scripts/showreel record picker-launch
 ```
 
-The take lands in `showreel/out/picker-launch/`: `recording.mov` (the full
+The take lands in `tools/showreel/out/picker-launch/`: `recording.mov` (the full
 display at native resolution), each `screenshot` as a PNG, each output, the
 agent's log and `manifest.json` (markers, window frames, timings). Re-cut the
 outputs after editing them, without recording again:
@@ -66,7 +66,7 @@ that logs in automatically, with Homebrew installed, plus `ffmpeg` on the host.
    ```bash
    scripts/showreel vm setup --host <vm-ip>
    ```
-   (Or run `sh "/Volumes/My Shared Files/<share>/showreel/guest/bootstrap.sh"`
+   (Or run `sh "/Volumes/My Shared Files/<share>/tools/showreel/guest/bootstrap.sh"`
    in the VM's Terminal when the repo is shared into it; it also turns off
    sleep and the screen saver.) Later runs find the VM's address from its MAC
    address in `/var/db/dhcpd_leases`.
@@ -216,7 +216,7 @@ macOS 27 keeps out of `vm grant`'s reach; `scripts/showreel record
 permissions` brings up every prompt in one sitting for you to Allow. `clip-ai`
 needs Claude Code signed in in the VM; `clip-calendar` needs a Vibeshed newer
 than 0.6.1. Secrets such as `SPOTIFY_CLIENT_ID` go in the git-ignored
-`showreel/.vm/secrets.env` and fill `${NAME}` placeholders in configs.
+`tools/showreel/.vm/secrets.env` and fill `${NAME}` placeholders in configs.
 
 Theme clips — `clip-theming` (⇪N steps through four themes while VS Code,
 Neovim, htop and lsd in Ghostty splits, the wallpaper and the accent all

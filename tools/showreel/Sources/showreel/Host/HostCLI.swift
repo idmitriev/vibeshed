@@ -22,7 +22,7 @@ enum HostCLI {
       vm start | stop | status
       vm ssh [command]        shell into the VM
 
-    Scenes live in showreel/scenes/; takes and outputs land in showreel/out/<scene>/.
+    Scenes live in tools/showreel/scenes/; takes and outputs land in tools/showreel/out/<scene>/.
     """
 
     static func main(_ arguments: [String]) -> Int32 {
@@ -58,14 +58,15 @@ enum HostCLI {
     }
 
     /// `SHOWREEL_REPO` (set by scripts/showreel), else the nearest folder up
-    /// from here with `showreel/Package.swift`.
+    /// from here with `tools/showreel/Package.swift`.
     private static func findRepo() throws -> URL {
         if let repo = ProcessInfo.processInfo.environment["SHOWREEL_REPO"] {
             return URL(fileURLWithPath: repo)
         }
         var directory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         while directory.path != "/" {
-            if FileManager.default.fileExists(atPath: directory.appendingPathComponent("showreel/Package.swift").path) {
+            let package = directory.appendingPathComponent("tools/showreel/Package.swift")
+            if FileManager.default.fileExists(atPath: package.path) {
                 return directory
             }
             directory.deleteLastPathComponent()
@@ -132,7 +133,7 @@ struct VMCommands {
         guard let index = options.firstIndex(of: "--host"), index + 1 < options.count else {
             print("""
             Key ready. Turn on Remote Login in the VM, then either run this in the VM's Terminal:
-                sh "/Volumes/My Shared Files/<share>/showreel/guest/bootstrap.sh"
+                sh "/Volumes/My Shared Files/<share>/tools/showreel/guest/bootstrap.sh"
             or authorize the key from here (asks for the VM user's password) and record the guest:
                 ssh-copy-id -i \(key).pub \(vm.user)@<vm-ip>
                 scripts/showreel vm setup --host <vm-ip>

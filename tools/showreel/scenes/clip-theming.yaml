@@ -11,7 +11,7 @@ setup:
   desktopIcons: hidden
   desktopWidgets: hidden
   # The Vibeshed sources, so VS Code shows a real project tree.
-  sync: [../fixtures/demo-data.py, ../fixtures/terminal-tools.sh, ../../Vibeshed]
+  sync: [../fixtures/demo-data.py, ../fixtures/terminal-tools.sh, ../../../Vibeshed]
   # Sample projects and terminal tool configs; the system accent back to
   # default (themes set it).
   prepare: |
@@ -32,7 +32,7 @@ setup:
     - open: vibeshed://theme/apply.tokyo-night
     - wait: 3
     # Ghostty: Neovim on top, htop and an lsd tree below (⌘⇧D splits down).
-    - type: { text: "cd ~/Showreel/repo/showreel/fixtures && nvim +88 -c 'normal zt' demo-data.py", cps: 80 }
+    - type: { text: "cd ~/Showreel/repo/tools/showreel/fixtures && nvim +88 -c 'normal zt' demo-data.py", cps: 80 }
     - press: return
     - wait: 1.2
     - press: cmd+shift+d

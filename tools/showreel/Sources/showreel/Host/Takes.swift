@@ -6,9 +6,9 @@ struct Takes {
     let repo: URL
     let vm: VirtualMachine
 
-    var scenesDirectory: URL { repo.appendingPathComponent("showreel/scenes") }
-    var outDirectory: URL { repo.appendingPathComponent("showreel/out") }
-    var agentBundle: URL { repo.appendingPathComponent("showreel/.build/ShowreelAgent.app") }
+    var scenesDirectory: URL { repo.appendingPathComponent("tools/showreel/scenes") }
+    var outDirectory: URL { repo.appendingPathComponent("tools/showreel/out") }
+    var agentBundle: URL { repo.appendingPathComponent("tools/showreel/.build/ShowreelAgent.app") }
 
     /// `picker-tour`, `picker-tour.yaml` or a path.
     func sceneURL(_ name: String) throws -> URL {
@@ -39,7 +39,7 @@ struct Takes {
             extra: ["--checksum", "--delete"]
         )
         // The agent itself runs as the launcher's child, so it can change freely.
-        let binary = repo.appendingPathComponent("showreel/.build/release/showreel")
+        let binary = repo.appendingPathComponent("tools/showreel/.build/release/showreel")
         try vm.rsync(host: host, [binary.path], to: "Showreel/bin/showreel", extra: ["--checksum"])
     }
 

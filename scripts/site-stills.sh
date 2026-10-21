@@ -6,10 +6,10 @@
 # the page's 1160 px band at 2×.
 #
 #   scripts/showreel record site-picker-themes site-theme-montage
-#   scripts/site-stills.sh                # → showreel/out/site-stills/
+#   scripts/site-stills.sh                # → tools/showreel/out/site-stills/
 set -eu
 repo=${0:A:h:h}
-out="$repo/showreel/out"
+out="$repo/tools/showreel/out"
 dest="$out/site-stills"
 work="$dest/work"
 mkdir -p "$work"

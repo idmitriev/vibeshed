@@ -93,7 +93,7 @@ extension SceneRunner {
         return false
     }
 
-    /// `~/Showreel/secrets.env`, copied from the host's showreel/.vm/secrets.env.
+    /// `~/Showreel/secrets.env`, copied from the host's tools/showreel/.vm/secrets.env.
     private func secrets() -> [String: String] {
         let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Showreel/secrets.env")
         return (try? String(contentsOf: url, encoding: .utf8)).map(ConfigMerge.parseEnv) ?? [:]

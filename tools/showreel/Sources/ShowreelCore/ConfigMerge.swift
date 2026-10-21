@@ -36,7 +36,7 @@ public enum ConfigMerge {
             let name = String(text[nameRange])
             let fallback = Range(match.range(at: 2), in: text).map { String(text[$0]) }
             guard let value = secrets[name] ?? fallback else {
-                throw SceneError.invalid("the config needs ${\(name)}: add \(name)=… to showreel/.vm/secrets.env")
+                throw SceneError.invalid("the config needs ${\(name)}: add \(name)=… to tools/showreel/.vm/secrets.env")
             }
             output += text[cursor ..< range.lowerBound] + value
             cursor = range.upperBound

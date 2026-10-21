@@ -216,7 +216,7 @@ public struct EventSetup: Decodable, Sendable, Equatable {
 public struct VibeshedSetup: Decodable, Sendable {
     /// Config files merged (later ones win, key by key) and written to
     /// ~/.config/vibeshed/config.yaml, relative to the scene. `${NAME}` and
-    /// `${NAME:-default}` are filled from showreel/.vm/secrets.env.
+    /// `${NAME:-default}` are filled from tools/showreel/.vm/secrets.env.
     public var config: [String] = []
     /// Extra files for ~/.config/vibeshed, e.g. `usage.json: ../fixtures/usage.json`.
     public var files: [String: String] = [:]

@@ -1,6 +1,6 @@
 excluded:
   - .build
-  - showreel/.build
+  - tools/showreel/.build
   - .claude
   - .swiftpm
   - VibeshedUITests

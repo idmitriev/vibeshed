@@ -19,7 +19,7 @@ setup:
   apps:
     - { app: Spotify, frame: [690, 330, 560, 440] }
     - { app: Safari, open: "https://github.com/idmitriev/vibeshed", frame: [50, 50, 760, 520] }
-    - { app: Visual Studio Code, open: ../../Vibeshed/Picker/FuzzyMatcher.swift, frame: [440, 150, 780, 540] }
+    - { app: Visual Studio Code, open: ../../../Vibeshed/Picker/FuzzyMatcher.swift, frame: [440, 150, 780, 540] }
     - { app: Ghostty, frame: [140, 370, 620, 400] }
   focus: Ghostty
   actions:

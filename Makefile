@@ -8,8 +8,8 @@ INSTALL_DIR = /Applications
 INSTALLED_APP = $(INSTALL_DIR)/$(APP_NAME).app
 SWIFTLINT = .build/artifacts/swiftlintplugins/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint
 SIGN_IDENTITY ?= Apple Development: iam@ivandmitriev.com (BDFRA4JH67)
-SHOWREEL_LAUNCHER = showreel/.build/release/ShowreelAgentLauncher
-SHOWREEL_AGENT = showreel/.build/ShowreelAgent.app
+SHOWREEL_LAUNCHER = tools/showreel/.build/release/ShowreelAgentLauncher
+SHOWREEL_AGENT = tools/showreel/.build/ShowreelAgent.app
 
 # Version from git tags: "v0.1.0" → "0.1.0"; fallback "0.1.0-dev"
 VERSION := $(shell V=$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//'); echo "$${V:-0.1.0-dev}")
@@ -75,24 +75,24 @@ lint:
 lint-fix:
 	$(SWIFTLINT) lint --fix --reporter xcode
 
-# Screenshot/video tooling (see showreel/README.md). The VM runs the
+# Screenshot/video tooling (see tools/showreel/README.md). The VM runs the
 # `showreel` binary through ShowreelAgent.app, a tiny launcher that holds the
 # VM's privacy grants; it's re-signed only when its bytes change, so grants
 # survive rebuilds of everything else.
 showreel:
-	swift build -c release --package-path showreel
+	swift build -c release --package-path tools/showreel
 	@# Signing rewrites the bundled binary, so compare against an unsigned copy.
-	@if ! cmp -s $(SHOWREEL_LAUNCHER) showreel/.build/ShowreelAgent.unsigned \
-		|| ! cmp -s showreel/Agent-Info.plist "$(SHOWREEL_AGENT)/Contents/Info.plist"; then \
+	@if ! cmp -s $(SHOWREEL_LAUNCHER) tools/showreel/.build/ShowreelAgent.unsigned \
+		|| ! cmp -s tools/showreel/Agent-Info.plist "$(SHOWREEL_AGENT)/Contents/Info.plist"; then \
 		rm -rf "$(SHOWREEL_AGENT)"; mkdir -p "$(SHOWREEL_AGENT)/Contents/MacOS"; \
 		cp $(SHOWREEL_LAUNCHER) "$(SHOWREEL_AGENT)/Contents/MacOS/ShowreelAgent"; \
-		cp showreel/Agent-Info.plist "$(SHOWREEL_AGENT)/Contents/Info.plist"; \
+		cp tools/showreel/Agent-Info.plist "$(SHOWREEL_AGENT)/Contents/Info.plist"; \
 		out=$$(codesign --force --sign "$(SIGN_IDENTITY)" \
 			--identifier com.ivandmitriev.Vibeshed.ShowreelAgent "$(SHOWREEL_AGENT)" 2>&1) \
 			|| { echo "$$out" >&2; exit 1; }; \
-		cp $(SHOWREEL_LAUNCHER) showreel/.build/ShowreelAgent.unsigned; \
+		cp $(SHOWREEL_LAUNCHER) tools/showreel/.build/ShowreelAgent.unsigned; \
 		echo "Signed $(SHOWREEL_AGENT): the VM will ask for its permissions again" >&2; \
 	fi
 
 showreel-test:
-	swift test --package-path showreel
+	swift test --package-path tools/showreel

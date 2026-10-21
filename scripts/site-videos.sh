@@ -7,11 +7,11 @@
 # against its first.
 #
 #   scripts/showreel record site-lap      # the take (after site-lap-warmup)
-#   scripts/site-videos.sh                # → showreel/out/site-videos/
+#   scripts/site-videos.sh                # → tools/showreel/out/site-videos/
 set -eu
 repo=${0:A:h:h}
-take="$repo/showreel/out/site-lap"
-dest="$repo/showreel/out/site-videos"
+take="$repo/tools/showreel/out/site-lap"
+dest="$repo/tools/showreel/out/site-videos"
 work="$dest/work"
 mkdir -p "$work"
 manifest="$take/manifest.json"

@@ -1,7 +1,7 @@
 import Foundation
 
 /// The UTM macOS guest, reached over SSH with a key of its own. What the host
-/// knows about it lives in `showreel/.vm/guest.env` (written by `vm setup` or
+/// knows about it lives in `tools/showreel/.vm/guest.env` (written by `vm setup` or
 /// by `guest/bootstrap.sh`); `SHOWREEL_VM`, `SHOWREEL_HOST` and
 /// `SHOWREEL_USER` override it.
 struct VirtualMachine {
@@ -15,7 +15,7 @@ struct VirtualMachine {
     static let agentPath = "Applications/ShowreelAgent.app"
 
     static func load(repo: URL) -> VirtualMachine {
-        let state = repo.appendingPathComponent("showreel/.vm")
+        let state = repo.appendingPathComponent("tools/showreel/.vm")
         let saved = (try? String(contentsOf: state.appendingPathComponent("guest.env"), encoding: .utf8))
             .map(parseEnv) ?? [:]
         let env = ProcessInfo.processInfo.environment

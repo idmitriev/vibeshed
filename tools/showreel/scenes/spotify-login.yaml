@@ -2,7 +2,7 @@
 # can search playlists. The first search opens Spotify's sign-in sheet — sign
 # in and approve in the VM; the scene waits until Vibeshed has its tokens
 # (~/.config/vibeshed/spotify-tokens.json, kept across takes). Needs
-# SPOTIFY_CLIENT_ID in showreel/.vm/secrets.env.
+# SPOTIFY_CLIENT_ID in tools/showreel/.vm/secrets.env.
 title: "Warm-up: Spotify sign-in"
 
 setup:

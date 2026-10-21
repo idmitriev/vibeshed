@@ -3,7 +3,7 @@
 # Claude Code sessions, calendar events, GitHub PRs, terminals and Spotify.
 # Kept apart so these modules don't change what the other clips' searches show.
 # Every key is spelled out: Vibeshed 0.6.1 has no per-key defaults for most.
-# The ${…} placeholders are filled from showreel/.vm/secrets.env on the host.
+# The ${…} placeholders are filled from tools/showreel/.vm/secrets.env on the host.
 
 modules:
   browser:

@@ -1,7 +1,7 @@
 #!/bin/sh
 # One-time setup inside the macOS VM, run from the guest's Terminal:
 #
-#   sh "/Volumes/My Shared Files/<share>/showreel/guest/bootstrap.sh"
+#   sh "/Volumes/My Shared Files/<share>/tools/showreel/guest/bootstrap.sh"
 #
 # Lets the host drive the guest over SSH: authorizes the key written by
 # `scripts/showreel vm setup`, turns on Remote Login, keeps the session awake
