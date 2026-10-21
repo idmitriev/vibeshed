@@ -299,6 +299,8 @@
 - [ ] Lists Claude Code sessions
 - [ ] Lists Claude Desktop sessions
 - [ ] Lists Codex sessions
+- [ ] Lists OpenCode sessions (top-level only, no subagents or archived)
+- [ ] Resume OpenCode session in terminal from its directory
 - [ ] Open session in browser/desktop app
 - [ ] Resume Claude Code session in terminal
 - [ ] Session titles and message previews shown

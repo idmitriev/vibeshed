@@ -24,6 +24,14 @@ final class SoftwareIntegrationTests: XCTestCase {
         XCTAssertEqual(software("openai", in: detected), ["Codex"])
     }
 
+    /// The desktop app and the CLI share one data directory, so either turns it on.
+    func testFindsOpenCodeFromTheAppOrItsData() {
+        let fromApp = SoftwareIntegration.detect(in: mac(apps: ["ai.opencode.desktop"]))
+        XCTAssertEqual(fromApp.map(\.moduleID), ["opencode"])
+        let fromData = SoftwareIntegration.detect(in: mac(paths: ["/Users/test/.local/share/opencode"]))
+        XCTAssertEqual(software("opencode", in: fromData), ["OpenCode"])
+    }
+
     func testNamesEachFindOnce() {
         let detected = SoftwareIntegration.detect(in: mac(
             apps: ["com.anthropic.claudefordesktop"],
@@ -59,8 +67,9 @@ final class SoftwareIntegrationTests: XCTestCase {
     func testNamesRealModulesWithUsableDefaults() async {
         let modules: [any Module] = [
             BrowserModule(), HomebrewModule(), AISessionsModule<AnthropicProvider>(),
-            AISessionsModule<OpenAIProvider>(), RecentProjectsModule<VSCodeProvider>(),
-            RecentProjectsModule<JetBrainsProvider>(), RecentProjectsModule<ZedProvider>(), ITermModule(),
+            AISessionsModule<OpenAIProvider>(), AISessionsModule<OpenCodeProvider>(),
+            RecentProjectsModule<VSCodeProvider>(), RecentProjectsModule<JetBrainsProvider>(),
+            RecentProjectsModule<ZedProvider>(), ITermModule(),
             GhosttyModule(), SpotifyModule(), TelegramModule(), ZoomModule(), GitHubModule(),
         ]
         var ids: Set<String> = []

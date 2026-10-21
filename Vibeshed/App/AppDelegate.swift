@@ -172,6 +172,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 TerminalModule(),
                 AISessionsModule<AnthropicProvider>(),
                 AISessionsModule<OpenAIProvider>(),
+                AISessionsModule<OpenCodeProvider>(),
                 TelegramModule(),
                 ZoomModule(),
                 CalendarModule(),
