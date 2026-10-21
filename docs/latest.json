@@ -1,8 +1,8 @@
 {
-  "version": "0.11.0",
-  "file": "Vibeshed-0.11.0.zip",
-  "url": "https://github.com/vibeshed/vibeshed/releases/download/v0.11.0/Vibeshed-0.11.0.zip",
-  "size": 4729962,
-  "date": "2026-10-18",
-  "sha256": "3628242b06aad433e1d642d279b35772a0659ce9bd9d56da2f09cba7bbb203d6"
+  "version": "0.12.0",
+  "file": "Vibeshed.zip",
+  "url": "https://github.com/vibeshed/vibeshed/releases/latest/download/Vibeshed.zip",
+  "size": 4747797,
+  "date": "2026-10-21",
+  "sha256": "719193e23aa7bea58111378c468884338c3e0bea3c604412ca0485e14077c284"
 }
