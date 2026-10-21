@@ -188,6 +188,11 @@ enum DefaultConfig {
     urlRouting:
       registerAsDefaultBrowser: false
       rules: []
+
+    # How solid the picker's background is while no overlay is behind it:
+    # 0 is bare glass (also what a missing `fill` means), 1 hides what's behind.
+    appearance:
+      fill: 0.72
     """
 
     private static let modulesIntro = [

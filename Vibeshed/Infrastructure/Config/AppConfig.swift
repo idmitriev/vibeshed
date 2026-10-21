@@ -30,6 +30,9 @@ struct AppConfig: Sendable, Equatable {
         var cornerRadius: Double = 12
         var rowHeight: Double = 52
         var searchBarHeight: Double = 56
+        /// How solid the picker's background is while no overlay is behind it: 0 is the
+        /// bare glass, 1 hides what's behind entirely.
+        var fill: Double = 0
         /// Backdrop behind the open picker; nil when the section is absent.
         var overlay: OverlayConfig?
     }
@@ -70,6 +73,7 @@ extension AppConfig.AppearanceConfig {
         rowHeight = try container.decodeIfPresent(Double.self, forKey: .rowHeight) ?? defaults.rowHeight
         searchBarHeight = try container.decodeIfPresent(Double.self, forKey: .searchBarHeight)
             ?? defaults.searchBarHeight
+        fill = try container.decodeIfPresent(Double.self, forKey: .fill) ?? defaults.fill
         overlay = Self.decodeOverlay(from: container)
     }
 

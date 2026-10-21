@@ -66,6 +66,12 @@ final class DefaultConfigTests: XCTestCase {
         XCTAssertTrue(WindowModule.validate(window).isValid)
     }
 
+    func testPickerFillStandsOutWithoutOverlay() throws {
+        let config = try ConfigManager.parseYAML(bareMac)
+        XCTAssertEqual(config.appearance.fill, 0.72)
+        XCTAssertNil(config.appearance.overlay)
+    }
+
     func testLeavesDefaultBrowserAlone() throws {
         let config = try ConfigManager.parseYAML(bareMac)
         XCTAssertFalse(config.urlRouting.registerAsDefaultBrowser)

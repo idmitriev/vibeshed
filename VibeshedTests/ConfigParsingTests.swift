@@ -61,6 +61,12 @@ final class ConfigParsingTests: XCTestCase {
         let config = try ConfigManager.parseYAML(yaml)
         XCTAssertEqual(config.appearance.panelWidth, 900)
         XCTAssertEqual(config.appearance.cornerRadius, 20)
+        XCTAssertEqual(config.appearance.fill, 0, "an older config keeps the bare glass")
+    }
+
+    func testParsesAppearanceFill() throws {
+        let config = try ConfigManager.parseYAML("appearance:\n  fill: 0.6\n")
+        XCTAssertEqual(config.appearance.fill, 0.6)
     }
 
     func testStoresEachModuleSectionAsRawData() throws {

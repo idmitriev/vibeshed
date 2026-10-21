@@ -163,7 +163,11 @@ struct PickerView: View {
             .padding(.top, glassInset)
         }
         .frame(width: appearance.panelWidth, height: appearance.panelHeight)
-        .pickerChrome(cornerRadius: appearance.cornerRadius, backdropShown: panelController.isBackdropShown)
+        .pickerChrome(
+            cornerRadius: appearance.cornerRadius,
+            fill: panelController.fill,
+            backdropShown: panelController.isBackdropShown
+        )
         .padding(Self.shadowMargin)
         .environment(\.isPickerVisible, panelController.isVisible)
         .accessibilityIdentifier("pickerView")

@@ -3,20 +3,19 @@ import SwiftUI
 extension View {
     /// The picker panel's background, edge and shadow. With the overlay up, a thin glass
     /// over the dimmed backdrop. Without it the picker sits straight on other windows and
-    /// the desktop, so it goes near-solid, with a crisper edge and a deeper shadow.
-    func pickerChrome(cornerRadius: CGFloat, backdropShown: Bool) -> some View {
-        modifier(PickerChrome(cornerRadius: cornerRadius, backdropShown: backdropShown))
+    /// the desktop, so it lays `fill` (`appearance.fill`, 0–1) over the glass and draws a
+    /// crisper edge and a deeper shadow.
+    func pickerChrome(cornerRadius: CGFloat, fill: Double, backdropShown: Bool) -> some View {
+        modifier(PickerChrome(cornerRadius: cornerRadius, fill: fill, backdropShown: backdropShown))
     }
 }
 
 private struct PickerChrome: ViewModifier {
     let cornerRadius: CGFloat
+    let fill: Double
     let backdropShown: Bool
     @Environment(\.pickerTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
-
-    /// How much of what shows through the material the solid fill hides, without the overlay.
-    private static let solidFillOpacity = 0.72
 
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: cornerRadius)
@@ -33,7 +32,7 @@ private struct PickerChrome: ViewModifier {
                     shape.fill(.ultraThinMaterial)
                     // The glass panels inside blur this too, so it evens them out as well.
                     shape.fill(theme.solidBackground ?? Color(nsColor: .windowBackgroundColor))
-                        .opacity(backdropShown ? 0 : Self.solidFillOpacity)
+                        .opacity(backdropShown ? 0 : min(max(fill, 0), 1))
                     if let tint = theme.backgroundTint {
                         shape.fill(tint)
                     }

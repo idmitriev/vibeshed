@@ -10,6 +10,9 @@ appearance:
   cornerRadius: 12
   rowHeight: 52
   searchBarHeight: 56
+  # How solid the picker's background is while no overlay is behind it, 0–1:
+  # 0 is bare glass (also what leaving `fill` out means), 1 hides what's behind.
+  fill: 0.72
 
   # Backdrop over the whole screen behind the open picker. On when present:
   # `overlay:` alone (or `overlay: true`) uses the defaults shown here. It steps

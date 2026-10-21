@@ -17,6 +17,11 @@ final class PanelController {
     /// draws a more solid, sharper-edged panel to stand out from what's behind.
     private(set) var isBackdropShown = false
 
+    /// `appearance.fill`, read live so a config edit restyles the picker as it is.
+    var fill: Double {
+        configManager.config.appearance.fill
+    }
+
     /// Bumped each time the panel is put on screen. With `isVisible`, it tells work that
     /// outlives an action run whether the picker is still as the run left it.
     @ObservationIgnored private(set) var presentationCount = 0
