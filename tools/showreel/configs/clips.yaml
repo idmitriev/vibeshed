@@ -1,0 +1,117 @@
+# Vibeshed config for the looping website clips (scenes/clip-*.yaml): like
+# demo.yaml, but nothing may change the solid background behind the picker —
+# no overlay backdrop, and palette themes only recolor the picker and accent.
+# Vibeshed is also the default browser here, for the URL routing clip.
+
+appearance:
+  # Six rows instead of eight, so the picker and the keystroke visualizer
+  # under it fit a small crop of the 1280×800 clip display.
+  panelWidth: 760
+  panelHeight: 368
+  cornerRadius: 12
+  rowHeight: 52
+  searchBarHeight: 56
+
+keybindings:
+  - combo: "capslock+space"
+    action: "app/togglePicker"
+  - combo: "capslock+left"
+    action: "window/tileLeft"
+  - combo: "capslock+right"
+    action: "window/tileRight"
+  - combo: "capslock+down"
+    action: "window/center"
+  - combo: "capslock+t"
+    action: "tiling/attachAll"
+  - combo: "capslock+s"
+    action: "tiling/swapNextSplit"
+
+modules:
+  window:
+  # A 2×2 grid for the multi-window clip.
+  tiling:
+    displays:
+      - match: main
+        columns: [1, 1]
+        rows: [1, 1]
+    padding: { top: 10, bottom: 10, left: 10, right: 10, gap: 10 }
+    autoTile: { maximizeSingleWindow: true, pollingInterval: 1.0, excludedBundleIDs: [], minimumSize: 120 }
+  homebrew:
+    brewPath: "/opt/homebrew/bin/brew"
+  # Vibeshed 0.6.1 needs every key of these sections (it has no per-key
+  # defaults yet), so they mirror config.example.yaml.
+  application:
+    showRunningOnly: false
+    cacheTTLSeconds: 3.0
+    excludedBundleIDs:
+      - "com.apple.Dock"
+      - "com.apple.loginwindow"
+  system:
+    screenshotPath: "~/Screenshots"
+    enabledActions:
+      - lock
+      - sleep
+      - toggleAppearance
+      - toggleDock
+      - emptyTrash
+      - screenshotInteractive
+  # pasteOnSelect would send ⌘V while the picker still has focus.
+  clipboard:
+    maxItems: 50
+    pollingInterval: 0.5
+    showClearAction: true
+    pasteOnSelect: false
+    excludePatterns: []
+  math:
+    decimalPlaces: 6
+    enableCurrency: false
+    currencyRateTTL: 3600
+    copyOnSelect: true
+    showBaseConversions: true
+  emoji:
+    maxResults: 8
+  websearch:
+    minQueryLength: 2
+    engines:
+      - name: "Google"
+        urlTemplate: "https://www.google.com/search?q={query}"
+  theme:
+    # The accent only: no wallpaper (the background must stay solid) and no
+    # appearance (it goes through System Events, which asks for Automation).
+    targets: [accent]
+    includeBuiltInThemes: false
+    # Same name as a built-in + `base:` extends that built-in. Clips apply
+    # "Vibeshed" (the website's colors) in setup: with no palette applied,
+    # Vibeshed 0.6.1 colors the picker from whatever is on screen, and on the
+    # near-black clip background that comes out near-black.
+    themes:
+      - name: "Vibeshed"
+        base: "Rosé Pine"
+        colors:
+          background: "#1b1420"     # the site's --bg-card, a shade above the page
+          foreground: "#f3eaf0"
+          accent: "#ff6b8b"
+      - { name: "Tokyo Night", base: "Tokyo Night" }
+      - { name: "Gruvbox", base: "Gruvbox" }
+      - { name: "Catppuccin Mocha", base: "Catppuccin Mocha" }
+      - { name: "Everforest", base: "Everforest" }
+      - { name: "Rosé Pine", base: "Rosé Pine" }
+      - { name: "Hackerman", base: "Hackerman" }
+  # Scenes turn the keystroke visualizer on through self/toggleKeystrokeVisualizer.
+  self:
+    enabledActions:
+      - toggleKeystrokeVisualizer
+      - openConfig
+      - reloadConfig
+
+# Links opened anywhere come to Vibeshed: github.com goes straight to Chrome,
+# everything else shows the browser chooser (Safari preselected).
+urlRouting:
+  registerAsDefaultBrowser: true
+  defaultBrowser: "safari"
+  rules:
+    # Matched against host + path: the first is github.com itself.
+    - pattern: "github.com/*"
+      browser: "chrome"
+    - pattern: "*.github.com/*"
+      browser: "chrome"

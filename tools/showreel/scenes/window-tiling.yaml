@@ -1,0 +1,45 @@
+# Two messy windows snapped into halves without touching the mouse.
+title: Tile windows from the keyboard
+
+setup:
+  display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
+  appearance: dark
+  wallpaper: ../../../docs/wallpapers/vibeshed-midnight-macbook.jpg
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: ../configs/demo.yaml
+    keystrokes: true
+  apps:
+    - { app: Safari, open: "https://github.com/idmitriev/vibeshed", frame: [280, 140, 940, 640] }
+    - { app: TextEdit, open: ../fixtures/launch-plan.txt, frame: [820, 460, 820, 560] }
+  focus: TextEdit
+  settle: 4                       # let the page load
+
+record:
+  leadIn: 0.6
+  leadOut: 1.2
+
+actions:
+  - marker: start
+  - press: capslock+left          # TextEdit → left half
+  - wait: 1.0
+  - press: capslock+space         # over to Safari through the picker
+  - waitFor: picker
+  - wait: 0.9                     # the list settles about a second after opening
+  - type: safari
+  - waitFor: { result: Safari }
+  - wait: 0.3
+  - press: return
+  - waitFor: { window: picker, gone: true }
+  - wait: 0.4
+  - press: capslock+right         # Safari → right half
+  - wait: 0.8
+  - marker: tiled
+  - wait: 1.2
+
+outputs:
+  - { name: website, width: 1920, from: start-0.4 }
+  - { name: square, size: 1080x1080, background: blur, from: start-0.4 }
+  - { name: poster, format: png, at: tiled }

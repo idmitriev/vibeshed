@@ -1,0 +1,80 @@
+# configs/demo.yaml plus palette themes, for scenes/palette-themes.yaml: a
+# short, fixed list of dark themes in a set order, so arrowing through
+# theme/switch shows the same sequence on every take.
+
+appearance:
+  overlay:
+    blur: 24
+    opacity: 0.2
+
+keybindings:
+  - combo: "capslock+space"
+    action: "app/togglePicker"
+  - combo: "capslock+left"
+    action: "window/tileLeft"
+  - combo: "capslock+right"
+    action: "window/tileRight"
+  - combo: "capslock+up"
+    action: "window/maximize"
+
+modules:
+  window:
+  # Vibeshed 0.6.1 needs every key of these sections (it has no per-key
+  # defaults yet), so they mirror config.example.yaml.
+  application:
+    showRunningOnly: false
+    cacheTTLSeconds: 3.0
+    excludedBundleIDs:
+      - "com.apple.Dock"
+      - "com.apple.loginwindow"
+  system:
+    screenshotPath: "~/Screenshots"
+    enabledActions:
+      - lock
+      - sleep
+      - toggleAppearance
+      - toggleDock
+      - emptyTrash
+      - screenshotInteractive
+  # pasteOnSelect would send ⌘V while the picker still has focus; scenes press
+  # ⌘V themselves once it closes.
+  clipboard:
+    maxItems: 50
+    pollingInterval: 0.5
+    showClearAction: true
+    pasteOnSelect: false
+    excludePatterns: []
+  math:
+    decimalPlaces: 6
+    enableCurrency: false
+    currencyRateTTL: 3600
+    copyOnSelect: true
+    showBaseConversions: true
+  emoji:
+    maxResults: 8
+  websearch:
+    minQueryLength: 2
+    engines:
+      - name: "Google"
+        urlTemplate: "https://www.google.com/search?q={query}"
+  theme:
+    # appearance goes through System Events, which would ask for Automation
+    # mid-take; all these themes are dark anyway.
+    targets: [accent, wallpaper]
+    includeBuiltInThemes: false
+    generateWallpapers: true
+    wallpaperStyle: auto            # a different generated style per theme
+    # Same name as a built-in + `base:` extends that built-in.
+    themes:
+      - { name: "Tokyo Night", base: "Tokyo Night" }
+      - { name: "Gruvbox", base: "Gruvbox" }
+      - { name: "Catppuccin Mocha", base: "Catppuccin Mocha" }
+      - { name: "Everforest", base: "Everforest" }
+      - { name: "Rosé Pine", base: "Rosé Pine" }
+      - { name: "Hackerman", base: "Hackerman" }
+  # Scenes turn the keystroke visualizer on through self/toggleKeystrokeVisualizer.
+  self:
+    enabledActions:
+      - toggleKeystrokeVisualizer
+      - openConfig
+      - reloadConfig

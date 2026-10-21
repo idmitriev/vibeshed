@@ -1,0 +1,221 @@
+# The website's video lap, in one continuous take: search, themes, windows, and
+# back to the empty desktop it started on, so the loop has no seam
+# (https://claude.ai/artifact/6s5cSP7V1WAu1dncwuRPz5, Videos). Nothing is burned
+# into the frame and the keystroke visualizer is off: the page shows each
+# clip's line and keys beside the video. scripts/site-videos.sh zooms search in
+# on the picker, cuts the lap and the three clips, and encodes them.
+#
+# Join frames: the empty desktop (Vibeshed Glow, picker closed, every window
+# minimized, no Dock or menu bar) at lap-start, themes-start and lap-end; the
+# four overlapping windows at windows-start.
+#
+# Base VM: Vibeshed 0.10.0, Spotify, Zed, Ghostty and btop, Spotify and Claude
+# Code signed in, and the Claude Code session "teach the picker to read my mind"
+# in ~/code/vibeshed on feat/mind-reading. Run scenes/site-permissions.yaml and
+# scenes/site-search-permissions.yaml once, then scenes/site-lap-warmup.yaml
+# before each take: it teaches the picker the lap's results (Vibeshed ranks by
+# usage) and warms up Zed and the wallpapers. Two props
+# differ from the plan: the PR is #66 (no "Make the website satisfying" PR
+# exists yet), and the local calendar's event has no attendees.
+title: "Site: the lap"
+
+setup:
+  display: { width: 1600, height: 1000 }
+  locale: en_US
+  dock: hidden
+  menuBar: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: [../configs/site-videos.yaml, ../configs/site-search.yaml]
+    reset: false                       # keep the ranking the warm-up taught
+  # Overlapping at odd sizes, a third of the desktop bare for each wallpaper. Safari sits
+  # wholly left of the tiled Zed's center and Spotify right of Ghostty's left edge, so
+  # ⇪← and ⇪→ hop between Zed and Ghostty.
+  apps:
+    - { app: Spotify, frame: [840, 560, 720, 400] }
+    - { app: Safari, open: "https://en.wikipedia.org/wiki/Caps_Lock", frame: [40, 60, 700, 480] }
+    - { app: Ghostty, frame: [900, 260, 660, 480] }
+    - { app: Zed, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift, frame: [300, 120, 760, 560] }
+  # "In 4 min" on camera: 5 minutes from setup. Any zoom.us/j/ link gives the Zoom pill.
+  events:
+    - { title: "Pairing session", in: 5, minutes: 30, url: "https://zoom.us/j/4815162342", location: "https://zoom.us/j/4815162342" }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.vibeshed-glow
+    - open: vibeshed://window/toggleFocusBorder   # off at every launch; repaints with each theme
+    - wait: 1.5
+    - type: { text: "clear; btop", cps: 60 }
+    - press: return
+    - wait: 1
+    # Safari's front tab: the site (the Caps Lock tab stays for search).
+    - shell: open -a Safari "https://ivandmitriev.com/vibeshed/"
+    - wait: 2
+    # Spotify playing "(I Can't Get No) Satisfaction"; it keeps playing minimized.
+    - shell: open "spotify:track:2PzU4IB8Dr6mxV3lHuaG34"
+    - wait: 5
+    - focus: Safari
+    - focus: Ghostty
+    - focus: Zed                               # in front
+    - wait: 1
+    # The empty desktop: Restore puts them back exactly here.
+    - open: vibeshed://window/minimizeAll
+    - wait: 2.5
+  settle: 2
+
+record: { leadIn: 0.3, leadOut: 0.3, pauseOnDialogs: true }
+
+actions:
+  - marker: lap-start
+  - wait: 1.0                                   # the empty desktop holds still
+
+  # 1 · Search: one search bar, a different kind of result each beat, nothing opened.
+  - marker: search-open
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: spot, cps: 12 }
+  - waitFor: { result: Spotify }                # the app, its icon at the end of the search bar
+  - wait: 1.2
+  - select: "(I Can't Get No) Satisfaction"     # ↓ to what's playing: the preview fills with album art
+  - wait: 1.8
+  - press: cmd+a
+  - type: { text: caps, cps: 12 }
+  - waitFor: { result: Caps Lock }              # the Safari tab, favicon and address in the preview
+  - wait: 1.6
+  - press: cmd+a
+  - type: { text: pair, cps: 12 }
+  - waitFor: { result: Pairing session }        # In 4 min, with the Zoom pill
+  - wait: 1.8
+  - press: cmd+a
+  # "mind" alone also matches the much-used Restore Minimized Windows.
+  - type: { text: my mind, cps: 12 }
+  - waitFor: { result: teach the picker to read my mind }   # project, branch and model
+  - wait: 1.8
+  - press: cmd+a
+  # "pr" ranks the imminent "Pairing session" first, whatever the usage.
+  - type: { text: pull, cps: 12 }
+  - waitFor: { result: Search Pull Requests }
+  - press: return
+  - wait: 0.6
+  # Vibeshed lists PRs newest-updated first, and #67 mentions fonts too: titles only.
+  - type: { text: font in:title, cps: 14 }
+  - press: return                               # the query is a value: Return runs the search
+  - marker: pr-searching
+  - waitFor: { result: "#66 feat(theme): Switch Font", timeout: 15 }
+  - marker: pr-results
+  - wait: 2.0                                   # hold on its preview
+  - marker: search-closing
+  # Esc out of the results, then out of the picker: ⇪Space would hide it in the results,
+  # and it would open on them again for themes.
+  - press: escape
+  - wait: 0.15
+  - press: escape                               # the picker closes
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+  - marker: search-closed
+  - wait: 1.0                                   # the empty desktop again
+
+  # 2 · Themes: the windows come back, and every theme repaints them live.
+  - marker: themes-start
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: restore, cps: 12 }
+  - waitFor: { result: Restore Minimized Windows }
+  - press: return                               # Zed, Ghostty, Safari and Spotify come back
+  - wait: 1.6
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  # "theme" ranks Previous Theme first whatever the usage: the word match outweighs it.
+  - type: { text: switch theme, cps: 16 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 0.8                                   # every row shows its palette swatches
+  - type: { text: tok, cps: 18 }
+  - waitFor: { result: Tokyo Night }
+  - wait: 1.5
+  - press: cmd+a
+  - type: { text: latte, cps: 18 }
+  - waitFor: { result: Catppuccin Latte }
+  - wait: 1.5
+  - press: cmd+a
+  - type: { text: gruv, cps: 18 }
+  - waitFor: { result: Gruvbox }
+  - wait: 1.5
+  - press: cmd+a
+  - type: { text: drac, cps: 18 }
+  - waitFor: { result: Dracula }
+  - wait: 1.5
+  - press: cmd+a
+  - type: { text: os 9, cps: 18 }
+  - waitFor: { result: Mac OS 9 }
+  - wait: 1.5
+  - press: cmd+a
+  - type: { text: "95", cps: 18 }
+  - waitFor: { result: Windows 95 }
+  - wait: 1.5
+  - press: cmd+a
+  - type: { text: amiga, cps: 18 }
+  - waitFor: { result: Amiga Workbench 1.3 }
+  - wait: 1.7
+  - marker: themes-esc
+  - press: escape                               # everything snaps back to Vibeshed Glow
+  - wait: 0.3
+  - press: escape                               # and the picker goes; the windows stay put
+  - waitFor: { window: picker, gone: true, timeout: 3 }
+  - wait: 1.0
+
+  # 3 · Windows: tile, hop, maximize, pick, grid, and clear the desk.
+  - marker: windows-start
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: left, cps: 12 }
+  - waitFor: { result: Tile Left Half }
+  - press: return                               # Zed snaps left
+  - waitFor: { result: "Tile Right: ", timeout: 5 }
+  - wait: 1.4                                   # each row's live screenshot
+  - select: "Tile Right: Ghostty"
+  - wait: 1.4
+  - press: return                               # it fills the right half
+  - wait: 1.2
+  - press: capslock+left                        # focus hops; the raspberry border follows
+  - wait: 0.9
+  - press: capslock+right
+  - wait: 1.0
+  - press: capslock+m                           # maximize Ghostty
+  - wait: 1.1
+  - press: capslock+m                           # and back
+  - wait: 1.1
+  - press: capslock+p                           # pick a window
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: saf, cps: 12 }
+  - waitFor: { result: Safari, timeout: 5 }
+  - wait: 1.5                                   # Safari, live
+  - press: return                               # out from behind
+  - wait: 1.3
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: grid, cps: 12 }
+  - waitFor: { result: Attach All Windows to Grid }
+  - press: return                               # all four snap into the 2×2 grid
+  - wait: 2.0
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: min all, cps: 12 }
+  - waitFor: { result: Minimize All Windows }
+  - press: return                               # all four drop into the Dock
+  - wait: 1.8
+  - marker: lap-end
+  - wait: 0.6                                   # held still: the loop starts again from here
+
+outputs:
+  # One master for scripts/site-videos.sh, at the recording's full 3200 px (search zooms
+  # in on the picker). Cut: the PR search running, while the picker steps away.
+  - { name: lap-master, from: lap-start, to: lap-end, width: 3200, fps: 30, quality: 14,
+      skip: [[pr-searching, pr-results-0.3]] }
+  - { name: lap-poster, format: png, at: search-closing-0.5, width: 1600 }

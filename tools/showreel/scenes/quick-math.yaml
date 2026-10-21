@@ -1,0 +1,36 @@
+# Answers right in the picker: arithmetic, then a unit conversion.
+title: Math and unit conversions
+
+setup:
+  display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
+  appearance: dark
+  wallpaper: ../../../docs/wallpapers/vibeshed-sunset-macbook.jpg
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: ../configs/demo.yaml
+    keystrokes: true
+
+record:
+  leadIn: 0.6
+  leadOut: 1.2
+
+actions:
+  - marker: start
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.4
+  - type: "1440 / 16 * 9"
+  - wait: 1.6
+  - marker: math
+  - press: cmd+a
+  - type: "26.2 mi to km"
+  - wait: 1.8
+  - marker: units
+
+outputs:
+  - { name: website, width: 1920, from: start-0.4 }
+  # The picker plus the keystroke visualizer under it.
+  - { name: square, crop: [480, 270, 960, 930], size: 1080x1080, background: blur, from: start-0.4 }
+  - { name: poster, format: png, at: units }

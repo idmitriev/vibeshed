@@ -1,0 +1,129 @@
+# The website's video lap (scenes/site-lap.yaml): Vibeshed 0.10.0's
+# first-launch config on the clean VM, plus the demo settings from the site
+# redesign plan. Vibeshed Glow as a custom theme (the sunset palette over the
+# generated Glow wallpaper), where the lap starts and ends; each other theme
+# brings its own generated wallpaper (`wallpaperStyle: auto`); and a 2×2 tiling
+# grid for the attach-all finale. Caps Lock shortcuts and the 4 pt padding and
+# gaps stay first-launch defaults.
+
+# Each entry is `combo` + `action` (run a Vibeshed action) or `remap`
+# (send another key combo). Optional `app: <bundle ID>` scopes it to one app.
+# Caps Lock works as a modifier: hold it and press the other key. That needs
+# Input Monitoring, which the setup window asks for.
+keybindings:
+  - combo: "capslock+space"
+    action: "app/togglePicker"
+
+  # Focus the window beside the focused one
+  - combo: "capslock+left"
+    action: "window/focusLeft"
+  - combo: "capslock+right"
+    action: "window/focusRight"
+  - combo: "capslock+up"
+    action: "window/focusUp"
+  - combo: "capslock+down"
+    action: "window/focusDown"
+
+  - combo: "capslock+m"
+    action: "window/toggleMaximize"
+  - combo: "capslock+p"
+    action: "window/focusWindow"     # pick a window to focus
+
+  # Cycle the focused window through 50% and 100% of the screen from an edge
+  - combo: "capslock+w"
+    action: "window/cycleTop"
+  - combo: "capslock+a"
+    action: "window/cycleLeft"
+  - combo: "capslock+s"
+    action: "window/cycleBottom"
+  - combo: "capslock+d"
+    action: "window/cycleRight"
+
+# Keep the system default browser. Set to true to route links through
+# Vibeshed (rules + a browser chooser); see config.example.yaml.
+urlRouting:
+  registerAsDefaultBrowser: false
+  rules: []
+
+# Picker entries of your own (the first-launch "Install Homebrew" alias is gone:
+# Homebrew is installed on the base now).
+aliases: []
+
+# A module loads only when its section is present. An empty section
+# enables it with default settings.
+modules:
+  application:    # launch, focus and quit apps
+  system:         # lock, sleep, restart, appearance, screenshots, ...
+  settings:       # System Settings panes
+  audio:          # volume, mute, output/input devices
+  processes:      # find processes by CPU/memory/port, kill on select
+  performance:    # CPU, memory, disk and network activity; opens Activity Monitor
+  window:         # move, resize and switch windows (Accessibility + Screen Recording)
+    padding:
+      top: 4
+      bottom: 4
+      left: 4
+      right: 4
+      gap: 4
+  tiling:         # tiling grid per display (Accessibility)
+    defaultGrid:
+      columns: [1, 1]
+      rows: [1, 1]      # 2×2 for the website videos' attach-all finale
+    padding:
+      top: 4
+      bottom: 4
+      left: 4
+      right: 4
+      gap: 4
+  clipboard:      # clipboard history, kept on disk (skips copied passwords)
+  theme:          # palette themes and coding fonts across macOS and apps
+    targets: [appearance, accent, wallpaper, ghostty, zed, btop]
+    wallpaperStyle: auto            # each theme brings its own generated style
+    wallpaperGrain: false           # grain costs bitrate and shimmers once compressed
+    themes:
+      - name: "Vibeshed Glow"       # home base: a quiet wash that never moves
+        mode: light
+        icon: "sun.horizon"
+        macosAccent: "Pink"
+        wallpaperStyle: glow
+        colors:
+          background: "#fff8f3"
+          foreground: "#24121f"
+          accent: "#d4245c"
+          red: "#d81e5b"
+          green: "#2f8f5b"
+          yellow: "#b7791f"
+          blue: "#3a6fd8"
+          magenta: "#a3307a"
+          cyan: "#1f8a8c"
+  math:           # calculator, unit and currency conversion
+  timer:          # timers and reminders
+  emoji:          # search emoji, copy on select
+  websearch:      # web search fallback when nothing else matches
+  self:           # open/reload this config, module status, quit
+
+  # Runs the "Install Homebrew" alias:
+  terminal:       # new Terminal.app windows and commands (Automation)
+
+  # Found on this Mac:
+  browser:        # search and switch browser tabs (Automation)
+  zed:            # recent Zed workspaces
+  ghostty:        # Ghostty terminals, new tabs and commands (Automation)
+  spotify:        # playback controls and what's playing (Automation)
+
+  # More modules — uncomment to enable:
+  # menu:         # the frontmost app's menu items (Accessibility)
+  # bookmark:     # browser bookmarks/history (Full Disk Access for Safari)
+  # calendar:     # upcoming events (Calendars)
+  # notes:        # search, open and create Apple Notes (Automation)
+  # meetingPrep:  # get ready for the next meeting (Calendars + Screen Recording)
+  # wallpaper:    # search Wallhaven, Unsplash and museum collections for wallpapers
+  # homebrew:     # search, install and upgrade Homebrew packages
+  # anthropic:    # Claude Code and Claude Desktop sessions
+  # openai:       # Codex sessions from the ChatGPT app and the Codex CLI
+  # vscode:       # recent VS Code, Cursor and Windsurf projects
+  # jetbrains:    # recent JetBrains IDE projects
+  # iterm:        # iTerm sessions, new tabs and commands (Automation)
+  # telegram:     # open Telegram, Saved Messages and chats you list here
+  # zoom:         # start and join Zoom meetings
+  # github:       # search GitHub repos, issues and pull requests

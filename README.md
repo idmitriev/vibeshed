@@ -75,13 +75,22 @@ A keyboard-driven macOS launcher built with SwiftUI. Control your Mac with keyst
 
 ## Requirements
 
+- **Apple silicon only** (M1 or later). Releases are arm64 builds and won't open on Intel Macs.
 - macOS 14 (Sonoma) or later
 - Swift 5.9+ (for building from source)
 
 ## Installation
 
+Download the latest signed and notarized build from [vibeshed.dev](https://vibeshed.dev) or [Releases](https://github.com/vibeshed/vibeshed/releases/latest), unzip it and drag `Vibeshed.app` to Applications. Or use Homebrew:
+
 ```bash
-git clone https://github.com/idmitriev/vibeshed.git
+brew install --cask idmitriev/tap/vibeshed
+```
+
+To build from source:
+
+```bash
+git clone https://github.com/vibeshed/vibeshed.git
 cd vibeshed
 make build
 make run
@@ -269,7 +278,12 @@ Desktop wallpapers in Vibeshed's colors, in 5K and MacBook sizes, are in [docs/w
 
 ## Support
 
-If Vibeshed saves you keystrokes, [sponsor the project](https://github.com/sponsors/idmitriev).
+Vibeshed is free. If it saves you keystrokes, [tip the project](https://vibeshed.dev/#support) in USDC:
+
+- Base, Polygon, Arbitrum or Ethereum (one address): `0x9Ee642a541b96B85D4D4e5f17333b3121fD1E55A`
+- Solana: `FFW7o79fpujjarCn87gorHcZzUzjzBpF6h4zfJDGpGEH`
+
+Only these addresses, only these networks; check the whole address, not just its ends. They're signed in [DONATE.md](DONATE.md). We never post addresses in issues or messages, and we don't issue or endorse any token.
 
 ## License
 

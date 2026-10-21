@@ -1,0 +1,463 @@
+# "Zero to rice": a clean Mac with nothing but Vibeshed becomes a riced
+# desktop. Runs on a fresh clone of the base VM (`machine: fresh`), whose
+# Vibeshed has only its first-launch config: no Homebrew, so the picker
+# offers "Install Homebrew".
+#
+# Needs a Vibeshed release with the wallpaper module (#58), the Homebrew module
+# turning on after the install (#60) and The Met's search working in release
+# builds (#64) (0.9.0+). The base's config has the wallpaper module enabled
+# (Wallhaven anime-only) and a 2×2 tiling grid (a lone window keeps its cell):
+# three windows tile into it and the wallpapers show in the free quarter. The
+# base has VS Code's settings (no welcome page, trust prompt, recommendations
+# or AI panel) and a placeholder of Vibeshed's VS Code theme extension, so VS
+# Code loads it on its first launch; and Ghostty at 85% opacity with blur.
+#
+# Someone has to be at the VM window: Homebrew's installer asks for the
+# password and a Return; macOS asks before VS Code's and Ghostty's first
+# launch, then whether Vibeshed may control Ghostty, and Ghostty's banners need
+# clearing. The keystroke visualizer is off while Homebrew installs, so the
+# password never shows. Recording pauses through the installs and prompts.
+title: "Zero to rice"
+machine: fresh
+
+setup:
+  display: { width: 1920, height: 1200 }
+  # The stock widgets include Weather, which shows the VM's (the host's) city.
+  desktopWidgets: hidden
+  vibeshed:
+    # Keep the first-launch config the base VM wrote.
+    warmUp: true
+
+record: { leadIn: 0.5, leadOut: 0.5, pauseOnDialogs: true }
+
+actions:
+  # This very file, for VS Code to open later; Finder's home shows it from the start.
+  - shell: cp "$SCENE_DIR/zero-to-rice.yaml" ~/zero-to-rice.yaml
+  - open: vibeshed://self/toggleKeystrokeVisualizer
+  - marker: start
+  - wait: 1.5                                   # an empty desktop
+
+  # Finder on the home folder, whose folders take each theme's accent, at the right.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: finder, cps: 14 }
+  - waitFor: { result: Finder }
+  - press: return
+  - wait: 0.8
+  - press: cmd+n                                # Finder had no window open
+  - waitFor: { window: Finder, timeout: 5 }
+  - wait: 0.8
+  - press: shift+cmd+h                          # Go › Home
+  - wait: 1.0
+  - press: capslock+d                           # Vibeshed's ⇪D: the right half of the screen
+  - wait: 1.5
+
+  # Homebrew, from the picker.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: homebrew, cps: 14 }
+  - waitFor: { result: Install Homebrew }
+  - wait: 0.8
+  - press: return
+  - open: vibeshed://self/toggleKeystrokeVisualizer   # off before the password
+  - waitFor: { window: Terminal, timeout: 20 }
+  - wait: 3
+  - marker: brew-waiting
+  - recording: pause
+  - shell: |
+      echo "▶ in the VM's Terminal: type the password, then press Return when the installer asks"
+      for _ in $(seq 1 2400); do
+        if [ -x /opt/homebrew/bin/brew ] && ! pgrep -qf "Installation successful"; then
+          echo "Homebrew is installed"; exit 0
+        fi
+        sleep 1
+      done
+      echo "Homebrew didn't finish within 40 minutes" >&2; exit 1
+  # Homebrew's first searches fetch its package indexes; do them while paused.
+  - shell: /opt/homebrew/bin/brew search --cask visual-studio-code >/dev/null 2>&1; true
+  - shell: /opt/homebrew/bin/brew search --formula fastfetch >/dev/null 2>&1; true
+  - recording: resume
+  - marker: brew-done
+  - wait: 3                                     # "Installation successful!"
+  - focus: Terminal
+  - press: cmd+q                                # close Terminal
+  - wait: 1
+  - open: vibeshed://self/toggleKeystrokeVisualizer
+
+  # VS Code, Ghostty and fastfetch, from Vibeshed's Homebrew module.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: install cask, cps: 14 }
+  - waitFor: { result: Install Cask }
+  - press: return
+  - wait: 0.8
+  - type: { text: visual-studio-code, cps: 14 }   # brew search matches cask names literally
+  - waitFor: { result: visual-studio-code, timeout: 45 }
+  - wait: 2.5                                   # its preview (description, icon) loads
+  - press: return
+  - marker: vscode-waiting
+  - wait: 1
+  - recording: pause
+  - shell: |
+      for _ in $(seq 1 900); do
+        [ -d "/Applications/Visual Studio Code.app" ] && ! pgrep -qf Homebrew/brew.rb && exit 0
+        sleep 1
+      done
+      exit 1
+  - wait: 2
+  - waitForUser: 900                            # "Visual Studio Code is an app downloaded from the Internet"
+  - waitFor: { window: com.microsoft.VSCode, timeout: 90 }
+  - wait: 2
+  # The install launched it on an empty window; it opens this scene's file later instead.
+  - focus: Visual Studio Code
+  - press: cmd+q
+  - shell: for _ in $(seq 1 40); do pgrep -qf "Visual Studio Code.app/Contents/MacOS" || exit 0; sleep 0.5; done; exit 1
+  - waitForUser: 900
+  - recording: resume
+  - marker: vscode-done
+  - wait: 1.5
+
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: install cask, cps: 14 }
+  - waitFor: { result: Install Cask }
+  - press: return
+  - wait: 0.8
+  - type: { text: ghostty, cps: 14 }
+  - waitFor: { result: ghostty, timeout: 45 }
+  - wait: 2.5
+  - press: return
+  - marker: ghostty-waiting
+  - wait: 1
+  - recording: pause
+  - shell: |
+      for _ in $(seq 1 600); do
+        [ -d /Applications/Ghostty.app ] && ! pgrep -qf Homebrew/brew.rb && exit 0
+        sleep 1
+      done
+      exit 1
+  - wait: 2
+  - waitForUser: 900                            # "Ghostty is an app downloaded from the Internet"
+  - waitFor: { window: Ghostty, timeout: 60 }
+  # The install turned on Vibeshed's Ghostty module; its first look at Ghostty,
+  # when the picker opens, asks whether Vibeshed may control it. The module loads
+  # a moment after config.yaml gains its section, so look twice.
+  - shell: until grep -q "^  ghostty:" ~/.config/vibeshed/config.yaml; do sleep 0.5; done; sleep 3
+  - press: capslock+space
+  - waitForUser: 900                            # "Vibeshed wants access to control Ghostty" › Allow
+  - waitForUser: 900
+  - press: escape
+  - wait: 1.5
+  - press: capslock+space
+  - waitForUser: 900
+  - waitForUser: 900
+  - press: escape
+  # Ghostty's first launch leaves banners that stay up while nobody's active:
+  # "Dock Tile Extension Added" and its notification permission request.
+  - waitForUser: 900                            # clear them in the VM
+  - wait: 1
+  - recording: resume
+  - marker: ghostty-done
+  - wait: 1.5
+
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: install formula, cps: 14 }
+  - waitFor: { result: Install Formula }
+  - press: return
+  - wait: 0.8
+  - type: { text: fastfetch, cps: 14 }
+  - waitFor: { result: fastfetch, timeout: 45 }
+  - wait: 2.5
+  - press: return
+  - marker: fastfetch-waiting
+  - wait: 1
+  - recording: pause
+  - shell: until [ -x /opt/homebrew/bin/fastfetch ] && ! pgrep -qf Homebrew/brew.rb; do sleep 1; done
+  - recording: resume
+  - marker: fastfetch-done
+  - wait: 1.5
+
+  # In Ghostty: fastfetch, then this scene's file in VS Code.
+  - focus: Ghostty
+  - wait: 1                                     # activation takes a moment; keys typed sooner get lost
+  - click: { window: Ghostty, glide: 0 }        # the keyboard, for sure (the cursor isn't recorded)
+  - wait: 0.5
+  - type: { text: "clear; fastfetch", cps: 14 }
+  - press: return
+  - wait: 2
+  - type: { text: code zero-to-rice.yaml, cps: 14 }
+  - press: return
+  - marker: code-waiting
+  - wait: 1
+  - recording: pause
+  - waitFor: { window: com.microsoft.VSCode, title: zero-to-rice, timeout: 90 }
+  - wait: 3                                     # syntax highlighting fills in
+  - focus: Visual Studio Code
+  - press: cmd+b                                # no Explorer: there's no folder to show
+  # Front to back: VS Code, Finder, Ghostty. Auto-tile fills the grid in that order:
+  # VS Code top-left, Finder top-right (where it is), Ghostty bottom-left.
+  - focus: Finder
+  - focus: Visual Studio Code
+  - waitForUser: 60
+  - recording: resume
+  - marker: code-done
+  - wait: 2
+
+  # The Dock out of the way, the focus border, auto-tile; then a walk around the grid.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: toggle dock, cps: 14 }
+  - waitFor: { result: Toggle Dock }
+  - press: return
+  - wait: 1.2
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: focus border, cps: 14 }
+  - waitFor: { result: Enable Focus Border }
+  - press: return
+  - wait: 1.2
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: auto-tile, cps: 14 }
+  - waitFor: { result: Enable Auto-Tile }
+  - press: return
+  - wait: 2
+  - marker: tiled
+  - press: capslock+right                       # Finder
+  - wait: 0.9
+  - press: capslock+left                        # VS Code
+  - wait: 0.9
+  - press: capslock+down                        # Ghostty
+  - wait: 0.9
+  - press: capslock+up                          # back on VS Code
+  - wait: 1.2
+
+  # Retro themes, previewed live as the list filters (Switch Theme's options only
+  # match names, so one at a time): Amiga, BeOS, Windows 95, Mac OS 9.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: switch theme, cps: 14 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 1.0
+  - type: { text: amiga, cps: 14 }
+  - waitFor: { result: Amiga Workbench 1.3 }
+  - wait: 1.8
+  - press: down                                 # Amiga Workbench 3.1
+  - wait: 1.8
+  - press: cmd+a                                # a new filter replaces the last
+  - type: { text: beos, cps: 14 }
+  - waitFor: { result: BeOS }
+  - wait: 1.8
+  - press: cmd+a
+  - type: { text: windows 95, cps: 14 }
+  - waitFor: { result: Windows 95 }
+  - wait: 1.8
+  - press: cmd+a
+  - type: { text: mac os 9, cps: 14 }
+  - waitFor: { result: Mac OS 9 }
+  - wait: 1.8
+  - press: return                               # keep Mac OS 9
+  - wait: 2
+
+  # Omarchy themes, the same way: Hackerman, Osaka Jade, Retro 82, Lumon.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: switch theme, cps: 14 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 1.0
+  - type: { text: hackerman, cps: 14 }
+  - waitFor: { result: Hackerman }
+  - wait: 1.8
+  - press: cmd+a                              # a new filter replaces the last
+  - type: { text: osaka jade, cps: 14 }
+  - waitFor: { result: Osaka Jade }
+  - wait: 1.8
+  - press: cmd+a                              # a new filter replaces the last
+  - type: { text: retro 82, cps: 14 }
+  - waitFor: { result: Retro 82 }
+  - wait: 1.8
+  - press: cmd+a                              # a new filter replaces the last
+  - type: { text: lumon, cps: 14 }
+  - waitFor: { result: Lumon }
+  - wait: 1.8
+  - press: return                               # keep Lumon
+  - wait: 2
+
+  # Wallpapers, seen in the free quarter, and a theme from each; picked so the three
+  # themes differ: violet (dark), blue on paper (light), coral on navy (dark). The
+  # base's Wallhaven searches are anime-only (wallhavenCategories: [anime]).
+  # A neon city.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: search wallpapers, cps: 14 }
+  - waitFor: { result: Search Wallpapers }
+  - press: return
+  - wait: 0.8
+  - type: { text: wallhaven, cps: 14 }
+  - waitFor: { result: Wallhaven }
+  - press: return
+  - wait: 0.3
+  - waitFor: { result: "", timeout: 30 }        # its featured images: the list the search replaces
+  - wait: 0.6
+  - type: { text: neon city, cps: 12 }
+  - marker: neon-searching
+  # Wallhaven's titles are resolutions, so: the first row of the search's own results.
+  - waitFor: { result: "", fresh: true, timeout: 30 }
+  - marker: neon-results
+  - wait: 2                                     # thumbnails
+  - shell: ls "$HOME/Library/Application Support/Vibeshed/Online Wallpapers" 2>/dev/null | wc -l > /tmp/zero-to-rice-wallpapers
+  - press: return
+  - marker: neon-downloading
+  - shell: |
+      d="$HOME/Library/Application Support/Vibeshed/Online Wallpapers"
+      before=$(cat /tmp/zero-to-rice-wallpapers)
+      for _ in $(seq 1 120); do
+        [ "$(ls "$d" 2>/dev/null | wc -l)" -gt "$before" ] && { sleep 1.5; exit 0; }
+        sleep 0.5
+      done
+      echo "no wallpaper download after 60s" >&2; exit 1
+  - marker: neon-set
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: theme from wallpaper, cps: 14 }
+  - waitFor: { result: Generate Theme from Wallpaper }
+  - press: return
+  - wait: 2.5
+
+  # Van Gogh's Irises (1890) from The Met: a light theme. It's squarer than the
+  # screen, so it sits on a matte of its edge color.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: search wallpapers, cps: 14 }
+  - waitFor: { result: Search Wallpapers }
+  - press: return
+  - wait: 0.8
+  - type: { text: the met, cps: 14 }
+  - waitFor: { result: The Met }
+  - press: return
+  - wait: 0.3
+  - waitFor: { result: "", timeout: 30 }        # its highlights first
+  - wait: 0.6
+  - type: { text: irises, cps: 12 }
+  - marker: irises-searching
+  - waitFor: { result: Irises, timeout: 30 }    # each painting is a lookup: a few seconds
+  - marker: irises-results
+  - wait: 2
+  - shell: ls "$HOME/Library/Application Support/Vibeshed/Online Wallpapers" 2>/dev/null | wc -l > /tmp/zero-to-rice-wallpapers
+  - press: return
+  - marker: irises-downloading
+  - shell: |
+      d="$HOME/Library/Application Support/Vibeshed/Online Wallpapers"
+      before=$(cat /tmp/zero-to-rice-wallpapers)
+      for _ in $(seq 1 120); do
+        [ "$(ls "$d" 2>/dev/null | wc -l)" -gt "$before" ] && { sleep 1.5; exit 0; }
+        sleep 0.5
+      done
+      echo "no wallpaper download after 60s" >&2; exit 1
+  - marker: irises-set
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: theme from wallpaper, cps: 14 }
+  - waitFor: { result: Generate Theme from Wallpaper }
+  - press: return
+  - wait: 2.5
+
+  # Akira fan art at dawn, and the last theme: coral on navy.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: search wallpapers, cps: 14 }
+  - waitFor: { result: Search Wallpapers }
+  - press: return
+  - wait: 0.8
+  - type: { text: wallhaven, cps: 14 }
+  - waitFor: { result: Wallhaven }
+  - press: return
+  - wait: 0.3
+  - waitFor: { result: "", timeout: 30 }
+  - wait: 0.6
+  - type: { text: akira dawn, cps: 12 }
+  - marker: akira-searching
+  - waitFor: { result: "", fresh: true, timeout: 30 }
+  - marker: akira-results
+  - wait: 1.5
+  - shell: ls "$HOME/Library/Application Support/Vibeshed/Online Wallpapers" 2>/dev/null | wc -l > /tmp/zero-to-rice-wallpapers
+  - press: return
+  - marker: akira-downloading
+  - shell: |
+      d="$HOME/Library/Application Support/Vibeshed/Online Wallpapers"
+      before=$(cat /tmp/zero-to-rice-wallpapers)
+      for _ in $(seq 1 120); do
+        [ "$(ls "$d" 2>/dev/null | wc -l)" -gt "$before" ] && { sleep 1.5; exit 0; }
+        sleep 0.5
+      done
+      echo "no wallpaper download after 60s" >&2; exit 1
+  - marker: akira-set
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: theme from wallpaper, cps: 14 }
+  - waitFor: { result: Generate Theme from Wallpaper }
+  - press: return
+  - wait: 3
+
+  # One terminal left, in the bottom-right quarter, and the picker up.
+  - focus: Visual Studio Code
+  - wait: 0.8
+  - press: cmd+q
+  - wait: 1.5
+  - focus: Finder
+  - wait: 0.8
+  - press: cmd+alt+w                            # Close All
+  - wait: 1.5
+  - focus: Ghostty
+  - wait: 1
+  - click: { window: Ghostty, glide: 0 }
+  - wait: 0.5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.5
+  - type: { text: move window right, cps: 14 }
+  - waitFor: { result: Move Window Right }
+  - press: return
+  - wait: 2
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 3
+  - marker: end
+
+outputs:
+  # Installs and the prompts answered in the VM aren't recorded (`recording:
+  # pause`); these cut the wallpaper downloads.
+  # Both open on a before/after frame: the bare desktop's left half beside the
+  # riced one's right half (also saved as zero-to-rice-split.png).
+  - name: zero-to-rice
+    from: start
+    to: end
+    width: 1920
+    beforeAfter: 2
+    skip:
+      - [neon-downloading+0.4, neon-set-1]
+      - [irises-downloading+0.4, irises-set-1]
+      - [akira-downloading+0.4, akira-set-1]
+  - { name: zero-to-rice, format: webm, from: start, to: end, width: 1920, beforeAfter: 2,
+      skip: [[neon-downloading+0.4, neon-set-1], [irises-downloading+0.4, irises-set-1],
+             [akira-downloading+0.4, akira-set-1]] }
+  - { name: zero-to-rice-poster, format: png, at: end-1, width: 1920 }

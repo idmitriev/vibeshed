@@ -1,0 +1,55 @@
+# Copy a few things, then paste an older one back from the clipboard history.
+title: Paste from clipboard history
+
+setup:
+  display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
+  appearance: dark
+  wallpaper: ../../../docs/wallpapers/vibeshed-pattern-macbook.jpg
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: ../configs/demo.yaml
+    keystrokes: true
+  apps:
+    - { app: TextEdit, open: ../fixtures/release-notes.txt, frame: [460, 140, 1000, 700] }
+  focus: TextEdit
+  actions:
+    - press: cmd+down             # caret to the end of the notes
+  # Filled after Vibeshed starts watching the clipboard (it polls every 0.5s);
+  # the history lists the newest first.
+  shell: |
+    export LANG=en_US.UTF-8
+    for item in "#ff6b35" "brew install --cask idmitriev/tap/vibeshed" \
+        "https://github.com/idmitriev/vibeshed" "Ship the launch video 🎬"; do
+      printf '%s' "$item" | pbcopy
+      sleep 0.8
+    done
+
+record:
+  leadIn: 0.6
+  leadOut: 1.5
+
+actions:
+  - marker: start
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.9                     # the list settles about a second after opening
+  - type: clip
+  - waitFor: { result: Paste from Clipboard History }
+  - wait: 0.4
+  - press: return                 # Paste from Clipboard History
+  - wait: 1.0
+  - press: { keys: down, times: 2, interval: 0.45 }
+  - wait: 0.8
+  - marker: picked
+  - press: return                 # copies it back to the clipboard
+  - waitFor: { window: picker, gone: true }
+  - wait: 0.3
+  - press: cmd+v
+  - wait: 1.5
+
+outputs:
+  - { name: website, width: 1920, from: start-0.4 }
+  - { name: square, crop: [420, 100, 1080, 1080], size: 1080x1080, from: start-0.4 }
+  - { name: poster, format: png, at: picked }

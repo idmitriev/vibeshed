@@ -21,3 +21,14 @@ jobs:
         run: |
           SWIFTLINT=.build/artifacts/swiftlintplugins/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint
           if [ -x "$SWIFTLINT" ]; then "$SWIFTLINT" lint --strict --reporter github-actions-logging; else echo "SwiftLint binary not found, skipping"; fi
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Donation addresses match DONATE.md
+        run: python3 scripts/check-donate-addresses.py
+      - name: Site data is up to date
+        run: |
+          python3 scripts/generate-site-data.py
+          git diff --exit-code docs/themes.json docs/index.html || { echo "Run python3 scripts/generate-site-data.py and commit the result."; exit 1; }

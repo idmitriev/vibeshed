@@ -2,16 +2,17 @@ cask "vibeshed" do
   version "0.11.0"
   sha256 "3628242b06aad433e1d642d279b35772a0659ce9bd9d56da2f09cba7bbb203d6"
 
-  url "https://github.com/idmitriev/vibeshed/releases/download/v#{version}/Vibeshed-#{version}.zip"
+  url "https://github.com/vibeshed/vibeshed/releases/download/v#{version}/Vibeshed-#{version}.zip"
   name "Vibeshed"
   desc "Keyboard-driven launcher"
-  homepage "https://github.com/idmitriev/vibeshed"
+  homepage "https://vibeshed.dev"
 
   livecheck do
     url :url
     strategy :github_latest
   end
 
+  depends_on arch: :arm64
   depends_on macos: :sonoma
 
   app "Vibeshed.app"
