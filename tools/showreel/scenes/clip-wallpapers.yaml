@@ -1,0 +1,54 @@
+# Loop for the website: browse generated wallpaper styles; each previews
+# live, and Escape puts the theme's own back, so the loop closes.
+title: "Clip: wallpaper styles"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  sync: [../fixtures/demo-data.py, ../fixtures/terminal-tools.sh]
+  # Sample projects and terminal tool configs; the system accent back to
+  # default (themes set it).
+  prepare: |
+    defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null
+    python3 "$SCENE_DIR/../fixtures/demo-data.py"
+    zsh "$SCENE_DIR/../fixtures/terminal-tools.sh"
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-theming.yaml]
+    keystrokes: true
+  actions:
+    - open: vibeshed://theme/apply.tokyo-night
+    - wait: 3
+  settle: 1
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still frame for the loop to fade into
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6                     # the list settles after opening
+  - type: { text: wallpaper style, cps: 22 }
+  - waitFor: { result: Choose Wallpaper Style }
+  - wait: 0.2
+  - press: return
+  - wait: 0.9
+  - marker: browsing
+  # Retro Sunset, Retro Arcs, Halftone, Pulsar (Guilloché, next, renders too
+  # slowly to preview in time).
+  - press: { keys: down, times: 4, interval: 1.1 }
+  - wait: 1.0
+  - press: { keys: escape, times: 2, interval: 0.25 }
+  - waitFor: { window: picker, gone: true }
+  - wait: 0.8                     # the theme's own wallpaper comes back
+  - marker: end
+
+outputs:
+  # The whole 1280×800 display below the menu bar.
+  - { name: wallpapers, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: wallpapers, format: webm, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: wallpapers-poster, format: png, crop: [0, 30, 1280, 770], width: 1280, at: browsing+1.9 }

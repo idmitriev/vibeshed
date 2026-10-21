@@ -6,10 +6,11 @@ and Build → Assets). All of it is Vibeshed 0.11.0 (0.10.0 for the video) in a
 macOS VM at 1600×1000 pt, captured at 2×, in sRGB. Nothing is burned into the
 frames: lines, keys and captions belong in the page's HTML.
 
-They're recorded by the showreel tool on the `feat/showreel` branch
-(`showreel/scenes/site-lap.yaml`, `site-picker-themes.yaml`,
-`site-theme-montage.yaml`, finished by `scripts/site-videos.sh` and
-`scripts/site-stills.sh`). Re-record there rather than editing these files.
+They're recorded by the showreel tool in `tools/showreel/` (scenes
+`site-lap.yaml`, `site-picker-themes.yaml` and `site-theme-montage.yaml`,
+finished by `scripts/site-videos.sh` and `scripts/site-stills.sh`; see
+`tools/showreel/README.md`, Website lap). Re-record rather than editing these
+files.
 
 ## `video/`: the lap
 
@@ -80,7 +81,7 @@ the sunset colors) and three built-in themes: `tokyo-night`,
   the preview.
 
 The lists come from a seeded usage history
-(`showreel/fixtures/site-stills-usage.json` on `feat/showreel`), so window
+(`tools/showreel/fixtures/site-stills-usage.json`), so window
 commands the video rehearsals ran don't crowd them.
 
 | Files | Size | What |

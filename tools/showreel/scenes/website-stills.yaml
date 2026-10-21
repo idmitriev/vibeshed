@@ -1,0 +1,43 @@
+# Still images of the picker for the website: no video, just screenshots.
+title: Picker stills for the website
+
+setup:
+  display: { width: 1920, height: 1200 }   # the clip-* scenes switch to 1280×800
+  appearance: dark
+  wallpaper: ../../../docs/wallpapers/vibeshed-midnight-macbook.jpg
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: ../configs/demo.yaml
+
+record:
+  video: false
+
+actions:
+  - open: vibeshed://picker
+  - waitFor: picker
+  - wait: 1.5
+  - screenshot: { name: picker-empty, window: picker }
+  - screenshot: { name: picker-empty-desktop, region: picker, padding: 120 }
+
+  - type: { text: "1440 / 16 * 9", cps: 30 }
+  - wait: 1.5
+  - screenshot: { name: picker-math, window: picker }
+
+  - press: cmd+a
+  - type: { text: "dark", cps: 30 }
+  - wait: 1.5
+  - screenshot: { name: picker-system, window: picker }
+
+  # Emoji are options of "Find Emoji": pick it, then search inside it.
+  - press: cmd+a
+  - type: { text: "emoji", cps: 30 }
+  - waitFor: { result: Find Emoji }
+  - wait: 0.3
+  - press: return
+  - wait: 0.8
+  - type: { text: "rocket", cps: 30 }
+  - wait: 1.5
+  - screenshot: { name: picker-emoji, window: picker }
+  - press: escape

@@ -1,0 +1,536 @@
+# Not a video: teaches the picker the lap's results and warms everything up.
+# Vibeshed ranks by usage, so each round runs, from the picker, every action the
+# lap takes from the top of the list: Restore Minimized Windows, the Spotify app
+# and what's playing, Search Pull Requests, Switch Theme, Tile Left Half, Attach
+# All Windows to Grid and Minimize All Windows. Usage counts per action, not per
+# query, so each is reached by a query that already ranks it first, and `select`
+# checks the preview shows it before Return. Then one pass through the lap's themes, so Zed's
+# one-time theme reload and the first wallpaper renders happen off camera, and
+# screenshots of each query to check the ranking (out/site-lap-warmup/q-*.png).
+title: "Warm-up: the lap's picker ranking"
+
+setup:
+  display: { width: 1600, height: 1000 }
+  locale: en_US
+  dock: hidden
+  menuBar: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: [../configs/site-videos.yaml, ../configs/site-search.yaml]
+    reset: false                       # keep (and add to) the usage it learns
+  apps:
+    - { app: Spotify, frame: [840, 560, 720, 400] }
+    - { app: Safari, open: "https://en.wikipedia.org/wiki/Caps_Lock", frame: [40, 60, 700, 480] }
+    - { app: Ghostty, frame: [900, 260, 660, 480] }
+    - { app: Zed, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift, frame: [300, 120, 760, 560] }
+  # No sample event here: its row refreshes its countdown and resets the selection, so a
+  # Return meant for the row below would open its Zoom link.
+  focus: Zed
+  actions:
+    - open: vibeshed://theme/apply.vibeshed-glow
+    - shell: open "spotify:track:2PzU4IB8Dr6mxV3lHuaG34"
+    - wait: 4
+  settle: 2
+
+record: { video: false, pauseOnDialogs: true }
+
+actions:
+  # Round 1.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: restore min, cps: 16 }
+  - wait: 1.2
+  - select: "Restore Minimized Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: spotify, cps: 16 }
+  - wait: 1.2
+  - select: "Spotify"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - wait: 1.2
+  - select: "(I Can't Get No) Satisfaction"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: pull requests, cps: 16 }
+  - wait: 1.2
+  - select: "Search Pull Requests"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 16 }
+  - wait: 1.2
+  - select: "Switch Theme"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: tile left, cps: 16 }
+  - wait: 1.2
+  - select: "Tile Left Half"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: attach all, cps: 16 }
+  - wait: 1.2
+  - select: "Attach All Windows to Grid"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: min all, cps: 16 }
+  - wait: 1.2
+  - select: "Minimize All Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+
+  # Round 2.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: restore min, cps: 16 }
+  - wait: 1.2
+  - select: "Restore Minimized Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: spotify, cps: 16 }
+  - wait: 1.2
+  - select: "Spotify"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - wait: 1.2
+  - select: "(I Can't Get No) Satisfaction"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: pull requests, cps: 16 }
+  - wait: 1.2
+  - select: "Search Pull Requests"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 16 }
+  - wait: 1.2
+  - select: "Switch Theme"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: tile left, cps: 16 }
+  - wait: 1.2
+  - select: "Tile Left Half"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: attach all, cps: 16 }
+  - wait: 1.2
+  - select: "Attach All Windows to Grid"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: min all, cps: 16 }
+  - wait: 1.2
+  - select: "Minimize All Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+
+  # Round 3.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: restore min, cps: 16 }
+  - wait: 1.2
+  - select: "Restore Minimized Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: spotify, cps: 16 }
+  - wait: 1.2
+  - select: "Spotify"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - wait: 1.2
+  - select: "(I Can't Get No) Satisfaction"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: pull requests, cps: 16 }
+  - wait: 1.2
+  - select: "Search Pull Requests"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 16 }
+  - wait: 1.2
+  - select: "Switch Theme"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: tile left, cps: 16 }
+  - wait: 1.2
+  - select: "Tile Left Half"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: attach all, cps: 16 }
+  - wait: 1.2
+  - select: "Attach All Windows to Grid"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: min all, cps: 16 }
+  - wait: 1.2
+  - select: "Minimize All Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+
+  # Round 4.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: restore min, cps: 16 }
+  - wait: 1.2
+  - select: "Restore Minimized Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: spotify, cps: 16 }
+  - wait: 1.2
+  - select: "Spotify"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: satis, cps: 16 }
+  - wait: 1.2
+  - select: "(I Can't Get No) Satisfaction"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - focus: Zed
+  - wait: 0.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: pull requests, cps: 16 }
+  - wait: 1.2
+  - select: "Search Pull Requests"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 16 }
+  - wait: 1.2
+  - select: "Switch Theme"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: tile left, cps: 16 }
+  - wait: 1.2
+  - select: "Tile Left Half"
+  - wait: 0.4
+  - press: return
+  - wait: 1.0
+  - press: escape
+  - wait: 0.4
+  - press: escape
+  - wait: 0.8
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: attach all, cps: 16 }
+  - wait: 1.2
+  - select: "Attach All Windows to Grid"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: min all, cps: 16 }
+  - wait: 1.2
+  - select: "Minimize All Windows"
+  - wait: 0.4
+  - press: return
+  - wait: 1.5
+  - waitFor: { window: picker, gone: true, timeout: 4 }
+
+  # The lap's themes once, off camera: Zed reloads its theme the first time, and each
+  # generated wallpaper renders for the first time.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: restore min, cps: 16 }
+  - waitFor: { result: Restore Minimized Windows }
+  - press: return
+  - wait: 1.5
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: switch theme, cps: 16 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 1.0
+  - press: cmd+a
+  - type: { text: tok, cps: 16 }
+  - waitFor: { result: Tokyo Night, timeout: 5 }
+  - wait: 3
+  - press: cmd+a
+  - type: { text: latte, cps: 16 }
+  - waitFor: { result: Catppuccin Latte, timeout: 5 }
+  - wait: 3
+  - press: cmd+a
+  - type: { text: gruv, cps: 16 }
+  - waitFor: { result: Gruvbox, timeout: 5 }
+  - wait: 3
+  - press: cmd+a
+  - type: { text: drac, cps: 16 }
+  - waitFor: { result: Dracula, timeout: 5 }
+  - wait: 3
+  - press: cmd+a
+  - type: { text: os 9, cps: 16 }
+  - waitFor: { result: Mac OS 9, timeout: 5 }
+  - wait: 3
+  - press: cmd+a
+  - type: { text: "95", cps: 16 }
+  - waitFor: { result: Windows 95, timeout: 5 }
+  - wait: 3
+  - press: cmd+a
+  - type: { text: amiga, cps: 16 }
+  - waitFor: { result: Amiga Workbench 1.3, timeout: 5 }
+  - wait: 3
+  - press: escape
+  - wait: 0.5
+  - press: escape
+  - wait: 2
+
+  # How each query ranks now.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: spot, cps: 16 }
+  - wait: 1.8
+  - screenshot: { name: q-spot, window: picker }
+  - press: escape
+  - wait: 0.6
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: pr, cps: 16 }
+  - wait: 1.8
+  - screenshot: { name: q-pr, window: picker }
+  - press: escape
+  - wait: 0.6
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: restore, cps: 16 }
+  - wait: 1.8
+  - screenshot: { name: q-restore, window: picker }
+  - press: escape
+  - wait: 0.6
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: theme, cps: 16 }
+  - wait: 1.8
+  - screenshot: { name: q-theme, window: picker }
+  - press: escape
+  - wait: 0.6
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: left, cps: 16 }
+  - wait: 1.8
+  - screenshot: { name: q-left, window: picker }
+  - press: escape
+  - wait: 0.6
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: grid, cps: 16 }
+  - wait: 1.8
+  - screenshot: { name: q-grid, window: picker }
+  - press: escape
+  - wait: 0.6
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6
+  - type: { text: min all, cps: 16 }
+  - wait: 1.8
+  - screenshot: { name: q-min-all, window: picker }
+  - press: escape
+  - wait: 0.6

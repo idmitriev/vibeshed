@@ -1,0 +1,37 @@
+# Not a video: brings up every Automation prompt the site video needs, in one
+# sitting, so takes don't stop on them one by one. Answer each prompt in the VM
+# with Allow; `waitForUser` steps wait for that and send no input while a
+# dialog is up.
+title: "Warm-up: permission prompts for the site videos"
+
+setup:
+  display: { width: 1600, height: 1000 }
+  vibeshed:
+    config: ../configs/site-videos.yaml
+  apps:
+    - { app: Safari, open: "https://ivandmitriev.com/vibeshed/" }
+    - { app: Spotify }
+    - { app: Ghostty }
+    - { app: Zed, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift }
+
+record: { video: false, pauseOnDialogs: true }
+
+actions:
+  # Opening the picker makes Vibeshed ask for each app it scripts: Safari's
+  # tabs, Ghostty's terminals, Spotify's now playing.
+  - open: vibeshed://picker
+  - waitForUser: 900
+  - press: escape
+  - wait: 1
+  # Applying themes reaches every target: appearance, accent, wallpaper,
+  # Ghostty, Zed, btop. A dark one, then back to Vibeshed Sunset.
+  - open: vibeshed://theme/apply.tokyo-night
+  - wait: 3
+  - waitForUser: 900
+  - open: vibeshed://theme/apply.vibeshed-sunset
+  - wait: 3
+  - waitForUser: 900
+  - open: vibeshed://picker
+  - waitForUser: 900
+  - press: escape
+  - wait: 1

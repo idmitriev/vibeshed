@@ -1,0 +1,48 @@
+# Not a clip: brings up every Automation and Calendar prompt the content
+# clips need, in one sitting, so takes don't stop on them one by one. macOS 27
+# keeps those grants where `vm grant` can't write them. Answer each prompt in
+# the VM with Allow; `waitForUser` steps wait for that and send no input
+# while a dialog is up.
+title: "Warm-up: permission prompts for the content clips"
+
+setup:
+  display: { width: 1280, height: 800 }
+  sync: [../fixtures/demo-data.py]
+  prepare: python3 "$SCENE_DIR/../fixtures/demo-data.py"
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-content.yaml]
+  apps:
+    - { app: Google Chrome, args: [--no-default-browser-check, --no-first-run] }
+    - { app: Safari }
+    - { app: Ghostty }
+    - { app: Spotify }
+    - { app: Terminal }
+  # The agent asks for Calendar here (to create the sample events).
+  events:
+    - { title: "Design review: onboarding flow", in: 12, minutes: 45, url: "https://zoom.us/j/5810274936" }
+
+record: { video: false }
+
+actions:
+  # Opening the picker makes Vibeshed ask for each app it scripts: browser
+  # tabs (Chrome, Safari), terminals (Ghostty), now playing (Spotify).
+  - open: vibeshed://picker
+  - waitForUser: 120
+  - press: escape
+  - wait: 0.5
+  # Vibeshed's own Calendar prompt.
+  - open: vibeshed://picker
+  - waitFor: picker
+  - wait: 0.8
+  - type: { text: grant calendar, cps: 20 }
+  - waitFor: { result: Grant Calendar Access, timeout: 3 }
+  - press: return
+  - waitForUser: 120
+  # Reopening a Claude session makes Vibeshed ask to control Terminal.
+  - open: vibeshed://picker
+  - waitFor: picker
+  - wait: 0.8
+  - type: { text: add rate limiting, cps: 20 }
+  - waitFor: { result: Add rate limiting }
+  - press: return
+  - waitForUser: 120

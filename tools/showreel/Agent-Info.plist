@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>ShowreelAgent</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.ivandmitriev.Vibeshed.ShowreelAgent</string>
+	<key>CFBundleName</key>
+	<string>ShowreelAgent</string>
+	<key>CFBundleDisplayName</key>
+	<string>Showreel Agent</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>15.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Showreel Agent creates sample events for recordings of Vibeshed's calendar features.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Showreel Agent switches the VM between light and dark mode for recordings.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Showreel Agent records the VM's screen for Vibeshed's website and social media videos.</string>
+</dict>
+</plist>

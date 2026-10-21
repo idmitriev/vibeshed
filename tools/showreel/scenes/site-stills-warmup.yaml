@@ -1,0 +1,101 @@
+# Not a picture for the site: readies the base VM for the website's stills
+# (scenes/site-picker-themes.yaml and scenes/site-theme-montage.yaml).
+#
+# VS Code is new on the base: open it once in the VM by hand first, answer
+# macOS's "downloaded from the Internet" check, trust ~/code/vibeshed and close
+# the Welcome tab. This then applies each theme the stills use once: the first
+# installs Vibeshed's VS Code theme extension, which VS Code only loads after a
+# restart, and each theme's wallpaper renders once. Last, screenshots of
+# candidate demo queries (out/site-stills-warmup/q-*.png) and of Switch Theme's
+# list, to pick the query the picker shots use.
+title: "Warm-up: the website's stills"
+
+setup:
+  display: { width: 1600, height: 1000 }
+  locale: en_US
+  dock: hidden
+  menuBar: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  vibeshed:
+    config: [../configs/site-videos.yaml, ../configs/site-search.yaml, ../configs/site-stills.yaml]
+    reset: false                       # keep the ranking the lap's warm-up taught
+  apps:
+    - { app: Spotify, frame: [840, 560, 720, 400] }
+    - { app: Safari, open: "https://en.wikipedia.org/wiki/Caps_Lock", frame: [40, 60, 700, 480] }
+    - { app: Ghostty, frame: [760, 360, 800, 600] }
+    - { app: Zed, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift, frame: [300, 120, 760, 560] }
+    # A folder, then a file in it: a window with no folder colors its status bar purple.
+    - { app: Visual Studio Code, open: ~/code/vibeshed }
+    - { app: Visual Studio Code, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift, frame: [40, 50, 860, 620] }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.vibeshed-glow
+    - shell: open -a Safari "https://ivandmitriev.com/vibeshed/"
+    - shell: open "spotify:track:2PzU4IB8Dr6mxV3lHuaG34"
+    - wait: 4
+  settle: 2
+
+record: { video: false, pauseOnDialogs: true }
+
+actions:
+  # Each theme once, VS Code open, so the extension and the wallpapers exist.
+  - open: vibeshed://theme/apply.tokyo-night
+  - wait: 6
+  - open: vibeshed://theme/apply.catppuccin-latte
+  - wait: 6
+  - open: vibeshed://theme/apply.dracula
+  - wait: 6
+  - open: vibeshed://theme/apply.mac-os-9
+  - wait: 6
+  - open: vibeshed://theme/apply.amiga-workbench-1-3
+  - wait: 6
+  - open: vibeshed://theme/apply.vibeshed-glow
+  - wait: 6
+  # VS Code loads the theme extension on its next launch.
+  - shell: osascript -e 'quit app "Visual Studio Code"'
+  - wait: 3
+  - shell: open -a "Visual Studio Code" ~/code/vibeshed ~/code/vibeshed/Vibeshed/Picker/PickerView.swift
+  - wait: 6
+  - screenshot: vscode-relaunched
+
+  # Candidate demo queries, on Vibeshed Glow.
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.8
+  - type: { text: vibe, cps: 16 }
+  - wait: 2.2
+  - screenshot: { name: q-vibe, window: picker }
+  - press: cmd+a
+  - type: { text: sa, cps: 16 }
+  - wait: 2.2
+  - screenshot: { name: q-sa, window: picker }
+  - press: cmd+a
+  - type: { text: code, cps: 16 }
+  - wait: 2.2
+  - screenshot: { name: q-code, window: picker }
+  - press: cmd+a
+  - type: { text: my, cps: 16 }
+  - wait: 2.2
+  - screenshot: { name: q-my, window: picker }
+  - press: cmd+a
+  - type: { text: s, cps: 16 }
+  - wait: 2.2
+  - screenshot: { name: q-s, window: picker }
+  - press: cmd+a
+  - type: { text: satis, cps: 16 }
+  - wait: 2.2
+  - screenshot: { name: q-satis, window: picker }
+  - press: cmd+a
+  - type: { text: pick, cps: 16 }
+  - wait: 2.2
+  - screenshot: { name: q-pick, window: picker }
+  # Switch Theme's list, to see where it opens.
+  - press: cmd+a
+  - type: { text: switch theme, cps: 16 }
+  - waitFor: { result: Switch Theme }
+  - press: return
+  - wait: 2.2
+  - screenshot: { name: q-switch-theme, window: picker }
+  - press: cmd+escape
+  - waitFor: { window: picker, gone: true, timeout: 4 }

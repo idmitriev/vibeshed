@@ -1,0 +1,52 @@
+# Loop for the website: find any app from a few letters.
+title: "Clip: launcher"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  # The theme clip's accent target changes the system accent; start from the
+  # default so the picker's match highlights look the same in every clip.
+  prepare: defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null; true
+  vibeshed:
+    config: ../configs/clips.yaml
+    keystrokes: true
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors (see clips.yaml)
+    - wait: 0.8
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still background for the loop to fade into
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6                     # the list settles after opening
+  - type: { text: spot, cps: 12 }
+  - waitFor: { result: Spotify }
+  - wait: 0.6
+  - press: cmd+a
+  - type: { text: ghos, cps: 12 }
+  - waitFor: { result: Ghostty }
+  - wait: 0.6
+  - press: cmd+a
+  - type: { text: code, cps: 12 }
+  - waitFor: { result: Visual Studio Code }
+  - wait: 1.0
+  - marker: found
+  - press: escape
+  - waitFor: { window: picker, gone: true }
+  - wait: 0.4
+  - marker: end
+
+outputs:
+  # The picker plus the keystroke chips under it. `loop` fades the end back
+  # into the start, so <video loop> cycles without a seam.
+  - { name: launcher, crop: [230, 190, 820, 580], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: launcher, format: webm, crop: [230, 190, 820, 580], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: launcher-poster, format: png, crop: [230, 190, 820, 580], width: 1280, at: found }

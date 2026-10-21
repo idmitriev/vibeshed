@@ -1,0 +1,7 @@
+#!/bin/sh
+# Records Vibeshed screenshots and videos in a UTM macOS VM — see tools/showreel/README.md.
+# Builds the tool (and the agent bundle it installs in the VM) quietly, then runs it.
+set -eu
+repo="$(cd "$(dirname "$0")/.." && pwd)"
+make -s -C "$repo" showreel >/dev/null
+SHOWREEL_REPO="$repo" exec "$repo/tools/showreel/.build/release/showreel" "$@"

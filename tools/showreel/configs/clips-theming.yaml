@@ -1,0 +1,23 @@
+# Layered over clips.yaml by clip-theming and clip-wallpapers: palette themes
+# applied everywhere they reach — wallpaper, accent, Ghostty, VS Code, btop,
+# lsd, bat — instead of only the picker. Neovim and htop follow Ghostty's ANSI
+# palette. Lists replace clips.yaml's, so the picker binding is repeated.
+
+keybindings:
+  - combo: "capslock+space"
+    action: "app/togglePicker"
+  - combo: "capslock+n"
+    action: "theme/next"
+
+modules:
+  theme:
+    targets: [accent, wallpaper, ghostty, vscode, btop, lsd, bat]
+    includeBuiltInThemes: false
+    generateWallpapers: true
+    wallpaperStyle: auto           # a different generated style per theme
+    # The order ⇪N steps through; it wraps, so four presses come back around.
+    themes:
+      - { name: "Tokyo Night", base: "Tokyo Night" }
+      - { name: "Gruvbox", base: "Gruvbox" }
+      - { name: "Rosé Pine", base: "Rosé Pine" }
+      - { name: "Everforest", base: "Everforest" }

@@ -1,0 +1,51 @@
+# Layered over clips.yaml (`config: [clips.yaml, clips-content.yaml]`) by the
+# clips that open things inside other apps: browser tabs, VS Code projects,
+# Claude Code sessions, calendar events, GitHub PRs, terminals and Spotify.
+# Kept apart so these modules don't change what the other clips' searches show.
+# Every key is spelled out: Vibeshed 0.6.1 has no per-key defaults for most.
+# The ${…} placeholders are filled from tools/showreel/.vm/secrets.env on the host.
+
+modules:
+  browser:
+    browsers: []                 # every running supported browser
+    cacheTTLSeconds: 3.0
+    maxResults: 50
+    showCloseActions: false
+  vscode:
+    maxResults: 20
+    showFiles: false
+    showRemote: false
+  anthropic:
+    maxResults: 20
+    sources: [claudeCode]
+    showLaunchers: false
+    resumeIn: "terminal"
+    showAlternateResume: false
+    terminalApp: "terminal"      # 0.6.1 resumes in Terminal or iTerm only
+  calendar:
+    lookaheadHours: 24
+    lookbehindMinutes: 30
+    showAllDayEvents: false
+    showDeclinedEvents: false
+    showOpenCalendarAction: false
+    includedCalendars: ["Showreel"]
+  zoom:
+    meetings: []
+    showStartMeeting: false
+    showJoinAction: true
+    showLaunchAction: false
+  github:
+    token: ${GITHUB_TOKEN:-null}  # optional: public search works without one
+    defaultOwner: "idmitriev"
+    maxResults: 10
+    searchTypes: [pr]
+    showRepos: false
+    showNotifications: false
+  ghostty:
+    commands:
+      "btop": "btop"
+  spotify:
+    clientId: ${SPOTIFY_CLIENT_ID:-null}
+    maxSearchResults: 10
+    searchTypes: [playlist]          # clip-spotify shows playlists only
+    showNowPlaying: true

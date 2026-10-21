@@ -40,3 +40,7 @@ release/
 *.zip
 *.dmg
 __pycache__/
+
+# Showreel: VM state (guest details, host key copy) and takes
+tools/showreel/.vm/
+tools/showreel/out/

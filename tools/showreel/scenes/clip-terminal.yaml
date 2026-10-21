@@ -1,0 +1,52 @@
+# Loop for the website: run a saved command in a new Ghostty tab.
+title: "Clip: terminal commands"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  sync: [../fixtures/demo-data.py]
+  # Sample projects, Claude sessions and VS Code recents; the system accent
+  # back to default (the theme clip changes it).
+  prepare: |
+    defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null
+    python3 "$SCENE_DIR/../fixtures/demo-data.py"
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-content.yaml]
+    keystrokes: true
+  apps:
+    - { app: Ghostty, frame: [140, 90, 1000, 620] }
+  focus: Ghostty
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors (see clips.yaml)
+    - wait: 0.8
+    - type: { text: "export PS1='%F{205}❯%f '; clear", cps: 60 }
+    - press: return
+  settle: 2.6                     # the setup's typed command fades from the keystroke chips
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still frame for the loop to fade into
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6                     # the list settles after opening
+  - type: { text: btop, cps: 12 }
+  - waitFor: { result: btop }
+  - wait: 0.6
+  - marker: found
+  - press: return
+  - waitFor: { window: picker, gone: true }
+  - wait: 2.5                     # btop starts in the new tab
+  - marker: end
+
+outputs:
+  # The whole 1280×800 display below the menu bar.
+  - { name: terminal, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: terminal, format: webm, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5 }
+  - { name: terminal-poster, format: png, crop: [0, 30, 1280, 770], width: 1280, at: end-0.5 }

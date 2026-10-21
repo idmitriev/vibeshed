@@ -1,0 +1,50 @@
+# Loop for the website: find a Claude Code session by what it was about and
+# pick it up again in the terminal. Needs Claude Code signed in in the VM.
+title: "Clip: Claude Code sessions"
+
+setup:
+  display: { width: 1280, height: 800 }
+  appearance: dark
+  wallpaper: "#120d16"            # the website's --bg
+  locale: en_US
+  dock: hidden
+  desktopIcons: hidden
+  desktopWidgets: hidden
+  sync: [../fixtures/demo-data.py]
+  # Sample projects, Claude sessions and VS Code recents; the system accent
+  # back to default (the theme clip changes it).
+  prepare: |
+    defaults delete -g AppleAccentColor 2>/dev/null; defaults delete -g AppleHighlightColor 2>/dev/null
+    python3 "$SCENE_DIR/../fixtures/demo-data.py"
+  vibeshed:
+    config: [../configs/clips.yaml, ../configs/clips-content.yaml]
+    keystrokes: true
+  actions:
+    - open: vibeshed://theme/apply.vibeshed   # fixed picker colors (see clips.yaml)
+    - wait: 0.8
+
+record: { leadIn: 0.3, leadOut: 0.3 }
+
+actions:
+  - marker: start
+  - wait: 0.5                     # still frame for the loop to fade into
+  - press: capslock+space
+  - waitFor: picker
+  - wait: 0.6                     # the list settles after opening
+  - type: { text: rate limit, cps: 14 }
+  - waitFor: { result: Add rate limiting }
+  - wait: 1.0
+  - marker: found
+  - press: return
+  - waitFor: { window: picker, gone: true }
+  - marker: opening
+  - waitFor: { window: Terminal, title: claude, timeout: 20 }
+  - marker: opened
+  - wait: 2.5                     # Claude Code draws the conversation
+  - marker: end
+
+outputs:
+  # The whole 1280×800 display below the menu bar.
+  - { name: ai, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5, skip: [[opening+0.4, opened]] }
+  - { name: ai, format: webm, crop: [0, 30, 1280, 770], width: 1280, from: start, to: end, loop: 0.5, skip: [[opening+0.4, opened]] }
+  - { name: ai-poster, format: png, crop: [0, 30, 1280, 770], width: 1280, at: found }

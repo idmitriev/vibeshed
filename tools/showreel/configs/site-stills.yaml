@@ -1,0 +1,7 @@
+# Merged over site-videos.yaml and site-search.yaml for the website's stills
+# (scenes/site-picker-themes.yaml, scenes/site-theme-montage.yaml): VS Code
+# joins the theme targets, for the montage of Ghostty, VS Code and the picker.
+
+modules:
+  theme:
+    targets: [appearance, accent, wallpaper, ghostty, vscode, zed, btop]
