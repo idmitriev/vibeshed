@@ -98,8 +98,8 @@
     if (heroShot) {
       const own = PICKER_SHOTS.includes(name);
       const label = own ? name : 'its own Vibeshed Glow palette';
-      heroShot.src = `img/picker/music-${own ? slug(name) : 'vibeshed-glow'}.webp`;
-      heroShot.alt = `Vibeshed’s picker in ${label}: the query ‘satis’ finds (I Can’t Get No) Satisfaction playing in Spotify, with its album art in the preview.`;
+      heroShot.src = `img/picker/launch-${own ? slug(name) : 'vibeshed-glow'}.webp`;
+      heroShot.alt = `Vibeshed’s picker in ${label}, just opened: (I Can’t Get No) Satisfaction playing in Spotify with its album art, then a Claude Code session, a project, pull requests, themes and a Safari tab.`;
       heroNote.textContent = own ? `In ${name}, as the app draws it.` : name ? `Shown in Vibeshed Glow; the app has ${name} too.` : '';
       if (!name) heroNote.innerHTML = 'Press <kbd>T</kbd> to see it in other themes.';
     }
