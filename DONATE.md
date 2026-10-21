@@ -1,7 +1,5 @@
 # Donate to Vibeshed
 
-Card, PayPal or bank transfer: https://opencollective.com/ivan-dmitriev
-
 USDC on Base, Polygon, Arbitrum or Ethereum (one address):
 0x9Ee642a541b96B85D4D4e5f17333b3121fD1E55A
 

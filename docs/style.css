@@ -246,16 +246,7 @@ h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); font-weight: 750; line-height: 0.9
 .note-text ol { display: flex; flex-direction: column; gap: 4px; color: var(--ink-2); }
 .ways { display: flex; flex-direction: column; gap: 20px; }
 .way { padding: clamp(18px, 3vw, 28px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; gap: 14px; }
-.way-oc > div { display: flex; flex-direction: column; gap: 14px; }
-.way-usdc { display: block; }
-.way-usdc > * + * { margin-top: 14px; }
 .way-free ul { display: flex; flex-direction: column; gap: 6px; }
-.way-usdc summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding-right: 32px; position: relative; cursor: pointer; list-style: none; }
-.way-usdc summary::-webkit-details-marker { display: none; }
-.way-usdc summary::after { content: "+"; position: absolute; right: 0; top: -4px; font: 400 1.5rem var(--font-mono); color: var(--accent); }
-.way-usdc[open] summary::after { content: "−"; }
-[data-primary="usdc"] .oc-live,
-[data-primary="opencollective"] .oc-pending { display: none !important; }
 .wallets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
 .wallet { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--sunk); }
 .wallet img { width: 164px; height: 164px; border-radius: 8px; background: #fff; }
@@ -294,14 +285,6 @@ h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); font-weight: 750; line-height: 0.9
 .setup { display: flex; flex-direction: column; gap: 4px; }
 .ask { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; }
 .ask > p { color: var(--ink-2); font-size: 0.95rem; }
-.seg { display: inline-flex; align-self: flex-start; padding: 3px; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; }
-.seg button { min-height: 32px; padding: 4px 14px; font: 500 0.85rem var(--font-body); color: var(--ink-2); background: transparent; border: 0; border-radius: 7px; cursor: pointer; }
-.seg button[aria-pressed="true"] { color: var(--ink); background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14); }
-.amounts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.amounts button { min-width: 64px; min-height: 40px; padding: 6px 12px; font: 600 0.92rem var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-variant-numeric: tabular-nums; }
-.amounts button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.other { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
-.other input { width: 5.5em; min-height: 40px; padding: 6px 8px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .give { align-self: flex-start; }
 
 @media (max-width: 960px) {

@@ -9,7 +9,6 @@
   const handheld = root.classList.contains('handheld');
   const calm = matchMedia('(prefers-reduced-motion: reduce)');
   const prefersDark = matchMedia('(prefers-color-scheme: dark)');
-  const OPEN_COLLECTIVE = 'https://opencollective.com/ivan-dmitriev';
   const support = $('#support');
   const panel = $('#dl-panel');
 
@@ -243,54 +242,11 @@
     if (!a.hasAttribute('data-retry')) openPanel();
   }));
 
-  // The one ask: frequency and amount, then Open Collective (or USDC until it's approved).
+  // The one ask: Send USDC closes the panel and goes to the addresses.
   if (panel) {
-    const give = $('#give');
-    const note = $('#give-note');
-    const other = $('.other', panel);
-    const otherInput = $('input', other);
-    let freq = 'once';
-    let amt = '5';
-    const update = () => {
-      const oc = support && support.dataset.primary === 'opencollective';
-      const dollars = amt === 'other' ? Math.max(1, Math.round(Number(otherInput.value) || 0)) : Number(amt);
-      const monthly = freq === 'monthly';
-      if (oc) {
-        give.href = `${OPEN_COLLECTIVE}/donate?amount=${dollars}${monthly ? '&interval=month' : ''}`;
-        give.textContent = `Tip $${dollars}${monthly ? ' a month' : ''}`;
-        note.textContent = `${monthly ? 'Monthly · cancel anytime' : 'One-time · no account needed'} · card or PayPal`;
-      } else {
-        give.href = '#usdc';
-        give.textContent = `Tip $${dollars} in USDC`;
-        note.textContent = monthly
-          ? 'Monthly tips by card arrive with Open Collective soon. For now, USDC is one-time.'
-          : 'USDC on Base, Polygon, Arbitrum, Ethereum or Solana.';
-      }
-    };
-    $$('.seg button', panel).forEach((b) => b.addEventListener('click', () => {
-      freq = b.dataset.freq;
-      $$('.seg button', panel).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      update();
-    }));
-    $$('.amounts button', panel).forEach((b) => b.addEventListener('click', () => {
-      amt = b.dataset.amt;
-      $$('.amounts button', panel).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      other.hidden = amt !== 'other';
-      if (amt === 'other') otherInput.focus();
-      update();
-    }));
-    otherInput.addEventListener('input', update);
-    give.addEventListener('click', () => { if (give.getAttribute('href').startsWith('#')) panel.close(); });
+    $('#give').addEventListener('click', () => panel.close());
     panel.addEventListener('click', (e) => { if (e.target === panel) panel.close(); }); // a click on the backdrop
-    update();
   }
-
-  // The USDC addresses sit in a closed block; any link to #usdc opens it.
-  const usdc = $('#usdc');
-  const openUsdc = () => { if (usdc) usdc.open = true; };
-  document.addEventListener('click', (e) => { if (e.target.closest('a[href="#usdc"]')) openUsdc(); });
-  addEventListener('hashchange', () => { if (location.hash === '#usdc') openUsdc(); });
-  if (location.hash === '#usdc') openUsdc();
 
   // --- Send to my Mac ------------------------------------------------------------------
 

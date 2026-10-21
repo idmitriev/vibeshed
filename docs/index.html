@@ -309,8 +309,7 @@ modules:
   </div>
 </section>
 
-<!-- To make Open Collective the main way to give once it's approved, change data-primary to "opencollective". -->
-<section class="section band" id="support" data-primary="usdc" aria-labelledby="support-h">
+<section class="section band" id="support" aria-labelledby="support-h">
   <div class="wrap">
     <div class="sec-head">
       <p class="label">Support</p>
@@ -319,8 +318,8 @@ modules:
 
     <div class="note">
       <!-- TODO(owner): replace the draft note with your own words. -->
-      <img class="photo" src="img/ivan.png" width="400" height="400" loading="lazy" decoding="async"
-        alt="Ivan, who makes Vibeshed, in a four-color green photo like an old Game Boy screen.">
+      <img class="photo" src="img/ivan.png" width="556" height="556" loading="lazy" decoding="async"
+        alt="Ivan, who makes Vibeshed, looking down into the camera, drawn as a pixel-art portrait in warm browns, slate and cream.">
 
       <div class="note-text">
         <p>Vibeshed costs nothing and always will: no store, no paid tier, no account. It’s made by one person, Ivan, after hours. Tips pay the $99 a year Apple charges to sign and notarize every release, then buy time for new tricks.</p>
@@ -336,22 +335,9 @@ modules:
     </div>
 
     <div class="ways">
-      <div class="way way-oc">
-        <h3>Card, PayPal or bank transfer</h3>
-        <div class="oc-live">
-          <p>Through Open Collective, one-time or monthly, no account needed. Every contribution shows on its public ledger.</p>
-          <p class="cta">
-            <a class="btn" href="https://opencollective.com/ivan-dmitriev/donate">Tip once</a>
-            <a class="btn btn-quiet" href="https://opencollective.com/ivan-dmitriev/donate?interval=month">Tip monthly</a>
-          </p>
-        </div>
-        <div class="oc-pending">
-          <p>Coming soon through <a href="https://opencollective.com/ivan-dmitriev">Open Collective</a>, one-time or monthly, once its host approves the project. Until then, <a href="#usdc">USDC</a> works today.</p>
-        </div>
-      </div>
-
-      <details class="way way-usdc" id="usdc">
-        <summary><h3>Hold crypto? Send USDC.</h3><span class="muted small">Base, Polygon, Arbitrum, Ethereum or Solana</span></summary>
+      <div class="way way-usdc" id="usdc">
+        <h3>Tip in USDC</h3>
+        <p>USDC on Base, Polygon, Arbitrum, Ethereum or Solana. A dollar stablecoin, so a $5 tip stays $5, and on these networks it costs you under a cent to send.</p>
         <div class="wallets">
           <div class="wallet">
             <p class="networks"><span>Base</span><span>Polygon</span><span>Arbitrum</span><span>Ethereum</span></p>
@@ -370,7 +356,7 @@ modules:
         </div>
         <p class="warn"><strong>Pick the network named here, and check the whole address, not just its ends.</strong> USDC only, on these networks only.</p>
         <p class="muted small">These addresses are signed in <a href="https://github.com/vibeshed/vibeshed/blob/main/DONATE.md">DONATE.md</a> in the repo. We never post addresses in issues or messages, and we don’t issue or endorse any token.</p>
-      </details>
+      </div>
 
       <div class="way way-free">
         <h3>Free ways to help</h3>
@@ -433,19 +419,8 @@ modules:
   <div class="ask">
     <h3>Satisfaction guaranteed, or your $0 back.</h3>
     <p>Vibeshed is free. If you’d like to tip anyway, a few dollars keeps it signed, notarized and buzzing.</p>
-    <div class="seg" role="group" aria-label="How often">
-      <button type="button" data-freq="once" aria-pressed="true">One-time</button>
-      <button type="button" data-freq="monthly" aria-pressed="false">Monthly</button>
-    </div>
-    <div class="amounts" role="group" aria-label="Amount">
-      <button type="button" data-amt="3" aria-pressed="false">$3</button>
-      <button type="button" data-amt="5" aria-pressed="true">$5</button>
-      <button type="button" data-amt="10" aria-pressed="false">$10</button>
-      <button type="button" data-amt="other" aria-pressed="false">Other</button>
-      <label class="other" hidden>$<input type="number" min="1" max="1000" step="1" value="20" inputmode="numeric" aria-label="Amount in dollars"></label>
-    </div>
-    <a class="btn give" id="give" href="#usdc">Tip $5</a>
-    <p class="small muted" id="give-note">One-time · no account needed</p>
+    <p class="small muted">Hold crypto? Tips arrive as USDC on Base, Polygon, Arbitrum, Ethereum or Solana.</p>
+    <a class="btn give" id="give" href="#usdc">Send USDC</a>
   </div>
   <p class="small">No cash? <a href="https://github.com/vibeshed/vibeshed">Star the repo</a> or tell a friend.</p>
 </dialog>

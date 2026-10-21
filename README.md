@@ -278,7 +278,7 @@ Desktop wallpapers in Vibeshed's colors, in 5K and MacBook sizes, are in [docs/w
 
 ## Support
 
-Vibeshed is free. If it saves you keystrokes, [tip the project](https://vibeshed.dev/#support): by card, PayPal or bank transfer through [Open Collective](https://opencollective.com/ivan-dmitriev) (opening soon), or in USDC:
+Vibeshed is free. If it saves you keystrokes, [tip the project](https://vibeshed.dev/#support) in USDC:
 
 - Base, Polygon, Arbitrum or Ethereum (one address): `0x9Ee642a541b96B85D4D4e5f17333b3121fD1E55A`
 - Solana: `FFW7o79fpujjarCn87gorHcZzUzjzBpF6h4zfJDGpGEH`
