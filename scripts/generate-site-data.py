@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generates the website's data from the source, so the page never drifts from the app:
   docs/themes.json   every built-in palette (for the theme chips and press-T), plus counts
-  docs/index.html    the numbers in elements marked data-stat="modules|themes|wallpapers|fonts"
+  docs/index.html    the numbers in elements marked data-stat="modules|themes|wallpapers|fonts",
+                     and the module list between <!-- modules:start --> and <!-- modules:end -->
 
 Counts come from:
   themes      Vibeshed/Modules/Theme/BuiltInThemes*.swift (one ThemeDefinition each)
@@ -13,6 +14,7 @@ Run from the repo root:  python3 scripts/generate-site-data.py
 """
 
 import glob
+import html
 import json
 import re
 
@@ -94,18 +96,27 @@ def count_fonts():
     return len(re.findall(r"^\s+(?:FontDefinition\(|monaspace\()", curated, re.M))
 
 
-def count_modules():
+def modules():
+    """(name, description) for each row of the README's Modules table."""
     readme = read("README.md")
     table = readme.split("\n## Modules\n", 1)[1].split("\n## ", 1)[0]
-    return len(re.findall(r"^\| \*\*", table, re.M))
+    return re.findall(r"^\| \*\*(.+?)\*\* \| (.+?) \|$", table, re.M)
+
+
+def modules_html(rows):
+    items = "".join(
+        f"\n        <div><dt>{html.escape(name, quote=False)}</dt><dd>{html.escape(desc, quote=False)}</dd></div>" for name, desc in rows
+    )
+    return f'<dl class="module-list">{items}\n      </dl>'
 
 
 def main():
     found = themes()
+    module_rows = modules()
     # Alphabetical, like BuiltInThemes.all (localizedStandardCompare is close enough to casefold here).
     found.sort(key=lambda t: t[0].casefold())
     stats = {
-        "modules": count_modules(),
+        "modules": len(module_rows),
         "themes": len(found),
         "wallpapers": count_wallpapers(),
         "fonts": count_fonts(),
@@ -115,11 +126,17 @@ def main():
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
         f.write("\n")
 
-    html = read(INDEX)
+    page = read(INDEX)
     for key, value in stats.items():
-        html = re.sub(rf'(data-stat="{key}"[^>]*>)[^<]*(<)', rf"\g<1>{value}\g<2>", html)
+        page = re.sub(rf'(data-stat="{key}"[^>]*>)[^<]*(<)', rf"\g<1>{value}\g<2>", page)
+    page = re.sub(
+        r"(<!-- modules:start[^>]*-->).*?(\s*<!-- modules:end -->)",
+        lambda m: m.group(1) + "\n      " + modules_html(module_rows) + m.group(2),
+        page,
+        flags=re.S,
+    )
     with open(INDEX, "w", encoding="utf-8") as f:
-        f.write(html)
+        f.write(page)
     print(f"{OUT}: {len(found)} themes; stats {stats}")
 
 
