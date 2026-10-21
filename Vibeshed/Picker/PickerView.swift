@@ -5,10 +5,12 @@ struct PickerView: View {
     @Bindable var state: PickerState
     let panelController: PanelController
     var appearance: AppConfig.AppearanceConfig = .init()
-    @Environment(\.pickerTheme) private var theme
 
     @State private var previewVisible = false
     @State private var previewIdleTask: Task<Void, Never>?
+
+    /// Room for the panel's shadow on every side; the window is this much bigger.
+    static let shadowMargin: CGFloat = 40
 
     private static let previewIdleDelay: Duration = .milliseconds(1200)
     private let glassInset: CGFloat = 6
@@ -161,27 +163,8 @@ struct PickerView: View {
             .padding(.top, glassInset)
         }
         .frame(width: appearance.panelWidth, height: appearance.panelHeight)
-        .background {
-            ZStack {
-                RoundedRectangle(cornerRadius: appearance.cornerRadius)
-                    .fill(.ultraThinMaterial)
-                if let tint = theme.backgroundTint {
-                    RoundedRectangle(cornerRadius: appearance.cornerRadius)
-                        .fill(tint)
-                }
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: appearance.cornerRadius))
-        .overlay(
-            RoundedRectangle(cornerRadius: appearance.cornerRadius)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
-        )
-        .shadow(
-            color: theme.shadowColor ?? .black.opacity(0.35),
-            radius: 8,
-            y: 2
-        )
-        .padding(16)
+        .pickerChrome(cornerRadius: appearance.cornerRadius, backdropShown: panelController.isBackdropShown)
+        .padding(Self.shadowMargin)
         .environment(\.isPickerVisible, panelController.isVisible)
         .accessibilityIdentifier("pickerView")
         .onKeyPress(.downArrow) { state.selectNext(); return .handled }

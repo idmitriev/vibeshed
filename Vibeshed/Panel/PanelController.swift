@@ -13,6 +13,10 @@ final class PanelController {
 
     private(set) var isVisible: Bool = false
 
+    /// Whether the overlay is up behind the picker (not suspended). Without it the picker
+    /// draws a more solid, sharper-edged panel to stand out from what's behind.
+    private(set) var isBackdropShown = false
+
     /// Bumped each time the panel is put on screen. With `isVisible`, it tells work that
     /// outlives an action run whether the picker is still as the run left it.
     @ObservationIgnored private(set) var presentationCount = 0
@@ -140,6 +144,9 @@ final class PanelController {
     /// desktop behind it, and back in after.
     func setOverlaySuspended(_ suspended: Bool) {
         overlay.setSuspended(suspended)
+        if overlay.isShown {
+            isBackdropShown = !suspended
+        }
     }
 
     /// Readies the overlay ahead of its first show, now and after every config change
@@ -175,11 +182,14 @@ final class PanelController {
         guard let config = configManager.config.appearance.activeOverlay, let screen else {
             panel.level = .picker
             overlay.hide()
+            isBackdropShown = false
             return
         }
         // The overlay covers the menu bar and Dock, so the picker has to sit above it.
         panel.level = .pickerAboveOverlay
-        overlay.show(config, style: overlayStyle(for: config), pickerFrame: panel.frame, on: screen)
+        let pickerFrame = panel.frame.insetBy(dx: PickerView.shadowMargin, dy: PickerView.shadowMargin)
+        overlay.show(config, style: overlayStyle(for: config), pickerFrame: pickerFrame, on: screen)
+        isBackdropShown = true
         watchOverlayStyle()
     }
 
@@ -233,12 +243,11 @@ final class PanelController {
         if let existing = panel { return existing }
 
         let appearance = configManager.config.appearance
-        // Outer 16pt padding on each side accommodates the panel shadow.
         let frame = NSRect(
             x: 0,
             y: 0,
-            width: appearance.panelWidth + 32,
-            height: appearance.panelHeight + 32
+            width: appearance.panelWidth + 2 * PickerView.shadowMargin,
+            height: appearance.panelHeight + 2 * PickerView.shadowMargin
         )
         let newPanel = FloatingPanel(contentRect: frame)
 
