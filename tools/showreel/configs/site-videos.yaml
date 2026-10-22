@@ -1,4 +1,4 @@
-# The website's video lap (scenes/site-lap.yaml): Vibeshed 0.10.0's
+# The website's video lap (scenes/site-lap.yaml): Vibeshed 0.12.0's
 # first-launch config on the clean VM, plus the demo settings from the site
 # redesign plan. Vibeshed Glow as a custom theme (the sunset palette over the
 # generated Glow wallpaper), where the lap starts and ends; each other theme
@@ -44,6 +44,11 @@ keybindings:
 urlRouting:
   registerAsDefaultBrowser: false
   rules: []
+
+# How solid the picker's background is while no overlay is behind it:
+# 0 is bare glass (also what a missing `fill` means), 1 hides what's behind.
+appearance:
+  fill: 0.72
 
 # Picker entries of your own (the first-launch "Install Homebrew" alias is gone:
 # Homebrew is installed on the base now).
@@ -121,6 +126,7 @@ modules:
   # homebrew:     # search, install and upgrade Homebrew packages
   # anthropic:    # Claude Code and Claude Desktop sessions
   # openai:       # Codex sessions from the ChatGPT app and the Codex CLI
+  # opencode:     # OpenCode sessions from the CLI and desktop app
   # vscode:       # recent VS Code, Cursor and Windsurf projects
   # jetbrains:    # recent JetBrains IDE projects
   # iterm:        # iTerm sessions, new tabs and commands (Automation)

@@ -9,7 +9,7 @@ setup:
   vibeshed:
     config: ../configs/site-videos.yaml
   apps:
-    - { app: Safari, open: "https://ivandmitriev.com/vibeshed/" }
+    - { app: Safari, open: "https://vibeshed.dev/" }
     - { app: Spotify }
     - { app: Ghostty }
     - { app: Zed, open: ~/code/vibeshed/Vibeshed/Picker/PickerView.swift }

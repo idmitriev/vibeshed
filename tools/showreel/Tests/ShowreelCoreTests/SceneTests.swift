@@ -24,6 +24,13 @@ struct SceneTests {
         #expect(scene.actions.isEmpty)
     }
 
+    @Test func anEmptyEventListDiffersFromNone() throws {
+        #expect(try decode("title: Untouched").setup.events == nil)
+        #expect(try decode("setup:\n  events: []").setup.events == [])
+        let events = try decode("setup:\n  events:\n    - { title: Standup, in: 5, minutes: 15 }").setup.events
+        #expect(events?.map(\.title) == ["Standup"])
+    }
+
     @Test func actionsDecodeFromShorthandAndMappings() throws {
         let scene = try decode("""
         actions:

@@ -9,7 +9,7 @@
 # minimized, no Dock or menu bar) at lap-start, themes-start and lap-end; the
 # four overlapping windows at windows-start.
 #
-# Base VM: Vibeshed 0.10.0, Spotify, Zed, Ghostty and btop, Spotify and Claude
+# Base VM: Vibeshed 0.12.0, Spotify, Zed, Ghostty and btop, Spotify and Claude
 # Code signed in, and the Claude Code session "teach the picker to read my mind"
 # in ~/code/vibeshed on feat/mind-reading. Run scenes/site-permissions.yaml and
 # scenes/site-search-permissions.yaml once, then scenes/site-lap-warmup.yaml
@@ -49,7 +49,7 @@ setup:
     - press: return
     - wait: 1
     # Safari's front tab: the site (the Caps Lock tab stays for search).
-    - shell: open -a Safari "https://ivandmitriev.com/vibeshed/"
+    - shell: open -a Safari "https://vibeshed.dev/"
     - wait: 2
     # Spotify playing "(I Can't Get No) Satisfaction"; it keeps playing minimized.
     - shell: open "spotify:track:2PzU4IB8Dr6mxV3lHuaG34"
@@ -83,15 +83,18 @@ actions:
   - type: { text: caps, cps: 12 }
   - waitFor: { result: Caps Lock }              # the Safari tab, favicon and address in the preview
   - wait: 1.6
+  - marker: shot-tab                            # the site's feature cards are frames of the lap
   - press: cmd+a
   - type: { text: pair, cps: 12 }
   - waitFor: { result: Pairing session }        # In 4 min, with the Zoom pill
   - wait: 1.8
+  - marker: shot-meeting
   - press: cmd+a
   # "mind" alone also matches the much-used Restore Minimized Windows.
   - type: { text: my mind, cps: 12 }
   - waitFor: { result: teach the picker to read my mind }   # project, branch and model
   - wait: 1.8
+  - marker: shot-claude
   - press: cmd+a
   # "pr" ranks the imminent "Pairing session" first, whatever the usage.
   - type: { text: pull, cps: 12 }
@@ -203,6 +206,7 @@ actions:
   - waitFor: { result: Attach All Windows to Grid }
   - press: return                               # all four snap into the 2×2 grid
   - wait: 2.0
+  - marker: shot-grid
   - press: capslock+space
   - waitFor: picker
   - wait: 0.5

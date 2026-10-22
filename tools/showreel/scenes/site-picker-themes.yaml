@@ -6,7 +6,9 @@
 # Spotify is playing, its album art in the preview, a nod to the headline; and
 # `my`, the Claude Code session with its project, branch and model. Each gives
 # two pictures: the picker window alone with its shadow on a transparent
-# background, and the picker on that theme's wallpaper.
+# background, and the picker on that theme's wallpaper. The window has 40 pt of
+# shadow around the picker (16 pt before 0.12.0), so 96 pt of padding keeps
+# 136 pt of wallpaper around it, the size the site was laid out for.
 #
 # Base VM: as for scenes/site-lap.yaml, plus a run of
 # scenes/site-stills-warmup.yaml once. The windows sit minimized: their apps
@@ -27,6 +29,7 @@ setup:
     # the lists): its counts order the list as it opens, and per-query picks keep
     # `satis` on the track and `my` on the session, the non-window rows next.
     files: { usage.json: ../fixtures/site-stills-usage.json }
+  events: []             # the lap's imminent "Pairing session" would top the list as it opens
   apps:
     - { app: Spotify, frame: [840, 560, 720, 400] }
     - { app: Safari, open: "https://en.wikipedia.org/wiki/Caps_Lock", frame: [40, 60, 700, 480] }
@@ -37,7 +40,7 @@ setup:
   focus: Ghostty
   actions:
     - open: vibeshed://theme/apply.vibeshed-glow
-    - shell: open -a Safari "https://ivandmitriev.com/vibeshed/"
+    - shell: open -a Safari "https://vibeshed.dev/"
     - shell: open "spotify:track:2PzU4IB8Dr6mxV3lHuaG34"
     - wait: 5
     - open: vibeshed://window/minimizeAll
@@ -53,7 +56,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4                                   # the preview slides in after the list holds still
   - screenshot: { name: picker-launch-vibeshed-glow, window: picker }
-  - screenshot: { name: picker-launch-vibeshed-glow-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-launch-vibeshed-glow-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -63,7 +66,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4
   - screenshot: { name: picker-music-vibeshed-glow, window: picker }
-  - screenshot: { name: picker-music-vibeshed-glow-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-music-vibeshed-glow-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -73,7 +76,7 @@ actions:
   - waitFor: { result: "teach the picker to read my mind" }
   - wait: 2.4
   - screenshot: { name: picker-session-vibeshed-glow, window: picker }
-  - screenshot: { name: picker-session-vibeshed-glow-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-session-vibeshed-glow-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
 
@@ -85,7 +88,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4
   - screenshot: { name: picker-launch-tokyo-night, window: picker }
-  - screenshot: { name: picker-launch-tokyo-night-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-launch-tokyo-night-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -95,7 +98,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4
   - screenshot: { name: picker-music-tokyo-night, window: picker }
-  - screenshot: { name: picker-music-tokyo-night-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-music-tokyo-night-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -105,7 +108,7 @@ actions:
   - waitFor: { result: "teach the picker to read my mind" }
   - wait: 2.4
   - screenshot: { name: picker-session-tokyo-night, window: picker }
-  - screenshot: { name: picker-session-tokyo-night-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-session-tokyo-night-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
 
@@ -117,7 +120,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4
   - screenshot: { name: picker-launch-catppuccin-latte, window: picker }
-  - screenshot: { name: picker-launch-catppuccin-latte-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-launch-catppuccin-latte-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -127,7 +130,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4
   - screenshot: { name: picker-music-catppuccin-latte, window: picker }
-  - screenshot: { name: picker-music-catppuccin-latte-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-music-catppuccin-latte-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -137,7 +140,7 @@ actions:
   - waitFor: { result: "teach the picker to read my mind" }
   - wait: 2.4
   - screenshot: { name: picker-session-catppuccin-latte, window: picker }
-  - screenshot: { name: picker-session-catppuccin-latte-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-session-catppuccin-latte-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
 
@@ -149,7 +152,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4
   - screenshot: { name: picker-launch-mac-os-9, window: picker }
-  - screenshot: { name: picker-launch-mac-os-9-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-launch-mac-os-9-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -159,7 +162,7 @@ actions:
   - waitFor: { result: "(I Can't Get No) Satisfaction" }
   - wait: 2.4
   - screenshot: { name: picker-music-mac-os-9, window: picker }
-  - screenshot: { name: picker-music-mac-os-9-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-music-mac-os-9-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
   - press: capslock+space
@@ -169,7 +172,7 @@ actions:
   - waitFor: { result: "teach the picker to read my mind" }
   - wait: 2.4
   - screenshot: { name: picker-session-mac-os-9, window: picker }
-  - screenshot: { name: picker-session-mac-os-9-desktop, region: picker, padding: 120 }
+  - screenshot: { name: picker-session-mac-os-9-desktop, region: picker, padding: 96 }
   - press: escape
   - waitFor: { window: picker, gone: true, timeout: 3 }
 

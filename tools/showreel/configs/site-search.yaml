@@ -6,7 +6,7 @@ modules:
     includedCalendars: ["Showreel"]   # the scene's sample event only
     showOpenCalendarAction: false
   github:
-    defaultOwner: "idmitriev"
+    defaultOwner: "vibeshed"
     searchTypes: [pr]
     showRepos: false
     showNotifications: false        # needs a token; public PR search doesn't
