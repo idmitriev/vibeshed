@@ -129,8 +129,9 @@ public struct Setup: Decodable, Sendable {
     /// More files to copy into the VM, e.g. scripts `shell` runs (it gets the
     /// scene's folder in the VM as `$SCENE_DIR`).
     public var sync: [String] = []
-    /// Calendar events created (fresh) in a local "Showreel" calendar.
-    public var events: [EventSetup] = []
+    /// Calendar events created (fresh) in a local "Showreel" calendar; `[]`
+    /// empties it, and leaving it out keeps what an earlier scene put there.
+    public var events: [EventSetup]?
 
     enum CodingKeys: String, CodingKey {
         case display, appearance, wallpaper, dock, menuBar, desktopIcons, desktopWidgets, locale, quitApps, apps, focus
@@ -160,7 +161,7 @@ public struct Setup: Decodable, Sendable {
         settle = try container.decodeIfPresent(Double.self, forKey: .settle) ?? settle
         actions = try container.decodeIfPresent([SceneAction].self, forKey: .actions) ?? []
         sync = try container.decodeIfPresent([String].self, forKey: .sync) ?? []
-        events = try container.decodeIfPresent([EventSetup].self, forKey: .events) ?? []
+        events = try container.decodeIfPresent([EventSetup].self, forKey: .events)
     }
 }
 

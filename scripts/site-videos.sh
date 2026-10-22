@@ -2,9 +2,9 @@
 # Finishes the website's video lap from its showreel take (scenes/site-lap.yaml):
 # search zooms in on the picker as it drops in, to a 1120×700 pt box so its text
 # reads on a phone, and back out as it closes; then the lap and each clip are
-# encoded for the page. Nothing is burned in: the page shows each clip's line and
-# keys beside the video. Prints an SSIM seam check of the lap's last frame
-# against its first.
+# encoded for the page, with the feature cards' frames (shot-*.webp). Nothing is
+# burned in: the page shows each clip's line and keys beside the video. Prints an
+# SSIM seam check of the lap's last frame against its first.
 #
 #   scripts/showreel record site-lap      # the take (after site-lap-warmup)
 #   scripts/site-videos.sh                # → tools/showreel/out/site-videos/
@@ -44,6 +44,22 @@ echo "zoom: in at ${zoom_in}s, out at ${zoom_out}s, around (${cx}, ${cy}) px"
 ffmpeg -v error -y -i "$master" -vf "$zoompan,format=yuv420p,setsar=1" \
   -c:v libx264 -preset slow -crf 12 -pix_fmt yuv420p "${colors[@]}" -an "$work/zoomed.mp4"
 
+# The feature cards' frames, from the master at the scene's shot-* markers: the
+# picker itself (its window less the 40 pt shadow margin), its footer cropped off
+# to the cards' 800×506, and the whole screen for the grid.
+m=40
+integer sx sy sw sh   # whole pixels for crop
+sx=$(( (px + m) * 2 )); sy=$(( (py + m) * 2 )); sw=$(( (pw - 2 * m) * 2 )); sh=$(( sw * 506 / 800 ))
+yuv="in_color_matrix=bt709:in_range=tv:flags=lanczos"
+shot() {  # shot <name> <filter>
+  ffmpeg -v error -y -ss "$(at "shot-$1")" -i "$master" -frames:v 1 -vf "$2,format=rgb24" "$work/shot-$1.png"
+  cwebp -quiet -q 84 "$work/shot-$1.png" -o "$dest/shot-$1.webp"
+}
+for name in tab meeting claude; do
+  shot $name "crop=${sw}:${sh}:${sx}:${sy},scale=800:506:${yuv}"
+done
+shot grid "scale=800:500:${yuv}"
+
 # Each clip at its own pace (the take runs long; the plan's lap is about 52 s), joined
 # at the markers, which are continuous footage of the same take.
 s1=1.15 s2=1.3 s3=1.3
@@ -76,7 +92,8 @@ encode "$work/lap.mp4" search 0 "$themes"
 encode "$work/lap.mp4" themes "$themes" "$windows"
 encode "$work/lap.mp4" windows "$windows" "$length"
 
-for f in lap.mp4 lap.webm lap-800.mp4 lap-poster.jpg search.mp4 search.webm themes.mp4 themes.webm windows.mp4 windows.webm; do
+for f in lap.mp4 lap.webm lap-800.mp4 lap-poster.jpg search.mp4 search.webm themes.mp4 themes.webm windows.mp4 windows.webm \
+  shot-tab.webp shot-meeting.webp shot-claude.webp shot-grid.webp; do
   printf '  %-16s %6s KB  %ss\n' "$f" $(( $(stat -f %z "$dest/$f") / 1024 )) \
     "$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$dest/$f" 2>/dev/null | cut -c1-5)"
 done

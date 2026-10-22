@@ -20,6 +20,7 @@ setup:
   vibeshed:
     config: [../configs/site-videos.yaml, ../configs/site-search.yaml, ../configs/site-stills.yaml]
     reset: false                       # keep the ranking the lap's warm-up taught
+  events: []                           # no "Pairing session" left over from the lap
   apps:
     - { app: Spotify, frame: [840, 560, 720, 400] }
     - { app: Safari, open: "https://en.wikipedia.org/wiki/Caps_Lock", frame: [40, 60, 700, 480] }
@@ -31,7 +32,7 @@ setup:
   focus: Ghostty
   actions:
     - open: vibeshed://theme/apply.vibeshed-glow
-    - shell: open -a Safari "https://ivandmitriev.com/vibeshed/"
+    - shell: open -a Safari "https://vibeshed.dev/"
     - shell: open "spotify:track:2PzU4IB8Dr6mxV3lHuaG34"
     - wait: 4
   settle: 2

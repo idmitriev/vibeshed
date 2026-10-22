@@ -10,7 +10,7 @@ extension SceneRunner {
         if setup.quitApps { await quitApps() }
         if let script = setup.prepare { try runShell(script) }
         try applyDesktop(setup)
-        if !setup.events.isEmpty { try await CalendarFixtures.replace(with: setup.events) }
+        if let events = setup.events { try await CalendarFixtures.replace(with: events) }
         try await setUpVibeshed(setup.vibeshed)
         for app in setup.apps {
             try await openApp(app)

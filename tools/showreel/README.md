@@ -129,6 +129,7 @@ inside the repo. Every field has a default.
 | `prepare` | — | zsh script run after quitting the other apps, before opening `apps` (e.g. clear an app's saved session) |
 | `apps` | — | `- { app: Safari, open: https://…, frame: [x, y, w, h], args: [--flag] }` (`args` apply at launch: apps are quit first) |
 | `clipboard` | — | text on the clipboard |
+| `events` | — | `- { title: Standup, in: 10, minutes: 15, url: https://zoom.us/j/… }`: events starting `in` minutes from setup, in a local "Showreel" calendar emptied first; `[]` only empties it, and leaving `events` out keeps an earlier scene's |
 | `shell` | — | zsh script run in the VM after the apps open |
 | `focus` | — | app to bring to the front last |
 | `cursor` | — | pointer position |
@@ -243,7 +244,7 @@ the clip has no visible edge:
 windows in one continuous take that starts and ends on the same empty desktop
 (Vibeshed Glow, every window minimized, no Dock or menu bar), so it loops with
 no seam. It uses `configs/site-videos.yaml` with `configs/site-search.yaml`
-over it, on a base VM with Vibeshed 0.10.0, Spotify, Zed, Ghostty and btop,
+over it, on a base VM with Vibeshed 0.12.0, Spotify, Zed, Ghostty and btop,
 Spotify and Claude Code signed in, and a Claude Code session in
 `~/code/vibeshed`. Prepare it once:
 
