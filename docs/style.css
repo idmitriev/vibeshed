@@ -155,7 +155,7 @@ h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); font-weight: 750; line-height: 0.9
 .shot figcaption kbd { font-size: 0.7rem; }
 /* The picker and the montage come with their own shadow and corners, on transparency. */
 .hero-shot img, .montage img { border: 0; border-radius: 0; box-shadow: none; }
-.hero-shot img { max-width: 792px; margin-inline: auto; }
+.hero-shot img { max-width: 840px; margin-inline: auto; }
 .montage { margin-bottom: 28px; }
 .montage img[data-single] { max-width: 800px; border-radius: 12px; box-shadow: var(--shadow); }
 

@@ -313,18 +313,18 @@
     const chapter = $('.player-n', player);
     const CLIPS = [
       { at: 0, line: 'Whatever you’re into.', print: 'Apps, tracks, tabs, meetings, pull requests and AI sessions, from one search bar. Each with a preview.', rest: ['⇪', 'Space'] },
-      { at: 19.6, line: 'Comes in 73 colors.', print: 'One palette across macOS, your wallpaper, terminal and editor. Preview live. Esc is the safe word.', rest: ['⇪', 'Space'] },
-      { at: 38.67, line: 'Try every position.', print: 'Tile, focus, maximize and grid every window from the keyboard, 4 pt apart.', rest: ['⇪', '←', '→', 'M', 'P'] },
+      { at: 20.03, line: 'Comes in 73 colors.', print: 'One palette across macOS, your wallpaper, terminal and editor. Preview live. Esc is the safe word.', rest: ['⇪', 'Space'] },
+      { at: 39.45, line: 'Try every position.', print: 'Tile, focus, maximize and grid every window from the keyboard, 4 pt apart.', rest: ['⇪', '←', '→', 'M', 'P'] },
     ];
     // Lap times, checked against the take: each key lights as it's pressed.
     const CUES = [
-      [0.8, ['⇪', 'Space']], [1.4, ['spot']], [3.3, ['↓']], [6.3, ['caps']], [8.3, ['pair']], [10.8, ['my mind']],
-      [13.3, ['pull', '↩']], [14.3, ['font']], [15.8, ['↩']], [17.9, ['esc']],
-      [19.6, ['⇪', 'Space']], [20.0, ['restore', '↩']], [21.8, ['⇪', 'Space']], [22.3, ['switch theme', '↩']],
-      [24.4, ['tok']], [26.9, ['latte']], [28.4, ['gruv']], [29.9, ['drac']], [31.8, ['os 9']], [33.9, ['95']], [35.8, ['amiga']], [37.3, ['esc']],
-      [38.8, ['⇪', 'Space']], [39.2, ['left', '↩']], [40.2, ['↓']], [43.2, ['↩']], [44.0, ['⇪', '←']], [44.6, ['⇪', '→']],
-      [45.8, ['⇪', 'M']], [46.8, ['⇪', 'M']], [47.9, ['⇪', 'P']], [48.4, ['saf']], [49.8, ['↩']],
-      [50.8, ['⇪', 'Space']], [51.2, ['grid', '↩']], [53.4, ['⇪', 'Space']], [53.9, ['min all', '↩']],
+      [0.9, ['⇪', 'Space']], [1.5, ['spot']], [3.7, ['↓']], [7.0, ['caps']], [9.0, ['pair']], [11.3, ['my mind']],
+      [14.0, ['pull', '↩']], [15.1, ['font']], [16.7, ['↩']], [18.8, ['esc']],
+      [20.0, ['⇪', 'Space']], [20.6, ['restore', '↩']], [22.7, ['⇪', 'Space']], [23.1, ['switch theme', '↩']],
+      [25.0, ['tok']], [26.6, ['latte']], [28.6, ['gruv']], [30.4, ['drac']], [32.0, ['os 9']], [34.4, ['95']], [35.9, ['amiga']], [37.7, ['esc']],
+      [39.5, ['⇪', 'Space']], [40.0, ['left', '↩']], [42.2, ['↓']], [44.3, ['↩']], [45.2, ['⇪', '←']], [46.0, ['⇪', '→']],
+      [46.9, ['⇪', 'M']], [47.9, ['⇪', 'M']], [48.8, ['⇪', 'P']], [49.4, ['saf']], [50.9, ['↩']],
+      [51.9, ['⇪', 'Space']], [52.4, ['grid', '↩']], [54.5, ['⇪', 'Space']], [55.1, ['min all', '↩']],
     ];
     const LIT = 0.9; // seconds a key stays lit
     const KEYS = new Set(['⇪', 'Space', '↓', '↩', 'esc', '←', '→', 'M', 'P']);
